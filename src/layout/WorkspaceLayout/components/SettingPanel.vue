@@ -57,7 +57,7 @@
           <div class="min-w-0">
             <template v-if="!isEditingTitle">
               <h3
-                class="text-2xl font-medium truncate cursor-text text-text-primary"
+                class="text-lg font-medium truncate cursor-text text-text-primary"
                 @click="startEditTitle"
                 v-tooltip="'Click to rename'"
               >

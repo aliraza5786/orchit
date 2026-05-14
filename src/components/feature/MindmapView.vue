@@ -49,7 +49,7 @@
             />
             <path
               :d="e.path"
-              :stroke="e.color || '#6e3b96'"
+              :stroke="e.color || 'var(--primary-color)'"
               stroke-width="1.5"
               fill="none"
               stroke-linecap="round"
@@ -235,7 +235,7 @@
                     node.variables?.lane?.variables?.['lane-color'] ||
                     node.style?.borderColor ||
                     node.style?.color ||
-                    '#6e3b96',
+                    'var(--primary-color)',
                 }"
               ></div>
 
@@ -390,7 +390,7 @@
               :class="
                 selectedNodeId ? 'fa-solid fa-sliders' : 'fa-solid fa-palette'
               "
-              style="color: var(--accent, #6e3b96)"
+              style="color: var(--primary-color, #6e3b96)"
             ></i>
             <span>{{ selectedNodeId ? "Format Node" : "Map Theme" }}</span>
           </div>
@@ -1202,7 +1202,7 @@ const props = defineProps<{
   selectedSheetId: string;
   selectedViewBy: string;
   workspaceId: string;
-  selectedSheetTitle?:string;
+  selectedSheetTitle?: string;
   moduleId: string;
   addingList: boolean;
   activeAddList: boolean;
@@ -1322,16 +1322,29 @@ const THEMES: MapTheme[] = [
   {
     id: "default",
     name: "Default",
-    bg: "#dedfe3",
+    bg: "var(--bg-body)",
     nodeColors: {
-      root: "#f1eeff",
-      sheet: "#ede9fb",
-      list: "#f3f4f6",
-      card: "#ffffff",
+      root: "var(--primary-color)",
+      sheet: "var(--bg-surface)",
+      list: "var(--bg-card)",
+      card: "var(--bg-card)",
     },
-    edgeColor: "#7D68C8",
-    textColor: "#2b2c30",
+    edgeColor: "var(--primary-color)",
+    textColor: "var(--text-primary)",
   },
+  // {
+  //   id: "default",
+  //   name: "Default",
+  //   bg: "#dedfe3",
+  //   nodeColors: {
+  //     root: "#f1eeff",
+  //     sheet: "#ede9fb",
+  //     list: "#f3f4f6",
+  //     card: "#ffffff",
+  //   },
+  //   edgeColor: "#7D68C8",
+  //   textColor: "#2b2c30",
+  // },
   {
     id: "ocean",
     name: "Ocean",
@@ -1657,7 +1670,7 @@ const BG_COLORS = [
 ];
 
 const activeThemeId = ref<string>("default");
-const activeCanvasBg = ref<string>("#dedfe3");
+const activeCanvasBg =  ref("var(--bg-body)");
 const recentlyUsedColors = ref<string[]>([]);
 // const themeColorPickerOpen = ref(false);
 const customBgColor = ref("#dedfe3");
@@ -1773,7 +1786,7 @@ async function loadSavedTheme() {
       type,
     );
 
-    if (match?._id && match?.style) { 
+    if (match?._id && match?.style) {
       savedThemeDocId.value = match._id;
 
       // Ensure rootEl is mounted
@@ -1813,24 +1826,25 @@ watch(
       string | undefined,
       string | undefined,
       string | undefined,
-      string | null
+      string | null,
     ];
   },
- watch(
-  () => {
-    const { type, type_id } = resolveThemeContext();
-    return [type, type_id ?? undefined] as [string, string | undefined];
-  },
-  async (newVal, oldVal) => {
-    const [type, type_id] = newVal;
-    const [prevType, prevTypeId] = oldVal ?? [];
-    if (type === prevType && type_id === prevTypeId) return;
-    else await loadSavedTheme();
-  },
-  {
-    immediate: true,
-  }
-));
+  watch(
+    () => {
+      const { type, type_id } = resolveThemeContext();
+      return [type, type_id ?? undefined] as [string, string | undefined];
+    },
+    async (newVal, oldVal) => {
+      const [type, type_id] = newVal;
+      const [prevType, prevTypeId] = oldVal ?? [];
+      if (type === prevType && type_id === prevTypeId) return;
+      else await loadSavedTheme();
+    },
+    {
+      immediate: true,
+    },
+  ),
+);
 const themeContext = computed(() => {
   const { type, type_id } = resolveThemeContext();
   return { type, type_id };
@@ -1841,10 +1855,8 @@ watch(
   themeContext,
   async (newCtx, oldCtx) => {
     // Skip if nothing actually changed
-    if (
-      newCtx.type    === oldCtx?.type &&
-      newCtx.type_id === oldCtx?.type_id
-    ) return;
+    if (newCtx.type === oldCtx?.type && newCtx.type_id === oldCtx?.type_id)
+      return;
 
     const requestId = ++themeRequestId;
 
@@ -1856,7 +1868,7 @@ watch(
       console.warn("Theme watcher load failed:", err);
     }
   },
-  { immediate: true, deep: false }
+  { immediate: true, deep: false },
 );
 function openDeleteModal(node: any) {
   ticketToDelete.value = node;
@@ -2039,86 +2051,86 @@ const LAYOUT_GROUPS = [
         id: "right",
         name: "Right",
         svg: `<g>
-          <rect x="4" y="18" width="14" height="8" rx="2" fill="#f1eeff" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="32" y="6" width="22" height="7" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="32" y="18" width="22" height="7" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="32" y="30" width="22" height="7" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <path d="M18 22 C25 22 25 9 32 9" fill="none" stroke="#7D68C8" stroke-width="1"/>
-          <path d="M18 22 C25 22 25 21 32 21" fill="none" stroke="#7D68C8" stroke-width="1"/>
-          <path d="M18 22 C25 22 25 33 32 33" fill="none" stroke="#7D68C8" stroke-width="1"/>
+          <rect x="4" y="18" width="14" height="8" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="32" y="6" width="22" height="7" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="32" y="18" width="22" height="7" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="32" y="30" width="22" height="7" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <path d="M18 22 C25 22 25 9 32 9" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
+          <path d="M18 22 C25 22 25 21 32 21" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
+          <path d="M18 22 C25 22 25 33 32 33" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
         </g>`,
       },
       {
         id: "left",
         name: "Left",
         svg: `<g>
-          <rect x="42" y="18" width="14" height="8" rx="2" fill="#f1eeff" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="6" y="6" width="22" height="7" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="6" y="18" width="22" height="7" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="6" y="30" width="22" height="7" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <path d="M42 22 C35 22 35 9 28 9" fill="none" stroke="#7D68C8" stroke-width="1"/>
-          <path d="M42 22 C35 22 35 21 28 21" fill="none" stroke="#7D68C8" stroke-width="1"/>
-          <path d="M42 22 C35 22 35 33 28 33" fill="none" stroke="#7D68C8" stroke-width="1"/>
+          <rect x="42" y="18" width="14" height="8" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="6" y="6" width="22" height="7" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="6" y="18" width="22" height="7" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="6" y="30" width="22" height="7" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <path d="M42 22 C35 22 35 9 28 9" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
+          <path d="M42 22 C35 22 35 21 28 21" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
+          <path d="M42 22 C35 22 35 33 28 33" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
         </g>`,
       },
       {
         id: "center",
         name: "Centered",
         svg: `<g>
-          <rect x="23" y="18" width="14" height="8" rx="2" fill="#f1eeff" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="2" y="6" width="16" height="6" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="2" y="18" width="16" height="6" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="2" y="31" width="16" height="6" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="42" y="6" width="16" height="6" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="42" y="18" width="16" height="6" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="42" y="31" width="16" height="6" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <path d="M23 22 C15 22 15 9 18 9" fill="none" stroke="#7D68C8" stroke-width="1"/>
-          <path d="M23 22 C15 22 15 21 18 21" fill="none" stroke="#7D68C8" stroke-width="1"/>
-          <path d="M23 22 C15 22 15 34 18 34" fill="none" stroke="#7D68C8" stroke-width="1"/>
-          <path d="M37 22 C45 22 45 9 42 9" fill="none" stroke="#7D68C8" stroke-width="1"/>
-          <path d="M37 22 C45 22 45 21 42 21" fill="none" stroke="#7D68C8" stroke-width="1"/>
-          <path d="M37 22 C45 22 45 34 42 34" fill="none" stroke="#7D68C8" stroke-width="1"/>
+          <rect x="23" y="18" width="14" height="8" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="2" y="6" width="16" height="6" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="2" y="18" width="16" height="6" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="2" y="31" width="16" height="6" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="42" y="6" width="16" height="6" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="42" y="18" width="16" height="6" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="42" y="31" width="16" height="6" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <path d="M23 22 C15 22 15 9 18 9" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
+          <path d="M23 22 C15 22 15 21 18 21" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
+          <path d="M23 22 C15 22 15 34 18 34" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
+          <path d="M37 22 C45 22 45 9 42 9" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
+          <path d="M37 22 C45 22 45 21 42 21" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
+          <path d="M37 22 C45 22 45 34 42 34" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
         </g>`,
       },
       {
         id: "top",
         name: "Top down",
         svg: `<g>
-          <rect x="23" y="4" width="14" height="8" rx="2" fill="#f1eeff" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="4" y="28" width="14" height="7" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="23" y="28" width="14" height="7" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="42" y="28" width="14" height="7" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <path d="M30 12 C30 20 11 20 11 28" fill="none" stroke="#7D68C8" stroke-width="1"/>
-          <path d="M30 12 C30 20 30 20 30 28" fill="none" stroke="#7D68C8" stroke-width="1"/>
-          <path d="M30 12 C30 20 49 20 49 28" fill="none" stroke="#7D68C8" stroke-width="1"/>
+          <rect x="23" y="4" width="14" height="8" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="4" y="28" width="14" height="7" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="23" y="28" width="14" height="7" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="42" y="28" width="14" height="7" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <path d="M30 12 C30 20 11 20 11 28" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
+          <path d="M30 12 C30 20 30 20 30 28" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
+          <path d="M30 12 C30 20 49 20 49 28" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
         </g>`,
       },
       {
         id: "bottom",
         name: "Bottom up",
         svg: `<g>
-          <rect x="23" y="30" width="14" height="8" rx="2" fill="#f1eeff" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="4" y="8" width="14" height="7" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="23" y="8" width="14" height="7" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="42" y="8" width="14" height="7" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <path d="M30 30 C30 22 11 22 11 15" fill="none" stroke="#7D68C8" stroke-width="1"/>
-          <path d="M30 30 C30 22 30 22 30 15" fill="none" stroke="#7D68C8" stroke-width="1"/>
-          <path d="M30 30 C30 22 49 22 49 15" fill="none" stroke="#7D68C8" stroke-width="1"/>
+          <rect x="23" y="30" width="14" height="8" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="4" y="8" width="14" height="7" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="23" y="8" width="14" height="7" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="42" y="8" width="14" height="7" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <path d="M30 30 C30 22 11 22 11 15" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
+          <path d="M30 30 C30 22 30 22 30 15" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
+          <path d="M30 30 C30 22 49 22 49 15" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
         </g>`,
       },
       {
         id: "radial",
         name: "Radial",
         svg: `<g>
-          <rect x="23" y="18" width="14" height="8" rx="2" fill="#f1eeff" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="23" y="2" width="14" height="6" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="23" y="38" width="14" height="6" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="2" y="18" width="14" height="6" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="44" y="18" width="14" height="6" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <path d="M30 22 C30 14 30 10 30 8" fill="none" stroke="#7D68C8" stroke-width="1"/>
-          <path d="M30 22 C30 30 30 36 30 38" fill="none" stroke="#7D68C8" stroke-width="1"/>
-          <path d="M23 22 C16 22 14 22 16 21" fill="none" stroke="#7D68C8" stroke-width="1"/>
-          <path d="M37 22 C44 22 46 22 44 21" fill="none" stroke="#7D68C8" stroke-width="1"/>
+          <rect x="23" y="18" width="14" height="8" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="23" y="2" width="14" height="6" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="23" y="38" width="14" height="6" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="2" y="18" width="14" height="6" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="44" y="18" width="14" height="6" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <path d="M30 22 C30 14 30 10 30 8" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
+          <path d="M30 22 C30 30 30 36 30 38" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
+          <path d="M23 22 C16 22 14 22 16 21" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
+          <path d="M37 22 C44 22 46 22 44 21" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
         </g>`,
       },
     ],
@@ -2130,46 +2142,46 @@ const LAYOUT_GROUPS = [
         id: "logic-right",
         name: "Logic Right",
         svg: `<g>
-          <rect x="2" y="18" width="16" height="8" rx="1" fill="#f1eeff" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="30" y="6" width="28" height="6" rx="1" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="30" y="16" width="28" height="6" rx="1" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="30" y="26" width="28" height="6" rx="1" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="30" y="36" width="28" height="6" rx="1" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <path d="M18 22 L22 22 L22 9 L30 9" fill="none" stroke="#7D68C8" stroke-width="1"/>
-          <path d="M22 22 L22 19 L30 19" fill="none" stroke="#7D68C8" stroke-width="1"/>
-          <path d="M22 22 L22 29 L30 29" fill="none" stroke="#7D68C8" stroke-width="1"/>
-          <path d="M22 22 L22 39 L30 39" fill="none" stroke="#7D68C8" stroke-width="1"/>
+          <rect x="2" y="18" width="16" height="8" rx="1" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="30" y="6" width="28" height="6" rx="1" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="30" y="16" width="28" height="6" rx="1" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="30" y="26" width="28" height="6" rx="1" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="30" y="36" width="28" height="6" rx="1" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <path d="M18 22 L22 22 L22 9 L30 9" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
+          <path d="M22 22 L22 19 L30 19" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
+          <path d="M22 22 L22 29 L30 29" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
+          <path d="M22 22 L22 39 L30 39" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
         </g>`,
       },
       {
         id: "logic-left",
         name: "Logic Left",
         svg: `<g>
-          <rect x="42" y="18" width="16" height="8" rx="1" fill="#f1eeff" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="2" y="6" width="28" height="6" rx="1" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="2" y="16" width="28" height="6" rx="1" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="2" y="26" width="28" height="6" rx="1" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="2" y="36" width="28" height="6" rx="1" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <path d="M42 22 L38 22 L38 9 L30 9" fill="none" stroke="#7D68C8" stroke-width="1"/>
-          <path d="M38 22 L38 19 L30 19" fill="none" stroke="#7D68C8" stroke-width="1"/>
-          <path d="M38 22 L38 29 L30 29" fill="none" stroke="#7D68C8" stroke-width="1"/>
-          <path d="M38 22 L38 39 L30 39" fill="none" stroke="#7D68C8" stroke-width="1"/>
+          <rect x="42" y="18" width="16" height="8" rx="1" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="2" y="6" width="28" height="6" rx="1" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="2" y="16" width="28" height="6" rx="1" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="2" y="26" width="28" height="6" rx="1" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="2" y="36" width="28" height="6" rx="1" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <path d="M42 22 L38 22 L38 9 L30 9" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
+          <path d="M38 22 L38 19 L30 19" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
+          <path d="M38 22 L38 29 L30 29" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
+          <path d="M38 22 L38 39 L30 39" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
         </g>`,
       },
       {
         id: "fishbone",
         name: "Fishbone",
         svg: `<g>
-          <rect x="36" y="19" width="20" height="6" rx="1" fill="#f1eeff" stroke="#b8a8e8" stroke-width="1"/>
-          <line x1="4" y1="22" x2="36" y2="22" stroke="#7D68C8" stroke-width="1.5"/>
-          <line x1="10" y1="22" x2="18" y2="10" stroke="#7D68C8" stroke-width="1"/>
-          <line x1="22" y1="22" x2="30" y2="10" stroke="#7D68C8" stroke-width="1"/>
-          <line x1="10" y1="22" x2="18" y2="34" stroke="#7D68C8" stroke-width="1"/>
-          <line x1="22" y1="22" x2="30" y2="34" stroke="#7D68C8" stroke-width="1"/>
-          <rect x="14" y="5" width="12" height="6" rx="1" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="26" y="5" width="12" height="6" rx="1" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="14" y="33" width="12" height="6" rx="1" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="26" y="33" width="12" height="6" rx="1" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
+          <rect x="36" y="19" width="20" height="6" rx="1" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <line x1="4" y1="22" x2="36" y2="22" stroke="var(--primary-color)" stroke-width="1.5"/>
+          <line x1="10" y1="22" x2="18" y2="10" stroke="var(--primary-color)" stroke-width="1"/>
+          <line x1="22" y1="22" x2="30" y2="10" stroke="var(--primary-color)" stroke-width="1"/>
+          <line x1="10" y1="22" x2="18" y2="34" stroke="var(--primary-color)" stroke-width="1"/>
+          <line x1="22" y1="22" x2="30" y2="34" stroke="var(--primary-color)" stroke-width="1"/>
+          <rect x="14" y="5" width="12" height="6" rx="1" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="26" y="5" width="12" height="6" rx="1" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="14" y="33" width="12" height="6" rx="1" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="26" y="33" width="12" height="6" rx="1" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
         </g>`,
       },
     ],
@@ -2181,43 +2193,43 @@ const LAYOUT_GROUPS = [
         id: "org-chart",
         name: "Org Chart",
         svg: `<g>
-          <rect x="22" y="2" width="16" height="8" rx="2" fill="#f1eeff" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="4" y="22" width="14" height="8" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="23" y="22" width="14" height="8" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="42" y="22" width="14" height="8" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <line x1="30" y1="10" x2="30" y2="15" stroke="#7D68C8" stroke-width="1"/>
-          <line x1="11" y1="15" x2="49" y2="15" stroke="#7D68C8" stroke-width="1"/>
-          <line x1="11" y1="15" x2="11" y2="22" stroke="#7D68C8" stroke-width="1"/>
-          <line x1="30" y1="15" x2="30" y2="22" stroke="#7D68C8" stroke-width="1"/>
-          <line x1="49" y1="15" x2="49" y2="22" stroke="#7D68C8" stroke-width="1"/>
+          <rect x="22" y="2" width="16" height="8" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="4" y="22" width="14" height="8" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="23" y="22" width="14" height="8" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="42" y="22" width="14" height="8" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <line x1="30" y1="10" x2="30" y2="15" stroke="var(--primary-color)" stroke-width="1"/>
+          <line x1="11" y1="15" x2="49" y2="15" stroke="var(--primary-color)" stroke-width="1"/>
+          <line x1="11" y1="15" x2="11" y2="22" stroke="var(--primary-color)" stroke-width="1"/>
+          <line x1="30" y1="15" x2="30" y2="22" stroke="var(--primary-color)" stroke-width="1"/>
+          <line x1="49" y1="15" x2="49" y2="22" stroke="var(--primary-color)" stroke-width="1"/>
         </g>`,
       },
       {
         id: "timeline",
         name: "Timeline",
         svg: `<g>
-          <line x1="4" y1="22" x2="56" y2="22" stroke="#7D68C8" stroke-width="1.5"/>
-          <circle cx="12" cy="22" r="2.5" fill="#7D68C8"/>
-          <circle cx="30" cy="22" r="2.5" fill="#7D68C8"/>
-          <circle cx="48" cy="22" r="2.5" fill="#7D68C8"/>
-          <rect x="5" y="8" width="14" height="8" rx="2" fill="#f1eeff" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="23" y="28" width="14" height="8" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="41" y="8" width="14" height="8" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <line x1="12" y1="19" x2="12" y2="16" stroke="#7D68C8" stroke-width="1"/>
-          <line x1="30" y1="25" x2="30" y2="28" stroke="#7D68C8" stroke-width="1"/>
-          <line x1="48" y1="19" x2="48" y2="16" stroke="#7D68C8" stroke-width="1"/>
+          <line x1="4" y1="22" x2="56" y2="22" stroke="var(--primary-color)" stroke-width="1.5"/>
+          <circle cx="12" cy="22" r="2.5" fill="var(--primary-color)"/>
+          <circle cx="30" cy="22" r="2.5" fill="var(--primary-color)"/>
+          <circle cx="48" cy="22" r="2.5" fill="var(--primary-color)"/>
+          <rect x="5" y="8" width="14" height="8" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="23" y="28" width="14" height="8" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="41" y="8" width="14" height="8" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <line x1="12" y1="19" x2="12" y2="16" stroke="var(--primary-color)" stroke-width="1"/>
+          <line x1="30" y1="25" x2="30" y2="28" stroke="var(--primary-color)" stroke-width="1"/>
+          <line x1="48" y1="19" x2="48" y2="16" stroke="var(--primary-color)" stroke-width="1"/>
         </g>`,
       },
       {
         id: "tree-map",
         name: "Tree Map",
         svg: `<g>
-          <rect x="2" y="2" width="56" height="40" rx="2" fill="none" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="2" y="2" width="30" height="22" rx="2" fill="#f1eeff" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="32" y="2" width="26" height="22" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="2" y="24" width="18" height="18" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="20" y="24" width="20" height="18" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="40" y="24" width="18" height="18" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
+          <rect x="2" y="2" width="56" height="40" rx="2" fill="none" stroke="var(--border)" stroke-width="1"/>
+          <rect x="2" y="2" width="30" height="22" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="32" y="2" width="26" height="22" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="2" y="24" width="18" height="18" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="20" y="24" width="20" height="18" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="40" y="24" width="18" height="18" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
         </g>`,
       },
     ],
@@ -2255,8 +2267,18 @@ function parsePx(val?: string): number {
 }
 
 const colorPresets = [
-  { name: "Violet", bg: "#7D68C8", border: "#6e3b96", color: "#fff" },
-  { name: "Purple", bg: "#9356c5", border: "#7D68C8", color: "#fff" },
+  {
+    name: "Brand",
+    bg: "var(--primary-color)",
+    border: "var(--secondary-color)",
+    color: "#ffffff",
+  },
+  {
+    name: "Secondary",
+    bg: "var(--bg-surface)",
+    border: "var(--border)",
+    color: "var(--text-primary)",
+  },
   { name: "Sky", bg: "#0ea5e9", border: "#0284c7", color: "#fff" },
   { name: "Emerald", bg: "#10b981", border: "#059669", color: "#fff" },
   { name: "Amber", bg: "#f59e0b", border: "#d97706", color: "#fff" },
@@ -2271,7 +2293,7 @@ const shadowPresets = [
   { label: "Medium", value: "0 4px 16px rgba(0,0,0,.14)" },
   { label: "Hard", value: "0 8px 24px rgba(0,0,0,.22)" },
   { label: "Inner", value: "inset 0 2px 6px rgba(0,0,0,.12)" },
-  { label: "Glow", value: "0 0 0 3px rgba(125,104,200,.4)" },
+  { label: "Glow", value: "0 0 0 3px var(--primary-color)" },
 ];
 
 function applyPreset(p: { bg: string; border: string; color: string }) {
@@ -3131,7 +3153,7 @@ function buildTree(sheets: any[]): MindNode {
 
   sheets.forEach((sheet) => {
     const title =
-    localStorage.getItem("selected_sheet_title") ||
+      localStorage.getItem("selected_sheet_title") ||
       props.selectedSheetTitle ||
       localStorage.getItem("selectedSprintTitle") ||
       "Sheet";
@@ -3264,7 +3286,7 @@ function nodeLevel(node: MindNode): number {
 }
 const currentEdgeColor = computed(() => {
   const theme = THEMES.find((t) => t.id === activeThemeId.value);
-  return theme?.edgeColor ?? "#7D68C8";
+  return theme?.edgeColor ?? "var(--primary-color)";
 });
 const visibleEdges = computed<Edge[]>(() => {
   const root = nodeMap.get(rootNodeId.value);
@@ -3470,8 +3492,8 @@ function nodeInlineStyle(node: MindNode): Record<string, string> {
 
   if (isTreeMap.value && node.uniqueName === "sheet") {
     base.borderRadius = "10px";
-    base.border = "1.5px solid #b8a8e8";
-    base.background = "var(--mm-node-sheet-bg, #ede9fb)";
+    base.border = "1.5px solid var(--border)";
+    base.background = "var(--mm-node-sheet-bg, var(--bg-surface))";
     base.overflow = "visible"; // must be visible so cards aren't clipped
     base.display = "block";
     base.padding = "0";
@@ -3487,7 +3509,7 @@ function nodeInlineStyle(node: MindNode): Record<string, string> {
     }
     base.borderRadius = "4px";
     base.border = "none";
-    base.background = "rgba(125,104,200,0.10)";
+    base.background = "var(--bg-surface)";
     base.boxShadow = "none";
     base.overflow = "hidden";
     base.display = "flex";
@@ -3503,8 +3525,8 @@ function nodeInlineStyle(node: MindNode): Record<string, string> {
       return base;
     }
     base.borderRadius = "6px";
-    base.border = "1px solid #c4b8f0";
-    base.background = "var(--mm-node-card-bg, #ffffff)";
+    base.border = "1px solid var(--border)";
+    base.background = "var(--mm-node-card-bg, var(--bg-card))";
     base.boxShadow = "0 1px 3px rgba(0,0,0,0.07)";
     base.overflow = "hidden";
     return base;
@@ -4206,7 +4228,7 @@ function createDefaultCardPayload(
   siblingStatus?: string,
 ) {
   console.log(directCreate);
-  
+
   const now = new Date();
   const startDate = now.toISOString().split("T")[0];
   const endDate = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000)
@@ -4844,9 +4866,9 @@ onBeforeUnmount(() => {
   box-shadow: 0 4px 16px rgba(125, 104, 200, 0.15);
 }
 .mm-node--selected {
-  border-color: var(--accent, #7d68c8) !important;
+  border-color: var(--primary-color) !important;
   box-shadow:
-    0 0 0 2px rgba(125, 104, 200, 0.25),
+    0 0 0 2px color-mix(in srgb, var(--primary-color), transparent 75%),
     0 4px 16px rgba(0, 0, 0, 0.12) !important;
 }
 
@@ -4868,7 +4890,7 @@ onBeforeUnmount(() => {
 }
 .mm-node--root {
   border-radius: 28px;
-  border-color: #c4b8f0;
+  border-color: var(--primary-color);
 }
 .node-root-inner {
   height: 100%;
@@ -4877,12 +4899,13 @@ onBeforeUnmount(() => {
   justify-content: center;
   gap: 10px;
   padding: 0 20px;
+  background: var(--primary-color) !important;
 }
 .node-root-icon {
   font-size: 18px;
   opacity: 0.75;
   flex-shrink: 0;
-  color: var(--accent, #6e3b96);
+  color: var(--primary-color, #6e3b96);
 }
 .node-root-title {
   color: inherit;
@@ -4891,10 +4914,11 @@ onBeforeUnmount(() => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  color: #fff;
 }
 
 .mm-node--sheet {
-  border-color: #b8a8e8;
+  border-color: var(--primary-color);
   border-radius: 10px;
 }
 .node-sheet-inner {
@@ -4910,7 +4934,7 @@ onBeforeUnmount(() => {
   gap: 7px;
 }
 .node-sheet-icon {
-  color: var(--accent, #6e3b96);
+  color: var(--primary-color, #6e3b96);
   font-size: 13px;
   flex-shrink: 0;
 }
@@ -4957,7 +4981,7 @@ onBeforeUnmount(() => {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--accent, #6e3b96);
+  background: var(--primary-color);
   flex-shrink: 0;
 }
 .node-list-title {
@@ -4971,7 +4995,7 @@ onBeforeUnmount(() => {
 }
 
 .mm-node--card {
-  border-color: #c4b8f0;
+  border-color: var(--primary-color);
   border-radius: 8px;
   overflow: hidden;
   transition: overflow 0s;
@@ -5025,7 +5049,7 @@ onBeforeUnmount(() => {
 }
 .card-badge--status {
   background: rgba(125, 104, 200, 0.12);
-  color: var(--accent, #7d68c8);
+  color: var(--primary-color);
 }
 .card-badge--low {
   background: #dcfce7;
@@ -5045,7 +5069,7 @@ onBeforeUnmount(() => {
 }
 .card-badge--process {
   background: rgba(125, 104, 200, 0.1);
-  color: var(--accent, #7d68c8);
+  color: var(--primary-color);
 }
 
 .node-card-title {
@@ -5101,7 +5125,7 @@ onBeforeUnmount(() => {
 }
 .card-link {
   font-size: 9.5px;
-  color: var(--accent, #6e3b96);
+  color: var(--primary-color);
   text-decoration: none;
   display: flex;
   align-items: center;
@@ -5180,7 +5204,7 @@ onBeforeUnmount(() => {
   color: #ef4444 !important;
 }
 .nact--open:hover {
-  color: var(--accent, #7d68c8) !important;
+  color: var(--primary-color) !important;
 }
 .nact--add:hover {
   color: #22c55e !important;
@@ -5193,9 +5217,9 @@ onBeforeUnmount(() => {
   padding: 3px 8px;
   font-size: 10px;
   font-weight: 500;
-  color: var(--accent, #7d68c8);
-  background: rgba(125, 104, 200, 0.07);
-  border: 1px dashed rgba(125, 104, 200, 0.3);
+  color: #fff;
+  background: rgba(var(--primary-color), 0.07);
+  border: 1px dashed rgba(var(--primary-color), 0.3);
   border-radius: 5px;
   cursor: pointer;
   text-align: left;
@@ -5212,8 +5236,8 @@ onBeforeUnmount(() => {
   display: flex;
 }
 .list-add-card-btn:hover {
-  background: rgba(125, 104, 200, 0.14);
-  border-color: rgba(125, 104, 200, 0.5);
+  background: var(--primary-color);
+  border-color: var(--primary-color);
 }
 
 .inline-create-card {
@@ -5231,10 +5255,11 @@ onBeforeUnmount(() => {
   font-weight: 500;
   color: var(--text-primary, #2b2c30);
   background: var(--bg-card, #fff);
-  border: 1.5px solid var(--accent, #7d68c8);
+  border: 1.5px solid var(--primary-color);
   border-radius: 5px;
   outline: none;
-  box-shadow: 0 0 0 2px rgba(125, 104, 200, 0.15);
+  box-shadow: 0 0 0 2px
+    color-mix(in srgb, var(--primary-color), transparent 85%);
   box-sizing: border-box;
 }
 .inline-card-input::placeholder {
@@ -5259,14 +5284,14 @@ onBeforeUnmount(() => {
   transition: background 0.12s;
 }
 .inline-btn--confirm {
-  background: var(--accent, #7d68c8);
-  color: var(--accent-text, #fff);
+  background: var(--primary-color);
+  color: #fff;
 }
 .inline-btn--confirm:hover:not(:disabled) {
-  background: var(--accent-hover, #6e3b96);
+  background: var(--primary-color);
 }
 .inline-btn--confirm:disabled {
-  background: rgba(125, 104, 200, 0.4);
+  background: var(--primary-color);
   cursor: not-allowed;
 }
 .inline-btn--cancel {
@@ -5336,9 +5361,9 @@ onBeforeUnmount(() => {
 }
 .ctrl-btn:hover,
 .ctrl-btn--active {
-  background: var(--accent, #7d68c8);
-  color: var(--accent-text, #fff);
-  border-color: var(--accent, #7d68c8);
+  background: var(--primary-color);
+  color: #fff;
+  border-color: var(--primary-color);
 }
 .ctrl-divider {
   width: 20px;
@@ -5438,16 +5463,16 @@ onBeforeUnmount(() => {
   flex-shrink: 0;
 }
 .fs-icon--root {
-  color: var(--accent, #7d68c8);
+  color: var(--primary-color);
 }
 .fs-icon--sheet {
-  color: var(--accent, #7d68c8);
+  color: var(--primary-color);
 }
 .fs-icon--List {
-  color: var(--accent-hover, #6e3b96);
+  color: var(--primary-color);
 }
 .fs-icon--card {
-  color: #9356c5;
+  color: var(--primary-color);
 }
 .fs-node-label {
   flex: 1;
@@ -5542,8 +5567,9 @@ onBeforeUnmount(() => {
   outline: none;
 }
 .fs-input:focus {
-  border-color: var(--accent, #7d68c8);
-  box-shadow: 0 0 0 2px rgba(125, 104, 200, 0.15);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px
+    color-mix(in srgb, var(--primary-color), transparent 85%);
 }
 
 .fs-input-full {
@@ -5560,8 +5586,9 @@ onBeforeUnmount(() => {
   box-sizing: border-box;
 }
 .fs-input-full:focus {
-  border-color: var(--accent, #7d68c8);
-  box-shadow: 0 0 0 2px rgba(125, 104, 200, 0.15);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px
+    color-mix(in srgb, var(--primary-color), transparent 85%);
 }
 
 .fs-select {
@@ -5577,7 +5604,7 @@ onBeforeUnmount(() => {
   outline: none;
 }
 .fs-select:focus {
-  border-color: var(--accent, #7d68c8);
+  border-color: var(--primary-color);
 }
 
 .input-with-unit {
@@ -5671,9 +5698,9 @@ onBeforeUnmount(() => {
 }
 .align-btn:hover,
 .align-btn--active {
-  background: var(--accent, #7d68c8);
-  color: var(--accent-text, #fff);
-  border-color: var(--accent, #7d68c8);
+  background: var(--primary-color);
+  color: var(--primary-color, #fff);
+  border-color: var(--primary-color);
 }
 
 .shadow-presets {
@@ -5694,9 +5721,9 @@ onBeforeUnmount(() => {
 }
 .shadow-btn:hover,
 .shadow-btn--active {
-  background: var(--accent, #7d68c8);
-  color: var(--accent-text, #fff);
-  border-color: var(--accent, #7d68c8);
+  background: var(--primary-color);
+  color: var(--primary-color, #fff);
+  border-color: var(--primary-color);
 }
 
 .fs-reset-btn {
@@ -5724,8 +5751,8 @@ onBeforeUnmount(() => {
 .fs-save-btn {
   width: 100%;
   padding: 8px;
-  background: var(--accent, #7d68c8);
-  color: var(--accent-text, #fff);
+  background: var(--primary-color);
+  color: #fff;
   border: none;
   border-radius: 7px;
   cursor: pointer;
@@ -5740,8 +5767,9 @@ onBeforeUnmount(() => {
     box-shadow 0.15s;
 }
 .fs-save-btn:hover:not(:disabled) {
-  background: var(--accent-hover, #6e3b96);
-  box-shadow: 0 4px 12px rgba(125, 104, 200, 0.35);
+  background: var(--primary-color);
+  box-shadow: 0 4px 12px
+    color-mix(in srgb, var(--primary-color), transparent 65%);
 }
 .fs-save-btn:disabled {
   opacity: 0.5;
@@ -5777,7 +5805,7 @@ onBeforeUnmount(() => {
   gap: 5px;
   font-size: 9.5px !important;
   font-weight: 600 !important;
-  color: var(--accent, #7d68c8) !important;
+  color: var(--primary-color) !important;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -5805,12 +5833,12 @@ onBeforeUnmount(() => {
   color: var(--text-primary, #2b2c30);
 }
 .add-list-input:focus {
-  border-color: var(--accent, #7d68c8);
+  border-color: var(--primary-color);
 }
 .add-list-btn {
   padding: 6px 16px;
-  background: var(--accent, #7d68c8);
-  color: var(--accent-text, #fff);
+  background: var(--primary-color);
+  color: var(--primary-color, #fff);
   border: none;
   border-radius: 6px;
   cursor: pointer;
@@ -5818,7 +5846,7 @@ onBeforeUnmount(() => {
   font-weight: 500;
 }
 .add-list-btn:hover {
-  background: var(--accent-hover, #6e3b96);
+  background: var(--primary-color);
 }
 
 .modal-backdrop {
@@ -5856,8 +5884,9 @@ onBeforeUnmount(() => {
   color: var(--text-primary, #2b2c30);
 }
 .modal-input:focus {
-  border-color: var(--accent, #7d68c8);
-  box-shadow: 0 0 0 2px rgba(125, 104, 200, 0.15);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px
+    color-mix(in srgb, var(--primary-color), transparent 85%);
 }
 .modal-footer {
   display: flex;
@@ -5876,8 +5905,8 @@ onBeforeUnmount(() => {
 }
 .modal-btn-confirm {
   padding: 7px 16px;
-  background: var(--accent, #7d68c8);
-  color: var(--accent-text, #fff);
+  background: var(--primary-color);
+  color: var(--primary-color, #fff);
   border: none;
   border-radius: 7px;
   cursor: pointer;
@@ -5885,10 +5914,10 @@ onBeforeUnmount(() => {
   font-weight: 600;
 }
 .modal-btn-confirm:hover:not(.disabled) {
-  background: var(--accent-hover, #6e3b96);
+  background: var(--primary-color);
 }
 .modal-btn-confirm.disabled {
-  background: rgba(125, 104, 200, 0.4);
+  background: color-mix(in srgb, var(--primary-color), transparent 60%);
   cursor: not-allowed;
 }
 
@@ -5918,7 +5947,7 @@ onBeforeUnmount(() => {
   margin-bottom: 4px;
 }
 .ctx-header-icon {
-  color: var(--accent, #7d68c8);
+  color: var(--primary-color);
   font-size: 12px;
   flex-shrink: 0;
 }
@@ -5966,10 +5995,10 @@ onBeforeUnmount(() => {
   color: #22c55e;
 }
 .ctx-icon--open {
-  color: var(--accent, #7d68c8);
+  color: var(--primary-color);
 }
 .ctx-icon--format {
-  color: #9356c5;
+  color: var(--primary-color);
 }
 .ctx-item--danger .ctx-item-icon {
   color: #ef4444;
@@ -6030,16 +6059,16 @@ onBeforeUnmount(() => {
 }
 
 .mindmap-root[data-dark="true"] :where(.mm-node--root) {
-  background: #27272a;
-  color: #c4b8f0;
+  background: var(--bg-surface, #27272a);
+  color: var(--text-primary, #f5f5f5);
 }
 .mindmap-root[data-dark="true"] :where(.mm-node--sheet) {
-  background: #2b2c30;
-  color: #b0b0b0;
+  background: var(--bg-card, #2b2c30);
+  color: var(--text-secondary, #b0b0b0);
 }
 .mindmap-root[data-dark="true"] :where(.mm-node--List) {
-  background: #1a1a1a;
-  color: #b0b0b0;
+  background: var(--bg-surface, #1a1a1a);
+  color: var(--text-secondary, #b0b0b0);
 }
 .mindmap-root[data-dark="true"] :where(.mm-node--card) {
   background: var(--bg-card, #2b2c30);
@@ -6047,16 +6076,16 @@ onBeforeUnmount(() => {
 }
 
 .mindmap-root[data-dark="true"] .mm-node--root {
-  border-color: #4a3d8c;
+  border-color: var(--primary-color);
 }
 .mindmap-root[data-dark="true"] .mm-node--sheet {
-  border-color: #3e3e42;
+  border-color: var(--border, #3e3e42);
 }
 .mindmap-root[data-dark="true"] .mm-node--List {
-  border-color: #3e3e42;
+  border-color: var(--border, #3e3e42);
 }
 .mindmap-root[data-dark="true"] .mm-node--card {
-  border-color: #4a3d8c;
+  border-color: var(--primary-color);
 }
 .mindmap-root[data-dark="true"] .mm-node {
   box-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
@@ -6066,21 +6095,21 @@ onBeforeUnmount(() => {
 }
 
 .mindmap-root[data-dark="true"] .node-root-icon {
-  color: #9356c5;
+  color: var(--primary-color);
 }
 .mindmap-root[data-dark="true"] .node-sheet-icon {
-  color: #9356c5;
+  color: var(--primary-color);
 }
 .mindmap-root[data-dark="true"] .meta-pill {
-  background: rgba(147, 86, 197, 0.15);
+  background: var(--bg-surface, rgba(147, 86, 197, 0.15));
 }
 .mindmap-root[data-dark="true"] .node-list-dot {
-  background: #9356c5;
+  background: var(--primary-color);
 }
 
 .mindmap-root[data-dark="true"] .card-badge--status {
-  background: rgba(147, 86, 197, 0.2);
-  color: #c4b8f0;
+  background: var(--bg-surface);
+  color: var(--text-primary);
 }
 .mindmap-root[data-dark="true"] .card-badge--low {
   background: #052e16;
@@ -6099,25 +6128,25 @@ onBeforeUnmount(() => {
   color: #2b2c30;
 }
 .mindmap-root[data-dark="true"] .card-badge--process {
-  background: rgba(147, 86, 197, 0.15);
-  color: #c4b8f0;
+  background: var(--bg-surface);
+  color: var(--text-primary);
 }
 .mindmap-root[data-dark="true"] .card-badge--type {
   background: rgba(255, 255, 255, 0.07);
 }
 .mindmap-root[data-dark="true"] .card-link {
-  color: #9356c5;
+  color: var(--primary-color);
 }
 .mindmap-root[data-dark="true"] .node-card-footer {
   border-color: rgba(255, 255, 255, 0.07);
 }
 .mindmap-root[data-dark="true"] .node-card-actions-row {
-  background: #2b2c30;
-  border-color: rgba(255, 255, 255, 0.08);
+  background: var(--bg-card, #2b2c30);
+  border-color: var(--border, rgba(255, 255, 255, 0.08));
 }
 .mindmap-root[data-dark="true"] .canvas-controls {
-  background: #2b2c30;
-  border-color: #3e3e42;
+  background: var(--bg-card, #2b2c30);
+  border-color: var(--border, #3e3e42);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
 }
 .mindmap-root[data-dark="true"] .ctrl-btn {
@@ -6126,9 +6155,9 @@ onBeforeUnmount(() => {
 }
 .mindmap-root[data-dark="true"] .ctrl-btn:hover,
 .mindmap-root[data-dark="true"] .ctrl-btn--active {
-  background: var(--accent, #9356c5);
+  background: var(--primary-color);
   color: #fff;
-  border-color: var(--accent, #9356c5);
+  border-color: var(--primary-color);
 }
 .mindmap-root[data-dark="true"] .ctrl-divider {
   background: #3e3e42;
@@ -6150,13 +6179,13 @@ onBeforeUnmount(() => {
 .mindmap-root[data-dark="true"] .inline-card-input {
   background: var(--bg-card, #2b2c30);
   color: var(--text-primary, #f5f5f5);
-  border-color: var(--accent, #9356c5);
+  border-color: var(--primary-color);
 }
 .mindmap-root[data-dark="true"] .inline-card-input::placeholder {
   color: #b0b0b0;
 }
 .mindmap-root[data-dark="true"] .inline-btn--confirm {
-  background: var(--accent, #9356c5);
+  background: var(--primary-color);
 }
 .mindmap-root[data-dark="true"] .inline-btn--cancel {
   background: var(--bg-surface, #1a1a1a);
@@ -6166,9 +6195,9 @@ onBeforeUnmount(() => {
   background: var(--border, #3e3e42);
 }
 .mindmap-root[data-dark="true"] .list-add-card-btn {
-  color: #9356c5;
-  background: rgba(147, 86, 197, 0.12);
-  border-color: rgba(147, 86, 197, 0.3);
+  color: #fff;
+  background: var(--primary-color);
+  border: 1px dashed var(--primary-color);
 }
 
 .mindmap-root[data-dark="true"] .format-sidebar {
@@ -6177,21 +6206,21 @@ onBeforeUnmount(() => {
   color: var(--text-primary, #f5f5f5) !important;
 }
 .mindmap-root[data-dark="true"] .fs-header {
-  border-color: #3e3e42;
+  border-color: var(--border, #3e3e42);
 }
 .mindmap-root[data-dark="true"] .fs-header-left {
-  color: #f5f5f5 !important;
+  color: var(--text-primary, #f5f5f5) !important;
 }
 .mindmap-root[data-dark="true"] .fs-close {
-  color: #b0b0b0;
+  color: var(--text-secondary, #b0b0b0);
 }
 .mindmap-root[data-dark="true"] .fs-close:hover {
-  background: #3e3e42;
-  color: #f5f5f5;
+  background: var(--bg-surface, #3e3e42);
+  color: var(--text-primary, #f5f5f5);
 }
 .mindmap-root[data-dark="true"] .fs-node-name {
-  color: #f5f5f5 !important;
-  border-color: #3e3e42;
+  color: var(--text-primary, #f5f5f5) !important;
+  border-color: var(--border, #3e3e42);
 }
 .mindmap-root[data-dark="true"] .fs-node-label {
   color: #f5f5f5 !important;
@@ -6415,8 +6444,9 @@ onBeforeUnmount(() => {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 .bg-swatch--active {
-  border-color: var(--accent, #7d68c8) !important;
-  box-shadow: 0 0 0 2px rgba(125, 104, 200, 0.4) !important;
+  border-color: var(--primary-color) !important;
+  box-shadow: 0 0 0 2px
+    color-mix(in srgb, var(--primary-color), transparent 60%) !important;
 }
 
 .bg-custom-row {
@@ -6489,12 +6519,14 @@ onBeforeUnmount(() => {
   overflow: hidden;
 }
 .theme-card:hover {
-  border-color: var(--accent, #7d68c8);
-  box-shadow: 0 2px 10px rgba(125, 104, 200, 0.2);
+  border-color: var(--primary-color);
+  box-shadow: 0 2px 10px
+    color-mix(in srgb, var(--primary-color), transparent 80%);
 }
 .theme-card--active {
-  border-color: var(--accent, #7d68c8) !important;
-  box-shadow: 0 0 0 2px rgba(125, 104, 200, 0.3) !important;
+  border-color: var(--primary-color) !important;
+  box-shadow: 0 0 0 2px
+    color-mix(in srgb, var(--primary-color), transparent 70%) !important;
 }
 
 /* Mini mindmap preview inside each theme card */
@@ -6549,7 +6581,7 @@ onBeforeUnmount(() => {
   top: 3px;
   right: 4px;
   font-size: 8px;
-  color: var(--accent, #7d68c8);
+  color: var(--primary-color);
   background: white;
   border-radius: 50%;
   padding: 1px;
@@ -6620,8 +6652,8 @@ onBeforeUnmount(() => {
   color: var(--text-primary, #2b2c30) !important;
 }
 .fs-tab--active {
-  color: var(--accent, #7d68c8) !important;
-  border-bottom-color: var(--accent, #7d68c8);
+  color: var(--primary-color) !important;
+  border-bottom-color: var(--primary-color);
 }
 
 /* ── Layout cards grid ───────────────────────────────────────────────── */
@@ -6647,12 +6679,14 @@ onBeforeUnmount(() => {
   overflow: hidden;
 }
 .layout-card:hover {
-  border-color: var(--accent, #7d68c8);
-  box-shadow: 0 2px 10px rgba(125, 104, 200, 0.2);
+  border-color: var(--primary-color);
+  box-shadow: 0 2px 10px
+    color-mix(in srgb, var(--primary-color), transparent 80%);
 }
 .layout-card--active {
-  border-color: var(--accent, #7d68c8) !important;
-  box-shadow: 0 0 0 2px rgba(125, 104, 200, 0.3) !important;
+  border-color: var(--primary-color) !important;
+  box-shadow: 0 0 0 2px
+    color-mix(in srgb, var(--primary-color), transparent 70%) !important;
 }
 .layout-preview {
   width: 100%;
@@ -6679,7 +6713,7 @@ onBeforeUnmount(() => {
   top: 3px;
   right: 4px;
   font-size: 8px;
-  color: var(--accent, #7d68c8);
+  color: var(--primary-color);
   background: white;
   border-radius: 50%;
   padding: 1px;
@@ -6696,8 +6730,8 @@ onBeforeUnmount(() => {
   color: #f5f5f5 !important;
 }
 .mindmap-root[data-dark="true"] .fs-tab--active {
-  color: #c4b8f0 !important;
-  border-bottom-color: #9356c5;
+  color: var(--primary-color) !important;
+  border-bottom-color: var(--primary-color);
 }
 .mindmap-root[data-dark="true"] .layout-card {
   border-color: #3e3e42;
@@ -6710,6 +6744,6 @@ onBeforeUnmount(() => {
 }
 .mindmap-root[data-dark="true"] .layout-check {
   background: #2b2c30;
-  color: #c4b8f0;
+  color: var(--primary-color);
 }
 </style>

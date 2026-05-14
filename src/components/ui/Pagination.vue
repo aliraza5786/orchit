@@ -21,11 +21,15 @@
       <button
         v-if="lastPage > 0"
         class="px-2 sm:px-3 py-1.5 sm:py-1 cursor-pointer text-xs sm:text-sm rounded border transition-colors touch-manipulation min-w-[32px] sm:min-w-[36px] shadow-none"
-        :class="
-          1 === currentPage
-            ? 'bg-accent text-white border-accent'
-            : 'border-border text-text-secondary hover:bg-bg-hover'
-        "
+       :class="
+  1 === currentPage
+    ? (
+        inSpace
+          ? 'bg-primary-color text-white border-primary-color'
+          : 'bg-accent text-white border-accent'
+      )
+    : 'border-border text-text-secondary hover:bg-bg-hover'
+"
         @click="$emit('update:page', 1)"
       >
         1
@@ -95,6 +99,7 @@
 const props = defineProps<{
     currentPage: number
     lastPage: number
+    inSpace?: boolean
 }>()
 
 defineEmits(['update:page'])

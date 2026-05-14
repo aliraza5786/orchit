@@ -1,6 +1,6 @@
 <template>
   <div
-    :class="`max-w-[358px] bg-bg-card  rounded-lg overflow-y-auto overflow-x-hidden relative ${
+    :class="`max-w-[358px] bg-bg-surface  rounded-[6px] overflow-y-auto overflow-x-hidden relative ${
       props.showAgentPanel
         ? '!translate-x-0 w-full h-full min-w-full sm:min-w-[380px] overflow-y-auto'
         : '!translate-x-100 w-0 h-0'
@@ -8,7 +8,7 @@
   >
     <!-- Header -->
     <div
-      class="pt-[17px] pb-[18px] flex justify-between items-center border-b border-border px-5 sticky top-0 bg-bg-card z-1"
+      class="pt-[15px] pb-[15px] flex justify-between items-center border-b border-border px-3 sticky top-0 bg-bg-surface z-1"
     >
       <h5 class="text-[16px] font-medium">Agent Configuration</h5>
       <i
@@ -17,8 +17,8 @@
       />
     </div>
     <!-- Body -->
-    <div class="py-4 px-5">
-      <SwitchTab v-model="activeTab" class="mb-2" :options="tabOptions" />
+    <div class="py-3 px-3">
+      <SwitchTab :inSpace="true" v-model="activeTab" class="mb-2" :options="tabOptions" />
       <!-- Title -->
        <!-- {{ updateAgentData }} -->
       <section v-if="activeTab == 'configure'">
@@ -208,7 +208,7 @@
             @click="submitPersona"
             v-if="!isEditMode"
             :disabled="isLoading || !agentConfig.name"
-            class="w-full mt-4 px-4 py-2.5 cursor-pointer text-sm bg-accent text-white rounded-lg hover:bg-accent-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            class="w-full mt-4 px-4 py-2.5 cursor-pointer text-sm bg-primary-color text-white rounded-lg   transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <span v-if="isLoading">Saving...</span>
             <span v-else>Save Agent</span>
@@ -219,7 +219,7 @@
               @click="deleteAgent(agentConfig.id)"
               v-if="isEditMode"
               :disabled="agentStore.isDeletingAgent || !agentConfig.name"
-              class="w-full mt-4 px-4 py-2.5 cursor-pointer text-sm bg-red-600 text-white rounded-lg hover:bg-accent-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              class="w-full mt-4 px-4 py-2.5 cursor-pointer text-sm bg-red-600 text-white rounded-lg  transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <span v-if="isLoading">Deleting...</span>
               <span v-else>Delete Agent</span>
@@ -228,7 +228,7 @@
               @click="updateAgent(agentConfig.id)"
               v-if="isEditMode"
               :disabled="agentStore.isUpdatingAgent || !agentConfig.name"
-              class="w-full mt-4 px-4 py-2.5 cursor-pointer text-sm bg-accent text-white rounded-lg hover:bg-accent-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              class="w-full mt-4 px-4 py-2.5 cursor-pointer text-sm bg-primary-color text-white rounded-lg  transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <span v-if="isLoading">Updating...</span>
               <span v-else>Update Agent</span>
@@ -322,7 +322,7 @@
         <button
           @click="submitKnowledge"
           :disabled="isKnowledgeLoading || !moduleSelected"
-          class="w-full mt-4 px-4 py-2.5 text-sm rounded-lg cursor-pointer text-white bg-accent hover:bg-accent-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          class="w-full mt-4 px-4 py-2.5 text-sm rounded-lg cursor-pointer text-white bg-primary-color hover:bg-primary-color transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
           <span v-if="isKnowledgeLoading">Saving...</span>
           <span v-else>Save Knowledge</span>
@@ -418,7 +418,7 @@
             (uploadConfig.text === '' && uploadConfig.files.length === 0) ||
             isUploading
           "
-          class="w-full mt-4 px-4 py-2.5 cursor-pointer text-sm bg-accent text-white rounded-lg hover:bg-accent-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          class="w-full mt-4 px-4 py-2.5 cursor-pointer text-sm bg-primary-color text-white rounded-lg hover:bg-primary-color transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <span v-if="isUploading">Uploading...</span>
           <span v-else>Upload Training Content</span>
@@ -487,7 +487,7 @@
           type="checkbox"
           v-model="action.is_selected"
           :id="action._id"
-          class="h-4 w-4 rounded border-border accent-accent cursor-pointer"
+          class="h-4 w-4 rounded border-border accent-primary-color cursor-pointer"
         />
       </div>
 
@@ -512,7 +512,7 @@
   <button
     @click="savePromptActions"
     :disabled="isSavingPrompt"
-    class="w-full px-4 py-2.5 text-sm bg-accent text-white rounded-lg hover:bg-accent-dark transition disabled:opacity-50"
+    class="w-full px-4 py-2.5 text-sm bg-primary-color text-white rounded-lg hover:bg-primary-color transition disabled:opacity-50"
   >
     <span v-if="isSavingPrompt">Saving...</span>
     <span v-else>Save Prompt</span>
@@ -803,14 +803,14 @@ const roleOptions = computed(() => {
     _id: "ADD_NEW_ROLE",
     title: "➕ Add New Role",
     customClass:
-      "text-accent font-medium sticky bottom-0 hover:bg-bg-dropdown-menu-hover transition-all duration-150 bg-bg-dropdown border-t border-border w-full",
+      "text-primary-color font-medium sticky bottom-0 hover:bg-bg-dropdown-menu-hover transition-all duration-150 bg-bg-dropdown border-t border-border w-full",
     isAction: true,
   },
   {
     _id: "MANAGE_PERMISSIONS",
     title: "🛠 Manage Permissions",
     customClass:
-      "text-accent font-medium sticky bottom-0 hover:bg-bg-dropdown-menu-hover transition-all duration-150 bg-bg-dropdown border-t border-border w-full",
+      "text-primary-color font-medium sticky bottom-0 hover:bg-bg-dropdown-menu-hover transition-all duration-150 bg-bg-dropdown border-t border-border w-full",
     isAction: true,
   },
 );

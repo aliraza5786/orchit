@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex-auto flex-grow h-full bg-bg-surface rounded-[6px] border border-border flex-col flex overflow-hidden"
+    class="flex-auto flex-grow h-full bg-bg-surface  rounded-[6px] border border-border flex-col flex overflow-hidden"
   >
     <!-- Header -->
     <div class="overflow-x-auto shrink-0 border-b border-border">
@@ -155,19 +155,6 @@
             </button>
 
             <button
-              @click="view = 'calendar'"
-              class="aspect-square cursor-pointer rounded-sm py-0.5 px-1 border border-border outline-0"
-              :class="
-                view === 'calendar'
-                  ? 'text-primary-color'
-                  : 'backdrop-blur-2xl transition-all duration-75 hover:text-primary-color'
-              "
-              title="Calendar view"
-            >
-              <i class="fa-regular fa-calendar"></i>
-            </button>
-
-            <button
               @click="view = 'gantt'"
               class="aspect-square cursor-pointer rounded-sm py-0.5 px-1 border border-border outline-0"
               :class="
@@ -189,6 +176,18 @@
               </svg>
             </button>
 
+            <button
+              @click="view = 'calendar'"
+              class="aspect-square cursor-pointer rounded-sm py-0.5 px-1 border border-border outline-0"
+              :class="
+                view === 'calendar'
+                  ? 'text-primary-color'
+                  : 'backdrop-blur-2xl transition-all duration-75 hover:text-primary-color'
+              "
+              title="Calendar view"
+            >
+              <i class="fa-regular fa-calendar"></i>
+            </button>
             <button
               @click="view = 'timeline'"
               class="aspect-square cursor-pointer rounded-sm py-0.5 px-1 border border-border outline-0"
@@ -272,7 +271,11 @@
         </template>
       </KanbanBoard>
       <!-- Add List Section -->
-      <div class="min-w-[270px]" v-if="view === 'kanban' && isStatusView" @click.stop >
+      <div
+        class="min-w-[270px]"
+        v-if="view === 'kanban' && isStatusView"
+        @click.stop
+      >
         <div v-if="activeAddList" class="bg-bg-body rounded-lg p-4">
           <BaseTextField
             :autofocus="true"
@@ -370,20 +373,50 @@
         @create:card="(payload) => handleMindmapCreateCard(payload)"
       />
     </div>
-    <template v-if="view === 'calendar'">
+    <!-- <template v-if="view === 'calendar'">
       <CalendarView :data="filteredBoard" @select:ticket="selectCardHandler" />
-    </template>
+    </template> -->
     <!-- ── Gantt View ──────────────────────────────────────────────────────── -->
-    <template v-if="view === 'gantt'">
+    <!-- <template v-if="view === 'gantt'">
       <GanttChartView
         :data="filteredBoard"
         @select:ticket="selectCardHandler"
       />
-    </template>
+    </template> -->
 
     <!-- ── Timeline View ───────────────────────────────────────────────────── -->
-    <template v-if="view === 'timeline'">
+    <!-- <template v-if="view === 'timeline'">
       <TimelineView :data="filteredBoard" @select:ticket="selectCardHandler" />
+    </template> -->
+
+    <!-- ── Custom Calendar View ─────────────────────────────────────────────── -->
+    <template v-if="view === 'calendar'">
+      <CustomCalendarView
+        :data="timelineData"
+        @select:ticket="selectCardHandler"
+      />
+    </template>
+
+    <!-- ── Gantt View ───────────────────────────────────────────────────────── -->
+    <template v-if="view === 'gantt'">
+      <CustomGanttChart
+        :data="timelineData"
+        :loading="isAddingTicket"
+        @select:ticket="selectCardHandler"
+        @create:ticket="handleCreateTicket"
+        @update:ticket="handleUpdateTicket"
+      />
+    </template>
+
+    <!-- ── Custom Timeline View ─────────────────────────────────────────────── -->
+    <template v-if="view === 'timeline'">
+      <CustomTimelineView
+        :data="timelineData"
+        :loading="isAddingTicket"
+        @select:ticket="selectCardHandler"
+        @create:ticket="handleCreateTicket"
+        @update:ticket="handleUpdateTicket"
+      />
     </template>
 
     <!-- Modals -->
@@ -504,9 +537,10 @@ import { request, toApiMessage } from "../../libs/api";
 import SearchBar from "../../components/ui/SearchBar.vue";
 import PinMindmapView from "../Pin/components/MindMap.vue";
 import TableView from "../../components/feature/TableView/TableView.vue";
-import CalendarView from "../../components/feature/CalendarView.vue";
-import GanttChartView from "../../components/feature/GanttChartView.vue";
-import TimelineView from "../../components/feature/TimelineView.vue";
+// import CalendarView from "../../components/feature/CalendarView.vue";
+// import GanttChartView from "../../components/feature/GanttChartView.vue";
+// import TimelineView from "../../components/feature/TimelineView.vue";
+import { useSidePanelStore } from "../../stores/sidePanelStore";
 import { useAgentStore } from "../../stores/agentStore";
 const TableSearchCell = defineAsyncComponent(
   () => import("../../components/feature/TableView/TableSearchCell.vue"),
@@ -526,7 +560,20 @@ const TableGroupDropdown = defineAsyncComponent(
 const VariableViewDropdown = defineAsyncComponent(
   () => import("../Product/components/VariableViewDropdown.vue"),
 );
-import { updateCardInStructure } from "../../utilities/cacheSync";
+const CustomTimelineView = defineAsyncComponent(
+  () => import("../../components/feature/CustomTimelineView.vue"),
+);
+const CustomGanttChart = defineAsyncComponent(
+  () => import("../../components/feature/CustomGanttChart.vue"),
+);
+const CustomCalendarView = defineAsyncComponent(
+  () => import("../../components/feature/CustomCalendarView.vue"),
+);
+import {
+  updateCardInStructure,
+  performOptimisticUpdate,
+  rollbackOptimisticUpdate,
+} from "../../utilities/cacheSync";
 
 import { usePermissions } from "../../composables/usePermissions";
 import { toast } from "vue-sonner";
@@ -570,6 +617,7 @@ const queryClient = useQueryClient();
 const selectedTicketId = ref("");
 const isDeletingTicket = ref(false);
 const agentStore = useAgentStore();
+const sidePanelStore = useSidePanelStore();
 
 const sheetDropdownRef = ref<any>(null);
 // Variables & Sheets
@@ -614,7 +662,12 @@ const isStatusView = computed(() => {
   const slug = v.slug?.toLowerCase() || "";
   const title = v.title?.toLowerCase() || "";
 
-  return slug === "pin-list" || slug === "status" || title === "pin list" || slug === "card-status";
+  return (
+    slug === "pin-list" ||
+    slug === "status" ||
+    title === "pin list" ||
+    slug === "card-status"
+  );
 });
 
 watch(
@@ -911,6 +964,7 @@ function onReorder(a: any) {
 function handleBoardUpdate(_: any) {}
 
 function selectCardHandler(card: any) {
+  selectedTicketId.value = card?._id;
   selectedCard.value = card;
 
   // Clean up card_id query param if present
@@ -1206,6 +1260,33 @@ const filteredBoard = computed(() => {
   return mergedLists.map((col: any) => {
     const filteredCards = results.filter((c: any) => c.columnId === col.title);
     return { ...col, cards: filteredCards };
+  });
+});
+
+const timelineData = computed(() => {
+  return filteredBoard.value.map((column: any) => {
+    return {
+      ...column,
+      cards: column.cards?.map((card: any) => {
+        let start = card.variables?.["start-date"] || card["start-date"];
+        let end = card.variables?.["end-date"] || card["end-date"];
+
+        if (!start) {
+          start = card.createdAt || new Date().toISOString();
+        }
+        if (!end) {
+          const startDate = new Date(start);
+          startDate.setDate(startDate.getDate() + 2);
+          end = startDate.toISOString();
+        }
+
+        return {
+          ...card,
+          "start-date": start,
+          "end-date": end,
+        };
+      }),
+    };
   });
 });
 
@@ -1643,6 +1724,30 @@ const { mutate: addTicket, isPending: isAddingTicket } = useAddTicket({
   },
 });
 
+function handleUpdateTicket(task: any) {
+  const id = task?._id;
+  if (!id) return;
+
+  const updates: Record<string, any> = {};
+  if (task._start) updates["start-date"] = task._start;
+  if (task._end) updates["end-date"] = task._end;
+
+  if (Object.keys(updates).length > 0) {
+    const snapshots = performOptimisticUpdate({
+      queryClient,
+      sidePanelStore,
+      cardId: id,
+      updates: updates,
+      invalidateKeys: ["sheet-list", "table-cards-flat"],
+    });
+
+    moveCard.mutate(
+      { card_id: id, variables: updates },
+      { onError: () => rollbackOptimisticUpdate(queryClient, snapshots) },
+    );
+  }
+}
+
 function handleCreateTicket(newRow: any) {
   // Fill default owner
   if (authStore.user?.data) {
@@ -1722,5 +1827,8 @@ function handleMindmapCreateCard(payload: any) {
 .custom_scroll_bar {
   scrollbar-width: thin;
   scrollbar-color: rgba(150, 150, 150, 0.5) transparent !important;
+}
+ .node-card-stripe{
+  background: var(--primary-color) !important;
 }
 </style>

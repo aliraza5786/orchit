@@ -1,11 +1,11 @@
 <template>
   <div class="flex h-full w-full gap-2">
     <div
-      class="flex-auto bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur rounded-[6px] flex flex-col border border-border overflow-hidden"
+      class="flex-auto bg-gradient-to-b from-bg-surface/95 to-bg-surface/90 backdrop-blur rounded-[6px] flex flex-col border border-border overflow-hidden"
     >
-      <div class="sticky top-0 z-20 bg-bg-card overflow-x-auto shrink-0">
+      <div class="sticky top-0 z-20 bg-bg-surface overflow-x-auto shrink-0">
         <div
-          class="header lg:px-4 px-2 py-2 flex justify-between items-center gap-1 overflow-auto border-b border-border"
+          class="header px-2 py-1 flex justify-between items-center gap-1 overflow-auto border-b border-border"
         >
           <div class="flex lg:gap-4 gap-2 py-1 items-center">
             <div>
@@ -277,7 +277,7 @@
       </div>
 
       <!-- ===== MAIN ===== -->
-      <div class="flex flex-1 overflow-hidden bg-bg-card">
+      <div class="flex flex-1 overflow-hidden bg-bg-surface">
         <div class="flex-1 min-w-0 flex flex-col">
           <!-- ── Kanban View ─────────────────────────────────────── -->
           <template v-if="view === 'kanban'">
@@ -304,7 +304,7 @@
 
             <div
               v-show="!isPending && filteredBoard?.length"
-              class="flex-1 overflow-x-auto overflow-y-hidden scrollbar-visible py-4 mx-4"
+              class="flex-1 overflow-x-auto overflow-y-hidden scrollbar-visible pt-2 mx-2"
             >
               <div class="flex gap-3 min-w-max h-full">
                 <KanbanBoard
@@ -437,19 +437,19 @@
           </template>
 
           <!-- ── Calendar View ───────────────────────────────────── -->
-          <template
+          <!-- <template
             v-if="view === 'calendar'"
             class="max-h-[calc(100vh-100px)] overflow-y-auto"
           >
-            <CalendarView
+            <CuCalendarView
               :data="filteredBoard"
               @select:ticket="selectCardHandler"
               class="min-h-[600px]"
             />
-          </template>
+          </template> -->
 
           <!-- ── Gantt View ───────────────────────────────────────── -->
-          <template
+          <!-- <template
             v-if="view === 'gantt'"
             class="max-h-[calc(100vh-100px)] overflow-y-auto"
           >
@@ -457,16 +457,46 @@
               :data="filteredBoard"
               @select:ticket="selectCardHandler"
             />
-          </template>
+          </template> -->
 
           <!-- ── Timeline View ───────────────────────────────────── -->
-          <template
+          <!-- <template
             v-if="view === 'timeline'"
             class="max-h-[calc(100vh-100px)] overflow-y-auto"
           >
             <TimelineView
               :data="filteredBoard"
               @select:ticket="selectCardHandler"
+            />
+          </template> -->
+
+          <!-- ── Custom Calendar View ─────────────────────────────────────────────── -->
+          <template v-if="view === 'calendar'">
+            <CustomCalendarView
+              :data="filteredBoard"
+              @select:ticket="selectCardHandler"
+            />
+          </template>
+
+          <!-- ── Gantt View ───────────────────────────────────────────────────────── -->
+          <template v-if="view === 'gantt'">
+            <CustomGanttChart
+              :data="filteredBoard"
+              :loading="isAddingTableTicket"
+              @select:ticket="selectCardHandler"
+              @create:ticket="handleCreateTicket"
+              @update:ticket="handleUpdateTicket"
+            />
+          </template>
+
+          <!-- ── Custom Timeline View ─────────────────────────────────────────────── -->
+          <template v-if="view === 'timeline'">
+            <CustomTimelineView
+              :data="filteredBoard"
+              :loading="isAddingTableTicket"
+              @select:ticket="selectCardHandler"
+              @create:ticket="handleCreateTicket"
+              @update:ticket="handleUpdateTicket"
             />
           </template>
 
@@ -598,21 +628,30 @@ const KanbanBoard = defineAsyncComponent(
 const DatePicker = defineAsyncComponent(
   () => import("../../Product/components/DatePicker.vue"),
 );
+const CustomTimelineView = defineAsyncComponent(
+  () => import("../../../components/feature/CustomTimelineView.vue"),
+);
+const CustomGanttChart = defineAsyncComponent(
+  () => import("../../../components/feature/CustomGanttChart.vue"),
+);
+const CustomCalendarView = defineAsyncComponent(
+  () => import("../../../components/feature/CustomCalendarView.vue"),
+);
 const TableSearchCell = defineAsyncComponent(
   () => import("../../../components/feature/TableView/TableSearchCell.vue"),
 );
 const TableAssigneeCell = defineAsyncComponent(
   () => import("../../../components/feature/TableView/TableAssigneeCell.vue"),
 );
-const CalendarView = defineAsyncComponent(
-  () => import("../../../components/feature/CalendarView.vue"),
-);
-const GanttChartView = defineAsyncComponent(
-  () => import("../../../components/feature/GanttChartView.vue"),
-);
-const TimelineView = defineAsyncComponent(
-  () => import("../../../components/feature/TimelineView.vue"),
-);
+// const CalendarView = defineAsyncComponent(
+//   () => import("../../../components/feature/CalendarView.vue"),
+// );
+// const GanttChartView = defineAsyncComponent(
+//   () => import("../../../components/feature/GanttChartView.vue"),
+// );
+// const TimelineView = defineAsyncComponent(
+//   () => import("../../../components/feature/TimelineView.vue"),
+// );
 const MindMapView = defineAsyncComponent(
   () => import("../../../components/feature/MindmapView.vue"),
 );
@@ -1391,6 +1430,30 @@ function handleCreateTicket(title: any) {
           isAddingTableTicket.value = false;
         },
       },
+    );
+  }
+}
+
+function handleUpdateTicket(task: any) {
+  const id = task?._id;
+  if (!id) return;
+
+  const updates: Record<string, any> = {};
+  if (task._start) updates["start-date"] = task._start;
+  if (task._end) updates["end-date"] = task._end;
+
+  if (Object.keys(updates).length > 0) {
+    const snapshots = performOptimisticUpdate({
+      queryClient,
+      sidePanelStore,
+      cardId: id,
+      updates: updates,
+      invalidateKeys: ["sprint-kanban", "sprint-table-flat"],
+    });
+
+    moveCard.mutate(
+      { card_id: id, variables: updates },
+      { onError: () => rollbackOptimisticUpdate(queryClient, snapshots) },
     );
   }
 }

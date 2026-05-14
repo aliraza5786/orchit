@@ -5,7 +5,7 @@
       :class="disabled ? 'opacity-60 pointer-events-none' : ''" >
       <button v-for="(option, i) in options" :key="option.value" :ref="(el: any) => setBtnRef(el, i)" role="tab"
         :aria-selected="modelValue === option.value" :tabindex="modelValue === option.value ? 0 : -1"
-        @click="choose(option.value)" @mouseenter="hovered = i" @mouseleave="hovered = null" class="relative px-3 py-2 rounded-md text-sm font-medium transition-colors
+        @click="choose(option.value)" @mouseenter="hovered = i" @mouseleave="hovered = null" class="relative text-nowrap px-3 py-2 rounded-md text-sm font-medium transition-colors
                text-text-secondary hover:text-text-primary
                focus:outline-none focus-visible:ring-2"
 

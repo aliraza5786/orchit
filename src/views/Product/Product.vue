@@ -91,7 +91,11 @@
             >
               <i
                 class="fa-solid fa-layer-group text-[14px]"
-                :class="showVariableDropdown ? 'text-primary-color' : 'text-primary-color'"
+                :class="
+                  showVariableDropdown
+                    ? 'text-primary-color'
+                    : 'text-primary-color'
+                "
               ></i>
               <span class="text-nowrap">Group: {{ selectedViewByLabel }}</span>
             </button>
@@ -127,7 +131,11 @@
             >
               <i
                 class="fa-solid fa-layer-group text-[14px]"
-                :class="showGroupDropdown ? 'text-primary-color' : 'text-primary-color'"
+                :class="
+                  showGroupDropdown
+                    ? 'text-primary-color'
+                    : 'text-primary-color'
+                "
               ></i>
               <span>Group: {{ selectedGroupLabel }}</span>
             </button>
@@ -197,19 +205,6 @@
             </button>
 
             <button
-              @click="view = 'calendar'"
-              class="aspect-square cursor-pointer rounded-sm py-0.5 px-1 border border-border outline-0"
-              :class="
-                view === 'calendar'
-                  ? 'text-primary-color'
-                  : 'backdrop-blur-2xl transition-all duration-75 outline-0 hover:text-primary-color'
-              "
-              title="Calendar view"
-            >
-              <i class="fa-regular fa-calendar"></i>
-            </button>
-
-            <button
               @click="view = 'gantt'"
               class="aspect-square cursor-pointer rounded-sm py-0.5 px-1 border border-border outline-0"
               :class="
@@ -231,6 +226,18 @@
               </svg>
             </button>
 
+            <button
+              @click="view = 'calendar'"
+              class="aspect-square cursor-pointer rounded-sm py-0.5 px-1 border border-border outline-0"
+              :class="
+                view === 'calendar'
+                  ? 'text-primary-color'
+                  : 'backdrop-blur-2xl transition-all duration-75 outline-0 hover:text-primary-color'
+              "
+              title="Calendar view"
+            >
+              <i class="fa-regular fa-calendar"></i>
+            </button>
             <button
               @click="view = 'timeline'"
               class="aspect-square cursor-pointer rounded-sm py-0.5 px-1 border border-border outline-0"
@@ -425,7 +432,9 @@
           class="absolute inset-0 z-20 flex items-center justify-center bg-bg-card/60 backdrop-blur-[2px]"
         >
           <div class="flex flex-col items-center gap-3">
-            <i class="fa-solid fa-spinner fa-spin text-primary-color text-3xl"></i>
+            <i
+              class="fa-solid fa-spinner fa-spin text-primary-color text-3xl"
+            ></i>
             <span class="text-sm font-medium text-text-secondary italic"
               >Mapping your data...</span
             >
@@ -462,21 +471,51 @@
     </template>
 
     <!-- ── Calendar View ───────────────────────────────────────────────────── -->
-    <template v-if="view === 'calendar'">
+    <!-- <template v-if="view === 'calendar'">
       <CalendarView :data="filteredBoard" @select:ticket="selectCardHandler" />
-    </template>
+    </template> -->
 
     <!-- ── Gantt View ──────────────────────────────────────────────────────── -->
-    <template v-if="view === 'gantt'">
+    <!-- <template v-if="view === 'gantt'">
       <GanttChartView
+        :data="filteredBoard"
+        @select:ticket="selectCardHandler"
+      />
+    </template> -->
+
+    <!-- ── Timeline View ───────────────────────────────────────────────────── -->
+    <!-- <template v-if="view === 'timeline'">
+      <TimelineView :data="filteredBoard" @select:ticket="selectCardHandler" />
+    </template> -->
+
+    <!-- ── Custom Calendar View ─────────────────────────────────────────────── -->
+    <template v-if="view === 'calendar'">
+      <CustomCalendarView
         :data="filteredBoard"
         @select:ticket="selectCardHandler"
       />
     </template>
 
-    <!-- ── Timeline View ───────────────────────────────────────────────────── -->
+    <!-- ── Gantt View ───────────────────────────────────────────────────────── -->
+    <template v-if="view === 'gantt'">
+      <CustomGanttChart
+        :data="filteredBoard"
+        :loading="isAddingTableTicket"
+        @select:ticket="selectCardHandler"
+        @create:ticket="handleCreateTicket"
+        @update:ticket="handleUpdateTicket"
+      />
+    </template>
+
+    <!-- ── Custom Timeline View ─────────────────────────────────────────────── -->
     <template v-if="view === 'timeline'">
-      <TimelineView :data="filteredBoard" @select:ticket="selectCardHandler" />
+      <CustomTimelineView
+        :data="filteredBoard"
+        :loading="isAddingTableTicket"
+        @select:ticket="selectCardHandler"
+        @create:ticket="handleCreateTicket"
+        @update:ticket="handleUpdateTicket"
+      />
     </template>
 
     <!-- ── No Sheets Modal ─────────────────────────────────────────────────── -->
@@ -689,14 +728,23 @@ const TableSearchCell = defineAsyncComponent(
 const TableAssigneeCell = defineAsyncComponent(
   () => import("../../components/feature/TableView/TableAssigneeCell.vue"),
 );
-const CalendarView = defineAsyncComponent(
-  () => import("../../components/feature/CalendarView.vue"),
+// const CalendarView = defineAsyncComponent(
+//   () => import("../../components/feature/CalendarView.vue"),
+// );
+// const GanttChartView = defineAsyncComponent(
+//   () => import("../../components/feature/GanttChartView.vue"),
+// );
+// const TimelineView = defineAsyncComponent(
+//   () => import("../../components/feature/TimelineView.vue"),
+// );
+const CustomCalendarView = defineAsyncComponent(
+  () => import("../../components/feature/CustomCalendarView.vue"),
 );
-const GanttChartView = defineAsyncComponent(
-  () => import("../../components/feature/GanttChartView.vue"),
+const CustomGanttChart = defineAsyncComponent(
+  () => import("../../components/feature/CustomGanttChart.vue"),
 );
-const TimelineView = defineAsyncComponent(
-  () => import("../../components/feature/TimelineView.vue"),
+const CustomTimelineView = defineAsyncComponent(
+  () => import("../../components/feature/CustomTimelineView.vue"),
 );
 const CreateTaskModal = defineAsyncComponent(
   () => import("./modals/CreateTaskModal.vue"),
@@ -2464,6 +2512,30 @@ function handleChangeTicket(row: any, key: any, value: any) {
 
 function handleCreateTicket(row: any) {
   checkAndCreateTicket(row);
+}
+
+function handleUpdateTicket(task: any) {
+  const id = task?._id;
+  if (!id) return;
+
+  const updates: Record<string, any> = {};
+  if (task._start) updates["start-date"] = task._start;
+  if (task._end) updates["end-date"] = task._end;
+
+  if (Object.keys(updates).length > 0) {
+    const snapshots = performOptimisticUpdate({
+      queryClient,
+      sidePanelStore,
+      cardId: id,
+      updates: updates,
+      invalidateKeys: ["sheet-list", "table-cards-flat"],
+    });
+
+    moveCard.mutate(
+      { card_id: id, variables: updates },
+      { onError: () => rollbackOptimisticUpdate(queryClient, snapshots) },
+    );
+  }
 }
 
 const setStartDate = (row: any, e: any) => {

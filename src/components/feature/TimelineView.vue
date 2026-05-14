@@ -1,34 +1,43 @@
 <template>
   <div class="scrollbar-visible overflow-x-auto h-full mx-2">
-  <div class="schedule-container">
-    <div class="calendar-header bg-bg-card text-text-secondary lg:space-y-0 space-y-2 py-2">
-      <div class="nav-group bg-bg-body text-text-secondary rounded-md px-2 py-1">
-        <button class="nav-btn text-text-secondary" @click="goPrev">
-          <i class="fa-regular fa-chevron-left text-sm"></i>
-        </button>
-        <button class="nav-btn text-text-secondary" @click="goNext">
-          <i class="fa-regular fa-chevron-right text-sm"></i>
-        </button>
-        <button class="today-btn text-text-secondary border border-border" @click="goToday">Today</button>
-        <span class="date-label">{{ dateLabel }}</span>
-      </div>
-
-      <div class="tabs bg-bg-body rounded-md">
-        <button
-          v-for="v in views"
-          :key="v"
-          :class="['tab-btn', { active: currentView === v }]"
-          @click="changeView(v)"
+    <div class="schedule-container">
+      <div
+        class="calendar-header bg-bg-card text-text-secondary lg:space-y-0 space-y-2 py-2"
+      >
+        <div
+          class="nav-group bg-bg-body text-text-secondary rounded-md px-2 py-1"
         >
-          {{ v }}
-        </button>
+          <button class="nav-btn text-text-secondary" @click="goPrev">
+            <i class="fa-regular fa-chevron-left text-sm"></i>
+          </button>
+          <button class="nav-btn text-text-secondary" @click="goNext">
+            <i class="fa-regular fa-chevron-right text-sm"></i>
+          </button>
+          <button
+            class="today-btn text-text-secondary border border-border"
+            @click="goToday"
+          >
+            Today
+          </button>
+          <span class="date-label">{{ dateLabel }}</span>
+        </div>
+
+        <div class="tabs bg-bg-body rounded-md">
+          <button
+            v-for="v in views"
+            :key="v"
+            :class="['tab-btn', { active: currentView === v }]"
+            @click="changeView(v)"
+          >
+            {{ v }}
+          </button>
+        </div>
+      </div>
+
+      <div class="calendar-wrapper">
+        <div ref="calendarEl" class="calendar-host border border-border"></div>
       </div>
     </div>
-
-    <div class="calendar-wrapper">
-      <div ref="calendarEl" class="calendar-host border border-border"></div>
-    </div>
-  </div>
   </div>
 </template>
 <script setup lang="ts">
@@ -36,7 +45,14 @@
 import Calendar from "@toast-ui/calendar";
 // @ts-ignore
 import "@toast-ui/calendar/dist/toastui-calendar.css";
-import { ref, watch, onMounted, onBeforeUnmount, nextTick, computed } from "vue";
+import {
+  ref,
+  watch,
+  onMounted,
+  onBeforeUnmount,
+  nextTick,
+  computed,
+} from "vue";
 import { useTheme } from "../../composables/useTheme";
 
 interface RawCard {
@@ -56,7 +72,7 @@ const flattenedCards = computed(() => {
   if (!props.data || props.data.length === 0) return [];
 
   if ("cards" in props.data[0]) {
-    return (props.data as CardList[]).flatMap(list => list.cards || []);
+    return (props.data as CardList[]).flatMap((list) => list.cards || []);
   } else {
     return props.data as RawCard[];
   }
@@ -109,8 +125,7 @@ function buildEvents(cards: RawCard[]) {
       if (!start || isNaN(start.getTime())) return null;
 
       // ✅ End date fallback
-      let end =
-        parsePlainDate(card["end-date"]);
+      let end = parsePlainDate(card["end-date"]);
 
       if (!end || isNaN(end.getTime())) {
         end = new Date(start);
@@ -163,9 +178,18 @@ function updateDateLabel() {
       });
   }
 }
-function goToday() { calendar?.today(); updateDateLabel(); }
-function goPrev()  { calendar?.prev();  updateDateLabel(); }
-function goNext()  { calendar?.next();  updateDateLabel(); }
+function goToday() {
+  calendar?.today();
+  updateDateLabel();
+}
+function goPrev() {
+  calendar?.prev();
+  updateDateLabel();
+}
+function goNext() {
+  calendar?.next();
+  updateDateLabel();
+}
 
 function changeView(view: "month" | "week" | "day") {
   currentView.value = view;
@@ -175,14 +199,18 @@ function changeView(view: "month" | "week" | "day") {
 
 function loadEvents(data: RawCard[] | CardList[]) {
   console.log(data);
-  
+
   if (!calendar) return;
   calendar.clear();
 
   const events = buildEvents(flattenedCards.value);
   if (events.length) calendar.createEvents(events);
 }
-watch(() => props.data, () => loadEvents(flattenedCards.value), { deep: true });
+watch(
+  () => props.data,
+  () => loadEvents(flattenedCards.value),
+  { deep: true },
+);
 onMounted(async () => {
   await nextTick();
   if (!calendarEl.value) return;
@@ -216,7 +244,11 @@ onMounted(async () => {
   updateDateLabel();
 });
 
-watch(() => props.data, (val) => loadEvents(val ?? []), { deep: true });
+watch(
+  () => props.data,
+  (val) => loadEvents(val ?? []),
+  { deep: true },
+);
 
 onBeforeUnmount(() => {
   calendar?.destroy();
@@ -231,7 +263,7 @@ onBeforeUnmount(() => {
 
   display: flex;
   flex-direction: column;
-  height:  calc(100% - 10px) !important;
+  height: calc(100% - 10px) !important;
   transition: background 0.2s;
   min-width: 1000px;
 }
@@ -239,10 +271,13 @@ onBeforeUnmount(() => {
   display: flex;
   justify-content: space-between;
   flex-wrap: wrap;
-  align-items: center; 
+  align-items: center;
   transition: background 0.2s;
 }
-::v-deep .toastui-calendar-weekday-grid, ::v-deep .toastui-calendar-daygrid-cell, ::v-deep .toastui-calendar-panel-grid, ::v-deep .calendar-wrapper *{
+::v-deep .toastui-calendar-weekday-grid,
+::v-deep .toastui-calendar-daygrid-cell,
+::v-deep .toastui-calendar-panel-grid,
+::v-deep .calendar-wrapper * {
   border-color: var(--color-border) !important;
 }
 
@@ -264,7 +299,9 @@ onBeforeUnmount(() => {
   border-radius: 6px;
   transition: background 0.15s;
 }
-.nav-btn:hover { background: var(--cal-hover); }
+.nav-btn:hover {
+  background: var(--cal-hover);
+}
 
 .today-btn {
   padding: 5px 14px;
@@ -273,9 +310,14 @@ onBeforeUnmount(() => {
   border-radius: 6px;
   font-size: 13px;
   font-weight: 500;
-  transition: background 0.15s, border-color 0.2s, color 0.2s;
+  transition:
+    background 0.15s,
+    border-color 0.2s,
+    color 0.2s;
 }
-.today-btn:hover { background: var(--cal-hover); }
+.today-btn:hover {
+  background: var(--cal-hover);
+}
 
 .date-label {
   font-size: 14px;
@@ -300,9 +342,13 @@ onBeforeUnmount(() => {
   font-size: 13px;
   font-weight: 500;
   text-transform: capitalize;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
 }
-.tab-btn:hover:not(.active) { background: var(--cal-hover); }
+.tab-btn:hover:not(.active) {
+  background: var(--cal-hover);
+}
 .tab-btn.active {
   background: #9356c5;
   color: #ffffff;
@@ -321,22 +367,25 @@ onBeforeUnmount(() => {
   background: var(--cal-bg);
 }
 :deep(.toastui-calendar-grid-cell-date .toastui-calendar-weekday-grid-date) {
-    color: #7D68C8 !important;
+  color: #7d68c8 !important;
 }
-:deep(.toastui-calendar-template-monthDayName){
-  color: #7D68C8 !important;
+:deep(.toastui-calendar-template-monthDayName) {
+  color: #7d68c8 !important;
 }
-:deep(.toastui-calendar-day-name-container .toastui-calendar-day-name__date, .toastui-calendar-day-name__name){
-  color: #7D68C8 !important;
+:deep(
+  .toastui-calendar-day-name-container .toastui-calendar-day-name__date,
+  .toastui-calendar-day-name__name
+) {
+  color: #7d68c8 !important;
 }
-:deep(.toastui-calendar-day-name-container .toastui-calendar-day-name__name){
-  color: #7D68C8 !important;
+:deep(.toastui-calendar-day-name-container .toastui-calendar-day-name__name) {
+  color: #7d68c8 !important;
 }
-:deep(.toastui-calendar-panel-title){
-  color: #7D68C8 !important;
+:deep(.toastui-calendar-panel-title) {
+  color: #7d68c8 !important;
   font-weight: 600 !important;
 }
-:deep(.toastui-calendar-grid-cell-more-events){
+:deep(.toastui-calendar-grid-cell-more-events) {
   color: #6e3b96 !important;
 }
 :deep(.toastui-calendar-layout),
@@ -354,7 +403,10 @@ onBeforeUnmount(() => {
   background: var(--cal-bg) !important;
   color: var(--cal-text) !important;
   /* border-color: var(--cal-border) !important; */
-  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  transition:
+    background 0.2s,
+    color 0.2s,
+    border-color 0.2s;
 }
 
 :deep(.toastui-calendar-weekday-grid-line),
@@ -368,17 +420,25 @@ onBeforeUnmount(() => {
 :deep(.toastui-calendar-grid-cell-date) {
   color: var(--cal-text) !important;
 }
-:deep(.toastui-calendar-grid-cell-date .toastui-calendar-weekday-grid-date.toastui-calendar-weekday-grid-date-decorator){
+:deep(
+  .toastui-calendar-grid-cell-date
+    .toastui-calendar-weekday-grid-date.toastui-calendar-weekday-grid-date-decorator
+) {
   background-color: #9356c5 !important;
   color: white !important;
 }
-:deep(.toastui-calendar-template-allday){
+:deep(.toastui-calendar-template-allday) {
   color: white !important;
 }
-:deep(.toastui-calendar-template-monthGridHeaderExceed, .toastui-calendar-template-monthDayName){
+:deep(
+  .toastui-calendar-template-monthGridHeaderExceed,
+  .toastui-calendar-template-monthDayName
+) {
   color: #2b2c30 !important;
 }
-:deep(.toastui-calendar-weekday-grid-date .toastui-calendar-template-monthGridHeader){
+:deep(
+  .toastui-calendar-weekday-grid-date .toastui-calendar-template-monthGridHeader
+) {
   color: #2b2c30 !important;
 }
 </style>
