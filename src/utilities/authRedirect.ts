@@ -21,7 +21,7 @@ export function getMainDomainLoginUrl(redirectPath = '/dashboard'): string | nul
 
 export function redirectToLogin(
   router?: { replace: (to: any) => void },
-  redirectPath = '/dashboard'
+  redirectPath = '/'  // ← was '/dashboard', change default to '/'
 ): boolean {
   const url = getMainDomainLoginUrl(redirectPath)
   if (url) {
@@ -35,5 +35,6 @@ export function redirectToLogin(
 export function getPersonalDashboardUrl(): string {
   const primary = getPrimaryDomain()
   const protocol = window.location.protocol
-  return `${protocol}//${primary}/dashboard`
+  // ← tell the receiving page this is a personal mode switch
+  return `${protocol}//${primary}/dashboard?personal_mode=true`
 }

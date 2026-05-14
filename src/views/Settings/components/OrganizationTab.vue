@@ -97,7 +97,7 @@
     <!-- Has org — settings form -->
     <div v-else class="space-y-6">
       <!-- Organization Info Section -->
-      <section class="rounded-2xl border border-border/40 bg-bg-body/50 p-6">
+      <section class="rounded-2xl p-6">
         <div class="mb-6">
           <h3 class="text-lg font-bold text-text-primary flex items-center gap-2">
             <i class="fa-solid fa-building text-accent"></i>

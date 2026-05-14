@@ -71,7 +71,7 @@
             <p class="text-sm font-medium capitalize">{{ member.name }}</p>
             <p class="text-xs text-text-secondary">{{ member.email }}</p>
           </div>
-          <button @click="removeMember(role, idx)"
+          <button @click="removeMember(role, idx as number)"
             class="text-text-primary w-8 h-8 bg-bg-card rounded-md cursor-pointer">✕</button>
         </div>
 
@@ -176,13 +176,13 @@ function enforceCapacity(role: Role) {
 }
 
 function addMemberEmail(role: Role, email: string) {
-  if (role.people.some(p => p.email.toLowerCase() === email.toLowerCase())) return
+  if (role.people.some(p => p.email?.toLowerCase() === email?.toLowerCase())) return
   role.people.push({ name: email?.split('@')[0], email })
 }
 
 function removeMember(role: Role, index: number) {
   const [removed] = role.people.splice(index, 1)
-  const idx = role.emailList.findIndex(e => e.toLowerCase() === removed.email.toLowerCase())
+  const idx = role.emailList.findIndex(e => e?.toLowerCase() === removed.email?.toLowerCase())
   if (idx !== -1) role.emailList.splice(idx, 1)
   role.capacityWarning = role.people.length >= role.max_num_people
 
@@ -204,7 +204,7 @@ function onEmailsAdd(role: Role, added: string[]) {
 }
 
 function onEmailsRemove(role: Role, removedEmail: string) {
-  const idx = role.people.findIndex(p => p.email.toLowerCase() === removedEmail.toLowerCase())
+  const idx = role.people.findIndex(p => p.email?.toLowerCase() === removedEmail?.toLowerCase())
   if (idx !== -1) role.people.splice(idx, 1)
   role.capacityWarning = role.people.length >= role.max_num_people
 

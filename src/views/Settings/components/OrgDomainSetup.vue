@@ -1,8 +1,50 @@
 <template>
   <div class="w-full space-y-6 flex-1">
+<!-- ── Skeleton loader (replaces entire view while fetching) ──────────── -->
+    <template v-if="isLoading">
 
-    <!-- ── Header ──────────────────────────────────────────────────────────── -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <!-- Header skeleton -->
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 animate-pulse">
+        <div class="space-y-2">
+          <div class="h-5 w-40 bg-border/20 rounded-lg"></div>
+          <div class="h-3.5 w-64 bg-border/15 rounded-lg"></div>
+        </div>
+        <div class="h-9 w-32 bg-border/20 rounded-lg self-start sm:self-auto"></div>
+      </div>
+
+      <!-- Domain card skeletons -->
+      <div class="space-y-3">
+        <div
+          v-for="i in 2"
+          :key="i"
+          class="bg-bg-card border border-border/40 rounded-xl overflow-hidden animate-pulse"
+        >
+          <!-- Card header -->
+          <div class="flex items-center justify-between px-4 py-3.5">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-lg bg-border/20 shrink-0"></div>
+              <div class="space-y-1.5">
+                <div class="h-3.5 w-36 bg-border/20 rounded"></div>
+                <div class="h-2.5 w-24 bg-border/15 rounded"></div>
+              </div>
+            </div>
+            <div class="h-5 w-16 bg-border/20 rounded-full"></div>
+          </div>
+          <!-- Card footer strip -->
+          <div class="border-t border-border/20 px-4 py-3 flex gap-5">
+            <div class="h-3 w-20 bg-border/15 rounded"></div>
+            <div class="h-3 w-20 bg-border/15 rounded"></div>
+            <div class="h-3 w-24 bg-border/15 rounded"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Info banner skeleton -->
+      <div class="h-12 bg-border/10 border border-border/20 rounded-xl animate-pulse"></div>
+
+    </template>
+    <template v-else>
+       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
         <h3 class="text-lg font-bold text-text-primary flex items-center gap-2">
           <span class="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-accent/10 text-accent border border-accent/20">
@@ -19,8 +61,9 @@
 
       <button
         v-if="canAddDomain"
+        :disabled="hasDomain"
         @click="openAddModal"
-        class="inline-flex items-center gap-2 px-4 py-2.5 bg-accent text-white text-sm font-semibold rounded-lg hover:bg-accent/90 active:scale-95 transition-all shadow-lg shadow-accent/20 self-start sm:self-auto whitespace-nowrap"
+        class="inline-flex items-center disabled:opacity-40 disabled:cursor-not-allowed gap-2 px-4 py-2.5 bg-accent text-white text-sm font-semibold rounded-lg hover:bg-accent/90 active:scale-95 transition-all shadow-lg shadow-accent/20 self-start sm:self-auto whitespace-nowrap"
       >
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
@@ -28,6 +71,9 @@
         Add domain
       </button>
     </div>
+    </template>
+    <!-- ── Header ──────────────────────────────────────────────────────────── -->
+   
 
     <!-- ── Add domain modal ─────────────────────────────────────────────────── -->
     <Transition
@@ -141,8 +187,10 @@
           Connect a custom domain to give your workspace a professional, branded URL.
         </p>
         <button
+        v-if="canAddDomain"
+        :disabled="hasDomain"
           @click="openAddModal"
-          class="inline-flex items-center gap-2 px-4 py-2 bg-accent text-white text-sm font-semibold rounded-lg hover:bg-accent/90 transition-all"
+          class="inline-flex items-center disabled:opacity-40 disabled:cursor-not-allowed gap-2 px-4 py-2 bg-accent text-white text-sm font-semibold rounded-lg hover:bg-accent/90 transition-all"
         >
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
@@ -702,6 +750,7 @@ const { mutateAsync: setPrimaryMutation, isPending: isSettingPrimary } = useSetP
 const domains = computed(() => {
   return domainsData.value?.domains ?? []
 })
+const hasDomain = computed(() => domains.value.length > 0)
 // ── Add domain modal ──────────────────────────────────────────────────────────
 const showAddModal = ref(false)
 const newDomain    = ref('')

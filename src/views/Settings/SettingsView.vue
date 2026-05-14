@@ -38,16 +38,6 @@
       <div class="py-6 px-4 sm:px-6 sm:p-10 overflow-y-auto h-full flex flex-col">
         <div class="mx-auto w-full flex-1 flex flex-col">
 
-          <!-- Title & Description -->
-          <header class="mb-4 md:mb-8 text-center md:text-left">
-            <h1 class="text-xl lg:text-xl font-bold font-manrope mb-2 sm:mb-3 tracking-tight text-text-primary">
-              {{ pageTitle }}
-            </h1>
-            <p class="text-text-secondary mt-1">
-              {{ tabDescription }}
-            </p>
-          </header>
-
           <!-- Dynamic Content -->
           <ProfileTab v-if="currentTab === 'profile'" />
           <BillingTab v-else-if="currentTab === 'billing'" />
@@ -109,52 +99,6 @@ async function onSwitchCompany(company: any) {
   localStorage.setItem('company_name', company.title)
 }
 
-// ─── Page meta ────────────────────────────────────────────────────────────────
-const pageTitle = computed(() => {
-  const titles: Record<string, string> = {
-    profile: 'Your profile',
-    billing: 'Billing & subscription',
-    'token-utilization': 'AI tokens utilization',
-    'org-setup': 'Organization settings',
-    'org-domain': 'Domain setup',
-    'org-users': 'Team members',
-    'org-roles': 'Role management',
-    'ownership-transfer': 'Transfer ownership',
-    'org-packages': 'Organization billing',
-    'token-allocation': 'Tokens allocation',
-    'org-create': 'Create organization',
-  }
-  return titles[currentTab.value] || 'Account'
-})
-
-const tabDescription = computed(() => {
-  switch (currentTab.value) {
-    case 'profile':
-      return 'Manage your public profile and personal information.'
-    case 'billing':
-      return 'Manage your subscription, billing details, and usage limits.'
-    case 'token-utilization':
-      return 'View your personal AI token usage and limits.'
-    case 'org-setup':
-      return "Configure your organization's basic information, branding, and settings."
-    case 'org-domain':
-      return "Set up and manage your organization's custom domain."
-    case 'org-users':
-      return 'Invite team members, manage their roles, and control access.'
-    case 'org-roles':
-      return 'Create custom roles and manage permissions for your team.'
-    case 'org-packages':
-      return 'Manage billing and subscription plans for your organization.'
-    case 'token-allocation':
-      return 'Distribute AI token budgets across your team members.'
-    case 'ownership-transfer':
-      return 'Transfer ownership of your organization to another member.'
-    case 'org-create':
-      return 'Create a new organization and invite your team to collaborate.'
-    default:
-      return ''
-  }
-})
 
 // ─── Mobile sidebar ───────────────────────────────────────────────────────────
 function toggleMobileSidebar() {
