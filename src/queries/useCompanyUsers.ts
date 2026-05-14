@@ -36,6 +36,7 @@ export interface CreateCompanyUserPayload {
   u_email: string
   u_password: string
   company_role_id?: string
+  role?:string
 }
 
 export interface UpdateCompanyUserPayload {
