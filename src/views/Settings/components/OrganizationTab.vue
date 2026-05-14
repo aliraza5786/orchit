@@ -590,33 +590,40 @@ const isFormValid = computed(() =>
   hasChanges.value
 )
 
-// ─── Watchers: populate form from server ──────────────────────────────────────
 watch(currentCompany, (company) => {
   if (!company) return
-  orgName.value        = company.title        ?? ''
-  orgSlug.value        = company.custom_domain         ?? ''
+
+  orgName.value        = company.title ?? ''
+  orgSlug.value        = company.custom_domain ?? company.slug ?? ''
   orgSize.value        = company.company_size ?? '1–10'
-  orgData.value.logo   = company.logo         ?? ''
-  industry.value       = company.work_to_do   ?? ''
-  orgDescription.value = company.description  ?? ''
+  orgData.value.logo   = company.logo ?? ''
+  industry.value       = company.work_to_do ?? ''
+  orgDescription.value = company.description ?? ''
+
   originalValues.value = {
-    title: company.title ?? '', slug: company.slug ?? '',
+    title: company.title ?? '',
+    slug: company.slug ?? '',
     company_size: company.company_size ?? '1–10',
-    work_to_do: company.work_to_do ?? '', logo: company.logo ?? '',
+    work_to_do: company.work_to_do ?? '',
+    logo: company.logo ?? '',
     description: company.description ?? '',
   }
+
+  hasChanges.value = false
 }, { immediate: true })
 
-watch([orgName, orgSlug, orgSize, industry, orgLogoPreview, orgDescription], () => {
-  hasChanges.value =
-    orgName.value        !== originalValues.value.title ||
-    orgSlug.value        !== originalValues.value.slug ||
-    orgSize.value        !== originalValues.value.company_size ||
-    industry.value       !== originalValues.value.work_to_do ||
-    orgDescription.value !== originalValues.value.description ||
-    (orgLogoPreview.value !== null && orgLogoPreview.value !== originalValues.value.logo)
-})
-
+watch(
+  [orgName, orgSlug, orgSize, industry, orgLogoPreview, orgDescription],
+  () => {
+    hasChanges.value =
+      orgName.value.trim() !== originalValues.value.title ||
+      orgSlug.value.trim() !== originalValues.value.slug ||
+      orgSize.value !== originalValues.value.company_size ||
+      industry.value !== originalValues.value.work_to_do ||
+      orgDescription.value !== originalValues.value.description ||
+      (orgLogoPreview.value ?? originalValues.value.logo) !== originalValues.value.logo
+  }
+)
 // ─── Slug availability ────────────────────────────────────────────────────────
 const checkSlugAvailability = useDebounceFn(async (slug: string) => {
   if (!slug || slug === currentCompany.value?.slug) {
@@ -696,7 +703,10 @@ async function saveOrg() {
   validateOrgName()
   validateOrgSlug()
   if (!isFormValid.value) return
-  if (orgSlug.value !== currentCompany.value?.slug && isSlugAvailable.value === false) {
+  if (
+  orgSlug.value !== originalValues.value.slug &&
+  isSlugAvailable.value === false
+) {
     toast.error('This domain is already taken. Please choose another.')
     return
   }
