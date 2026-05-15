@@ -95,7 +95,7 @@
               v-if="item?.type === 'Select' && item.slug == 'card-type'"
               class="space-y-1.5 sm:col-span-1"
             >
-              <div class="text-xs uppercase tracking-wider text-text-secondary ">
+              <div class="text-xs uppercase tracking-wider text-text-secondary">
                 {{ item.title }}
               </div>
               <BaseSelectField
@@ -153,7 +153,9 @@
 
           <!-- Description -->
           <div class="desc-section">
-            <h3 class="mb-1 text-[11px] font-semibold uppercase tracking-widest text-text-secondary px-1">
+            <h3
+              class="mb-1 text-[11px] font-semibold uppercase tracking-widest text-text-secondary px-1"
+            >
               Description
             </h3>
 
@@ -166,7 +168,7 @@
                 :class="[
                   canEditCard
                     ? 'cursor-text hover:bg-bg-body hover:ring-1 hover:ring-bg-body/50'
-                    : 'cursor-not-allowed opacity-60'
+                    : 'cursor-not-allowed opacity-60',
                 ]"
                 @click="startEditDesc"
               >
@@ -176,14 +178,19 @@
                   class="word-break desc-rendered text-[14px] leading-6 text-text-primary"
                 ></div>
                 <div v-else class="flex items-center gap-2 text-text-secondary">
-                  <i class="fa-regular fa-pen-to-square text-[13px] opacity-50"></i>
-                  <span class="text-[14px] italic opacity-60">Add a description…</span>
+                  <i
+                    class="fa-regular fa-pen-to-square text-[13px] opacity-50"
+                  ></i>
+                  <span class="text-[14px] italic opacity-60"
+                    >Add a description…</span
+                  >
                 </div>
                 <!-- Jira-style edit hint badge -->
                 <span
                   v-if="canEditCard && !description"
                   class="absolute bottom-2 right-2 text-[10px] text-text-secondary opacity-0 group-hover:opacity-60 transition-opacity"
-                >Click to edit</span>
+                  >Click to edit</span
+                >
               </div>
 
               <!-- ── EDIT MODE ── -->
@@ -196,7 +203,9 @@
                 <BaseRichTextEditor v-model="description" />
 
                 <!-- Save / Cancel — Jira style -->
-                <div class="flex items-center gap-2 px-3 py-2 border-t border-border bg-orchit-white/3">
+                <div
+                  class="flex items-center gap-2 px-3 py-2 border-t border-border bg-orchit-white/3"
+                >
                   <button
                     type="button"
                     class="px-3 py-1.5 rounded-md text-[13px] font-medium text-text-secondary bg-orchit-white/5 hover:bg-orchit-white/10 border border-border transition-all active:scale-95"
@@ -206,7 +215,7 @@
                   </button>
                   <button
                     type="button"
-                    class="px-4 py-1.5 rounded-md bg-primary-color text-[13px] font-semibold text-white transition-all active:scale-95 hover:opacity-90"            
+                    class="px-4 py-1.5 rounded-md bg-primary-color text-[13px] font-semibold text-white transition-all active:scale-95 hover:opacity-90"
                     @click="finishDescEdit"
                   >
                     Save
@@ -215,7 +224,6 @@
               </div>
             </Transition>
           </div>
-
 
           <!-- Tabs (segmented) -->
           <SwitchTab
@@ -323,11 +331,7 @@
                     </div>
                     <div
                       class="h-10 px-3 flex items-center gap-2 rounded-lg bg-bg-input border transition-colors"
-                      :class="
-                        endDateError
-                          ? 'border-red-500'
-                          : 'border-border'
-                      "
+                      :class="endDateError ? 'border-red-500' : 'border-border'"
                     >
                       <i class="fa-regular fa-calendar"></i>
                       <DatePicker
@@ -419,7 +423,10 @@
 
                     <!-- Selection Types -->
                     <BaseSelectField
-                      v-if="item.type === 'Select' || !item?.type && item?.data?.length"
+                      v-if="
+                        item.type === 'Select' ||
+                        (!item?.type && item?.data?.length)
+                      "
                       :disabled="!canEditCard"
                       size="md"
                       :options="
@@ -653,9 +660,7 @@
                 <h3 class="text-sm font-semibold tracking-wide mb-3">
                   History
                 </h3>
-                <ol
-                  class="relative border-l border-border pl-5 space-y-4 ml-1"
-                >
+                <ol class="relative border-l border-border pl-5 space-y-4 ml-1">
                   <li
                     v-for="(h, i) in cardDetails?.history"
                     :key="i"
@@ -762,32 +767,32 @@
                         "
                         v-html="formatOverlay(editText)"
                       ></div>
-                        <textarea
-                          :ref="
-                            (el) => {
-                              if (el) editCommentTextareas[c._id] = el;
-                            }
-                          "
-                          v-model="editText"
-                          rows="3"
-                          spellcheck="false"
-                          @scroll="(e) => syncScroll(e, c._id)"
-                          @input="(e) => handleCommentInput(e, c._id)"
-                          @keydown="(e) => handleCommentKeydown(e, c._id)"
-                          @blur="handleCommentBlur"
-                          class="relative z-0 w-full p-3 rounded-lg bg-bg-input/80 border border-border focus:ring-2 focus:ring-primary-color/40 outline-none text-sm leading-normal resize-none text-transparent caret-text-primary font-sans"
-                          style="
-                            font-family:
-                              Inter,
-                              system-ui,
-                              -apple-system,
-                              sans-serif;
-                            line-height: 1.5;
-                            letter-spacing: normal;
-                            font-weight: 400;
-                            -webkit-font-smoothing: antialiased;
-                          "
-                        />
+                      <textarea
+                        :ref="
+                          (el) => {
+                            if (el) editCommentTextareas[c._id] = el;
+                          }
+                        "
+                        v-model="editText"
+                        rows="3"
+                        spellcheck="false"
+                        @scroll="(e) => syncScroll(e, c._id)"
+                        @input="(e) => handleCommentInput(e, c._id)"
+                        @keydown="(e) => handleCommentKeydown(e, c._id)"
+                        @blur="handleCommentBlur"
+                        class="relative z-0 w-full p-3 rounded-lg bg-bg-input/80 border border-border focus:ring-2 focus:ring-primary-color/40 outline-none text-sm leading-normal resize-none text-transparent caret-text-primary font-sans"
+                        style="
+                          font-family:
+                            Inter,
+                            system-ui,
+                            -apple-system,
+                            sans-serif;
+                          line-height: 1.5;
+                          letter-spacing: normal;
+                          font-weight: 400;
+                          -webkit-font-smoothing: antialiased;
+                        "
+                      />
                     </div>
                     <div class="flex items-center gap-2 justify-end">
                       <Button variant="secondary" size="sm" @click="cancelEdit"
@@ -828,11 +833,25 @@
                       target="_blank"
                       class="flex items-center gap-2 flex-1 min-w-0"
                     >
-                      <div v-if="file.name.match(/\.(jpg|jpeg|png|gif|webp|avif)$/i)" class="w-6 h-6 rounded overflow-hidden flex-shrink-0 border border-border">
-                        <img :src="file.url" class="w-full h-full object-cover" />
+                      <div
+                        v-if="
+                          file.name.match(/\.(jpg|jpeg|png|gif|webp|avif)$/i)
+                        "
+                        class="w-6 h-6 rounded overflow-hidden flex-shrink-0 border border-border"
+                      >
+                        <img
+                          :src="file.url"
+                          class="w-full h-full object-cover"
+                        />
                       </div>
-                      <i v-else-if="file.name.match(/\.pdf$/i)" class="fa-regular fa-file-pdf text-[11px] text-red-400"></i>
-                      <i v-else-if="file.name.match(/\.(doc|docx)$/i)" class="fa-regular fa-file-word text-[11px] text-blue-400"></i>
+                      <i
+                        v-else-if="file.name.match(/\.pdf$/i)"
+                        class="fa-regular fa-file-pdf text-[11px] text-red-400"
+                      ></i>
+                      <i
+                        v-else-if="file.name.match(/\.(doc|docx)$/i)"
+                        class="fa-regular fa-file-word text-[11px] text-blue-400"
+                      ></i>
                       <i
                         v-else
                         class="fa-regular fa-file text-text-secondary group-hover:text-text-primary transition"
@@ -915,15 +934,27 @@
                     :key="file.id"
                     class="group flex items-center gap-2 px-2 py-1 rounded-lg bg-orchit-white/5 border border-border text-[11px] text-text-secondary transition-all hover:border-orchit-white/20"
                   >
-                    <div v-if="(file.previewUrl || file.data?.url) && file.name.match(/\.(jpg|jpeg|png|gif|webp|avif)$/i)" class="w-6 h-6 rounded overflow-hidden flex-shrink-0 border border-border">
-                      <img :src="file.previewUrl || file.data?.url" class="w-full h-full object-cover" />
+                    <div
+                      v-if="
+                        (file.previewUrl || file.data?.url) &&
+                        file.name.match(/\.(jpg|jpeg|png|gif|webp|avif)$/i)
+                      "
+                      class="w-6 h-6 rounded overflow-hidden flex-shrink-0 border border-border"
+                    >
+                      <img
+                        :src="file.previewUrl || file.data?.url"
+                        class="w-full h-full object-cover"
+                      />
                     </div>
-                    <i v-else-if="file.name.match(/\.pdf$/i)" class="fa-regular fa-file-pdf text-[10px] text-red-400"></i>
-                    <i v-else-if="file.name.match(/\.(doc|docx)$/i)" class="fa-regular fa-file-word text-[10px] text-blue-400"></i>
                     <i
-                      v-else
-                      class="fa-regular fa-file text-[10px]"
+                      v-else-if="file.name.match(/\.pdf$/i)"
+                      class="fa-regular fa-file-pdf text-[10px] text-red-400"
                     ></i>
+                    <i
+                      v-else-if="file.name.match(/\.(doc|docx)$/i)"
+                      class="fa-regular fa-file-word text-[10px] text-blue-400"
+                    ></i>
+                    <i v-else class="fa-regular fa-file text-[10px]"></i>
                     <span class="truncate max-w-[120px]">{{ file.name }}</span>
                     <i
                       v-if="file.loading"
@@ -969,22 +1000,31 @@
             <!-- TAB: Attachment -->
             <section v-else key="tab-attachments" class="space-y-6">
               <div class="flex items-center justify-between">
-                <div class="text-xs font-semibold text-text-secondary uppercase tracking-wider">
+                <div
+                  class="text-xs font-semibold text-text-secondary uppercase tracking-wider"
+                >
                   Files attached to this {{ details?.type ?? "item" }}
                 </div>
-                <div class="text-[11px] text-text-secondary bg-orchit-white/5 px-2 py-0.5 rounded-full border border-border">
+                <div
+                  class="text-[11px] text-text-secondary bg-orchit-white/5 px-2 py-0.5 rounded-full border border-border"
+                >
                   {{ attachments.length }} files
                 </div>
               </div>
 
-              <div v-if="attachments.length > 0" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div
+                v-if="attachments.length > 0"
+                class="grid grid-cols-1 sm:grid-cols-2 gap-4"
+              >
                 <div
                   v-for="file in attachments"
                   :key="file._id"
                   class="group relative flex flex-col flex-wrap rounded-xl border border-border bg-orchit-white/5 hover:bg-orchit-white/8 transition-all duration-300 hover:shadow-lg hover:shadow-black/20 hover:-translate-y-0.5"
                 >
                   <!-- Preview Area -->
-                  <div class="aspect-[16/10] w-full relative rounded-t-xl overflow-hidden bg-bg-surface">
+                  <div
+                    class="aspect-[16/10] w-full relative rounded-t-xl overflow-hidden bg-bg-surface"
+                  >
                     <img
                       v-if="file.kind === 'image'"
                       :src="file.url"
@@ -1000,30 +1040,53 @@
                       class="w-full h-full flex items-center justify-center bg-bg-surface"
                     >
                       <div class="relative">
-                        <i v-if="file.name.match(/\.pdf$/i)" class="fa-regular fa-file-pdf text-4xl text-red-400 opacity-80"></i>
-                        <i v-else-if="file.name.match(/\.(doc|docx)$/i)" class="fa-regular fa-file-word text-4xl text-blue-400 opacity-80"></i>
-                        <i v-else-if="file.name.match(/\.(xls|xlsx)$/i)" class="fa-regular fa-file-excel text-4xl text-green-400 opacity-80"></i>
-                        <i v-else class="fa-regular fa-file-lines text-4xl text-text-secondary opacity-60"></i>
+                        <i
+                          v-if="file.name.match(/\.pdf$/i)"
+                          class="fa-regular fa-file-pdf text-4xl text-red-400 opacity-80"
+                        ></i>
+                        <i
+                          v-else-if="file.name.match(/\.(doc|docx)$/i)"
+                          class="fa-regular fa-file-word text-4xl text-blue-400 opacity-80"
+                        ></i>
+                        <i
+                          v-else-if="file.name.match(/\.(xls|xlsx)$/i)"
+                          class="fa-regular fa-file-excel text-4xl text-green-400 opacity-80"
+                        ></i>
+                        <i
+                          v-else
+                          class="fa-regular fa-file-lines text-4xl text-text-secondary opacity-60"
+                        ></i>
                       </div>
                     </div>
 
                     <!-- Type Badge -->
-                    <div class="absolute top-3 left-3 px-2 py-1 bg-bg-body backdrop-blur-md rounded-lg text-[9px] font-bold text-text-primary uppercase tracking-tighter border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div
+                      class="absolute top-3 left-3 px-2 py-1 bg-bg-body backdrop-blur-md rounded-lg text-[9px] font-bold text-text-primary uppercase tracking-tighter border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
                       {{ file.kind }}
                     </div>
                   </div>
 
                   <!-- Info Area -->
                   <div class="p-3.5 flex flex-col flex-1">
-                    <div class="font-medium text-sm text-text-primary truncate mb-1" :title="file.name">
+                    <div
+                      class="font-medium text-sm text-text-primary truncate mb-1"
+                      :title="file.name"
+                    >
                       {{ file.name }}
                     </div>
                     <div class="flex items-center justify-between mt-auto pt-2">
                       <div class="flex flex-col gap-0.5 min-w-0">
-                        <span v-if="file.author" class="text-[10px] text-text-secondary truncate opacity-80">
+                        <span
+                          v-if="file.author"
+                          class="text-[10px] text-text-secondary truncate opacity-80"
+                        >
                           By {{ file.author }}
                         </span>
-                        <span v-if="file.date" class="text-[9px] text-text-secondary opacity-60">
+                        <span
+                          v-if="file.date"
+                          class="text-[9px] text-text-secondary opacity-60"
+                        >
                           {{ new Date(file.date).toLocaleDateString() }}
                         </span>
                       </div>
@@ -1042,12 +1105,23 @@
               </div>
 
               <!-- Empty State -->
-              <div v-else class="py-12 flex flex-col items-center justify-center border border-dashed border-border rounded-3xl bg-orchit-white/2">
-                <div class="w-16 h-16 rounded-2xl bg-orchit-white/5 flex items-center justify-center mb-4">
-                  <i class="fa-regular fa-folder-open text-2xl text-text-secondary opacity-40"></i>
+              <div
+                v-else
+                class="py-12 flex flex-col items-center justify-center border border-dashed border-border rounded-3xl bg-orchit-white/2"
+              >
+                <div
+                  class="w-16 h-16 rounded-2xl bg-orchit-white/5 flex items-center justify-center mb-4"
+                >
+                  <i
+                    class="fa-regular fa-folder-open text-2xl text-text-secondary opacity-40"
+                  ></i>
                 </div>
-                <div class="text-sm font-medium text-text-primary">No attachments found</div>
-                <div class="text-xs text-text-secondary mt-1">Files from comments will appear here</div>
+                <div class="text-sm font-medium text-text-primary">
+                  No attachments found
+                </div>
+                <div class="text-xs text-text-secondary mt-1">
+                  Files from comments will appear here
+                </div>
               </div>
             </section>
           </Transition>
@@ -1460,7 +1534,7 @@ const local = reactive({
     props.details?.created_at ??
     props.details?.createdAt ??
     "",
-}); 
+});
 
 const dateISO = computed({
   get: () =>
@@ -1649,7 +1723,9 @@ const { mutate: createComment, isPending: isPostingComment } = useCreateComment(
       });
       queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
       queryClient.invalidateQueries({ queryKey: ["product-card"] });
-      queryClient.invalidateQueries({ queryKey: ["cardDetail", propsID.value] });
+      queryClient.invalidateQueries({
+        queryKey: ["cardDetail", propsID.value],
+      });
     },
     onSuccess: () => {
       toast.success("Comment posted successfully");
@@ -2052,7 +2128,9 @@ const { mutate: updateComment, isPending: isUpdatingComment } =
       editingId.value = null;
       editText.value = "";
       queryClient.invalidateQueries({ queryKey: ["product-card"] });
-      queryClient.invalidateQueries({ queryKey: ["cardDetail", propsID.value] });
+      queryClient.invalidateQueries({
+        queryKey: ["cardDetail", propsID.value],
+      });
       queryClient.invalidateQueries({
         queryKey: ["comments", props.details._id],
       });
@@ -2136,7 +2214,9 @@ const { mutate: deleteComment, isPending: isDeletingComment } =
       });
       queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
       queryClient.invalidateQueries({ queryKey: ["product-card"] });
-      queryClient.invalidateQueries({ queryKey: ["cardDetail", propsID.value] });
+      queryClient.invalidateQueries({
+        queryKey: ["cardDetail", propsID.value],
+      });
     },
   });
 
@@ -2208,7 +2288,9 @@ function saveEdit(c: any) {
         cancelEdit();
         currentMentions.value = [];
         queryClient.invalidateQueries({ queryKey: ["product-card"] });
-        queryClient.invalidateQueries({ queryKey: ["cardDetail", propsID.value] });
+        queryClient.invalidateQueries({
+          queryKey: ["cardDetail", propsID.value],
+        });
       },
     },
   );
@@ -2240,12 +2322,14 @@ const attachments = computed(() => {
       ...a,
       author: c.commented_by?.u_full_name,
       date: c.created_at,
-    }))
+    })),
   );
 
   const all = [...cardFiles, ...commentFiles];
   // Deduplicate by URL
-  const unique = Array.from(new Map(all.map((item: any) => [item.url, item])).values());
+  const unique = Array.from(
+    new Map(all.map((item: any) => [item.url, item])).values(),
+  );
 
   return unique.map((f: any) => ({
     _id: f._id ?? f.id ?? Math.random().toString(36).substr(2, 9),
@@ -2253,8 +2337,11 @@ const attachments = computed(() => {
     url: f.url,
     author: f.author,
     date: f.date,
-    kind: f.url.match(/\.(jpg|jpeg|png|gif|webp|avif)$/i) ? "image" :
-          f.url.match(/\.(mp4|webm|ogg)$/i) ? "video" : "file"
+    kind: f.url.match(/\.(jpg|jpeg|png|gif|webp|avif)$/i)
+      ? "image"
+      : f.url.match(/\.(mp4|webm|ogg)$/i)
+        ? "video"
+        : "file",
   }));
 });
 const moveCard = useMoveCard({
@@ -2383,7 +2470,9 @@ function uploadSingleFile(file: File) {
         item.loading = false;
         item.data = res.data;
       }
-      queryClient.invalidateQueries({ queryKey: ["cardDetail", propsID.value] });
+      queryClient.invalidateQueries({
+        queryKey: ["cardDetail", propsID.value],
+      });
     },
     onError: () => {
       removeAttachment(tempId);
@@ -2525,8 +2614,7 @@ const { mutate: updateVariable } = useUpdateVar();
  * This avoids repeating the same filtering/mapping logic.
  */
 function broadUpdateVariables(transformer: (vars: any[]) => any[]) {
-  const queryKeys = [["cardDetail"], ["product-card"]]; 
-
+  const queryKeys = [["cardDetail"], ["product-card"]];
 
   // 1. Update card specific caches
   queryKeys.forEach((key) => {
@@ -2749,7 +2837,10 @@ function handleEditVar(item: any) {
   border: 1px solid rgba(124, 58, 237, 0.25);
   background: rgba(124, 58, 237, 0.07);
   color: #a78bfa;
-  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
   cursor: pointer;
   max-width: 280px;
   white-space: nowrap;
@@ -2774,5 +2865,4 @@ function handleEditVar(item: any) {
   display: block;
   max-width: 100%;
 }
-
 </style>

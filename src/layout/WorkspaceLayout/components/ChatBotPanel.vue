@@ -2,23 +2,18 @@
   <div
     v-if="workspaceStore.showChatBotPanel"
     :class="[
-      'flex h-full overflow-y-auto rounded-md border border-border overflow-x-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] shadow-xl',
+      'flex h-full bg-bg-surface overflow-y-auto rounded-[6px] border border-border overflow-x-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] shadow-xl',
       isExpanded
         ? 'min-w-full max-w-full'
         : 'min-w-full max-w-[23%] sm:min-w-[400px]',
     ]"
-    :style="{
-      background:
-        'linear-gradient(180deg, var(--bg-card, #fff) 0%, color-mix(in srgb, var(--bg-card, #fff) 96%, var(--accent, #7c3aed)) 100%)',
-      backdropFilter: 'blur(20px)',
-    }"
     role="complementary"
     aria-label="Details panel"
   >
     <!-- ==================== LEFT: PREVIEW MODAL ==================== -->
     <div
       v-if="isExpanded && !showConfigPanel && hasPreviewData"
-      class="xl:w-[80%] lg:w-[76%] md:w-[60%] border-r border-border/40 bg-bg-card h-full min-h-0 flex flex-col overflow-y-hidden pb-4 pt-2"
+      class="xl:w-[80%] lg:w-[76%] md:w-[60%] border-r border-border bg-bg-surface h-full min-h-0 flex flex-col overflow-y-hidden pb-4 pt-2"
     >
       <ChatBotPreviewModal
         @accept="acceptChanges"
@@ -30,18 +25,18 @@
 
     <!-- ==================== LEFT: CONFIG PANEL ==================== -->
     <div
-      v-if="isExpanded && showConfigPanel && (!hasPreviewData)"
-      class="md:w-[65%] lg:w-[76%] border-r border-border/40 bg-bg-card h-full min-h-0 flex flex-col overflow-y-hidden"
+      v-if="isExpanded && showConfigPanel && !hasPreviewData"
+      class="md:w-[65%] lg:w-[76%] border-r border-border bg-bg-card h-full min-h-0 flex flex-col overflow-y-hidden"
     >
       <!-- HEADER -->
       <div
-        class="px-6 py-4 bg-gradient-to-b from-bg-card to-bg-card/80 border-b border-border/40"
+        class="px-6 py-4 bg-gradient-to-b from-bg-card to-bg-card/80 border-b border-border"
       >
         <div class="flex items-center gap-2.5 mb-1">
           <div
-            class="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center"
+            class="w-8 h-8 rounded-lg bg-primary-color/10 flex items-center justify-center"
           >
-            <i class="fa-solid fa-sliders text-accent text-sm"></i>
+            <i class="fa-solid fa-sliders text-primary-color text-sm"></i>
           </div>
           <div>
             <h3
@@ -57,7 +52,7 @@
 
         <!-- TABS — pill style -->
         <div
-          class="mt-4 flex gap-1 bg-bg-body/60 rounded-lg p-1 overflow-x-auto"
+          class="mt-4 flex gap-1 border-b border-border pb-2 overflow-x-auto"
         >
           <button
             v-for="tab in configTabs"
@@ -66,7 +61,7 @@
             :class="[
               'flex-1 min-w-0 px-3 py-1.5 rounded-md text-[12px] font-medium transition-all duration-200 whitespace-nowrap',
               activeTab === tab.key
-                ? 'bg-accent text-white shadow-sm shadow-accent/25'
+                ? 'bg-primary-color text-white shadow-sm shadow-primary-color/25'
                 : 'text-text-secondary hover:text-text-primary hover:bg-bg-body',
             ]"
           >
@@ -113,7 +108,7 @@
                 >
                 <input
                   v-model="agentConfig.name"
-                  class="w-full border border-border/60 bg-bg-body/80 rounded-lg px-4 py-2.5 text-sm focus:border-accent/50 focus:ring-2 focus:ring-accent/10 outline-none transition-all placeholder:text-text-tertiary"
+                  class="w-full border border-border bg-bg-body/80 rounded-lg px-4 py-2.5 text-sm focus:border-primary-color/50 focus:ring-2 focus:ring-primary-color/10 outline-none transition-all placeholder:text-text-tertiary"
                   placeholder="Enter agent name..."
                 />
               </div>
@@ -127,7 +122,7 @@
                 <textarea
                   v-model="agentConfig.description"
                   rows="3"
-                  class="w-full border border-border/60 bg-bg-body/80 rounded-lg px-4 py-2.5 text-sm focus:border-accent/50 focus:ring-2 focus:ring-accent/10 outline-none transition-all resize-none placeholder:text-text-tertiary"
+                  class="w-full border border-border bg-bg-body/80 rounded-lg px-4 py-2.5 text-sm focus:border-primary-color/50 focus:ring-2 focus:ring-primary-color/10 outline-none transition-all resize-none placeholder:text-text-tertiary"
                   placeholder="Describe what this agent does..."
                 />
               </div>
@@ -169,7 +164,7 @@
                 <button
                   type="button"
                   @click="openLevel = !openLevel"
-                  class="w-full flex justify-between items-center border border-border/60 bg-bg-body/80 rounded-lg px-4 py-2.5 text-sm hover:border-accent/40 transition-colors"
+                  class="w-full flex justify-between items-center border border-border bg-bg-body/80 rounded-lg px-4 py-2.5 text-sm hover:border-primary-color/40 transition-colors"
                 >
                   <span>{{ selectedLevelLabel }}</span>
                   <i
@@ -180,14 +175,14 @@
                 <transition name="dropdown">
                   <div
                     v-if="openLevel"
-                    class="absolute z-50 mt-1 w-full rounded-xl border border-border/60 bg-bg-dropdown shadow-lg shadow-black/8 overflow-hidden"
+                    class="absolute z-50 mt-1 w-full rounded-xl border border-border bg-bg-dropdown shadow-lg shadow-black/8 overflow-hidden"
                   >
                     <ul class="py-1 text-sm">
                       <li
                         v-for="level in availableAgentsLevels"
                         :key="level.value"
                         @click="selectLevel(level.value)"
-                        class="px-4 py-2.5 cursor-pointer hover:bg-accent/8 transition-colors text-text-primary"
+                        class="px-4 py-2.5 cursor-pointer hover:bg-primary-color/8 transition-colors text-text-primary"
                       >
                         {{ level.title }}
                       </li>
@@ -218,7 +213,7 @@
               >
                 <input
                   type="checkbox"
-                  class="h-4 w-4 rounded border-border accent-accent mt-0.5"
+                  class="h-4 w-4 rounded border-border accent-primary-color mt-0.5"
                   v-model="isSheet"
                 />
                 <span class="text-sm text-text-primary leading-snug">
@@ -235,7 +230,7 @@
                 <button
                   type="button"
                   @click="openSheet = !openSheet"
-                  class="w-full flex justify-between items-center border border-border/60 bg-bg-body/80 rounded-lg px-4 py-2.5 text-sm hover:border-accent/40 transition-colors"
+                  class="w-full flex justify-between items-center border border-border bg-bg-body/80 rounded-lg px-4 py-2.5 text-sm hover:border-primary-color/40 transition-colors"
                 >
                   <span>{{ selectedSheetTitle }}</span>
                   <i
@@ -246,14 +241,14 @@
                 <transition name="dropdown">
                   <div
                     v-if="openSheet"
-                    class="absolute z-50 mt-1 w-full rounded-xl border border-border/60 bg-bg-dropdown shadow-lg shadow-black/8 overflow-hidden"
+                    class="absolute z-50 mt-1 w-full rounded-xl border border-border bg-bg-dropdown shadow-lg shadow-black/8 overflow-hidden"
                   >
                     <ul class="py-1 text-sm max-h-60 overflow-auto">
                       <li
                         v-for="sheet in transformedData"
                         :key="sheet._id"
                         @click="selectSheet(sheet._id)"
-                        class="px-4 py-2.5 cursor-pointer hover:bg-accent/8 transition-colors"
+                        class="px-4 py-2.5 cursor-pointer hover:bg-primary-color/8 transition-colors"
                       >
                         <div class="font-medium text-text-primary">
                           {{ sheet.title }}
@@ -280,13 +275,13 @@
                   <label
                     v-for="capability in availableCapabilities"
                     :key="capability.value"
-                    class="flex items-center gap-3 px-3 py-2 rounded-lg border border-border/40 hover:border-accent/30 hover:bg-accent/4 transition-all cursor-pointer"
+                    class="flex items-center gap-3 px-3 py-2 rounded-lg border border-border hover:border-primary-color/30 hover:bg-primary-color/4 transition-all cursor-pointer"
                   >
                     <input
                       type="checkbox"
                       :value="capability.value"
                       v-model="agentConfig.capabilities"
-                      class="h-4 w-4 rounded border-border accent-accent"
+                      class="h-4 w-4 rounded border-border accent-primary-color"
                     />
                     <span class="text-sm text-text-primary">{{
                       capability.label
@@ -300,7 +295,7 @@
                 @click="submitPersona"
                 v-if="!agentsData || !agentConfig?.id"
                 :disabled="isLoading || !agentConfig.name || !agentConfig.role"
-                class="w-full mt-2 px-4 py-2.5 cursor-pointer text-sm font-medium bg-accent text-white rounded-lg hover:bg-accent/90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm shadow-accent/20"
+                class="w-full mt-2 px-4 py-2.5 cursor-pointer text-sm font-medium bg-primary-color text-white rounded-lg hover:bg-primary-color/90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm shadow-primary-color/20"
               >
                 <span
                   v-if="isLoading"
@@ -339,7 +334,7 @@
                     !agentConfig.name ||
                     !agentConfig.role
                   "
-                  class="flex-1 px-4 py-2.5 cursor-pointer text-sm font-medium bg-accent text-white rounded-lg hover:bg-accent/90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm shadow-accent/20"
+                  class="flex-1 px-4 py-2.5 cursor-pointer text-sm font-medium bg-primary-color text-white rounded-lg hover:bg-primary-color/90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm shadow-primary-color/20"
                 >
                   <span
                     v-if="agentStore.isUpdatingAgent"
@@ -374,7 +369,7 @@
                   <button
                     type="button"
                     @click="toggleSourceDropdown(source.value)"
-                    class="w-full flex justify-between items-center border border-border/60 bg-bg-body/80 rounded-lg px-4 py-2.5 text-sm hover:border-accent/40 transition-colors"
+                    class="w-full flex justify-between items-center border border-border bg-bg-body/80 rounded-lg px-4 py-2.5 text-sm hover:border-primary-color/40 transition-colors"
                   >
                     <span class="text-text-primary">{{ source.label }}</span>
                     <i
@@ -385,7 +380,7 @@
                   <transition name="dropdown">
                     <div
                       v-if="openDropdowns[source.value]"
-                      class="absolute z-[999] mt-1 w-full rounded-xl border border-border/60 bg-bg-dropdown shadow-lg shadow-black/8 overflow-hidden"
+                      class="absolute z-[999] mt-1 w-full rounded-xl border border-border bg-bg-dropdown shadow-lg shadow-black/8 overflow-hidden"
                     >
                       <ul class="py-1 text-sm flex flex-col gap-0.5">
                         <li class="px-4 pt-2 pb-1">
@@ -397,7 +392,7 @@
                         <li
                           v-for="perm in permissionsMap[source.value]"
                           :key="perm.value"
-                          class="px-4 py-2 cursor-pointer hover:bg-accent/6 flex items-center gap-2.5 transition-colors"
+                          class="px-4 py-2 cursor-pointer hover:bg-primary-color/6 flex items-center gap-2.5 transition-colors"
                         >
                           <input
                             type="checkbox"
@@ -408,7 +403,7 @@
                                 perm.value as keyof (typeof knowledgePermissions)['INTERNAL_TICKET']
                               ]
                             "
-                            class="h-4 w-4 rounded border-border accent-accent"
+                            class="h-4 w-4 rounded border-border accent-primary-color"
                           />
                           <span class="text-text-primary">{{
                             getPermissionLabel(
@@ -432,17 +427,17 @@
               <textarea
                 v-model="knowledgeMetadataString"
                 rows="4"
-                class="w-full border border-border/60 bg-bg-body/80 rounded-lg px-4 py-2.5 text-sm font-mono text-[12px] focus:border-accent/50 focus:ring-2 focus:ring-accent/10 outline-none transition-all resize-none"
+                class="w-full border border-border bg-bg-body/80 rounded-lg px-4 py-2.5 text-sm font-mono text-[12px] focus:border-primary-color/50 focus:ring-2 focus:ring-primary-color/10 outline-none transition-all resize-none"
               />
             </div>
 
             <label
-              class="flex items-center gap-3 px-3 py-2 rounded-lg border border-border/40 hover:border-accent/30 hover:bg-accent/4 transition-all cursor-pointer"
+              class="flex items-center gap-3 px-3 py-2 rounded-lg border border-border hover:border-primary-color/30 hover:bg-primary-color/4 transition-all cursor-pointer"
             >
               <input
                 type="checkbox"
                 v-model="knowledgeConfig.is_active"
-                class="h-4 w-4 rounded border-border accent-accent"
+                class="h-4 w-4 rounded border-border accent-primary-color"
               />
               <span class="text-sm text-text-primary">Active Source</span>
             </label>
@@ -450,7 +445,7 @@
             <button
               @click="submitKnowledge"
               :disabled="isKnowledgeLoading || !moduleId || !moduleSelected"
-              class="w-full mt-2 px-4 py-2.5 text-sm font-medium rounded-lg cursor-pointer text-white bg-accent hover:bg-accent/90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm shadow-accent/20"
+              class="w-full mt-2 px-4 py-2.5 text-sm font-medium rounded-lg cursor-pointer text-white bg-primary-color hover:bg-primary-color/90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm shadow-primary-color/20"
             >
               <i
                 v-if="isKnowledgeLoading"
@@ -471,7 +466,7 @@
               <input
                 v-model="uploadConfig.name"
                 disabled
-                class="w-full border border-border/60 bg-bg-body/50 rounded-lg px-4 py-2.5 text-sm opacity-70 cursor-not-allowed"
+                class="w-full border border-border bg-bg-body/50 rounded-lg px-4 py-2.5 text-sm opacity-70 cursor-not-allowed"
               />
             </div>
 
@@ -483,7 +478,7 @@
               <button
                 type="button"
                 @click="openType = !openType"
-                class="w-full flex justify-between items-center border border-border/60 bg-bg-body/80 rounded-lg px-4 py-2.5 text-sm hover:border-accent/40 transition-colors"
+                class="w-full flex justify-between items-center border border-border bg-bg-body/80 rounded-lg px-4 py-2.5 text-sm hover:border-primary-color/40 transition-colors"
               >
                 <span>{{ selectedTypeLabel }}</span>
                 <i
@@ -494,14 +489,14 @@
               <transition name="dropdown">
                 <div
                   v-if="openType"
-                  class="absolute z-50 mt-1 w-full rounded-xl border border-border/60 bg-bg-dropdown shadow-lg shadow-black/8 overflow-hidden"
+                  class="absolute z-50 mt-1 w-full rounded-xl border border-border bg-bg-dropdown shadow-lg shadow-black/8 overflow-hidden"
                 >
                   <ul class="py-1 text-sm">
                     <li
                       v-for="type in availableUploadTypes"
                       :key="type.value"
                       @click="selectType(type.value)"
-                      class="px-4 py-2.5 cursor-pointer hover:bg-accent/8 transition-colors text-text-primary"
+                      class="px-4 py-2.5 cursor-pointer hover:bg-primary-color/8 transition-colors text-text-primary"
                     >
                       {{ type.label }}
                     </li>
@@ -518,14 +513,14 @@
               <textarea
                 v-model="uploadConfig.text"
                 rows="4"
-                class="w-full border border-border/60 bg-bg-body/80 rounded-lg px-4 py-2.5 text-sm focus:border-accent/50 focus:ring-2 focus:ring-accent/10 outline-none transition-all resize-none placeholder:text-text-tertiary"
+                class="w-full border border-border bg-bg-body/80 rounded-lg px-4 py-2.5 text-sm focus:border-primary-color/50 focus:ring-2 focus:ring-primary-color/10 outline-none transition-all resize-none placeholder:text-text-tertiary"
                 placeholder="Paste training content here..."
               />
             </div>
 
             <!-- File Upload Zone -->
             <div
-              class="relative border-2 border-dashed border-border/60 bg-bg-body/40 rounded-xl px-4 py-6 text-center hover:border-accent/40 hover:bg-accent/4 transition-all cursor-pointer"
+              class="relative border-2 border-dashed border-border bg-bg-body/40 rounded-xl px-4 py-6 text-center hover:border-primary-color/40 hover:bg-primary-color/4 transition-all cursor-pointer"
               @click="triggerFileInput"
             >
               <i
@@ -533,7 +528,7 @@
               ></i>
               <p class="text-sm text-text-secondary">
                 Drag & drop files or
-                <span class="text-accent font-medium">browse</span>
+                <span class="text-primary-color font-medium">browse</span>
               </p>
               <p class="text-[11px] text-text-tertiary mt-1">
                 Supports documents, text files, PDFs
@@ -552,10 +547,10 @@
               <div
                 v-for="(file, i) in uploadConfig.files"
                 :key="i"
-                class="flex justify-between items-center text-sm border border-border/40 rounded-lg px-3 py-2 bg-bg-body/40 group"
+                class="flex justify-between items-center text-sm border border-border rounded-lg px-3 py-2 bg-bg-body/40 group"
               >
                 <div class="flex items-center gap-2 min-w-0">
-                  <i class="fa-solid fa-file text-accent/60 text-xs"></i>
+                  <i class="fa-solid fa-file text-primary-color/60 text-xs"></i>
                   <span class="truncate text-text-primary">{{
                     file.name
                   }}</span>
@@ -576,7 +571,7 @@
                 (uploadConfig.text === '' && uploadConfig.files.length === 0) ||
                 isUploading
               "
-              class="w-full mt-2 px-4 py-2.5 cursor-pointer text-sm font-medium bg-accent text-white rounded-lg hover:bg-accent/90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm shadow-accent/20"
+              class="w-full mt-2 px-4 py-2.5 cursor-pointer text-sm font-medium bg-primary-color text-white rounded-lg hover:bg-primary-color/90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm shadow-primary-color/20"
             >
               <span
                 v-if="isUploading"
@@ -606,7 +601,7 @@
                     id="select-all"
                     :checked="allSelected"
                     @change="toggleSelectAll"
-                    class="h-4 w-4 rounded border-border cursor-pointer accent-accent"
+                    class="h-4 w-4 rounded border-border cursor-pointer accent-primary-color"
                   />
                   <span
                     class="text-xs font-semibold text-text-primary uppercase tracking-wider"
@@ -622,7 +617,7 @@
                     v-model="searchQuery"
                     type="text"
                     placeholder="Filter prompts..."
-                    class="pl-7 pr-3 py-1.5 text-xs border border-border/60 rounded-lg bg-bg-body/80 focus:border-accent/40 focus:ring-1 focus:ring-accent/10 outline-none transition-all w-40"
+                    class="pl-7 pr-3 py-1.5 text-xs border border-border rounded-lg bg-bg-body/80 focus:border-primary-color/40 focus:ring-1 focus:ring-primary-color/10 outline-none transition-all w-40"
                   />
                 </div>
               </div>
@@ -631,7 +626,7 @@
               <div
                 v-for="module in filteredModules"
                 :key="module.module_title"
-                class="border border-border/40 rounded-xl overflow-hidden bg-bg-body/20"
+                class="border border-border rounded-xl overflow-hidden bg-bg-body/20"
               >
                 <button
                   @click="toggleModule(module.module_title)"
@@ -650,18 +645,18 @@
 
                 <div
                   v-show="openModules[module.module_title]"
-                  class="border-t border-border/30 bg-bg-body/30"
+                  class="border-t border-border bg-bg-body/30"
                 >
                   <label
                     v-for="action in module.granted_actions"
                     :key="action._id"
-                    class="flex items-start gap-2.5 hover:bg-accent/4 px-4 py-2.5 cursor-pointer transition-colors"
+                    class="flex items-start gap-2.5 hover:bg-primary-color/4 px-4 py-2.5 cursor-pointer transition-colors"
                   >
                     <input
                       type="checkbox"
                       v-model="action.is_selected"
                       :id="action._id"
-                      class="h-4 w-4 rounded border-border accent-accent mt-0.5"
+                      class="h-4 w-4 rounded border-border accent-primary-color mt-0.5"
                     />
                     <span class="text-sm text-text-primary select-none">{{
                       action.title
@@ -675,7 +670,7 @@
               <button
                 @click="savePromptActions"
                 :disabled="isSavingPrompt"
-                class="w-full px-4 py-2.5 text-sm font-medium bg-accent text-white rounded-lg hover:bg-accent/90 active:scale-[0.98] transition-all disabled:opacity-50 shadow-sm shadow-accent/20"
+                class="w-full px-4 py-2.5 text-sm font-medium bg-primary-color text-white rounded-lg hover:bg-primary-color/90 active:scale-[0.98] transition-all disabled:opacity-50 shadow-sm shadow-primary-color/20"
               >
                 <span
                   v-if="isSavingPrompt"
@@ -701,7 +696,7 @@
               </div>
               <button
                 @click="addSuggestedPrompt"
-                class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-accent/30 bg-accent/8 text-accent text-xs font-medium hover:bg-accent/15 transition-all cursor-pointer"
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-primary-color/30 bg-primary-color/8 text-primary-color text-xs font-medium hover:bg-primary-color/15 transition-all cursor-pointer"
               >
                 <i class="fa-solid fa-plus text-[10px]"></i>
                 Add
@@ -714,19 +709,21 @@
               class="flex flex-col items-center justify-center py-12 text-center"
             >
               <div
-                class="w-14 h-14 rounded-2xl bg-accent/8 flex items-center justify-center mb-3"
+                class="w-14 h-14 rounded-2xl bg-primary-color/8 flex items-center justify-center mb-3"
               >
-                <i class="fa-solid fa-lightbulb text-accent text-xl"></i>
+                <i class="fa-solid fa-lightbulb text-primary-color text-xl"></i>
               </div>
               <p class="text-sm font-semibold text-text-primary">
                 Welcome back! Ask me anything
                 <span v-if="selectedSource === 'all'">
                   about
-                  <span class="text-accent">{{ contextTitle }}</span></span
+                  <span class="text-primary-color">{{
+                    contextTitle
+                  }}</span></span
                 >
                 <span v-else>
                   using
-                  <span class="text-accent">{{
+                  <span class="text-primary-color">{{
                     activeSource.label
                   }}</span></span
                 >.
@@ -751,7 +748,7 @@
               <div
                 v-for="(prompt, index) in suggestedPrompts"
                 :key="index"
-                class="group relative border border-border/40 rounded-xl p-3.5 bg-bg-body/30 hover:border-accent/25 hover:shadow-sm transition-all"
+                class="group relative border border-border rounded-xl p-3.5 bg-bg-body/30 hover:border-primary-color/25 hover:shadow-sm transition-all"
               >
                 <!-- Category badge -->
                 <div class="flex items-center gap-2 mb-2.5">
@@ -762,7 +759,7 @@
                     <input
                       v-model="prompt.category"
                       placeholder="Category (e.g. Analysis, Report)"
-                      class="w-full pl-7 pr-3 py-1.5 text-[11px] border border-border/40 rounded-md bg-bg-body/60 focus:border-accent/40 outline-none transition-all font-medium"
+                      class="w-full pl-7 pr-3 py-1.5 text-[11px] border border-border rounded-md bg-bg-body/60 focus:border-primary-color/40 outline-none transition-all font-medium"
                     />
                   </div>
                   <button
@@ -777,7 +774,7 @@
                 <input
                   v-model="prompt.label"
                   placeholder="Button label (e.g. Summarize data)"
-                  class="w-full border border-border/40 bg-bg-body/60 rounded-lg px-3 py-2 text-sm focus:border-accent/40 outline-none transition-all mb-2 placeholder:text-text-tertiary"
+                  class="w-full border border-border bg-bg-body/60 rounded-lg px-3 py-2 text-sm focus:border-primary-color/40 outline-none transition-all mb-2 placeholder:text-text-tertiary"
                 />
 
                 <!-- Prompt text -->
@@ -785,12 +782,12 @@
                   v-model="prompt.text"
                   rows="2"
                   placeholder="Full prompt text that will be sent..."
-                  class="w-full border border-border/40 bg-bg-body/60 rounded-lg px-3 py-2 text-sm focus:border-accent/40 outline-none transition-all resize-none placeholder:text-text-tertiary"
+                  class="w-full border border-border bg-bg-body/60 rounded-lg px-3 py-2 text-sm focus:border-primary-color/40 outline-none transition-all resize-none placeholder:text-text-tertiary"
                 />
 
                 <!-- Toggle active -->
                 <div
-                  class="flex items-center justify-between mt-2.5 pt-2.5 border-t border-border/20"
+                  class="flex items-center justify-between mt-2.5 pt-2.5 border-t border-border"
                 >
                   <span class="text-[11px] text-text-secondary">Active</span>
                   <label
@@ -802,7 +799,7 @@
                       class="sr-only peer"
                     />
                     <div
-                      class="w-8 h-[18px] bg-bg-body rounded-full peer peer-checked:bg-accent transition-colors after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-[14px] after:w-[14px] after:transition-all peer-checked:after:translate-x-[14px] after:shadow-sm"
+                      class="w-8 h-[18px] bg-bg-body rounded-full peer peer-checked:bg-primary-color transition-colors after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-[14px] after:w-[14px] after:transition-all peer-checked:after:translate-x-[14px] after:shadow-sm"
                     ></div>
                   </label>
                 </div>
@@ -813,7 +810,7 @@
             <button
               @click="saveSuggestedPrompts"
               :disabled="isSavingSuggested"
-              class="w-full mt-2 px-4 py-2.5 text-sm font-medium bg-accent text-white rounded-lg hover:bg-accent/90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm shadow-accent/20"
+              class="w-full mt-2 px-4 py-2.5 text-sm font-medium bg-primary-color text-white rounded-lg hover:bg-primary-color/90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm shadow-primary-color/20"
             >
               <span
                 v-if="isSavingSuggested"
@@ -832,27 +829,26 @@
     </div>
 
     <!-- ==================== RIGHT: CHAT PANEL ==================== -->
-   <div
-  :class="[
-    'border-r border-border/40 bg-bg-card h-full min-h-0 flex flex-col overflow-x-hidden',
-    isExpanded
-      ? 'w-full md:w-[30%] lg:w-[30%]'
-      : 'w-full'
-  ]"
->
+    <div
+      :class="[
+        'border-r border-border bg-bg-surface h-full min-h-0 flex flex-col overflow-x-hidden',
+        isExpanded ? 'w-full md:w-[30%] lg:w-[30%]' : 'w-full',
+      ]"
+    >
       <!-- Chat Header -->
       <div
-        class="flex items-center border-b border-border/40 px-3.5 py-2.5 sticky top-0 bg-bg-card/95 backdrop-blur-sm z-30 gap-2"
+        class="flex items-center border-b border-border px-3.5 py-2.5 sticky top-0 bg-bg-surface z-30 gap-2"
       >
         <h5
           class="text-sm font-semibold flex items-center gap-1.5 min-w-0 flex-1"
         >
           <div
-            class="w-6 h-6 rounded-lg bg-gradient-to-br from-accent/20 to-accent/5 flex items-center justify-center"
+            class="w-6 h-6 rounded-lg bg-gradient-to-br from-primary-color/20 to-primary-color/5 flex items-center justify-center"
           >
-            <i class="fa-solid fa-sparkles text-accent text-[10px]"></i>
+            <i class="fa-solid fa-sparkles text-primary-color text-[10px]"></i>
           </div>
           <Dropdown
+            :inSpace="true"
             v-model="selectedAgentId"
             :options="agentOptions"
             :custom-title="selectedAgentName"
@@ -865,9 +861,10 @@
             <template #more>
               <div
                 @click="openConfigPanel"
-                class="capitalize border-t border-border px-4 py-1.5 hover:bg-accent/8 cursor-pointer flex items-center gap-2 overflow-hidden overflow-ellipsis text-nowrap text-xs transition-colors"
+                class="capitalize border-t border-border px-4 py-1.5 hover:bg-primary-color/8 cursor-pointer flex items-center gap-2 overflow-hidden overflow-ellipsis text-nowrap text-xs transition-colors"
               >
-                <i class="fa-solid fa-plus text-accent text-[10px]"></i> Add new
+                <i class="fa-solid fa-plus text-primary-color text-[10px]"></i>
+                Add new
               </div>
             </template>
           </Dropdown>
@@ -875,47 +872,48 @@
 
         <div class="flex items-center gap-0.5 shrink-0">
           <button
-            class="cursor-pointer w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-150 hover:bg-accent/10 hover:text-accent text-text-secondary"
+            class="shrink-0 flex items-center text-text-primary justify-center w-7 h-7 rounded-lg hover:bg-orchit-white/5 active:scale-[.98] transition-colors border-0 cursor-pointer"
             @click="showHistoryPanel = !showHistoryPanel"
             title="Chat history"
           >
-            <i class="fa-regular fa-clock-rotate-left text-[12px]"></i>
+            <i class="fa-regular fa-clock-rotate-left text-[16px]"></i>
           </button>
           <button
-            class="cursor-pointer w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-150 hover:bg-accent/10 hover:text-accent text-text-secondary"
+            class="shrink-0 flex items-center text-text-primary justify-center w-7 h-7 rounded-lg hover:bg-orchit-white/5 active:scale-[.98] transition-colors border-0 cursor-pointer"
             @click="startNewChat"
             title="New chat"
           >
-            <i class="fa-regular fa-pen-to-square text-[12px]"></i>
+            <i class="fa-regular fa-pen-to-square text-[16px]"></i>
           </button>
           <button
             v-if="!isExpanded"
-            class="cursor-pointer w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-150 hover:bg-accent/10 hover:text-accent text-text-secondary"
+            class="shrink-0 hidden sm:flex items-center text-text-primary justify-center w-7 h-7 rounded-lg hover:bg-orchit-white/5 active:scale-[.98] transition-colors border-0 cursor-pointer"
             @click="expandPanel"
             title="Expand"
           >
-            <i class="fa-solid fa-expand text-[12px]"></i>
+            <i class="fa-solid fa-expand text-[16px]"></i>
           </button>
           <button
             v-else
-            class="cursor-pointer w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-150 hover:bg-accent/10 hover:text-accent text-text-secondary"
+            class="shrink-0 hidden sm:flex items-center text-text-primary justify-center w-7 h-7 rounded-lg hover:bg-orchit-white/5 active:scale-[.98] transition-colors border-0 cursor-pointer"
             @click="compressPanel"
             title="Compress"
           >
-            <i class="fa-solid fa-compress text-[12px]"></i>
+            <i class="fa-solid fa-compress text-[16px]"></i>
           </button>
           <button
-            class="cursor-pointer w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-150 hover:bg-accent/10 hover:text-accent text-text-secondary"
+            class="shrink-0 flex items-center text-text-primary justify-center w-7 h-7 rounded-lg hover:bg-orchit-white/5 active:scale-[.98] transition-colors border-0 cursor-pointer"
             @click="openConfigPanel"
             :title="showConfigPanel ? 'Preview Data' : 'Agent Configuration'"
           >
-            <i class="fa-regular fa-gear text-[12px]"></i>
+            <i class="fa-regular fa-gear text-[16px]"></i>
           </button>
           <button
-            class="cursor-pointer w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-150 hover:bg-red-500/10 hover:text-red-500 text-text-secondary"
+            class="shrink-0 flex items-center text-text-primary justify-center w-7 h-7 rounded-lg hover:bg-orchit-white/5 active:scale-[.98] transition-colors border-0 cursor-pointer"
             @click="closeHandler"
+            title="Close"
           >
-            <i class="fa-solid fa-xmark text-[12px]"></i>
+            <i class="fa-solid fa-xmark text-[16px]"></i>
           </button>
         </div>
       </div>
@@ -925,379 +923,480 @@
         ref="messagesContainer"
         class="flex-1 overflow-y-auto min-h-0 p-4 space-y-3"
       >
-<!-- New skeleton loader -->
-<div
-  v-if="agentStore.isLoadingHistory && !hasEverLoaded"
-  class="flex flex-col gap-4 p-4"
->
-  <!-- Assistant bubble skeleton -->
-  <div class="flex gap-2.5">
-    <div class="w-7 h-7 rounded-full bg-bg-body animate-pulse shrink-0"></div>
-    <div class="flex flex-col gap-1.5 max-w-[75%]">
-      <div class="h-9 w-52 bg-bg-body animate-pulse rounded-2xl rounded-tl-md"></div>
-      <div class="h-4 w-32 bg-bg-body animate-pulse rounded-full"></div>
-    </div>
-  </div>
-
-  <!-- User bubble skeleton -->
-  <div class="flex gap-2.5 flex-row-reverse">
-    <div class="w-7 h-7 rounded-full bg-bg-body animate-pulse shrink-0"></div>
-    <div class="flex flex-col gap-1.5 items-end max-w-[75%]">
-      <div class="h-9 w-44 bg-accent/20 animate-pulse rounded-2xl rounded-tr-md"></div>
-      <div class="h-4 w-20 bg-bg-body animate-pulse rounded-full"></div>
-    </div>
-  </div>
-
-  <!-- Assistant bubble skeleton — longer -->
-  <div class="flex gap-2.5">
-    <div class="w-7 h-7 rounded-full bg-bg-body animate-pulse shrink-0"></div>
-    <div class="flex flex-col gap-1.5 max-w-[75%]">
-      <div class="h-20 w-64 bg-bg-body animate-pulse rounded-2xl rounded-tl-md"></div>
-      <div class="h-4 w-24 bg-bg-body animate-pulse rounded-full"></div>
-    </div>
-  </div>
-
-  <!-- User bubble skeleton -->
-  <div class="flex gap-2.5 flex-row-reverse">
-    <div class="w-7 h-7 rounded-full bg-bg-body animate-pulse shrink-0"></div>
-    <div class="flex flex-col gap-1.5 items-end max-w-[75%]">
-      <div class="h-12 w-56 bg-accent/20 animate-pulse rounded-2xl rounded-tr-md"></div>
-      <div class="h-4 w-20 bg-bg-body animate-pulse rounded-full"></div>
-    </div>
-  </div>
-
-  <!-- Assistant bubble skeleton -->
-  <div class="flex gap-2.5">
-    <div class="w-7 h-7 rounded-full bg-bg-body animate-pulse shrink-0"></div>
-    <div class="flex flex-col gap-1.5 max-w-[75%]">
-      <div class="h-14 w-48 bg-bg-body animate-pulse rounded-2xl rounded-tl-md"></div>
-      <div class="h-4 w-28 bg-bg-body animate-pulse rounded-full"></div>
-    </div>
-  </div>
-</div>
-<template v-else-if="orderedMessages.length || isAiThinkingBubbleVisible">
-  
-  <div
-    v-for="msg in orderedMessages"
-    :key="msg._id"
-    class="flex gap-2.5 relative animate-fade-in group/msg"
-    :class="msg.type === 'user' ? 'flex-row-reverse' : ''"
-  >
-    <!-- Avatar -->
-    <div
-      class="w-7 h-7 rounded-full flex items-center justify-center shrink-0 shadow-sm"
-      :class="
-        msg.type === 'user'
-          ? 'bg-gradient-to-br from-accent/20 to-accent/5 border border-accent/20'
-          : 'bg-gradient-to-br from-accent/15 to-accent/5 border border-accent/15'
-      "
-    >
-      <i
-        v-if="msg.type === 'assistant'"
-        class="fa-solid fa-robot text-accent text-[11px]"
-      ></i>
-      <span
-        v-else-if="msg.type === 'user'"
-        class="text-[9px] font-bold text-accent"
-        >ME</span
-      >
-    </div>
-
-    <!-- Bubble wrapper -->
-    <div
-      class="relative flex flex-col overflow-hidden"
-      :class="msg.type === 'user' ? 'max-w-[75%] w-fit ml-auto' : 'max-w-[75%]'"
-    >
-
-      <!-- Empty assistant response -->
-      <div
-        v-if="msg.type === 'assistant' && !msg.content"
-        class="px-3.5 py-2 rounded-2xl text-sm leading-relaxed bg-red-500/10 border border-red-500/20 text-red-400 rounded-tl-md wrap-break-word"
-      >
-        Unable to generate a response. Please try again.
-      </div>
-
-      <!-- Main bubble -->
-      <div
-        v-else
-        class="px-3.5 py-2 rounded-2xl text-sm leading-relaxed relative min-w-0 wrap-break-word"
-        :class="
-          msg.type === 'user'
-            ? 'bg-accent text-white rounded-tr-md shadow-sm shadow-accent/15 w-full'
-            : 'bg-bg-body border border-border/40 text-text-primary rounded-tl-md'
-        "
-      >
-        <!-- Message menu trigger -->
-        <button
-          v-if="activeSessionId && !(msg.metadata as MessageMetadata)?.temp"
-          @click.stop="toggleMsgMenu(msg._id)"
-          class="absolute top-1.5 right-1.5 opacity-0 group-hover/msg:opacity-100 transition-opacity duration-150 w-5 h-5 flex items-center justify-center rounded-md cursor-pointer"
-          :class="
-            msg.type === 'user'
-              ? 'text-white/70 hover:text-white hover:bg-white/10'
-              : 'text-text-tertiary hover:text-text-secondary hover:bg-black/5'
-          "
-        >
-          <i class="fa-solid fa-ellipsis text-[9px]"></i>
-        </button>
-
-        <!-- Message content -->
-        <p class="whitespace-pre-wrap pr-4" v-if="msg.content">
-          {{ msg.content }}
-        </p>
-
-        <!-- Attachments -->
+        <!-- New skeleton loader -->
         <div
-          v-if="msg.attachments && msg.attachments.length"
-          class="flex flex-wrap gap-1.5 mt-1.5"
+          v-if="agentStore.isLoadingHistory && !hasEverLoaded"
+          class="flex flex-col gap-4 p-4"
         >
-          <div
-            v-for="(attachment, idx) in msg.attachments"
-            :key="idx"
-            class="flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px]"
-            :class="
-              msg.type === 'user'
-                ? 'bg-white/15 text-white/90'
-                : 'border border-accent/20 bg-accent/5 text-text-primary'
-            "
-          >
-            <i
-              class="fa-solid"
-              :class="[
-                attachment.mimetype === 'application/pdf'
-                  ? 'fa-file-pdf'
-                  : 'fa-file-image',
-                msg.type === 'user' ? 'text-white/80' : 'text-accent',
-              ]"
-            ></i>
-            <span class="max-w-[100px] truncate">{{
-              attachment.filename || attachment.name
-            }}</span>
+          <!-- Assistant bubble skeleton -->
+          <div class="flex gap-2.5">
+            <div
+              class="w-7 h-7 rounded-full bg-bg-body animate-pulse shrink-0"
+            ></div>
+            <div class="flex flex-col gap-1.5 max-w-[75%]">
+              <div
+                class="h-9 w-52 bg-bg-body animate-pulse rounded-2xl rounded-tl-md"
+              ></div>
+              <div class="h-4 w-32 bg-bg-body animate-pulse rounded-full"></div>
+            </div>
+          </div>
+
+          <!-- User bubble skeleton -->
+          <div class="flex gap-2.5 flex-row-reverse">
+            <div
+              class="w-7 h-7 rounded-full bg-bg-body animate-pulse shrink-0"
+            ></div>
+            <div class="flex flex-col gap-1.5 items-end max-w-[75%]">
+              <div
+                class="h-9 w-44 bg-primary-color/20 animate-pulse rounded-2xl rounded-tr-md"
+              ></div>
+              <div class="h-4 w-20 bg-bg-body animate-pulse rounded-full"></div>
+            </div>
+          </div>
+
+          <!-- Assistant bubble skeleton — longer -->
+          <div class="flex gap-2.5">
+            <div
+              class="w-7 h-7 rounded-full bg-bg-body animate-pulse shrink-0"
+            ></div>
+            <div class="flex flex-col gap-1.5 max-w-[75%]">
+              <div
+                class="h-20 w-64 bg-bg-body animate-pulse rounded-2xl rounded-tl-md"
+              ></div>
+              <div class="h-4 w-24 bg-bg-body animate-pulse rounded-full"></div>
+            </div>
+          </div>
+
+          <!-- User bubble skeleton -->
+          <div class="flex gap-2.5 flex-row-reverse">
+            <div
+              class="w-7 h-7 rounded-full bg-bg-body animate-pulse shrink-0"
+            ></div>
+            <div class="flex flex-col gap-1.5 items-end max-w-[75%]">
+              <div
+                class="h-12 w-56 bg-primary-color/20 animate-pulse rounded-2xl rounded-tr-md"
+              ></div>
+              <div class="h-4 w-20 bg-bg-body animate-pulse rounded-full"></div>
+            </div>
+          </div>
+
+          <!-- Assistant bubble skeleton -->
+          <div class="flex gap-2.5">
+            <div
+              class="w-7 h-7 rounded-full bg-bg-body animate-pulse shrink-0"
+            ></div>
+            <div class="flex flex-col gap-1.5 max-w-[75%]">
+              <div
+                class="h-14 w-48 bg-bg-body animate-pulse rounded-2xl rounded-tl-md"
+              ></div>
+              <div class="h-4 w-28 bg-bg-body animate-pulse rounded-full"></div>
+            </div>
           </div>
         </div>
-
-        <!-- Timing pills + timestamp footer -->
-        <div class="mt-1.5 flex flex-col gap-1">
-
-          <!-- Timing pills — assistant only, when metadata has timing -->
-          <div
-            v-if="msg.type === 'assistant' && (msg.metadata?.think_ms || msg.metadata?.total_ms)"
-            class="flex items-center gap-1.5 flex-wrap"
-          >
-            <span
-              v-if="msg.metadata?.think_ms"
-              class="inline-flex items-center gap-1 text-[10px] text-text-tertiary bg-bg-body border border-border/40 px-2 py-0.5 rounded-full"
-            >
-              <i class="fa-solid fa-brain text-accent text-[8px]"></i>
-              Thought {{ (msg.metadata.think_ms / 1000).toFixed(1) }}s
-            </span>
-            <span
-              v-if="msg.metadata?.total_ms"
-              class="inline-flex items-center gap-1 text-[10px] text-text-tertiary bg-bg-body border border-border/40 px-2 py-0.5 rounded-full"
-            >
-              <i class="fa-regular fa-clock text-accent text-[8px]"></i>
-              {{ (msg.metadata.total_ms / 1000).toFixed(1) }}s total
-            </span>
-          </div>
-
-          <!-- Timestamp row -->
-          <div
-            class="flex justify-end items-center gap-1.5 text-[10px]"
-            :class="msg.type === 'user' ? 'text-white/60' : 'text-text-tertiary'"
-          >
-            <span>{{ formatTimestamp(msg.timestamp) }}</span>
-            <i
-              v-if="msg.is_pinned"
-              class="fa-solid fa-thumbtack text-[9px]"
-              :class="msg.type === 'user' ? 'text-white/70' : 'text-accent'"
-              title="Pinned message"
-            ></i>
-            <span v-if="msg.type === 'user'">
-              <i
-                v-if="msg.metadata?.status === 'completed'"
-                class="fa-solid fa-check-double text-green-300"
-              ></i>
-              <i v-else class="fa-solid fa-check text-white/50"></i>
-            </span>
-          </div>
-
-        </div>
-      </div>
-
-      <!-- Message dropdown menu -->
-      <transition name="dropdown">
-        <div
-          v-if="openMsgMenuId === msg._id"
-          class="absolute z-50 top-8 w-40 rounded-xl border border-border/60 bg-bg-card shadow-lg shadow-black/8 py-1 overflow-hidden"
-          :class="msg.type === 'user' ? 'right-0' : 'right-0'"
+        <template
+          v-else-if="orderedMessages.length || isAiThinkingBubbleVisible"
         >
-          <button
-            @click.stop="
-              togglePinMessage(msg);
-              openMsgMenuId = null;
-            "
-            class="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-text-primary hover:bg-accent/8 hover:text-accent transition-colors cursor-pointer"
+          <div
+            v-for="msg in orderedMessages"
+            :key="msg._id"
+            class="flex gap-2.5 relative animate-fade-in group/msg"
+            :class="msg.type === 'user' ? 'flex-row-reverse' : ''"
           >
-            <i
-              class="text-[11px] w-3"
+            <!-- Avatar -->
+            <div
+              class="w-7 h-7 rounded-full flex items-center justify-center shrink-0 shadow-sm"
               :class="
-                (msg as any).is_pinned
-                  ? 'fa-solid fa-thumbtack text-accent'
-                  : 'fa-regular fa-thumbtack text-text-secondary'
+                msg.type === 'user'
+                  ? 'bg-gradient-to-br from-primary-color/20 to-primary-color/5 border border-primary-color/20'
+                  : 'bg-gradient-to-br from-primary-color/15 to-primary-color/5 border border-primary-color/15'
               "
-            ></i>
-            <span>{{
-              (msg as any).is_pinned ? "Unpin message" : "Pin message"
-            }}</span>
-          </button>
-        </div>
-      </transition>
+            >
+              <i
+                v-if="msg.type === 'assistant'"
+                class="fa-solid fa-robot text-primary-color text-[11px]"
+              ></i>
+              <span
+                v-else-if="msg.type === 'user'"
+                class="text-[9px] font-bold text-primary-color"
+                >ME</span
+              >
+            </div>
 
-      <!-- Like, Dislike, Copy buttons for assistant messages -->
-      <div
-        v-if="msg.type === 'assistant' && msg.content && activeSessionId"
-        class="flex items-center gap-1.5 mt-2 opacity-0 group-hover/msg:opacity-100 transition-opacity duration-150"
-      >
-        <button
-          @click.stop="toggleLike(msg._id)"
-          title="Like this response"
-          :class="[
-            'flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] transition-colors cursor-pointer',
-            likedMessages.has(msg._id)
-              ? 'text-accent bg-accent/8'
-              : 'text-text-secondary hover:text-accent hover:bg-accent/8'
-          ]"
-        >
-          <i :class="['text-[12px]', likedMessages.has(msg._id) ? 'fa-solid fa-thumbs-up' : 'fa-regular fa-thumbs-up']"></i>
-        </button>
-        <button
-          @click.stop="toggleDislike(msg._id)"
-          title="Dislike this response"
-          :class="[
-            'flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] transition-colors cursor-pointer',
-            dislikedMessages.has(msg._id)
-              ? 'text-red-500 bg-red-500/8'
-              : 'text-text-secondary hover:text-red-500 hover:bg-red-500/8'
-          ]"
-        >
-          <i :class="['text-[12px]', dislikedMessages.has(msg._id) ? 'fa-solid fa-thumbs-down' : 'fa-regular fa-thumbs-down']"></i>
-        </button>
-        <button
-          @click.stop="copyMessageToClipboard(msg.content)"
-          title="Copy message"
-          class="flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] text-text-secondary hover:text-accent hover:bg-accent/8 transition-colors cursor-pointer"
-        >
-          <i class="fa-regular fa-copy text-[12px]"></i>
-        </button>
-      </div>
+            <!-- Bubble wrapper -->
+            <div
+              class="relative flex flex-col overflow-hidden"
+              :class="
+                msg.type === 'user'
+                  ? 'max-w-[75%] w-fit ml-auto'
+                  : 'max-w-[75%]'
+              "
+            >
+              <!-- Empty assistant response -->
+              <div
+                v-if="msg.type === 'assistant' && !msg.content"
+                class="px-3.5 py-2 rounded-2xl text-sm leading-relaxed bg-red-500/10 border border-red-500/20 text-red-400 rounded-tl-md wrap-break-word"
+              >
+                Unable to generate a response. Please try again.
+              </div>
 
-    </div>
-  </div>
-<!-- ===== Thinking bubble — only during thinking phase ===== -->
-<div
-  v-if="showThinkingBubble"
-  class="flex gap-2.5 relative animate-fade-in"
->
-  <div class="w-7 h-7 rounded-full flex items-center justify-center shrink-0 bg-gradient-to-br from-accent/15 to-accent/5 border border-accent/15 shadow-sm">
-    <i class="fa-solid fa-robot text-accent text-[11px]"></i>
-  </div>
-  <div class="px-3.5 py-2.5 rounded-2xl rounded-tl-md max-w-[82%] text-sm border border-border/40 bg-bg-body">
-    <div class="flex items-center gap-2 mb-1">
-      <div class="typing-dots">
-        <span></span>
-        <span></span>
-        <span></span>
-      </div>
-      <span class="text-[11px] font-medium text-text-primary">Thinking</span>
-      <span class="text-[10px] text-text-tertiary tabular-nums">{{ elapsedLabel }}</span>
-    </div>
-    <!-- Phase detail -->
-    <div v-if="streamingPhaseDetail" class="text-[11px] text-text-secondary italic mt-1">
-      {{ streamingPhaseDetail }}
-    </div>
-  </div>
-</div>
+              <!-- Main bubble -->
+              <div
+                v-else
+                class="px-3.5 py-2 rounded-2xl text-sm leading-relaxed relative min-w-0 wrap-break-word"
+                :class="
+                  msg.type === 'user'
+                    ? 'bg-primary-color text-white rounded-tr-md shadow-sm shadow-primary-color/15 w-full'
+                    : 'bg-bg-body border border-border text-text-primary rounded-tl-md'
+                "
+              >
+                <!-- Message menu trigger -->
+                <button
+                  v-if="
+                    activeSessionId && !(msg.metadata as MessageMetadata)?.temp
+                  "
+                  @click.stop="toggleMsgMenu(msg._id)"
+                  class="absolute top-1.5 right-1.5 opacity-0 group-hover/msg:opacity-100 transition-opacity duration-150 w-5 h-5 flex items-center justify-center rounded-md cursor-pointer"
+                  :class="
+                    msg.type === 'user'
+                      ? 'text-white/70 hover:text-white hover:bg-white/10'
+                      : 'text-text-tertiary hover:text-text-secondary hover:bg-black/5'
+                  "
+                >
+                  <i class="fa-solid fa-ellipsis text-[9px]"></i>
+                </button>
 
-<!-- ===== Streaming bubble — only when generating AND has content ===== -->
-<div
-  v-if="showStreamingBubble"
-  class="flex gap-2.5 relative animate-fade-in"
->
-  <div class="w-7 h-7 rounded-full flex items-center justify-center shrink-0 bg-gradient-to-br from-accent/15 to-accent/5 border border-accent/15 shadow-sm">
-    <i class="fa-solid fa-robot text-accent text-[11px]"></i>
-  </div>
+                <!-- Message content -->
+                <p class="whitespace-pre-wrap pr-4" v-if="msg.content">
+                  {{ msg.content }}
+                </p>
 
-  <div class="px-3.5 py-2.5 rounded-2xl rounded-tl-md w-full max-w-[82%] text-sm leading-relaxed border border-accent/20 bg-bg-body shadow-sm">
+                <!-- Attachments -->
+                <div
+                  v-if="msg.attachments && msg.attachments.length"
+                  class="flex flex-wrap gap-1.5 mt-1.5"
+                >
+                  <div
+                    v-for="(attachment, idx) in msg.attachments"
+                    :key="idx"
+                    class="flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px]"
+                    :class="
+                      msg.type === 'user'
+                        ? 'bg-white/15 text-white/90'
+                        : 'border border-primary-color/20 bg-primary-color/5 text-text-primary'
+                    "
+                  >
+                    <i
+                      class="fa-solid"
+                      :class="[
+                        attachment.mimetype === 'application/pdf'
+                          ? 'fa-file-pdf'
+                          : 'fa-file-image',
+                        msg.type === 'user'
+                          ? 'text-white/80'
+                          : 'text-primary-color',
+                      ]"
+                    ></i>
+                    <span class="max-w-[100px] truncate">{{
+                      attachment.filename || attachment.name
+                    }}</span>
+                  </div>
+                </div>
 
-    <!-- Status bar -->
-    <div class="flex items-center gap-1.5 mb-2 pb-1.5 border-b border-border/30 flex-wrap">
+                <!-- Timing pills + timestamp footer -->
+                <div class="mt-1.5 flex flex-col gap-1">
+                  <!-- Timing pills — assistant only, when metadata has timing -->
+                  <div
+                    v-if="
+                      msg.type === 'assistant' &&
+                      (msg.metadata?.think_ms || msg.metadata?.total_ms)
+                    "
+                    class="flex items-center gap-1.5 flex-wrap"
+                  >
+                    <span
+                      v-if="msg.metadata?.think_ms"
+                      class="inline-flex items-center gap-1 text-[10px] text-text-tertiary bg-bg-body border border-border px-2 py-0.5 rounded-full"
+                    >
+                      <i
+                        class="fa-solid fa-brain text-primary-color text-[8px]"
+                      ></i>
+                      Thought {{ (msg.metadata.think_ms / 1000).toFixed(1) }}s
+                    </span>
+                    <span
+                      v-if="msg.metadata?.total_ms"
+                      class="inline-flex items-center gap-1 text-[10px] text-text-tertiary bg-bg-body border border-border px-2 py-0.5 rounded-full"
+                    >
+                      <i
+                        class="fa-regular fa-clock text-primary-color text-[8px]"
+                      ></i>
+                      {{ (msg.metadata.total_ms / 1000).toFixed(1) }}s total
+                    </span>
+                  </div>
 
-      <!-- Thought time — appears once thinking phase ends -->
-      <span
-        v-if="streamingThinkMs !== null"
-        class="inline-flex items-center gap-1 text-[10px] text-text-tertiary bg-bg-body border border-border/40 px-2 py-0.5 rounded-full"
-      >
-        <i class="fa-solid fa-brain text-accent text-[8px]"></i>
-        Thought {{ (streamingThinkMs / 1000).toFixed(1) }}s
-      </span>
+                  <!-- Timestamp row -->
+                  <div
+                    class="flex justify-end items-center gap-1.5 text-[10px]"
+                    :class="
+                      msg.type === 'user'
+                        ? 'text-white/60'
+                        : 'text-text-tertiary'
+                    "
+                  >
+                    <span>{{ formatTimestamp(msg.timestamp) }}</span>
+                    <i
+                      v-if="msg.is_pinned"
+                      class="fa-solid fa-thumbtack text-[9px]"
+                      :class="
+                        msg.type === 'user'
+                          ? 'text-white/70'
+                          : 'text-primary-color'
+                      "
+                      title="Pinned message"
+                    ></i>
+                    <span v-if="msg.type === 'user'">
+                      <i
+                        v-if="msg.metadata?.status === 'completed'"
+                        class="fa-solid fa-check-double text-green-300"
+                      ></i>
+                      <i v-else class="fa-solid fa-check text-white/50"></i>
+                    </span>
+                  </div>
+                </div>
+              </div>
 
-      <!-- Live writing indicator -->
-      <span class="inline-flex items-center gap-1.5 text-[10px] text-accent font-medium">
-        <span class="relative flex h-1.5 w-1.5">
-          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
-          <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-accent"></span>
-        </span>
-        Writing
-        <span class="text-text-tertiary font-normal tabular-nums">{{ elapsedLabel }}</span>
-      </span>
+              <!-- Message dropdown menu -->
+              <transition name="dropdown">
+                <div
+                  v-if="openMsgMenuId === msg._id"
+                  class="absolute z-50 top-8 w-40 rounded-xl border border-border bg-bg-card shadow-lg shadow-black/8 py-1 overflow-hidden"
+                  :class="msg.type === 'user' ? 'right-0' : 'right-0'"
+                >
+                  <button
+                    @click.stop="
+                      togglePinMessage(msg);
+                      openMsgMenuId = null;
+                    "
+                    class="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-text-primary hover:bg-primary-color/8 hover:text-primary-color transition-colors cursor-pointer"
+                  >
+                    <i
+                      class="text-[11px] w-3"
+                      :class="
+                        (msg as any).is_pinned
+                          ? 'fa-solid fa-thumbtack text-primary-color'
+                          : 'fa-regular fa-thumbtack text-text-secondary'
+                      "
+                    ></i>
+                    <span>{{
+                      (msg as any).is_pinned ? "Unpin message" : "Pin message"
+                    }}</span>
+                  </button>
+                </div>
+              </transition>
 
-      <!-- Total time — appears once timing chunk arrives -->
-      <span
-        v-if="streamingTotalMs !== null"
-        class="inline-flex items-center gap-1 text-[10px] text-text-tertiary bg-bg-body border border-border/40 px-2 py-0.5 rounded-full"
-      >
-        <i class="fa-regular fa-clock text-accent text-[8px]"></i>
-        {{ (streamingTotalMs / 1000).toFixed(1) }}s total
-      </span>
+              <!-- Like, Dislike, Copy buttons for assistant messages -->
+              <div
+                v-if="
+                  msg.type === 'assistant' && msg.content && activeSessionId
+                "
+                class="flex items-center gap-1.5 mt-2 opacity-0 group-hover/msg:opacity-100 transition-opacity duration-150"
+              >
+                <button
+                  @click.stop="toggleLike(msg._id)"
+                  title="Like this response"
+                  :class="[
+                    'flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] transition-colors cursor-pointer',
+                    likedMessages.has(msg._id)
+                      ? 'text-primary-color bg-primary-color/8'
+                      : 'text-text-secondary hover:text-primary-color hover:bg-primary-color/8',
+                  ]"
+                >
+                  <i
+                    :class="[
+                      'text-[12px]',
+                      likedMessages.has(msg._id)
+                        ? 'fa-solid fa-thumbs-up'
+                        : 'fa-regular fa-thumbs-up',
+                    ]"
+                  ></i>
+                </button>
+                <button
+                  @click.stop="toggleDislike(msg._id)"
+                  title="Dislike this response"
+                  :class="[
+                    'flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] transition-colors cursor-pointer',
+                    dislikedMessages.has(msg._id)
+                      ? 'text-red-500 bg-red-500/8'
+                      : 'text-text-secondary hover:text-red-500 hover:bg-red-500/8',
+                  ]"
+                >
+                  <i
+                    :class="[
+                      'text-[12px]',
+                      dislikedMessages.has(msg._id)
+                        ? 'fa-solid fa-thumbs-down'
+                        : 'fa-regular fa-thumbs-down',
+                    ]"
+                  ></i>
+                </button>
+                <button
+                  @click.stop="copyMessageToClipboard(msg.content)"
+                  title="Copy message"
+                  class="flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] text-text-secondary hover:text-primary-color hover:bg-primary-color/8 transition-colors cursor-pointer"
+                >
+                  <i class="fa-regular fa-copy text-[12px]"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+          <!-- ===== Thinking bubble — only during thinking phase ===== -->
+          <div
+            v-if="showThinkingBubble"
+            class="flex gap-2.5 relative animate-fade-in"
+          >
+            <div
+              class="w-7 h-7 rounded-full flex items-center justify-center shrink-0 bg-gradient-to-br from-primary-color/15 to-primary-color/5 border border-primary-color/15 shadow-sm"
+            >
+              <i class="fa-solid fa-robot text-primary-color text-[11px]"></i>
+            </div>
+            <div
+              class="px-3.5 py-2.5 rounded-2xl rounded-tl-md max-w-[82%] text-sm border border-border bg-bg-body"
+            >
+              <div class="flex items-center gap-2 mb-1">
+                <div class="typing-dots">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+                <span class="text-[11px] font-medium text-text-primary"
+                  >Thinking</span
+                >
+                <span class="text-[10px] text-text-tertiary tabular-nums">{{
+                  elapsedLabel
+                }}</span>
+              </div>
+              <!-- Phase detail -->
+              <div
+                v-if="streamingPhaseDetail"
+                class="text-[11px] text-text-secondary italic mt-1"
+              >
+                {{ streamingPhaseDetail }}
+              </div>
+            </div>
+          </div>
 
-    </div>
+          <!-- ===== Streaming bubble — only when generating AND has content ===== -->
+          <div
+            v-if="showStreamingBubble"
+            class="flex gap-2.5 relative animate-fade-in"
+          >
+            <div
+              class="w-7 h-7 rounded-full flex items-center justify-center shrink-0 bg-gradient-to-br from-primary-color/15 to-primary-color/5 border border-primary-color/15 shadow-sm"
+            >
+              <i class="fa-solid fa-robot text-primary-color text-[11px]"></i>
+            </div>
 
-    <!-- Streaming text + cursor -->
-    <p class="whitespace-pre-wrap text-text-primary leading-relaxed">
-      {{ displayedContent }}<span
-        class="inline-block w-[2px] h-[13px] bg-accent ml-0.5 align-middle animate-pulse rounded-sm"
-      ></span>
-    </p>
+            <div
+              class="px-3.5 py-2.5 rounded-2xl rounded-tl-md w-full max-w-[82%] text-sm leading-relaxed border border-primary-color/20 bg-bg-body shadow-sm"
+            >
+              <!-- Status bar -->
+              <div
+                class="flex items-center gap-1.5 mb-2 pb-1.5 border-b border-border flex-wrap"
+              >
+                <!-- Thought time — appears once thinking phase ends -->
+                <span
+                  v-if="streamingThinkMs !== null"
+                  class="inline-flex items-center gap-1 text-[10px] text-text-tertiary bg-bg-body border border-border px-2 py-0.5 rounded-full"
+                >
+                  <i
+                    class="fa-solid fa-brain text-primary-color text-[8px]"
+                  ></i>
+                  Thought {{ (streamingThinkMs / 1000).toFixed(1) }}s
+                </span>
 
-    <!-- Timestamp -->
-    <div class="flex justify-end text-[10px] text-text-tertiary mt-1.5">
-      <span>{{ formatTimestamp(new Date().toISOString()) }}</span>
-    </div>
+                <!-- Live writing indicator -->
+                <span
+                  class="inline-flex items-center gap-1.5 text-[10px] text-primary-color font-medium"
+                >
+                  <span class="relative flex h-1.5 w-1.5">
+                    <span
+                      class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-color opacity-75"
+                    ></span>
+                    <span
+                      class="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary-color"
+                    ></span>
+                  </span>
+                  Writing
+                  <span class="text-text-tertiary font-normal tabular-nums">{{
+                    elapsedLabel
+                  }}</span>
+                </span>
 
-  </div>
-</div>
+                <!-- Total time — appears once timing chunk arrives -->
+                <span
+                  v-if="streamingTotalMs !== null"
+                  class="inline-flex items-center gap-1 text-[10px] text-text-tertiary bg-bg-body border border-border px-2 py-0.5 rounded-full"
+                >
+                  <i
+                    class="fa-regular fa-clock text-primary-color text-[8px]"
+                  ></i>
+                  {{ (streamingTotalMs / 1000).toFixed(1) }}s total
+                </span>
+              </div>
 
-<!-- ===== Phase Timeline — shows all streamed phase updates ===== -->
-<div
-  v-if="phaseHistory.length > 0 && streamingPhase !== 'thinking' && streamingPhase !== 'completed'"
-  class="flex gap-2.5 relative mt-2"
->
-  <div class="w-7 h-7 flex-shrink-0"></div>
-  <div class="flex-1 space-y-2">
-    <div v-for="(phase, idx) in phaseHistory" :key="idx" class="text-[10px]">
-      <div class="flex items-start gap-2">
-        <div class="mt-1.5 w-2 h-2 rounded-full bg-accent flex-shrink-0"></div>
-        <div class="space-y-0.5">
-          <p class="font-semibold text-text-primary capitalize">{{ phase.phase }}</p>
-          <p v-if="phase.detail" class="text-text-secondary italic">{{ phase.detail }}</p>
-          <p class="text-text-tertiary">{{ formatTimestamp(new Date(phase.timestamp).toISOString()) }}</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+              <!-- Streaming text + cursor -->
+              <p class="whitespace-pre-wrap text-text-primary leading-relaxed">
+                {{ displayedContent
+                }}<span
+                  class="inline-block w-[2px] h-[13px] bg-primary-color ml-0.5 align-middle animate-pulse rounded-sm"
+                ></span>
+              </p>
 
-</template>
+              <!-- Timestamp -->
+              <div
+                class="flex justify-end text-[10px] text-text-tertiary mt-1.5"
+              >
+                <span>{{ formatTimestamp(new Date().toISOString()) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- ===== Phase Timeline — shows all streamed phase updates ===== -->
+          <div
+            v-if="
+              phaseHistory.length > 0 &&
+              streamingPhase !== 'thinking' &&
+              streamingPhase !== 'completed'
+            "
+            class="flex gap-2.5 relative mt-2"
+          >
+            <div class="w-7 h-7 flex-shrink-0"></div>
+            <div class="flex-1 space-y-2">
+              <div
+                v-for="(phase, idx) in phaseHistory"
+                :key="idx"
+                class="text-[10px]"
+              >
+                <div class="flex items-start gap-2">
+                  <div
+                    class="mt-1.5 w-2 h-2 rounded-full bg-primary-color flex-shrink-0"
+                  ></div>
+                  <div class="space-y-0.5">
+                    <p class="font-semibold text-text-primary capitalize">
+                      {{ phase.phase }}
+                    </p>
+                    <p v-if="phase.detail" class="text-text-secondary italic">
+                      {{ phase.detail }}
+                    </p>
+                    <p class="text-text-tertiary">
+                      {{
+                        formatTimestamp(new Date(phase.timestamp).toISOString())
+                      }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </template>
         <!-- Empty state — rich suggestions like ClickUp AI -->
         <div
           v-else
@@ -1307,7 +1406,7 @@
           <div class="space-y-0.5 px-1">
             <p class="text-sm font-semibold text-text-primary">
               Welcome back! Ask me anything about
-              <span class="text-accent">{{ contextTitle }}</span
+              <span class="text-primary-color">{{ contextTitle }}</span
               >.
             </p>
             <p class="text-[12px] text-text-tertiary">
@@ -1327,13 +1426,13 @@
                 v-for="prompt in emptyStateQuickPrompts"
                 :key="prompt"
                 @click="applyPromptAndSend(prompt)"
-                class="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-accent/6 hover:text-accent transition-all group cursor-pointer"
+                class="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-primary-color/6 hover:text-primary-color transition-all group cursor-pointer"
               >
                 <i
-                  class="fa-solid fa-arrow-right text-[10px] text-text-tertiary group-hover:text-accent transition-colors shrink-0"
+                  class="fa-solid fa-arrow-right text-[10px] text-text-tertiary group-hover:text-primary-color transition-colors shrink-0"
                 ></i>
                 <span
-                  class="text-[13px] text-text-primary group-hover:text-accent transition-colors leading-snug"
+                  class="text-[13px] text-text-primary group-hover:text-primary-color transition-colors leading-snug"
                   >{{ prompt }}</span
                 >
               </button>
@@ -1341,7 +1440,7 @@
           </div>
 
           <!-- Divider -->
-          <div class="border-t border-border/30"></div>
+          <div class="border-t border-border"></div>
 
           <!-- Feature cards -->
           <div class="space-y-2" v-if="emptyStateFeatureCards.length">
@@ -1355,7 +1454,7 @@
                 v-for="card in emptyStateFeatureCards"
                 :key="card.title"
                 @click="applyPromptAndSend(card.prompt)"
-                class="w-full text-left flex items-center gap-3 p-3 rounded-xl border border-border/40 hover:border-accent/30 hover:bg-accent/4 transition-all group cursor-pointer"
+                class="w-full text-left flex items-center gap-3 p-3 rounded-xl border border-border hover:border-primary-color/30 hover:bg-primary-color/4 transition-all group cursor-pointer"
               >
                 <!-- Icon box -->
                 <div
@@ -1369,13 +1468,13 @@
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2">
                     <span
-                      class="text-[13px] font-medium text-text-primary group-hover:text-accent transition-colors leading-snug"
+                      class="text-[13px] font-medium text-text-primary group-hover:text-primary-color transition-colors leading-snug"
                     >
                       {{ card.title }}
                     </span>
                     <span
                       v-if="card.isNew"
-                      class="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-accent/10 text-accent border border-accent/20 shrink-0"
+                      class="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-primary-color/10 text-primary-color border border-primary-color/20 shrink-0"
                     >
                       New
                     </span>
@@ -1387,7 +1486,7 @@
 
                 <!-- Arrow -->
                 <i
-                  class="fa-solid fa-chevron-right text-[10px] text-text-tertiary group-hover:text-accent transition-colors shrink-0"
+                  class="fa-solid fa-chevron-right text-[10px] text-text-tertiary group-hover:text-primary-color transition-colors shrink-0"
                 ></i>
               </button>
             </div>
@@ -1405,7 +1504,7 @@
                 v-for="sp in activeSuggestedPrompts"
                 :key="sp.label"
                 @click="applyPromptAndSend(sp.text)"
-                class="px-3 py-1.5 rounded-full border border-accent/20 bg-accent/5 text-[11px] text-accent font-medium hover:bg-accent/12 hover:border-accent/35 transition-all cursor-pointer"
+                class="px-3 py-1.5 rounded-full border border-primary-color/20 bg-primary-color/5 text-[11px] text-primary-color font-medium hover:bg-primary-color/12 hover:border-primary-color/35 transition-all cursor-pointer"
               >
                 <i class="fa-solid fa-sparkles text-[9px] mr-1 opacity-70"></i>
                 {{ sp.label }}
@@ -1414,13 +1513,13 @@
           </div>
         </div>
       </div>
-        
+
       <!-- Input Area -->
-      <div class="px-3 pt-3 pb-1.5 border-t border-border/40 bg-bg-card">
+      <div class="px-3 pt-3 pb-1.5 border-t border-border bg-bg-card">
         <!-- Breadcrumb -->
         <div
           v-if="contextTitle"
-          class="mb-2.5 flex justify-between border-b border-border/30 items-center gap-1.5 pb-2"
+          class="mb-2.5 flex justify-between border-b border-border items-center gap-1.5 pb-2"
         >
           <nav class="flex items-center text-[11px] text-text-secondary gap-1">
             <div
@@ -1469,14 +1568,17 @@
             v-for="sp in activeSuggestedPrompts.slice(0, 4)"
             :key="sp.label"
             @click="applyPromptToInput(sp.text)"
-            class="px-3 py-1.5 rounded-full border border-accent/20 bg-accent/5 text-[11px] text-accent font-medium hover:bg-accent/12 hover:border-accent/35 transition-all cursor-pointer"
+            class="px-3 py-1.5 rounded-full border border-primary-color/20 bg-primary-color/5 text-[11px] text-primary-color font-medium hover:bg-primary-color/12 hover:border-primary-color/35 transition-all cursor-pointer"
           >
             <i class="fa-solid fa-lightbulb mr-1 text-[9px] opacity-70"></i>
             {{ sp.label }}
           </button>
         </div>
         <!-- Chat Input Area -->
-        <div class="flex flex-col gap-2.5" :class="{ 'neon-flow-border-chatbot': agentStore.isSending }">
+        <div
+          class="flex flex-col gap-2.5"
+          :class="{ 'neon-flow-border-chatbot': agentStore.isSending }"
+        >
           <!-- Active suggested prompts (only when no messages yet) -->
           <div
             class="flex flex-wrap gap-1.5 px-1"
@@ -1486,7 +1588,7 @@
               v-for="sp in activeSuggestedPrompts.slice(0, 4)"
               :key="sp.label"
               @click="applyPromptToInput(sp.text)"
-              class="px-3 py-1.5 rounded-full border border-accent/20 bg-accent/5 text-[11px] text-accent font-medium hover:bg-accent/12 hover:border-accent/35 transition-all cursor-pointer"
+              class="px-3 py-1.5 rounded-full border border-primary-color/20 bg-primary-color/5 text-[11px] text-primary-color font-medium hover:bg-primary-color/12 hover:border-primary-color/35 transition-all cursor-pointer"
             >
               <i class="fa-solid fa-sparkles text-[9px] mr-1"></i>
               {{ sp.label }}
@@ -1498,7 +1600,7 @@
             class="relative rounded-2xl border bg-bg-card transition-all duration-200"
             :class="
               isFocused
-                ? 'border-accent/40 shadow-[0_0_0_3px_rgba(125,104,200,0.12)]'
+                ? 'border-primary-color/40 shadow-[0_0_0_3px_rgba(125,104,200,0.12)]'
                 : 'border-border'
             "
           >
@@ -1516,7 +1618,7 @@
                     class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] transition-all cursor-pointer"
                     :class="
                       selectedSource !== 'all'
-                        ? 'text-accent bg-accent/8 border border-accent/20'
+                        ? 'text-primary-color bg-primary-color/8 border border-primary-color/20'
                         : 'text-text-secondary hover:text-text-primary hover:bg-bg-surface'
                     "
                   >
@@ -1534,7 +1636,7 @@
                   <transition name="dropdown">
                     <div
                       v-if="showSourceDropdown"
-                      class="absolute bottom-full mb-2 left-0 w-64 rounded-xl border border-border/60 bg-bg-card shadow-lg shadow-black/8 z-50 overflow-hidden"
+                      class="absolute bottom-full mb-2 left-0 w-64 rounded-xl border border-border bg-bg-card shadow-lg shadow-black/8 z-50 overflow-hidden"
                     >
                       <!-- Search inside dropdown -->
                       <div class="px-3 pt-3 pb-2">
@@ -1546,7 +1648,7 @@
                             type="text"
                             placeholder="Search sources..."
                             v-model="sourceSearch"
-                            class="w-full pl-7 pr-3 py-1.5 text-xs border border-border/60 rounded-lg bg-bg-body/80 focus:border-accent/40 outline-none transition-all"
+                            class="w-full pl-7 pr-3 py-1.5 text-xs border border-border rounded-lg bg-bg-body/80 focus:border-primary-color/40 outline-none transition-all"
                           />
                         </div>
                       </div>
@@ -1556,9 +1658,11 @@
                           v-for="source in filteredSources"
                           :key="source.id"
                           @click="selectSource(source.id)"
-                          class="flex items-center gap-3 px-3 py-2.5 cursor-pointer hover:bg-accent/6 transition-colors group"
+                          class="flex items-center gap-3 px-3 py-2.5 cursor-pointer hover:bg-primary-color/6 transition-colors group"
                           :class="
-                            selectedSource === source.id ? 'bg-accent/8' : ''
+                            selectedSource === source.id
+                              ? 'bg-primary-color/8'
+                              : ''
                           "
                         >
                           <!-- Icon -->
@@ -1585,7 +1689,7 @@
                               </span>
                               <span
                                 v-if="source.badge"
-                                class="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-accent/10 text-accent"
+                                class="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-primary-color/10 text-primary-color"
                               >
                                 {{ source.badge }}
                               </span>
@@ -1600,7 +1704,7 @@
                           <!-- Check -->
                           <i
                             v-if="selectedSource === source.id"
-                            class="fa-solid fa-check text-accent text-[11px] shrink-0"
+                            class="fa-solid fa-check text-primary-color text-[11px] shrink-0"
                           ></i>
                         </div>
                       </div>
@@ -1614,8 +1718,8 @@
                   class="flex items-center gap-1 px-1.5 py-1.5 rounded-full text-[11px] transition-all cursor-pointer"
                   :class="
                     webSearch
-                      ? 'text-accent bg-accent/20 border border-accent/20'
-                      : 'text-text-secondary hover:text-accent hover:bg-bg-accent/20'
+                      ? 'text-primary-color bg-primary-color/20 border border-primary-color/20'
+                      : 'text-text-secondary hover:text-primary-color hover:bg-bg-primary-color/20'
                   "
                   title="Toggle web search"
                 >
@@ -1636,7 +1740,7 @@
                 <!-- Image preview -->
                 <div
                   v-if="file.type.startsWith('image/')"
-                  class="w-16 h-16 rounded-xl border border-border/60 overflow-hidden bg-bg-body"
+                  class="w-16 h-16 rounded-xl border border-border overflow-hidden bg-bg-body"
                 >
                   <img
                     :src="createObjectURL(file)"
@@ -1647,7 +1751,7 @@
                 <!-- PDF / other file preview -->
                 <div
                   v-else
-                  class="h-12 px-3 rounded-xl border border-border/60 bg-bg-body/80 flex items-center gap-2 max-w-[140px]"
+                  class="h-12 px-3 rounded-xl border border-border bg-bg-body/80 flex items-center gap-2 max-w-[140px]"
                 >
                   <i
                     class="fa-solid fa-file-pdf text-red-400 text-sm shrink-0"
@@ -1674,7 +1778,7 @@
               >
                 <!-- Header -->
                 <div
-                  class="flex items-center justify-between px-3 py-2 border-b border-border/30"
+                  class="flex items-center justify-between px-3 py-2 border-b border-border"
                 >
                   <span
                     class="text-[10px] font-semibold text-text-tertiary uppercase tracking-wider"
@@ -1699,7 +1803,7 @@
                     v-for="pin in pinnedPrompts.slice(0, 2)"
                     :key="'bar-recent-' + pin.id"
                     @click="applySavedPrompt(pin.text)"
-                    class="flex items-center gap-2.5 px-3 py-2 hover:bg-accent/6 cursor-pointer transition-colors"
+                    class="flex items-center gap-2.5 px-3 py-2 hover:bg-primary-color/6 cursor-pointer transition-colors"
                   >
                     <i
                       class="fa-regular fa-file-lines text-text-tertiary text-[11px] shrink-0"
@@ -1712,10 +1816,7 @@
                 </div>
 
                 <!-- Private to me -->
-                <div
-                  v-if="pinnedPrompts.length"
-                  class="border-t border-border/20"
-                >
+                <div v-if="pinnedPrompts.length" class="border-t border-border">
                   <p
                     class="px-3 pt-2 pb-1 text-[10px] font-semibold text-text-tertiary uppercase tracking-wider"
                   >
@@ -1725,7 +1826,7 @@
                     v-for="pin in pinnedPrompts"
                     :key="'bar-private-' + pin.id"
                     @click="applySavedPrompt(pin.text)"
-                    class="flex items-center gap-2.5 px-3 py-2 hover:bg-accent/6 cursor-pointer transition-colors"
+                    class="flex items-center gap-2.5 px-3 py-2 hover:bg-primary-color/6 cursor-pointer transition-colors"
                   >
                     <i
                       class="fa-regular fa-file-lines text-text-tertiary text-[11px] shrink-0"
@@ -1738,7 +1839,7 @@
                 </div>
 
                 <!-- Add new prompt -->
-                <div class="border-t border-border/30">
+                <div class="border-t border-border">
                   <button
                     @click="openNewPromptModal()"
                     class="w-full flex items-center gap-2.5 px-3 py-2.5 hover:bg-bg-surface transition-colors text-left cursor-pointer"
@@ -1753,7 +1854,7 @@
                 </div>
 
                 <!-- Footer -->
-                <div class="border-t border-border/30 px-3 py-2">
+                <div class="border-t border-border px-3 py-2">
                   <p class="text-[11px] text-text-tertiary">
                     Tell AI what to do next
                   </p>
@@ -1786,7 +1887,7 @@
                     showPlusMenu = !showPlusMenu;
                     showSavedPromptsMenu = false;
                   "
-                  class="w-8 h-8 rounded-full flex items-center justify-center text-text-secondary bg-accent/7 hover:text-accent hover:bg-accent/6 transition-all cursor-pointer"
+                  class="w-8 h-8 rounded-full flex items-center justify-center text-text-secondary bg-primary-color/7 hover:text-primary-color hover:bg-primary-color/6 transition-all cursor-pointer"
                 >
                   <i class="fa-regular fa-plus"></i>
                 </button>
@@ -1795,7 +1896,7 @@
                 <transition name="dropdown">
                   <div
                     v-if="showPlusMenu && !showSavedPromptsMenu"
-                    class="absolute bottom-full mb-2 left-0 w-52 rounded-xl border border-border/60 bg-bg-card shadow-lg shadow-black/8 z-50 overflow-hidden"
+                    class="absolute bottom-full mb-2 left-0 w-52 rounded-xl border border-border bg-bg-card shadow-lg shadow-black/8 z-50 overflow-hidden"
                   >
                     <div class="p-1">
                       <button
@@ -1832,7 +1933,7 @@
                         class="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-bg-surface transition-colors text-left"
                       >
                         <span
-                          class="w-7 h-7 rounded-lg bg-bg-surface border border-border/60 flex items-center justify-center shrink-0"
+                          class="w-7 h-7 rounded-lg bg-bg-surface border border-border flex items-center justify-center shrink-0"
                         >
                           <i
                             class="fa-solid fa-paperclip text-text-secondary text-[11px]"
@@ -1885,11 +1986,11 @@
                 <transition name="dropdown">
                   <div
                     v-if="showSavedPromptsMenu"
-                    class="absolute bottom-full mb-2 left-0 w-56 rounded-xl border border-border/60 bg-bg-card shadow-lg shadow-black/8 z-50 overflow-hidden"
+                    class="absolute bottom-full mb-2 left-0 w-56 rounded-xl border border-border bg-bg-card shadow-lg shadow-black/8 z-50 overflow-hidden"
                   >
                     <!-- Header -->
                     <div
-                      class="flex items-center gap-2 px-3 pt-2.5 pb-2 border-b border-border/30"
+                      class="flex items-center gap-2 px-3 pt-2.5 pb-2 border-b border-border"
                     >
                       <button
                         @click="showSavedPromptsMenu = false"
@@ -1964,7 +2065,7 @@
                     </div>
 
                     <!-- Add new prompt -->
-                    <div class="border-t border-border/30">
+                    <div class="border-t border-border">
                       <button
                         @click="
                           showSavedPromptsMenu = true;
@@ -1982,7 +2083,7 @@
                     </div>
 
                     <!-- Footer hint -->
-                    <div class="border-t border-border/30 px-3 py-2">
+                    <div class="border-t border-border px-3 py-2">
                       <p class="text-[11px] text-text-tertiary">
                         Tell AI what to do next
                       </p>
@@ -1994,7 +2095,7 @@
               <div class="flex items-center gap-2">
                 <span
                   v-if="selectedFiles.length"
-                  class="text-[11px] text-accent font-medium bg-accent/8 px-2 py-0.5 rounded-full border border-accent/15"
+                  class="text-[11px] text-primary-color font-medium bg-primary-color/8 px-2 py-0.5 rounded-full border border-primary-color/15"
                 >
                   {{ selectedFiles.length }} file{{
                     selectedFiles.length > 1 ? "s" : ""
@@ -2007,10 +2108,10 @@
                     (!userMessage.trim() && !selectedFiles.length) ||
                     agentStore.isSending
                   "
-                  class="w-9 h-9 rounded-full bg-accent flex items-center justify-center hover:bg-accent-hover active:scale-90 transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-sm shadow-accent/25"
+                  class="w-9 h-9 rounded-full bg-primary-color flex items-center justify-center hover:bg-primary-color active:scale-90 transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-sm shadow-primary-color/25"
                 >
                   <i
-                    class="fa-solid text-accent-text text-[11px]"
+                    class="fa-solid text-white text-[11px]"
                     :class="
                       agentStore.isSending
                         ? 'fa-spinner fa-spin'
@@ -2059,7 +2160,7 @@
           <template v-for="pin in pinnedPrompts.slice(0, 2)" :key="pin.id">
             <div class="relative group">
               <button
-                class="truncate max-w-[90px] pr-5 cursor-pointer px-2.5 py-1 rounded-full border border-border/40 bg-bg-body/80 text-[11px] text-text-secondary hover:border-accent/30 hover:text-accent transition-all duration-150"
+                class="truncate max-w-[90px] pr-5 cursor-pointer px-2.5 py-1 rounded-full border border-border bg-bg-body/80 text-[11px] text-text-secondary hover:border-primary-color/30 hover:text-primary-color transition-all duration-150"
                 @click="applyPromptToInput(pin.text)"
               >
                 {{ pin.label }}
@@ -2077,10 +2178,10 @@
 
           <button
             @click="toggleDropdown"
-            class="flex items-center gap-1.5 cursor-pointer px-3 py-1.5 rounded-full border border-border/40 bg-bg-body/80 text-[11px] text-text-secondary hover:border-accent/30 hover:text-accent transition-all duration-150"
+            class="flex items-center gap-1.5 cursor-pointer px-3 py-1.5 rounded-full border border-border bg-bg-body/80 text-[11px] text-text-secondary hover:border-primary-color/30 hover:text-primary-color transition-all duration-150"
           >
             <i
-              class="fa-solid fa-thumbtack text-accent"
+              class="fa-solid fa-thumbtack text-primary-color"
               style="font-size: 9px"
             ></i>
             Pinned
@@ -2096,10 +2197,10 @@
           <transition name="dropdown">
             <div
               v-if="isDropdownOpen"
-              class="absolute bottom-full mb-1 left-0 w-56 bg-bg-card border border-border/60 rounded-xl shadow-lg shadow-black/8 z-50 overflow-hidden"
+              class="absolute bottom-full mb-1 left-0 w-56 bg-bg-card border border-border rounded-xl shadow-lg shadow-black/8 z-50 overflow-hidden"
             >
               <div
-                class="flex justify-between items-center px-3 py-2 border-b border-border/30"
+                class="flex justify-between items-center px-3 py-2 border-b border-border"
               >
                 <span
                   class="text-[10px] font-bold text-text-tertiary uppercase tracking-wider"
@@ -2110,7 +2211,7 @@
                 <button
                   v-for="pin in pinnedPrompts"
                   :key="pin.id"
-                  class="w-full text-left px-3 py-2 flex items-center justify-between hover:bg-accent/8 transition-colors text-[12px]"
+                  class="w-full text-left px-3 py-2 flex items-center justify-between hover:bg-primary-color/8 transition-colors text-[12px]"
                   @click="applyPromptToInput(pin.text)"
                 >
                   <span class="truncate text-text-primary">{{
@@ -2143,14 +2244,14 @@
         >
           <!-- Header -->
           <div
-            class="flex items-center justify-between px-4 py-3 border-b border-border/40 shrink-0 bg-bg-card/95 backdrop-blur-sm"
+            class="flex items-center justify-between px-4 py-3 border-b border-border shrink-0 bg-bg-card/95 backdrop-blur-sm"
           >
             <div class="flex items-center gap-2.5">
               <div
-                class="w-7 h-7 rounded-lg bg-accent/10 flex items-center justify-center"
+                class="w-7 h-7 rounded-lg bg-primary-color/10 flex items-center justify-center"
               >
                 <i
-                  class="fa-regular fa-clock-rotate-left text-accent text-[11px]"
+                  class="fa-regular fa-clock-rotate-left text-primary-color text-[11px]"
                 ></i>
               </div>
               <h3 class="text-sm font-semibold text-text-primary">
@@ -2180,7 +2281,7 @@
             <!-- Session detail view -->
             <div v-else-if="historyViewSession" class="flex flex-col h-full">
               <div
-                class="flex items-center gap-2 px-3 py-2.5 border-b border-border/40 shrink-0 bg-bg-body/50"
+                class="flex items-center gap-2 px-3 py-2.5 border-b border-border shrink-0 bg-bg-body/50"
               >
                 <button
                   @click="historyViewSession = null"
@@ -2201,13 +2302,13 @@
                   @keydown.enter="confirmRename"
                   @keydown.escape="isRenamingSession = false"
                   ref="renameInput"
-                  class="flex-1 text-xs bg-bg-body border border-accent/40 rounded-lg px-2.5 py-1 outline-none text-text-primary min-w-0 focus:ring-1 focus:ring-accent/15"
+                  class="flex-1 text-xs bg-bg-body border border-primary-color/40 rounded-lg px-2.5 py-1 outline-none text-text-primary min-w-0 focus:ring-1 focus:ring-primary-color/15"
                   placeholder="Session name..."
                 />
                 <div class="flex items-center gap-0.5 shrink-0">
                   <button
                     @click="startRename"
-                    class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-accent/10 transition-colors cursor-pointer"
+                    class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-primary-color/10 transition-colors cursor-pointer"
                     title="Rename"
                   >
                     <i
@@ -2243,14 +2344,18 @@
                     <div
                       class="w-5 h-5 rounded-full flex items-center justify-center shrink-0"
                       :class="
-                        msg.role === 'user' ? 'bg-accent/10' : 'bg-accent/10'
+                        msg.role === 'user'
+                          ? 'bg-primary-color/10'
+                          : 'bg-primary-color/10'
                       "
                     >
                       <i
                         v-if="msg.role === 'assistant'"
-                        class="fa-solid fa-robot text-accent text-[8px]"
+                        class="fa-solid fa-robot text-primary-color text-[8px]"
                       ></i>
-                      <span v-else class="text-[7px] font-bold text-accent"
+                      <span
+                        v-else
+                        class="text-[7px] font-bold text-primary-color"
                         >ME</span
                       >
                     </div>
@@ -2258,8 +2363,8 @@
                       class="px-2.5 py-1.5 rounded-xl max-w-[85%] text-[11px] leading-relaxed"
                       :class="
                         msg.role === 'user'
-                          ? 'bg-accent text-white rounded-tr-md'
-                          : 'bg-bg-body border border-border/40 text-text-primary rounded-tl-md'
+                          ? 'bg-primary-color text-white rounded-tr-md'
+                          : 'bg-bg-body border border-border text-text-primary rounded-tl-md'
                       "
                     >
                       <p class="whitespace-pre-wrap">{{ msg.content }}</p>
@@ -2287,7 +2392,7 @@
               <div
                 v-for="session in sessionsList"
                 :key="session.session_id"
-                class="group relative px-3 py-2.5 rounded-xl border border-transparent hover:border-border/40 hover:bg-bg-body/60 cursor-pointer transition-all duration-150"
+                class="group relative px-3 py-2.5 rounded-xl border border-transparent hover:border-border hover:bg-bg-body/60 cursor-pointer transition-all duration-150"
                 @click="openSession(session)"
               >
                 <div class="flex items-start justify-between gap-2">
@@ -2319,19 +2424,19 @@
                     <transition name="dropdown">
                       <div
                         v-if="openMenuSessionId === session.session_id"
-                        class="absolute right-0 mt-1 w-40 rounded-xl bg-bg-card shadow-lg shadow-black/8 border border-border/60 z-50 py-1 overflow-hidden"
+                        class="absolute right-0 mt-1 w-40 rounded-xl bg-bg-card shadow-lg shadow-black/8 border border-border z-50 py-1 overflow-hidden"
                       >
                         <button
                           @click.stop="
                             startRenameFromList(session);
                             closeMenu();
                           "
-                          class="w-full flex items-center gap-2 px-3 py-2 text-xs text-text-primary hover:bg-accent/8 hover:text-accent transition-colors"
+                          class="w-full flex items-center gap-2 px-3 py-2 text-xs text-text-primary hover:bg-primary-color/8 hover:text-primary-color transition-colors"
                         >
                           <i class="fa-regular fa-pen text-[10px]"></i>
                           Rename
                         </button>
-                        <div class="my-0.5 border-t border-border/30"></div>
+                        <div class="my-0.5 border-t border-border"></div>
                         <button
                           @click.stop="
                             confirmDeleteSession(session.session_id);
@@ -2364,7 +2469,7 @@
                             el as HTMLInputElement;
                       }
                     "
-                    class="w-full text-xs bg-bg-body border border-accent/40 rounded-lg px-2.5 py-1.5 outline-none text-text-primary focus:ring-1 focus:ring-accent/15"
+                    class="w-full text-xs bg-bg-body border border-primary-color/40 rounded-lg px-2.5 py-1.5 outline-none text-text-primary focus:ring-1 focus:ring-primary-color/15"
                     placeholder="Session name..."
                   />
                 </div>
@@ -2384,12 +2489,12 @@
             v-if="
               !historyViewSession && !isLoadingSessions && totalSessionPages > 1
             "
-            class="flex items-center justify-between px-4 py-2.5 border-t border-border/40 shrink-0"
+            class="flex items-center justify-between px-4 py-2.5 border-t border-border shrink-0"
           >
             <button
               @click="changeSessionPage(currentSessionPage - 1)"
               :disabled="currentSessionPage === 1"
-              class="flex items-center gap-1.5 text-[11px] text-text-secondary hover:text-accent disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+              class="flex items-center gap-1.5 text-[11px] text-text-secondary hover:text-primary-color disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
             >
               <i class="fa-solid fa-chevron-left text-[9px]"></i>
               Prev
@@ -2400,7 +2505,7 @@
             <button
               @click="changeSessionPage(currentSessionPage + 1)"
               :disabled="currentSessionPage === totalSessionPages"
-              class="flex items-center gap-1.5 text-[11px] text-text-secondary hover:text-accent disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+              class="flex items-center gap-1.5 text-[11px] text-text-secondary hover:text-primary-color disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
             >
               Next
               <i class="fa-solid fa-chevron-right text-[9px]"></i>
@@ -2417,7 +2522,7 @@
     class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
   >
     <div
-      class="w-full max-w-sm rounded-2xl bg-bg-card shadow-2xl p-6 border border-border/40"
+      class="w-full max-w-sm rounded-2xl bg-bg-card shadow-2xl p-6 border border-border"
     >
       <div class="flex items-start gap-3.5">
         <div
@@ -2438,7 +2543,7 @@
       <div class="mt-5 flex justify-end gap-2">
         <button
           @click="handleDeleteCancel"
-          class="rounded-lg border border-border/60 px-4 py-2 text-sm text-text-primary hover:bg-bg-body transition-colors"
+          class="rounded-lg border border-border px-4 py-2 text-sm text-text-primary hover:bg-bg-body transition-colors"
         >
           Cancel
         </button>
@@ -2459,11 +2564,11 @@
       @click.self="closeNewPromptModal"
     >
       <div
-        class="w-full max-w-xl rounded-2xl bg-bg-card shadow-2xl border border-border/40 overflow-hidden"
+        class="w-full max-w-xl rounded-2xl bg-bg-card shadow-2xl border border-border overflow-hidden"
       >
         <!-- Header -->
         <div
-          class="flex items-center justify-between px-5 py-4 border-b border-border/40"
+          class="flex items-center justify-between px-5 py-4 border-b border-border"
         >
           <h3 class="text-sm font-semibold text-text-primary">New Prompt</h3>
           <button
@@ -2484,7 +2589,7 @@
             <input
               v-model="newPromptForm.title"
               placeholder="Enter prompt title"
-              class="w-full border border-border/60 bg-bg-body/60 rounded-lg px-3.5 py-2.5 text-sm focus:border-accent/50 focus:ring-2 focus:ring-accent/10 outline-none transition-all placeholder:text-text-tertiary"
+              class="w-full border border-border bg-bg-body/60 rounded-lg px-3.5 py-2.5 text-sm focus:border-primary-color/50 focus:ring-2 focus:ring-primary-color/10 outline-none transition-all placeholder:text-text-tertiary"
             />
           </div>
 
@@ -2497,7 +2602,7 @@
               v-model="newPromptForm.text"
               rows="4"
               placeholder="Write a prompt that you would like to save"
-              class="w-full border border-border/60 bg-bg-body/60 rounded-lg px-3.5 py-2.5 text-sm focus:border-accent/50 focus:ring-2 focus:ring-accent/10 outline-none transition-all resize-none placeholder:text-text-tertiary"
+              class="w-full border border-border bg-bg-body/60 rounded-lg px-3.5 py-2.5 text-sm focus:border-primary-color/50 focus:ring-2 focus:ring-primary-color/10 outline-none transition-all resize-none placeholder:text-text-tertiary"
             />
           </div>
 
@@ -2512,7 +2617,7 @@
                   type="radio"
                   value="only_me"
                   v-model="newPromptForm.shareWith"
-                  class="accent-accent w-4 h-4"
+                  class="accent-primary-color w-4 h-4"
                 />
                 <span class="text-sm text-text-primary">Only Me</span>
               </label>
@@ -2521,7 +2626,7 @@
                   type="radio"
                   value="everyone"
                   v-model="newPromptForm.shareWith"
-                  class="accent-accent w-4 h-4"
+                  class="accent-primary-color w-4 h-4"
                 />
                 <span class="text-sm text-text-primary">Everyone</span>
               </label>
@@ -2530,7 +2635,7 @@
                   type="radio"
                   value="admins"
                   v-model="newPromptForm.shareWith"
-                  class="accent-accent w-4 h-4"
+                  class="accent-primary-color w-4 h-4"
                 />
                 <span class="text-sm text-text-primary">Admins</span>
               </label>
@@ -2539,12 +2644,12 @@
                   type="radio"
                   value="select_people"
                   v-model="newPromptForm.shareWith"
-                  class="accent-accent w-4 h-4"
+                  class="accent-primary-color w-4 h-4"
                 />
                 <span class="text-sm text-text-primary">Select people:</span>
                 <div
                   v-if="newPromptForm.shareWith === 'select_people'"
-                  class="w-7 h-7 rounded-full border-2 border-dashed border-border flex items-center justify-center hover:border-accent/40 cursor-pointer transition-colors ml-1"
+                  class="w-7 h-7 rounded-full border-2 border-dashed border-border flex items-center justify-center hover:border-primary-color/40 cursor-pointer transition-colors ml-1"
                 >
                   <i
                     class="fa-solid fa-plus text-text-tertiary text-[10px]"
@@ -2557,11 +2662,11 @@
 
         <!-- Footer -->
         <div
-          class="flex items-center justify-end gap-2.5 px-5 py-4 border-t border-border/40 bg-bg-body/40"
+          class="flex items-center justify-end gap-2.5 px-5 py-4 border-t border-border bg-bg-body/40"
         >
           <button
             @click="closeNewPromptModal"
-            class="px-4 py-2 rounded-lg border border-border/60 text-sm text-text-primary hover:bg-bg-body transition-colors cursor-pointer"
+            class="px-4 py-2 rounded-lg border border-border text-sm text-text-primary hover:bg-bg-body transition-colors cursor-pointer"
           >
             Close
           </button>
@@ -2570,7 +2675,7 @@
             :disabled="
               !newPromptForm.title.trim() || !newPromptForm.text.trim()
             "
-            class="px-5 py-2 rounded-lg bg-accent text-white text-sm font-medium hover:bg-accent/90 active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-sm shadow-accent/20"
+            class="px-5 py-2 rounded-lg bg-primary-color text-white text-sm font-medium hover:bg-primary-color/90 active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-sm shadow-primary-color/20"
           >
             Create
           </button>
@@ -2656,9 +2761,7 @@ const configTabs = [
 const isManuallyExpanded = ref(false);
 
 const isExpanded = computed(() => {
-  return (
-    isManuallyExpanded.value || showConfigPanel.value
-  );
+  return isManuallyExpanded.value || showConfigPanel.value;
 });
 const showConfigPanel = ref(false);
 const showAIPreview = ref(false);
@@ -2679,36 +2782,44 @@ const showHistoryPanel = ref(false);
 const isFocused = ref(false);
 const activeSessionId = ref<string>("");
 const activeSessionTitle = ref<string>("");
-const streamingElapsedMs = ref(0)
-const streamingElapsedTimer = ref<ReturnType<typeof setInterval> | null>(null)
-const streamingPhaseLabel = ref("")
-let elapsedTimerHandle: ReturnType<typeof setInterval> | null = null
+const streamingElapsedMs = ref(0);
+const streamingElapsedTimer = ref<ReturnType<typeof setInterval> | null>(null);
+const streamingPhaseLabel = ref("");
+let elapsedTimerHandle: ReturnType<typeof setInterval> | null = null;
 const agentsData = computed(() => agentStore.agentSettings.agent);
 const agentModuleId = computed(() => agentStore.module_id);
 const agentModuleName = computed(() => agentStore.moduleName);
 const knowledgeData = computed(() => agentStore?.agentSettings?.knowledge);
 const trainingFileInput = ref<HTMLInputElement | null>(null);
-  // After: const isAiThinkingBubbleVisible = ref(false);
-const streamingContent = ref("")
-const streamingPhase = ref<"thinking" | "generating" | "completed" | "">("")
-const streamingThinkMs = ref<number | null>(null)
-const streamingTotalMs = ref<number | null>(null)
-const displayedContent = ref("")
-const animationFrameId = ref<number | null>(null)
-const streamingPhaseDetail = ref("")
-const streamingPhaseTimestamp = ref<number | null>(null)
-const phaseHistory = ref<Array<{ phase: string; detail: string; timestamp: number }>>([])
+// After: const isAiThinkingBubbleVisible = ref(false);
+const streamingContent = ref("");
+const streamingPhase = ref<"thinking" | "generating" | "completed" | "">("");
+const streamingThinkMs = ref<number | null>(null);
+const streamingTotalMs = ref<number | null>(null);
+const displayedContent = ref("");
+const animationFrameId = ref<number | null>(null);
+const streamingPhaseDetail = ref("");
+const streamingPhaseTimestamp = ref<number | null>(null);
+const phaseHistory = ref<
+  Array<{ phase: string; detail: string; timestamp: number }>
+>([]);
 const webSearch = ref(false);
 // const isRecording = ref(false);
 const sourceSearch = ref("");
 const agentsCreated = computed(() => agentStore.agentsCreated);
-const showStreamingBubble = computed(() =>
-  (streamingPhase.value === 'generating' && streamingContent.value.length > 0) ||
-  (streamingPhase.value === 'completed' && displayedContent.value.length > 0 && !orderedMessages.value.some((m) => m.type === 'assistant' && !(m.metadata as MessageMetadata)?.temp))
-)
-const showThinkingBubble = computed(() =>
-  isAiThinkingBubbleVisible.value && streamingPhase.value === 'thinking'
-)
+const showStreamingBubble = computed(
+  () =>
+    (streamingPhase.value === "generating" &&
+      streamingContent.value.length > 0) ||
+    (streamingPhase.value === "completed" &&
+      displayedContent.value.length > 0 &&
+      !orderedMessages.value.some(
+        (m) => m.type === "assistant" && !(m.metadata as MessageMetadata)?.temp,
+      )),
+);
+const showThinkingBubble = computed(
+  () => isAiThinkingBubbleVisible.value && streamingPhase.value === "thinking",
+);
 const filteredSources = computed(() => {
   if (!sourceSearch.value.trim()) return availableSources.value;
   const q = sourceSearch.value.toLowerCase();
@@ -2752,18 +2863,18 @@ const sheetName = computed(() => {
   }
   return sheetNameRef.value || "";
 });
-const SESSION_KEY = 'chatbot_ever_loaded'
-const hasEverLoaded = ref(sessionStorage.getItem(SESSION_KEY) === '1')
+const SESSION_KEY = "chatbot_ever_loaded";
+const hasEverLoaded = ref(sessionStorage.getItem(SESSION_KEY) === "1");
 
 watch(
   () => agentStore.isLoadingHistory,
   (loading) => {
     if (!loading && !hasEverLoaded.value) {
-      hasEverLoaded.value = true
-      sessionStorage.setItem(SESSION_KEY, '1')
+      hasEverLoaded.value = true;
+      sessionStorage.setItem(SESSION_KEY, "1");
     }
   },
-)
+);
 const sheetId = computed(() => {
   if (
     route.path.includes("peak") ||
@@ -2910,31 +3021,33 @@ const orderedMessages = computed(() => {
   const sessionMessages = Array.isArray(agentStore.chatHistory)
     ? agentStore.chatHistory
         .filter((s) =>
-          activeSessionId.value ? s.session_id === activeSessionId.value : false
+          activeSessionId.value
+            ? s.session_id === activeSessionId.value
+            : false,
         )
         .flatMap((s) => s.messages || [])
-        .filter((msg) => msg.metadata?.status !== 'thinking')
-    : []
+        .filter((msg) => msg.metadata?.status !== "thinking")
+    : [];
 
-  const historyIds = new Set(sessionMessages.map((m) => m._id))
+  const historyIds = new Set(sessionMessages.map((m) => m._id));
   const uniquePending = pendingMessages.value.filter(
-    (m) => !historyIds.has(m._id)
-  )
+    (m) => !historyIds.has(m._id),
+  );
 
   const all = [...sessionMessages, ...uniquePending].sort(
-    (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-  )
+    (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
+  );
 
   // ← Remove duplicate assistant messages — keep the one with real _id (no 'assistant-' prefix)
-  const seen = new Set<string>()
+  const seen = new Set<string>();
   return all.filter((msg) => {
-    if (msg.type !== 'assistant') return true
-    const key = msg.content?.slice(0, 50) // dedup by content prefix
-    if (seen.has(key)) return false
-    seen.add(key)
-    return true
-  })
-})
+    if (msg.type !== "assistant") return true;
+    const key = msg.content?.slice(0, 50); // dedup by content prefix
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+});
 const pinnedPrompts = computed(() => {
   return (pinnedAgentMessages.value || []).map((item: any) => {
     const msg = item.message || {};
@@ -2965,15 +3078,15 @@ async function startNewChat() {
     toast.error("Please select an agent first");
     return;
   }
-    pendingMessages.value = [];
-    agentStore.chatHistory = [];
-    activeSessionId.value = "";
-    activeSessionTitle.value = "";
-    showHistoryPanel.value = false;
-    streamingContent.value = "";
-    streamingPhase.value = "";
-    streamingThinkMs.value = null;
-    streamingTotalMs.value = null;
+  pendingMessages.value = [];
+  agentStore.chatHistory = [];
+  activeSessionId.value = "";
+  activeSessionTitle.value = "";
+  showHistoryPanel.value = false;
+  streamingContent.value = "";
+  streamingPhase.value = "";
+  streamingThinkMs.value = null;
+  streamingTotalMs.value = null;
 
   const payload = {
     agent_id: selectedAgentId.value,
@@ -3213,7 +3326,7 @@ const handlePaste = async (event: ClipboardEvent) => {
   const files: File[] = [];
   for (let i = 0; i < items.length; i++) {
     const item = items[i];
-    if (item.kind === 'file') {
+    if (item.kind === "file") {
       const file = item.getAsFile();
       if (file) {
         files.push(file);
@@ -3243,13 +3356,16 @@ const handlePaste = async (event: ClipboardEvent) => {
 
     const filesWithId: FileWithId[] = files.map((f) => {
       const fw = f as FileWithId;
-      fw.tempId = "temp-" + Date.now() + Math.random().toString(36).substr(2, 5);
+      fw.tempId =
+        "temp-" + Date.now() + Math.random().toString(36).substr(2, 5);
       fw.objectUrl = URL.createObjectURL(f);
       return fw;
     });
 
     selectedFiles.value = [...selectedFiles.value, ...filesWithId];
-    toast.success(`${files.length} file${files.length > 1 ? 's' : ''} pasted from clipboard`);
+    toast.success(
+      `${files.length} file${files.length > 1 ? "s" : ""} pasted from clipboard`,
+    );
   }
 };
 
@@ -3327,9 +3443,7 @@ async function sendMessage() {
     activeSessionId.value = sessionIdToUse;
 
     activeSessionTitle.value =
-      finalMessage.length > 40
-        ? finalMessage.slice(0, 40) + "…"
-        : finalMessage;
+      finalMessage.length > 40 ? finalMessage.slice(0, 40) + "…" : finalMessage;
 
     localStorage.setItem("activeSessionId", activeSessionId.value);
     localStorage.setItem("activeSessionTitle", activeSessionTitle.value);
@@ -3341,8 +3455,7 @@ async function sendMessage() {
     // 🔥 SEND MESSAGE
     await agentStore.sendMessage({
       workspace_id: workspaceId.value,
-      user_id:
-        authStore.userId || (localStorage.getItem("user_id") as string),
+      user_id: authStore.userId || (localStorage.getItem("user_id") as string),
       message: finalMessage,
       agent_id: selectedAgentId.value as string,
       sheet_id: sheetIdRef.value as string,
@@ -3386,101 +3499,111 @@ async function sendMessage() {
         resolve();
       }, 6000);
     });
-
   } catch (err: any) {
-   toast.error(err?.message || "Something went wrong");
-  pendingMessages.value = pendingMessages.value.filter(
-    (m) => !(m.metadata as MessageMetadata)?.temp,
-  );
+    toast.error(err?.message || "Something went wrong");
+    pendingMessages.value = pendingMessages.value.filter(
+      (m) => !(m.metadata as MessageMetadata)?.temp,
+    );
 
+    isAiThinkingBubbleVisible.value = false;
+    agentStore.isAiTyping = false;
+
+    streamingContent.value = "";
+    displayedContent.value = "";
+    streamingPhase.value = "";
+    streamingThinkMs.value = null;
+    streamingTotalMs.value = null;
+    streamingPhaseDetail.value = "";
+    streamingPhaseTimestamp.value = null;
+    phaseHistory.value = [];
+  }
+  if (isSuccess) {
+    try {
+      localStorage.setItem("activeSessionId", activeSessionId.value);
+      localStorage.setItem("activeSessionTitle", activeSessionTitle.value);
+      // Set displayed content to final text for the bubble
+      displayedContent.value = agentStore.currentStreamText;
+      // Build assistant message with timing metadata
+      const assistantMsg = {
+        _id: "assistant-" + Date.now(),
+        type: "assistant" as const,
+        content: agentStore.currentStreamText,
+        timestamp: new Date().toISOString(),
+        metadata: {
+          status: "completed",
+          think_ms: agentStore.streamThinkMs,
+          total_ms: agentStore.streamTotalMs,
+        },
+      };
+
+      // Find or create session in chatHistory
+      const existingIdx = agentStore.chatHistory.findIndex(
+        (s) => s.session_id === activeSessionId.value,
+      );
+
+      if (existingIdx !== -1) {
+        // Promote optimistic user message + append assistant reply
+        const session = agentStore.chatHistory[existingIdx];
+        // Find the temp user message in pendingMessages
+        const tempUserMsg = pendingMessages.value.find(
+          (m) => (m.metadata as MessageMetadata)?.temp,
+        );
+        if (tempUserMsg) {
+          // Add the confirmed user message to session
+          session.messages.push({
+            ...tempUserMsg,
+            metadata: { status: "completed" },
+          });
+        }
+        session.messages.push(assistantMsg);
+      } else {
+        // Brand new session
+        const userMsg = pendingMessages.value.find(
+          (m) => (m.metadata as MessageMetadata)?.temp,
+        );
+        agentStore.chatHistory.push({
+          _id: activeSessionId.value,
+          session_id: activeSessionId.value,
+          context: {
+            module_id: null,
+            sheet_id: null,
+            lane_id: null,
+            card_id: null,
+          },
+          messages: [
+            ...(userMsg
+              ? [{ ...userMsg, metadata: { status: "completed" } }]
+              : []),
+            assistantMsg,
+          ],
+        });
+      }
+
+      // Clear pending — history now has the real messages
+      pendingMessages.value = [];
+
+      // Fetch entities (no flicker — doesn't touch chatHistory)
+      await agentStore.fetchCreatedEntities(
+        workspaceId.value,
+        authStore.userId || (localStorage.getItem("user_id") as string),
+        route.path.includes("talent") && agentModuleName.value
+          ? (agentModuleName.value ?? undefined)
+          : (moduleSelected.value ?? undefined),
+        route.path.includes("talent") && agentModuleId.value
+          ? (agentModuleId.value ?? undefined)
+          : (moduleId.value ?? undefined),
+      );
+    } catch (err) {
+      console.error("Post-success processing failed:", err);
+    }
+  }
+
+  // Final cleanup — always runs
+  pendingMessages.value = [];
   isAiThinkingBubbleVisible.value = false;
   agentStore.isAiTyping = false;
-
-  streamingContent.value = "";
-  displayedContent.value = "";
-  streamingPhase.value = "";
-  streamingThinkMs.value = null;
-  streamingTotalMs.value = null;
-  streamingPhaseDetail.value = "";
-  streamingPhaseTimestamp.value = null;
-  phaseHistory.value = [];
-}
-if (isSuccess) {
-  try {
-    localStorage.setItem('activeSessionId', activeSessionId.value)
-    localStorage.setItem('activeSessionTitle', activeSessionTitle.value)
-    // Set displayed content to final text for the bubble
-    displayedContent.value = agentStore.currentStreamText
-    // Build assistant message with timing metadata
-    const assistantMsg = {
-      _id: 'assistant-' + Date.now(),
-      type: 'assistant' as const,
-      content: agentStore.currentStreamText,
-      timestamp: new Date().toISOString(),
-      metadata: {
-        status: 'completed',
-        think_ms: agentStore.streamThinkMs,
-        total_ms: agentStore.streamTotalMs,
-      },
-    }
-
-    // Find or create session in chatHistory
-    const existingIdx = agentStore.chatHistory.findIndex(
-      (s) => s.session_id === activeSessionId.value
-    )
-
-    if (existingIdx !== -1) {
-      // Promote optimistic user message + append assistant reply
-      const session = agentStore.chatHistory[existingIdx]
-      // Find the temp user message in pendingMessages
-      const tempUserMsg = pendingMessages.value.find((m) => (m.metadata as MessageMetadata)?.temp)
-      if (tempUserMsg) {
-        // Add the confirmed user message to session
-        session.messages.push({
-          ...tempUserMsg,
-          metadata: { status: 'completed' }
-        })
-      }
-      session.messages.push(assistantMsg)
-    } else {
-      // Brand new session
-      const userMsg = pendingMessages.value.find((m) => (m.metadata as MessageMetadata)?.temp)
-      agentStore.chatHistory.push({
-        _id: activeSessionId.value,
-        session_id: activeSessionId.value,
-        context: { module_id: null, sheet_id: null, lane_id: null, card_id: null },
-        messages: [
-          ...(userMsg ? [{ ...userMsg, metadata: { status: 'completed' } }] : []),
-          assistantMsg,
-        ],
-      })
-    }
-
-    // Clear pending — history now has the real messages
-    pendingMessages.value = []
-
-    // Fetch entities (no flicker — doesn't touch chatHistory)
-    await agentStore.fetchCreatedEntities(
-      workspaceId.value,
-      authStore.userId || (localStorage.getItem('user_id') as string),
-      route.path.includes('talent') && agentModuleName.value
-        ? agentModuleName.value ?? undefined
-        : moduleSelected.value ?? undefined,
-      route.path.includes('talent') && agentModuleId.value
-        ? agentModuleId.value ?? undefined
-        : moduleId.value ?? undefined,
-    )
-  } catch (err) {
-    console.error('Post-success processing failed:', err)
-  }
-}
-
-// Final cleanup — always runs
-pendingMessages.value = []
-isAiThinkingBubbleVisible.value = false
-agentStore.isAiTyping = false
-agentStore.isSending = false
-scrollToBottom()
+  agentStore.isSending = false;
+  scrollToBottom();
 }
 // Accept / Decline
 async function acceptChanges(payload: any) {
@@ -3500,7 +3623,7 @@ async function acceptChanges(payload: any) {
       await widgetStore.fetchWidgets(workspaceId.value);
     }
     if (route.path?.includes("plan")) {
-     queryClient.invalidateQueries({ queryKey: ["sprint-list"] });
+      queryClient.invalidateQueries({ queryKey: ["sprint-list"] });
     }
     showAIPreview.value = false;
     toast.success("Entities has been accepted and applied to workspace");
@@ -3698,24 +3821,23 @@ watch(
 );
 
 onBeforeUnmount(() => {
-  
   if (workspaceId.value && socket.value) {
     socket.value.emit("leave-workspace", workspaceId.value);
   }
   socket.value?.removeAllListeners();
   socket.value?.disconnect();
-   if (animFrameId !== null) cancelAnimationFrame(animFrameId)
-  stopElapsedTimer()
+  if (animFrameId !== null) cancelAnimationFrame(animFrameId);
+  stopElapsedTimer();
 });
 onBeforeUnmount(() => {
-   if (streamingElapsedTimer.value) clearInterval(streamingElapsedTimer.value)
+  if (streamingElapsedTimer.value) clearInterval(streamingElapsedTimer.value);
   if (animationFrameId.value !== null) {
     cancelAnimationFrame(animationFrameId.value);
   }
   streamingContent.value = "";
-displayedContent.value = "";
-streamingThinkMs.value = null;
-streamingTotalMs.value = null;
+  displayedContent.value = "";
+  streamingThinkMs.value = null;
+  streamingTotalMs.value = null;
 });
 const openConfigPanel = () => {
   showConfigPanel.value = !showConfigPanel.value;
@@ -3824,7 +3946,9 @@ watch(
     if (!selectedAgentId.value) {
       selectedAgentId.value = agents[0]._id;
     } else {
-      const stillExists = agents.some((a: any) => a._id === selectedAgentId.value);
+      const stillExists = agents.some(
+        (a: any) => a._id === selectedAgentId.value,
+      );
       if (!stillExists) {
         selectedAgentId.value = agents[0]._id;
       }
@@ -4391,10 +4515,7 @@ const updateAgent = async (agent: string) => {
   await agentStore.updateSelectedAgent(workspaceId.value, payload, agent);
   await fetchAssignedAgents();
   await loadAgentSettings();
-   await agentStore.fetchAgentsByRoleOrModule(
-      workspaceId.value,
-      "module",
-    );
+  await agentStore.fetchAgentsByRoleOrModule(workspaceId.value, "module");
 };
 
 const deleteAgent = async (agent: string) => {
@@ -4419,8 +4540,7 @@ const loadAgentSettings = async () => {
     selectedAgentId.value,
   );
   isLoadingSettings.value = false;
-  webSearch.value =
-    agentsData.value?.web_browsing_enabled ?? false;
+  webSearch.value = agentsData.value?.web_browsing_enabled ?? false;
 };
 async function fetchAssignedAgents() {
   await agentStore.fetchSavedAgents(
@@ -4715,36 +4835,36 @@ const dislikedMessages = ref<Set<string>>(new Set());
 function toggleLike(msgId: string) {
   if (likedMessages.value.has(msgId)) {
     likedMessages.value.delete(msgId);
-    toast.success('Like removed');
+    toast.success("Like removed");
   } else {
     likedMessages.value.add(msgId);
     dislikedMessages.value.delete(msgId); // Remove dislike if exists
-    toast.success('Message liked!');
+    toast.success("Message liked!");
   }
 }
 
 function toggleDislike(msgId: string) {
   if (dislikedMessages.value.has(msgId)) {
     dislikedMessages.value.delete(msgId);
-    toast.success('Dislike removed');
+    toast.success("Dislike removed");
   } else {
     dislikedMessages.value.add(msgId);
     likedMessages.value.delete(msgId); // Remove like if exists
-    toast.success('Message disliked');
+    toast.success("Message disliked");
   }
 }
 
 async function copyMessageToClipboard(content: string) {
   try {
-    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
       await navigator.clipboard.writeText(content);
-      toast.success('Copied to clipboard');
+      toast.success("Copied to clipboard");
     } else {
-      toast.error('Copy not supported');
+      toast.error("Copy not supported");
     }
   } catch (err) {
-    console.error('Failed to copy:', err);
-    toast.error('Failed to copy message');
+    console.error("Failed to copy:", err);
+    toast.error("Failed to copy message");
   }
 }
 
@@ -4925,8 +5045,8 @@ const availableSources = computed(() => [
     id: "all",
     label: "All sources",
     icon: "fa-solid fa-layer-group",
-    iconBg: "bg-accent/10",
-    iconColor: "text-accent",
+    iconBg: "bg-primary-color/10",
+    iconColor: "text-primary-color",
     description: "Search across everything",
   },
   {
@@ -5671,10 +5791,9 @@ const toggleWebSearch = async () => {
     await agentStore.updateAgentWebBrowsing(
       workspaceId.value,
       selectedAgentId.value,
-      { web_browsing_enabled: newValue }
+      { web_browsing_enabled: newValue },
     );
     await loadAgentSettings();
-
   } catch (err) {
     console.error("Toggle web search failed:", err);
   }
@@ -5682,144 +5801,146 @@ const toggleWebSearch = async () => {
 watch(
   () => agentStore.currentStreamText,
   (newText) => {
-    if (!newText) return
-    isAiThinkingBubbleVisible.value = false
-    streamingContent.value = newText
-    animateStreamingContent(newText)
-    scrollToBottom()
-  }
-)
+    if (!newText) return;
+    isAiThinkingBubbleVisible.value = false;
+    streamingContent.value = newText;
+    animateStreamingContent(newText);
+    scrollToBottom();
+  },
+);
 watch(
   () => [agentStore.streamThinkMs, agentStore.streamTotalMs] as const,
   ([thinkMs, totalMs]) => {
-    if (thinkMs !== null) streamingThinkMs.value = thinkMs
-    if (totalMs !== null) streamingTotalMs.value = totalMs
-  }
-)
+    if (thinkMs !== null) streamingThinkMs.value = thinkMs;
+    if (totalMs !== null) streamingTotalMs.value = totalMs;
+  },
+);
 watch(
   () => agentStore.currentPhase,
   (phase) => {
-    if (!phase) return
+    if (!phase) return;
 
-    if (phase === 'thinking') {
+    if (phase === "thinking") {
       // Reset everything, show only thinking bubble
-      streamingContent.value = ''
-      displayedContent.value = ''
-      streamingThinkMs.value = null
-      streamingTotalMs.value = null
-      streamingPhase.value = 'thinking'
-      isAiThinkingBubbleVisible.value = true
-      streamingPhaseLabel.value = 'Thinking'
-      startElapsedTimer()
+      streamingContent.value = "";
+      displayedContent.value = "";
+      streamingThinkMs.value = null;
+      streamingTotalMs.value = null;
+      streamingPhase.value = "thinking";
+      isAiThinkingBubbleVisible.value = true;
+      streamingPhaseLabel.value = "Thinking";
+      startElapsedTimer();
     }
 
-    if (phase === 'generating') {
+    if (phase === "generating") {
       // Hide thinking bubble, streaming bubble will show once first chunk arrives
-      isAiThinkingBubbleVisible.value = false
-      streamingPhase.value = 'generating'
-      streamingPhaseLabel.value = 'Writing'
-      startElapsedTimer()
+      isAiThinkingBubbleVisible.value = false;
+      streamingPhase.value = "generating";
+      streamingPhaseLabel.value = "Writing";
+      startElapsedTimer();
     }
 
-    if (phase === 'completed') {
-      isAiThinkingBubbleVisible.value = false
-      agentStore.isAiTyping = false
-      streamingPhase.value = 'completed'
-      streamingPhaseLabel.value = 'Done'
-      stopElapsedTimer()
-      scrollToBottom()
+    if (phase === "completed") {
+      isAiThinkingBubbleVisible.value = false;
+      agentStore.isAiTyping = false;
+      streamingPhase.value = "completed";
+      streamingPhaseLabel.value = "Done";
+      stopElapsedTimer();
+      scrollToBottom();
     }
-  }
-)
+  },
+);
 watch(
   () => orderedMessages.value,
   (msgs) => {
     if (
-      streamingPhase.value === 'completed' &&
-      msgs.some((m) => m.type === 'assistant' && !(m.metadata as MessageMetadata)?.temp)
+      streamingPhase.value === "completed" &&
+      msgs.some(
+        (m) => m.type === "assistant" && !(m.metadata as MessageMetadata)?.temp,
+      )
     ) {
       // Message confirmed in history — now safe to hide streaming bubble
-      streamingPhase.value = ''
-      streamingContent.value = ''
-      displayedContent.value = ''
+      streamingPhase.value = "";
+      streamingContent.value = "";
+      displayedContent.value = "";
     }
   },
-  { deep: false }
-)
+  { deep: false },
+);
 
 // Watch for phase detail and timestamp changes from store
 watch(
-  () => [agentStore.currentPhaseDetail, agentStore.currentPhaseTimestamp] as const,
+  () =>
+    [agentStore.currentPhaseDetail, agentStore.currentPhaseTimestamp] as const,
   ([detail, timestamp]) => {
-    if (detail) streamingPhaseDetail.value = detail
-    if (timestamp !== null) streamingPhaseTimestamp.value = timestamp
-  }
-)
+    if (detail) streamingPhaseDetail.value = detail;
+    if (timestamp !== null) streamingPhaseTimestamp.value = timestamp;
+  },
+);
 
 // Watch for phase history updates from store
 watch(
   () => agentStore.streamPhases,
   (phases) => {
-    phaseHistory.value = phases
+    phaseHistory.value = phases;
   },
-  { deep: true }
-)
+  { deep: true },
+);
 const elapsedLabel = computed(() => {
-  const s = (streamingElapsedMs.value / 1000).toFixed(1)
-  return `${s}s`
-})
+  const s = (streamingElapsedMs.value / 1000).toFixed(1);
+  return `${s}s`;
+});
 function startElapsedTimer() {
-  stopElapsedTimer()
-  streamingElapsedMs.value = 0
+  stopElapsedTimer();
+  streamingElapsedMs.value = 0;
   elapsedTimerHandle = setInterval(() => {
-    streamingElapsedMs.value += 100
-  }, 100)
+    streamingElapsedMs.value += 100;
+  }, 100);
 }
 
 function stopElapsedTimer() {
   if (elapsedTimerHandle) {
-    clearInterval(elapsedTimerHandle)
-    elapsedTimerHandle = null
+    clearInterval(elapsedTimerHandle);
+    elapsedTimerHandle = null;
   }
 }
 watch(
   () => [agentStore.streamThinkMs, agentStore.streamTotalMs],
   ([thinkMs, totalMs]) => {
-    if (thinkMs !== null) streamingThinkMs.value = thinkMs
-    if (totalMs !== null) streamingTotalMs.value = totalMs
-  }
-)
+    if (thinkMs !== null) streamingThinkMs.value = thinkMs;
+    if (totalMs !== null) streamingTotalMs.value = totalMs;
+  },
+);
 // Replace animateStreamingContent entirely:
-let animFrameId: number | null = null
-let animTargetText = ''
+let animFrameId: number | null = null;
+let animTargetText = "";
 
 function animateStreamingContent(targetText: string) {
-  animTargetText = targetText // always update target, never restart loop
+  animTargetText = targetText; // always update target, never restart loop
 
   // Only start the loop if it's not already running
-  if (animFrameId !== null) return
+  if (animFrameId !== null) return;
 
-  const CHARS_PER_FRAME = 4
+  const CHARS_PER_FRAME = 4;
 
   function step() {
     if (displayedContent.value.length >= animTargetText.length) {
-      displayedContent.value = animTargetText
-      animFrameId = null
-      return
+      displayedContent.value = animTargetText;
+      animFrameId = null;
+      return;
     }
 
     const nextIndex = Math.min(
       displayedContent.value.length + CHARS_PER_FRAME,
-      animTargetText.length
-    )
-    displayedContent.value = animTargetText.slice(0, nextIndex)
-    scrollToBottom()
-    animFrameId = requestAnimationFrame(step)
+      animTargetText.length,
+    );
+    displayedContent.value = animTargetText.slice(0, nextIndex);
+    scrollToBottom();
+    animFrameId = requestAnimationFrame(step);
   }
 
-  animFrameId = requestAnimationFrame(step)
+  animFrameId = requestAnimationFrame(step);
 }
-
 </script>
 
 <style scoped>
@@ -5831,7 +5952,7 @@ function animateStreamingContent(targetText: string) {
 .typing-dots span {
   width: 6px;
   height: 6px;
-  background-color: var(--accent, #7c3aed);
+  background-color: var(--primary-color, #7c3aed);
   border-radius: 50%;
   opacity: 0.4;
   animation: typing-bounce 1.4s infinite ease-in-out;
@@ -5848,47 +5969,50 @@ function animateStreamingContent(targetText: string) {
   padding: 5px;
   border-radius: 9999px;
   border: 3px solid #e5e7eb;
-  border-top-color: var(--accent, #7c3aed);
+  border-top-color: var(--primary-color, #7c3aed);
   animation: chat-spin 0.8s linear infinite;
 }
 .slide-left-enter-from {
   transform: translateX(-100%);
   opacity: 0;
 }
- .neon-flow-border-chatbot {
-    position: relative;
-    isolation: isolate;
-    overflow: hidden;
-  }
+.neon-flow-border-chatbot {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
 
-  .neon-flow-border-chatbot::after {
-    /* Crisp neon arc passing over the cut-out */
-    content: "";
-    position: absolute;
-    inset: 0;
-    padding: 2px;
-    border-radius: 20px;
-    background: conic-gradient(
-      from 45deg,
-      transparent 0deg,
-      transparent calc(var(--sweep) - 24deg),
-      hsl(var(--glow-brand)) calc(var(--sweep) - 24deg),
-      hsl(var(--glow-2)) calc(var(--sweep) - 12deg),
-      hsl(var(--glow-3)) var(--sweep),
-      hsl(var(--glow-2)) calc(var(--sweep) + 12deg),
-      hsl(var(--glow-brand)) calc(var(--sweep) + 24deg),
-      transparent calc(var(--sweep) + 24deg) 360deg
-    );
-    -webkit-mask: linear-gradient(#000 0 0) content-box,
-      linear-gradient(#000 0 0);
-    -webkit-mask-composite: xor;
-    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-    mask-composite: exclude;
-    /* mix-blend-mode: screen; */
-    animation: sweep var(--neon-speed, 4s) linear infinite;
-    pointer-events: none;
-    z-index: 2;
-  }
+.neon-flow-border-chatbot::after {
+  /* Crisp neon arc passing over the cut-out */
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: 2px;
+  border-radius: 20px;
+  background: conic-gradient(
+    from 45deg,
+    transparent 0deg,
+    transparent calc(var(--sweep) - 24deg),
+    hsl(var(--glow-brand)) calc(var(--sweep) - 24deg),
+    hsl(var(--glow-2)) calc(var(--sweep) - 12deg),
+    hsl(var(--glow-3)) var(--sweep),
+    hsl(var(--glow-2)) calc(var(--sweep) + 12deg),
+    hsl(var(--glow-brand)) calc(var(--sweep) + 24deg),
+    transparent calc(var(--sweep) + 24deg) 360deg
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  /* mix-blend-mode: screen; */
+  animation: sweep var(--neon-speed, 4s) linear infinite;
+  pointer-events: none;
+  z-index: 2;
+}
 @keyframes chat-spin {
   to {
     transform: rotate(360deg);

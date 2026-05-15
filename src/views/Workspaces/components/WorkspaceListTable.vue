@@ -184,9 +184,9 @@ const renderOrganization = ({ row }: any) => {
   const title = h(
     "span",
     {
-      class: company.domain_link
+      class: (company.domain_link
         ? "text-xs text-text-primary hover:underline cursor-pointer"
-        : "text-xs text-text-primary",
+        : "text-xs text-text-primary") + " truncate",
       onClick: company.domain_link ? goToDomain : undefined,
       title: company.domain_link
         ? `Go to ${company.domain_link}`
@@ -195,7 +195,7 @@ const renderOrganization = ({ row }: any) => {
     company.title,
   );
 
-  return h("div", { class: "flex items-center gap-2" }, [avatar, title]);
+  return h("div", { class: "flex items-center gap-2 min-w-0" }, [avatar, title]);
 };
 
 const renderProject = ({ row, value }: any) => {

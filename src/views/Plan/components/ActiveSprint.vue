@@ -165,67 +165,54 @@
             />
             <div class="flex gap-3 items-center">
               <div
-                class="flex items-center gap-3 bg-bg-surface/50 h-[32px] px-2 rounded-md"
+                class="flex items-center gap-1 bg-bg-surface/50 h-[36px] px-1.5 border-border border rounded-[6px]"
               >
                 <button
-                  class="aspect-square cursor-pointer rounded-sm py-0.5 px-1 border border-border outline-0"
+                  class="aspect-square cursor-pointer rounded-sm h-[28px] flex items-center justify-center border border-border outline-0"
                   :class="
                     view === 'kanban'
-                      ? 'text-primary-color'
-                      : 'hover:bg-border/50 transition-all duration-75 hover:outline-border hover:outline hover:text-primary-color'
+                      ? 'text-white bg-primary-color'
+                      : 'backdrop-blur-2xl transition-all duration-75 hover:text-primary-color'
                   "
+                  title="Kanban view"
                   @click="view = 'kanban'"
                 >
-                  <i class="fa-solid fa-chart-kanban"></i>
+                  <i class="fa-solid fa-chart-kanban text-[14px]"></i>
                 </button>
 
                 <button
                   @click="view = 'table'"
-                  class="aspect-square cursor-pointer rounded-sm py-0.5 px-1 border border-border outline-0"
+                  class="aspect-square cursor-pointer rounded-sm h-[28px] flex items-center justify-center border border-border outline-0"
                   :class="
                     view === 'table'
-                      ? 'text-primary-color'
-                      : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-primary-color'
+                      ? 'text-white bg-primary-color'
+                      : 'backdrop-blur-2xl transition-all duration-75 hover:text-primary-color'
                   "
-                  title="Gallery view"
+                  title="List view"
                 >
-                  <i class="fa-solid fa-align-left"></i>
+                  <i class="fa-solid fa-align-left text-[14px]"></i>
                 </button>
 
-                <!-- MindMap button — kept, logic lives in MindMapView component -->
                 <button
                   @click="view = 'mindmap'"
-                  class="aspect-square cursor-pointer rounded-sm py-0.5 px-1 border border-border outline-0"
+                  class="aspect-square cursor-pointer rounded-sm h-[28px] flex items-center justify-center border border-border outline-0"
                   :class="
                     view === 'mindmap'
-                      ? 'text-primary-color'
-                      : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-primary-color'
+                      ? 'text-white bg-primary-color'
+                      : 'backdrop-blur-2xl transition-all duration-75 hover:text-primary-color'
                   "
                   title="MindMap view"
                 >
-                  <i class="fa-solid fa-chart-diagram"></i>
-                </button>
-
-                <button
-                  @click="view = 'calendar'"
-                  class="aspect-square cursor-pointer rounded-sm py-0.5 px-1 border border-border outline-0"
-                  :class="
-                    view === 'calendar'
-                      ? 'text-primary-color'
-                      : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-primary-color'
-                  "
-                  title="Calendar view"
-                >
-                  <i class="fa-regular fa-calendar"></i>
+                  <i class="fa-solid fa-chart-diagram text-[14px]"></i>
                 </button>
 
                 <button
                   @click="view = 'gantt'"
-                  class="aspect-square cursor-pointer rounded-sm py-0.5 px-1 border border-border outline-0"
+                  class="aspect-square cursor-pointer rounded-sm h-[28px] flex items-center justify-center border border-border outline-0"
                   :class="
                     view === 'gantt'
-                      ? 'text-primary-color'
-                      : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-primary-color'
+                      ? 'text-white bg-primary-color'
+                      : 'backdrop-blur-2xl transition-all duration-75 hover:text-primary-color'
                   "
                   title="Gantt Chart view"
                 >
@@ -242,12 +229,25 @@
                 </button>
 
                 <button
+                  @click="view = 'calendar'"
+                  class="aspect-square cursor-pointer rounded-sm h-[28px] flex items-center justify-center border border-border outline-0"
+                  :class="
+                    view === 'calendar'
+                      ? 'text-white bg-primary-color'
+                      : 'backdrop-blur-2xl transition-all duration-75 hover:text-primary-color'
+                  "
+                  title="Calendar view"
+                >
+                  <i class="fa-regular fa-calendar text-[14px]"></i>
+                </button>
+
+                <button
                   @click="view = 'timeline'"
-                  class="aspect-square cursor-pointer rounded-sm py-0.5 px-1 border border-border outline-0"
+                  class="aspect-square cursor-pointer rounded-sm h-[28px] flex items-center justify-center border border-border outline-0"
                   :class="
                     view === 'timeline'
-                      ? 'text-primary-color'
-                      : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-primary-color'
+                      ? 'text-white bg-primary-color'
+                      : 'backdrop-blur-2xl transition-all duration-75 hover:text-primary-color'
                   "
                   title="Timeline view"
                 >

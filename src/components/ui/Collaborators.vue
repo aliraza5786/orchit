@@ -8,10 +8,10 @@
                     :alt="collaborator.name" loading="lazy" decoding="async" @click="collaborator.onclick?.()"
                     :class="`w-${size} h-${size} rounded-full border-2 border-white shadow-md object-cover cursor-pointer`" />
 
-                <div v-else @click="collaborator.onclick?.()" :alt="collaborator.name"
+                <div v-else @click="collaborator.onclick?.()" :alt="collaborator.name || collaborator.full_name || collaborator.email"
                     :style="{ backgroundColor: avatarColor({ email: collaborator?.email }) }"
                     :class="`w-${size} h-${size} rounded-full text-text-primary flex justify-center items-center bg-amber-600 border-2 border-border shadow-md object-cover cursor-pointer`">
-                    {{ getCachedInitials(collaborator?.name) }}
+                    {{ getCachedInitials(collaborator) }}
                 </div>
             </template>
 
@@ -52,11 +52,17 @@ const props = defineProps({
 
 // Cache initials to avoid recomputation
 const initialsCache = new Map();
-const getCachedInitials = (name) => {
-    if (!initialsCache.has(name)) {
-        initialsCache.set(name, getInitials(name));
+
+const getAvatarLabel = (collaborator) => {
+    return collaborator?.name || collaborator?.full_name || collaborator?.email || '?';
+};
+
+const getCachedInitials = (collaborator) => {
+    const label = getAvatarLabel(collaborator);
+    if (!initialsCache.has(label)) {
+        initialsCache.set(label, getInitials(label));
     }
-    return initialsCache.get(name);
+    return initialsCache.get(label);
 };
 
 // Combine computed properties for better performance

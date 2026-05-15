@@ -3,7 +3,7 @@
     <div class="mx-auto w-full max-w-360 px-5 pt-10 pb-10 md:px-15">
       <!-- Sophisticated Workspace Header -->
       <div
-        class="relative overflow-hidden rounded-xl bg-bg-card/60 border border-border/80 p-8 md:px-10 md:py-8 shadow-sm"
+        class="relative overflow-hidden rounded-xl bg-bg-card/60 p-8 md:px-10 md:py-8 shadow-sm shadow-accent/30"
       >
         <!-- Animated Background Elements -->
         <div class="absolute inset-0 overflow-hidden pointer-events-none">
@@ -76,7 +76,7 @@
               <h1
                 class="text-3xl md:text-[2.5rem] font-bold tracking-tight text-text-primary leading-tight"
               >
-                Welcome to <span class="text-accent">Orchit AI</span>
+                Welcome, <span class="text-accent">{{ userName }}</span>
               </h1>
               <p
                 class="text-[15px] text-text-secondary font-medium leading-relaxed max-w-2xl"
@@ -101,19 +101,7 @@
                     Workspaces</span
                   >
                 </div>
-              </div>
-              <div class="flex items-center gap-2.5 group cursor-default">
-                <div
-                  class="h-6 w-6 rounded-md bg-purple-500/5 flex items-center justify-center text-purple-500"
-                >
-                  <i class="fa-solid fa-list-check text-[10px]"></i>
-                </div>
-                <div class="flex flex-col">
-                  <span class="text-[13px] font-bold text-text-primary"
-                    >{{ activeTasksCount }} Active Tasks</span
-                  >
-                </div>
-              </div>
+              </div> 
             </div>
           </div>
 
@@ -133,26 +121,19 @@
 
       <div class="overflow-x-auto">
         <div class="mt-10 mb-8 flex items-center justify-between min-w-max">
-          <h2 class="text-lg font-medium me-3">
-            All Workspaces
-            <span
-              class="w-6 h-6 inline-flex items-center justify-center bg-accent/80 rounded-full text-sm"
-              >{{ galleryWorkspaces?.workspaces?.length || 0 }}</span
-            >
-          </h2>
-          <div class="flex items-center gap-3">
-            <div
+           <div
               class="w-48 border border-border hover:border-accent rounded-[6px] transition-colors duration-150"
             >
               <BaseSelectField
                 v-model="filter"
                 :options="filterOptions"
-                size="sm"
+                size="md"
                 placeholder="Filter Workspaces"
                 class="border-transparent"
               />
             </div>
-
+          
+          <div class="flex items-center gap-1 border border-border rounded-[6px] px-1 py-1"> 
             <button
               class="aspect-square w-8 cursor-pointer rounded-[6px] p-1 hover:shadow-0"
               :class="
@@ -253,7 +234,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted, nextTick, h } from "vue";
+import { computed, ref, onMounted, nextTick, watchEffect } from "vue";
 import Button from "../../components/ui/Button.vue";
 import ProjectGallery from "../../components/ui/ProjectGallery.vue";
 import WorkspaceListTable from "./components/WorkspaceListTable.vue";
@@ -264,6 +245,7 @@ import {
   useWorkspaceModulesAndUsers,
 } from "../../queries/useWorkspace";
 import { useWorkspaceStore } from "../../stores/workspace";
+import { useAuthStore } from "../../stores/auth";
 import { useRouter, useRoute } from "vue-router";
 import BaseSelectField from "../../components/ui/BaseSelectField.vue";
 import { useQueryClient } from "@tanstack/vue-query";
@@ -281,6 +263,16 @@ const router = useRouter();
 const route = useRoute();
 const queryClient = useQueryClient();
 const workspaceStore = useWorkspaceStore();
+const authStore = useAuthStore();
+
+const userName = computed(() => {
+  const name = authStore.user?.data?.u_full_name || authStore.user?.name;
+  return name ? name.split(" ")[0] + '!' : "there!";
+});
+
+watchEffect(()=>{
+  console.log("User name computed:", authStore.user);
+})
 
 type View = "list" | "gallery";
 const currentView = ref<View>("list");
@@ -386,9 +378,7 @@ const timeGreeting = computed(() => {
   if (hour < 17) return "Good Afternoon";
   return "Good Evening";
 });
-
-// Mock active tasks count - in a real app, this would come from a query
-const activeTasksCount = ref(12);
+ 
 
 function launchConfetti() {
   const duration = 2000;

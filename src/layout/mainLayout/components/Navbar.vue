@@ -1,12 +1,12 @@
 <template>
   <Loader v-if="isPending" />
   <nav
-    class="sticky top-0 z-10 w-full border-b border-border bg-bg-body/80 backdrop-blur supports-[backdrop-filter]:bg-bg-body/60"
+    class="sticky top-0 z-110 w-full border-b border-border bg-bg-body"
     role="navigation"
     aria-label="Primary"
   >
     <div
-      class="mx-auto flex max-w-[1400px] items-center justify-between px-6 max-md:p-4"
+      class="mx-auto flex max-w-[1400px] items-center justify-between px-10 max-md:p-4"
     >
       <div class="flex items-center gap-2">
         <!-- Mobile Toggle -->
@@ -124,7 +124,7 @@
             <div
               v-if="menuOpen"
               id="user-menu"
-              class="absolute right-0 mt-2 origin-top-right rounded-2xl bg-bg-dropdown p-1.5 text-sm shadow-xl ring-1 ring-black/5 w-[min(300px,calc(100vw-24px))] max-md:fixed max-md:left-1/2 max-md:-translate-x-1/2 max-md:right-auto max-md:top-[60px] max-md:w-[calc(100vw-32px)] flex flex-col max-h-[calc(100vh-80px)]"
+              class="absolute right-0 mt-2 origin-top-right rounded-[6px] bg-bg-dropdown z-[110] p-1.5 text-sm border border-border ring-1 ring-black/5 w-[min(300px,calc(100vw-24px))] max-md:fixed max-md:left-1/2 max-md:-translate-x-1/2 max-md:right-auto max-md:top-[60px] max-md:w-[calc(100vw-32px)] flex flex-col max-h-[calc(100vh-80px)]"
               role="menu"
               @keydown.esc.stop.prevent="menuOpen = false"
             >
@@ -178,7 +178,7 @@
               ></div>
 
               <!-- Scrollable middle section (account switcher only) -->
-              <div class="flex-1 overflow-y-auto overscroll-contain min-h-0" v-if="companyAccounts?.length">
+              <div class="flex-1 overflow-y-auto overscroll-contain min-h-0 scrollbar-visible pr-1" v-if="companyAccounts?.length">
                 <!-- ── ACCOUNT SWITCHER ── -->
                 <div class="px-1 pt-2 pb-1">
                   <p
@@ -388,13 +388,25 @@
                       <template v-if="companyAccounts.length > 0">
                         <div class="h-px w-full bg-bg-dropdown-menu-hover/40 my-0.5"></div>
                         <div class="px-1">
-                          <p class="px-2 pb-0.5 text-[9px] font-semibold uppercase tracking-widest text-text-secondary">
+                          <p class="px-2 pb-1.5 text-[9px] font-semibold uppercase tracking-widest text-text-secondary">
                             Company
                             <span class="ml-1 font-normal normal-case tracking-normal text-text-secondary/70">
                               ({{ filteredCompanyAccounts.length }})
                             </span>
                           </p>
-                          <ul class="max-h-[180px] overflow-y-auto flex flex-col gap-1">
+                          <div class="px-2 pb-1.5">
+                            <div class="relative">
+                              <i class="fa-regular fa-search absolute left-2 top-1/2 -translate-y-1/2 text-text-secondary text-[10px]"></i>
+                              <input
+                                v-model="accountSearch"
+                                type="text"
+                                placeholder="Search companies..."
+                                class="w-full bg-bg-body border border-border rounded-md pl-6 pr-2 py-1.5 text-xs text-text-primary focus:outline-none focus:border-primary-color transition-colors"
+                                @click.stop
+                              />
+                            </div>
+                          </div>
+                          <ul class="max-h-[180px] overflow-y-auto overflow-x-hidden flex flex-col gap-1 scrollbar-visible pr-1">
   <li v-for="account in filteredCompanyAccounts" :key="account.id">
     <button
       type="button"

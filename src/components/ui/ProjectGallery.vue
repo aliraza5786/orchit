@@ -186,8 +186,8 @@
             <div class="flex items-center gap-1.5 text-text-secondary">
               <i class="fa-regular fa-circle-check text-[11px]"></i>
               <span
-                >{{ project.completed_tasks ?? 0 }}/{{
-                  project.total_tasks ?? 0
+                >{{ project.task_stats?.completed_tasks ?? 0 }}/{{
+                  project.task_stats?.total_tasks ?? 0
                 }}
                 Tasks</span
               >
@@ -327,10 +327,8 @@ interface Project {
   LatestTask?: { job_id?: string };
   owner?: { name: string };
   People?: any[];
-  PeopleCount?: number;
-  total_tasks?: number;
-  completed_tasks?: number;
-  task_stats?: { total_percentage?: number };
+  PeopleCount?: number;  
+  task_stats?: { total_percentage?: number; total_tasks?: number; completed_tasks?: number; };
   is_archive: boolean;
   is_shared_with_me: boolean;
   company?: {

@@ -11,10 +11,13 @@
       class="pt-[14.5px] pb-[15px] flex justify-between items-center border-b border-border px-3 sticky top-0 bg-bg-surface z-1"
     >
       <h5 class="text-[16px] font-medium">Profile</h5>
-      <i
-        class="cursor-pointer text-text-primary fa-solid fa-close"
+      <button
+        class="shrink-0 flex items-center text-text-primary justify-center w-8 h-8 rounded-lg hover:bg-orchit-white/5 active:scale-[.98] transition-colors border-0 cursor-pointer"
         @click="$emit('close')"
-      />
+        aria-label="Close panel"
+      >
+        <i class="fa-solid fa-close"></i>
+      </button>
     </div>
 
     <!-- Body -->
@@ -54,7 +57,12 @@
           </p>
         </div>
       </div>
-      <SwitchTab :inSpace="true" v-model="activeTab" class="my-2" :options="tabOptions" />
+      <SwitchTab
+        :inSpace="true"
+        v-model="activeTab"
+        class="my-2"
+        :options="tabOptions"
+      />
 
       <div class="flex flex-col mt-2">
         <h1 class="text-base font-medium text-text-primary cursor-pointer">

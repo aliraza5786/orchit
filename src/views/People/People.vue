@@ -61,44 +61,45 @@
               placeholder="Search in Orchit AI space"
             />
             <div
-              class="flex items-center gap-3 bg-bg-surface/50 h-[32px] px-2 rounded-md"
+              class="flex items-center gap-1 bg-bg-surface/50 h-[36px] px-1.5 border-border border rounded-[6px]"
             >
               <button
-                class="aspect-square cursor-pointer rounded-sm  py-0.5 px-1 border border-border outline-0"
+                class="aspect-square cursor-pointer rounded-sm h-[28px] flex items-center justify-center border border-border outline-0"
                 :class="
                   currentView === 'kanban'
-                    ? 'text-primary-color'
+                    ? 'text-white bg-primary-color'
                     : 'backdrop-blur-2xl transition-all duration-75 hover:text-primary-color'
                 "
                 title="Kanban view"
                 @click="currentView = 'kanban'"
               >
-                <i class="fa-solid fa-chart-kanban"></i>
+                <i class="fa-solid fa-chart-kanban text-[14px]"></i>
               </button>
 
               <button
                 @click="currentView = 'table'"
-                class="aspect-square cursor-pointer rounded-sm py-0.5 px-1 border border-border outline-0"
+                class="aspect-square cursor-pointer rounded-sm h-[28px] flex items-center justify-center border border-border outline-0"
                 :class="
                   currentView === 'table'
-                    ? 'text-primary-color'
+                    ? 'text-white bg-primary-color'
                     : 'backdrop-blur-2xl transition-all duration-75 hover:text-primary-color'
                 "
                 title="List view"
               >
-                <i class="fa-solid fa-align-left"></i>
+                <i class="fa-solid fa-align-left text-[14px]"></i>
               </button>
+
               <button
                 @click="currentView = 'mindmap'"
-                class="aspect-square cursor-pointer rounded-sm py-0.5 px-1 border border-border outline-0"
+                class="aspect-square cursor-pointer rounded-sm h-[28px] flex items-center justify-center border border-border outline-0"
                 :class="
                   currentView === 'mindmap'
-                    ? 'text-primary-color'
-                    : ' backdrop-blur-2xl transition-all duration-75 hover:text-primary-color'
+                    ? 'text-white bg-primary-color'
+                    : 'backdrop-blur-2xl transition-all duration-75 hover:text-primary-color'
                 "
                 title="MindMap view"
               >
-                <i class="fa-solid fa-chart-diagram"></i>
+                <i class="fa-solid fa-chart-diagram text-[14px]"></i>
               </button>
             </div>
           </div>

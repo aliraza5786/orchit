@@ -162,112 +162,112 @@
           />
 
           <div
-            class="flex items-center gap-2 bg-bg-surface/50 h-[32px] px-2 rounded-md"
-          >
-            <!-- View Buttons ... -->
-            <button
-              class="aspect-square cursor-pointer rounded-sm py-0.5 px-1 border border-border outline-0"
-              :class="
-                view === 'kanban'
-                  ? 'text-primary-color'
-                  : 'backdrop-blur-2xl transition-all duration-75 outline-0 hover:text-primary-color'
-              "
-              title="Kanban view"
-              @click="view = 'kanban'"
-            >
-              <i class="fa-solid fa-chart-kanban"></i>
-            </button>
+  class="flex items-center gap-1 bg-bg-surface/50 h-[36px] px-1.5 border-border border rounded-[6px]"
+>
+  <button
+    class="aspect-square cursor-pointer rounded-sm h-[28px] flex items-center justify-center border border-border outline-0"
+    :class="
+      view === 'kanban'
+        ? 'text-white bg-primary-color'
+        : 'backdrop-blur-2xl transition-all duration-75 hover:text-primary-color'
+    "
+    title="Kanban view"
+    @click="view = 'kanban'"
+  >
+    <i class="fa-solid fa-chart-kanban text-[14px]"></i>
+  </button>
 
-            <button
-              @click="view = 'table'"
-              class="aspect-square cursor-pointer rounded-sm py-0.5 px-1 border border-border outline-0"
-              :class="
-                view === 'table'
-                  ? 'text-primary-color'
-                  : 'backdrop-blur-2xl transition-all duration-75 outline-0 hover:text-primary-color'
-              "
-              title="List view"
-            >
-              <i class="fa-solid fa-align-left"></i>
-            </button>
+  <button
+    @click="view = 'table'"
+    class="aspect-square cursor-pointer rounded-sm h-[28px] flex items-center justify-center border border-border outline-0"
+    :class="
+      view === 'table'
+        ? 'text-white bg-primary-color'
+        : 'backdrop-blur-2xl transition-all duration-75 hover:text-primary-color'
+    "
+    title="List view"
+  >
+    <i class="fa-solid fa-align-left text-[14px]"></i>
+  </button>
 
-            <button
-              @click="view = 'mindmap'"
-              class="aspect-square cursor-pointer rounded-sm py-0.5 px-1 border border-border outline-0"
-              :class="
-                view === 'mindmap'
-                  ? 'text-primary-color'
-                  : 'backdrop-blur-2xl transition-all duration-75 outline-0 hover:text-primary-color'
-              "
-              title="MindMap view"
-            >
-              <i class="fa-solid fa-chart-diagram"></i>
-            </button>
+  <button
+    @click="view = 'mindmap'"
+    class="aspect-square cursor-pointer rounded-sm h-[28px] flex items-center justify-center border border-border outline-0"
+    :class="
+      view === 'mindmap'
+        ? 'text-white bg-primary-color'
+        : 'backdrop-blur-2xl transition-all duration-75 hover:text-primary-color'
+    "
+    title="MindMap view"
+  >
+    <i class="fa-solid fa-chart-diagram text-[14px]"></i>
+  </button>
 
-            <button
-              @click="view = 'gantt'"
-              class="aspect-square cursor-pointer rounded-sm py-0.5 px-1 border border-border outline-0"
-              :class="
-                view === 'gantt'
-                  ? 'text-primary-color'
-                  : 'backdrop-blur-2xl transition-all duration-75 hover:text-primary-color'
-              "
-              title="Gantt Chart view"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-5 w-5"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-              >
-                <path
-                  d="M4 6h2v12H4V6Zm4 4h10v2H8v-2Zm0 4h10v2H8v-2Zm0-8h10v2H8V6Z"
-                />
-              </svg>
-            </button>
+  <button
+    @click="view = 'gantt'"
+    class="aspect-square cursor-pointer rounded-sm h-[28px] flex items-center justify-center border border-border outline-0"
+    :class="
+      view === 'gantt'
+        ? 'text-white bg-primary-color'
+        : 'backdrop-blur-2xl transition-all duration-75 hover:text-primary-color'
+    "
+    title="Gantt Chart view"
+  >
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      class="h-5 w-5"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+    >
+      <path
+        d="M4 6h2v12H4V6Zm4 4h10v2H8v-2Zm0 4h10v2H8v-2Zm0-8h10v2H8V6Z"
+      />
+    </svg>
+  </button>
 
-            <button
-              @click="view = 'calendar'"
-              class="aspect-square cursor-pointer rounded-sm py-0.5 px-1 border border-border outline-0"
-              :class="
-                view === 'calendar'
-                  ? 'text-primary-color'
-                  : 'backdrop-blur-2xl transition-all duration-75 outline-0 hover:text-primary-color'
-              "
-              title="Calendar view"
-            >
-              <i class="fa-regular fa-calendar"></i>
-            </button>
-            <button
-              @click="view = 'timeline'"
-              class="aspect-square cursor-pointer rounded-sm py-0.5 px-1 border border-border outline-0"
-              :class="
-                view === 'timeline'
-                  ? 'text-primary-color'
-                  : 'backdrop-blur-2xl transition-all duration-75 outline-0 hover:text-primary-color'
-              "
-              title="Timeline view"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-5 w-5"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-              >
-                <path
-                  d="M4 12a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm16 0a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm-8 8a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm0-16a2 2 0 1 1 0-4 2 2 0 0 1 0 4Z"
-                  opacity="0"
-                />
-                <path
-                  d="M4 12h4m8 0h4M9 12h6M9 12v-6M15 12v6"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
-              </svg>
-            </button>
-          </div>
+  <button
+    @click="view = 'calendar'"
+    class="aspect-square cursor-pointer rounded-sm h-[28px] flex items-center justify-center border border-border outline-0"
+    :class="
+      view === 'calendar'
+        ? 'text-white bg-primary-color'
+        : 'backdrop-blur-2xl transition-all duration-75 hover:text-primary-color'
+    "
+    title="Calendar view"
+  >
+    <i class="fa-regular fa-calendar text-[14px]"></i>
+  </button>
+
+  <button
+    @click="view = 'timeline'"
+    class="aspect-square cursor-pointer rounded-sm h-[28px] flex items-center justify-center border border-border outline-0"
+    :class="
+      view === 'timeline'
+        ? 'text-white bg-primary-color'
+        : 'backdrop-blur-2xl transition-all duration-75 hover:text-primary-color'
+    "
+    title="Timeline view"
+  >
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      class="h-5 w-5"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+    >
+      <path
+        d="M4 12a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm16 0a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm-8 8a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm0-16a2 2 0 1 1 0-4 2 2 0 0 1 0 4Z"
+        opacity="0"
+      />
+      <path
+        d="M4 12h4m8 0h4M9 12h6M9 12v-6M15 12v6"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+    </svg>
+  </button>
+</div>
         </div>
       </div>
     </div>
