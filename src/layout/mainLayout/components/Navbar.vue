@@ -128,64 +128,49 @@
               role="menu"
               @keydown.esc.stop.prevent="menuOpen = false"
             >
-              <!-- Header — fixed -->
-              <div
-                class="flex items-center gap-2.5 rounded-xl p-2.5 shrink-0"
-              >
-              <img
-              v-if="profileData?.u_profile_image"
-              class="object-cover cursor-pointer w-10 h-10 rounded-full"
-              :src="profileData?.u_profile_image"
-              alt="profile_img"
-            />
-                <div v-else
-                  class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-orange-500 text-sm font-bold text-white"
-                >
-              {{ initials }} 
+              <!-- Header — Centered & Prominent (Google-like) -->
+              <div class="flex flex-col items-center pt-6 pb-4 px-5 shrink-0 text-center">
+                <div class="relative mb-3 group">
+                  <img
+                    v-if="profileData?.u_profile_image"
+                    class="object-cover w-20 h-20 rounded-full ring-4 ring-border/20 transition-transform group-hover:scale-105"
+                    :src="profileData?.u_profile_image"
+                    alt="profile_img"
+                  />
+                  <div v-else
+                    class="grid h-20 w-20 shrink-0 place-items-center rounded-full bg-gradient-to-br from-orange-500 to-orange-600 text-2xl font-bold text-white shadow-lg"
+                  >
+                    {{ initials }} 
+                  </div>
                 </div>
-                <div class="min-w-0 flex-1">
-                  <p class="truncate text-sm font-semibold leading-5">
+                
+                <div class="min-w-0 w-full">
+                  <p class="truncate text-lg font-bold text-text-primary leading-tight">
                     {{ currentAccount.name }}
                   </p>
-                  <p class="truncate text-[11px] text-text-secondary">
+                  <p class="truncate text-sm text-text-secondary mt-1">
                     {{ currentAccount.email }}
                   </p>
-                  <span
-                    class="mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold"
-                    :class="
-                      currentAccount.type === 'company'
-                        ? 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400'
-                        : 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400'
-                    "
-                  >
-                    <i
-                      :class="
-                        currentAccount.type === 'company'
-                          ? 'fa-solid fa-building'
-                          : 'fa-solid fa-user'
-                      "
-                      class="text-[9px]"
-                    ></i>
-                    {{
-                      currentAccount.type === "company" ? "Company" : "Personal"
-                    }}
-                  </span>
+                  
+                  <div class="mt-4 flex justify-center">
+                    <button 
+                      @click="openAccountSettings"
+                      class="px-5 py-1.5 rounded-full border border-border hover:bg-bg-dropdown-menu-hover text-sm font-medium transition-all active:scale-95"
+                    >
+                      Manage your profile
+                    </button>
+                  </div>
                 </div>
               </div>
 
-              <div
-                class="h-px w-full bg-bg-dropdown-menu-hover/50 shrink-0"
-              ></div>
+              <div class="h-px w-full bg-border/40 shrink-0 mx-auto max-w-[90%]"></div>
+
+
 
               <!-- Scrollable middle section (account switcher only) -->
               <div class="flex-1 overflow-y-auto overscroll-contain min-h-0 scrollbar-visible pr-1" v-if="companyAccounts?.length">
                 <!-- ── ACCOUNT SWITCHER ── -->
-                <div class="px-1 pt-2 pb-1">
-                  <p
-                    class="px-3 pb-1 text-[10px] font-semibold uppercase tracking-widest text-text-primary"
-                  >
-                    Switch Account
-                  </p>
+
 
                   <Transition
                     enter-active-class="transition duration-150 ease-out"
@@ -304,33 +289,10 @@
 
                     <!-- Account list -->
                     <div v-else key="list" class="flex flex-col gap-1">
-                      <!-- Search -->
-                      <div v-if="companyAccounts.length > 4 && companyAccounts.length > 0" class="px-1 pb-1">
-                        <div
-                          class="flex items-center gap-2 rounded-lg bg-bg-dropdown-menu-hover/50 px-2.5 py-1.5"
-                        >
-                          <i
-                            class="fa-regular fa-magnifying-glass text-text-secondary/50 text-xs shrink-0"
-                          ></i>
-                          <input
-                            v-model="accountSearch"
-                            type="text"
-                            placeholder="Search companies…"
-                            class="flex-1 bg-transparent text-xs text-text-primary placeholder:text-text-secondary/40 outline-none"
-                          />
-                          <button
-                            v-if="accountSearch"
-                            type="button"
-                            @click="accountSearch = ''"
-                            class="text-text-secondary/40 hover:text-text-secondary transition"
-                          >
-                            <i class="fa-solid fa-xmark text-[10px]"></i>
-                          </button>
-                        </div>
-                      </div>
 
-                      <!-- Personal -->
-                      <div class="px-1">
+
+                      <!-- Personal — only shown when NO companies exist -->
+                      <div v-if="companyAccounts.length === 0" class="px-1">
                         <p
                           class="px-2 pb-0.5 text-[9px] font-semibold uppercase tracking-widest text-text-secondary"
                         >
@@ -387,27 +349,10 @@
                       <!-- Companies — only shown when user has companies -->
                       <template v-if="companyAccounts.length > 0">
                         <div class="h-px w-full bg-bg-dropdown-menu-hover/40 my-0.5"></div>
-                        <div class="px-1">
-                          <p class="px-2 pb-1.5 text-[9px] font-semibold uppercase tracking-widest text-text-secondary">
-                            Company
-                            <span class="ml-1 font-normal normal-case tracking-normal text-text-secondary/70">
-                              ({{ filteredCompanyAccounts.length }})
-                            </span>
-                          </p>
-                          <div class="px-2 pb-1.5">
-                            <div class="relative">
-                              <i class="fa-regular fa-search absolute left-2 top-1/2 -translate-y-1/2 text-text-secondary text-[10px]"></i>
-                              <input
-                                v-model="accountSearch"
-                                type="text"
-                                placeholder="Search companies..."
-                                class="w-full bg-bg-body border border-border rounded-md pl-6 pr-2 py-1.5 text-xs text-text-primary focus:outline-none focus:border-primary-color transition-colors"
-                                @click.stop
-                              />
-                            </div>
-                          </div>
-                          <ul class="max-h-[180px] overflow-y-auto overflow-x-hidden flex flex-col gap-1 scrollbar-visible pr-1">
-  <li v-for="account in filteredCompanyAccounts" :key="account.id">
+
+
+                          <ul class="max-h-[250px] overflow-y-auto overflow-x-hidden flex flex-col gap-1 scrollbar-visible pr-1">
+  <li v-for="account in companyAccounts" :key="account.id">
     <button
       type="button"
       class="group flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 transition hover:bg-bg-dropdown-menu-hover"
@@ -425,38 +370,24 @@
         class="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-purple-500 text-[10px] text-white">
         <i class="fa-solid fa-check"></i>
       </span>
-      <span v-else
-        class="hidden shrink-0 rounded-md bg-purple-100 px-2 py-0.5 text-[10px] font-semibold text-purple-600 group-hover:block dark:bg-purple-900/30 dark:text-purple-400">
-        Switch
-      </span>
+
     </button>
   </li>
-  <li v-if="filteredCompanyAccounts.length === 0" class="px-3 py-2 text-xs text-text-secondary">
+  <li v-if="companyAccounts.length === 0" class="px-3 py-2 text-xs text-text-secondary">
     No companies match your search.
   </li>
 </ul>
-                        </div>
-                      </template>
+</template>
                     </div>
                   </Transition>
                 </div>
-              </div>
+
 
               <!-- Footer — always visible, never scrolls away -->
               <div class="flex-shrink-0">
                 <div class="h-px w-full bg-bg-dropdown-menu-hover/50"></div>
                 <ul class="p-1">
-                  <li>
-                    <button
-                      class="cursor-pointer flex w-full items-center gap-3 rounded-lg px-3 py-2 hover:bg-bg-dropdown-menu-hover"
-                      role="menuitem"
-                      type="button"
-                      @click="openAccountSettings"
-                    >
-                      <i class="fa-regular fa-gear"></i>
-                      <span>Account settings</span>
-                    </button>
-                  </li>
+
                   <!-- Theme submenu -->
                   <li
                     class="relative cursor-pointer"
@@ -536,7 +467,7 @@
 
                   <li>
                     <button
-                      class="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 hover:bg-bg-dropdown-menu-hover"
+                      class="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 hover:bg-bg-dropdown-menu-hover text-red-500"
                       role="menuitem"
                       type="button"
                       @click="handleLogout"
@@ -548,6 +479,14 @@
                     </button>
                   </li>
                 </ul>
+
+                <!-- Managed Profile Footer (Google style) -->
+                <div v-if="currentAccount.type === 'company'" class="px-4 py-3 bg-bg-dropdown-menu-hover/20 mt-1 border-t border-border/40 text-center">
+                   <p class="text-[10px] text-text-secondary flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-shield-halved text-[9px]"></i>
+                    Managed by {{ currentAccount.name }}
+                  </p>
+                </div>
               </div>
             </div>
           </Transition>
@@ -952,22 +891,9 @@ onBeforeUnmount(() => {
   if (rAF2) cancelAnimationFrame(rAF2);
 });
 
-// ── Account search ─────────────────────────────────────────────
-const accountSearch = ref("");
-
-const filteredCompanyAccounts = computed(() => {
-  const q = accountSearch.value.trim().toLowerCase();
-  if (!q) return companyAccounts.value;
-  return companyAccounts.value.filter(
-    (c) =>
-      c.name.toLowerCase().includes(q) || c.domain.toLowerCase().includes(q),
-  );
-});
-
 // Clear search when dropdown closes
 watch(menuOpen, (open) => {
-  if (!open) accountSearch.value = "";
-   pendingAccount.value = null;
+  if (!open) pendingAccount.value = null;
 });
 </script>
 

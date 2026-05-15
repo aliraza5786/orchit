@@ -38,7 +38,7 @@
                   </div>
 
                   <div class="space-y-1.5">
-                    <h2 class="text-[22px] font-bold tracking-tight" style="color: var(--text-primary);">Your email is already claimed</h2>
+                    <h2 class="text-[22px] font-bold tracking-tight" style="color: var(--text-primary);">Your email is already associated with an organization</h2>
                     <p class="text-sm leading-relaxed max-w-xs mx-auto" style="color: var(--text-secondary);">
                       This email address is associated with an existing organisation on Orchit AI. You cannot create a new company while this association is active.
                     </p>
@@ -308,39 +308,88 @@
               </div>
 
               <!-- Scenario 2: MODE SWITCH toggle (generic email only) -->
-              <button
-                v-if="!isCompanyEmail"
-                type="button"
-                class="w-full flex items-center justify-between gap-4 px-5 py-4 rounded-xl border-2 transition-all duration-200 text-left"
-                :style="{
-                  borderColor: hasCustomDomain ? 'var(--accent)' : 'var(--border)',
-                  background: hasCustomDomain ? 'color-mix(in srgb, var(--accent) 8%, transparent)' : 'var(--bg-surface)',
-                }"
-                @click="toggleCustomDomain"
-              >
-                <div class="flex-1 min-w-0">
-                  <p class="text-sm font-semibold" :style="{ color: hasCustomDomain ? 'var(--accent)' : 'var(--text-primary)' }">
-                    {{ hasCustomDomain ? 'Custom domain enabled' : 'Subdomain enabled' }}
-                  </p>
-                  <p class="text-xs" style="color: var(--text-secondary);">
-                    Click to switch to {{ hasCustomDomain ? 'subdomain (.streamed.space)' : 'custom domain' }}
-                  </p>
-                </div>
-                <div
-                  class="w-10 h-6 rounded-full border-2 flex items-center transition-all duration-300 shrink-0 px-0.5"
-                  :style="{
-                    borderColor: hasCustomDomain ? 'var(--accent)' : 'var(--border)',
-                    background: hasCustomDomain ? 'var(--accent)' : 'transparent',
-                    justifyContent: hasCustomDomain ? 'flex-end' : 'flex-start',
-                  }"
-                >
-                  <div class="w-4 h-4 rounded-full bg-white shadow-sm transition-all duration-300" />
-                </div>
-              </button>
+             <button
+  v-if="!isCompanyEmail"
+  type="button"
+  class="group w-full flex items-center justify-between cursor-pointer gap-4 px-5 py-4 rounded-2xl border-2 transition-all duration-300 text-left hover:scale-[1.01] hover:shadow-lg active:scale-[0.99]"
+  :style="{
+    borderColor: hasCustomDomain ? 'var(--accent)' : 'var(--border)',
+    background: hasCustomDomain
+      ? 'color-mix(in srgb, var(--accent) 10%, var(--bg-surface))'
+      : 'var(--bg-surface)',
+    boxShadow: hasCustomDomain
+      ? '0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent)'
+      : 'none',
+  }"
+  @click="toggleCustomDomain"
+>
+  <!-- Left Content -->
+  <div class="flex-1 min-w-0">
+    <div class="flex items-center gap-2 mb-1">
+      <div
+        class="w-2.5 h-2.5 rounded-full transition-all duration-300"
+        :style="{
+          background: hasCustomDomain
+            ? 'var(--accent)'
+            : 'var(--text-secondary)',
+          boxShadow: hasCustomDomain
+            ? '0 0 10px color-mix(in srgb, var(--accent) 60%, transparent)'
+            : 'none',
+        }"
+      />
+
+      <p
+        class="text-sm font-semibold transition-colors duration-300"
+        :style="{
+          color: hasCustomDomain
+            ? 'var(--accent)'
+            : 'var(--text-primary)',
+        }"
+      >
+        {{
+          hasCustomDomain
+            ? 'I have a custom domain'
+            : "I don't have a custom domain"
+        }}
+      </p>
+    </div>
+
+    <p
+      class="text-xs transition-opacity duration-300 group-hover:opacity-100 opacity-80"
+      style="color: var(--text-secondary);"
+    >
+      {{
+        hasCustomDomain
+          ? 'Use your own branded domain for streaming'
+          : 'Use a free .streamed.space subdomain'
+      }}
+    </p>
+  </div>
+
+  <!-- Toggle -->
+  <div
+    class="relative w-12 h-7 rounded-full border-2 flex items-center px-0.5 transition-all duration-300 shrink-0"
+    :style="{
+      borderColor: hasCustomDomain ? 'var(--accent)' : 'var(--border)',
+      background: hasCustomDomain
+        ? 'var(--accent)'
+        : 'transparent',
+    }"
+  >
+    <div
+      class="w-5 h-5 rounded-full bg-white shadow-md transition-all duration-300"
+      :style="{
+        transform: hasCustomDomain
+          ? 'translateX(20px)'
+          : 'translateX(0px)',
+      }"
+    />
+  </div>
+</button>
 
               <!-- SUBDOMAIN MODE: shown for Scenario 3 always, Scenario 2 when hasCustomDomain===false -->
-              <div  class="space-y-5" v-if="!hasCustomDomain && !isCompanyEmail">
-                <div class="space-y-1.5" >
+              <div class="space-y-5" v-if="!hasCustomDomain && !isCompanyEmail">
+                <div class="space-y-1.5">
                   <label class="text-[11px] font-semibold uppercase tracking-wider" style="color: var(--text-secondary);">Site name</label>
                   <div
                     class="flex items-stretch rounded-[10px] overflow-hidden border-[1.5px]"
@@ -348,6 +397,116 @@
                       borderColor: isFocused && isSlugAvailable ? 'var(--accent)'
                                  : isFocused && isAnyUnavailable ? '#e55050'
                                  : 'var(--border-input)',
+                      background: 'var(--bg-input)',
+                    }"
+                  >
+                    <input
+                      v-model="siteName"
+                      type="text"
+                      placeholder="e.g. acme, my-team"
+                      class="flex-1 min-w-0 px-3.5 py-2.5 text-[15px] outline-none bg-transparent"
+                      @focus="isFocused = true"
+                      @blur="isFocused = false"
+                      style="color: var(--text-primary);"
+                    />
+                    <div class="flex items-center px-3.5 border-l" style="background: var(--bg-surface); border-color: var(--border);">
+                      <span class="text-[13px] font-semibold" style="color: var(--text-secondary);">.streamed.space</span>
+                    </div>
+                  </div>
+                  <p v-if="isCheckingSlug" class="text-xs" style="color: var(--text-secondary);">Checking availability…</p>
+                  <p v-else-if="isSlugAvailable === true && isDnsAvailable === true" class="text-xs" style="color: #1d9e75;">{{ siteSlug }}.streamed.space is available</p>
+                  <p v-else-if="isSlugAvailable === true && isCheckingDns" class="text-xs" style="color: var(--text-secondary);">Verifying domain…</p>
+                  <p v-else-if="isSlugAvailable === true && isDnsAvailable === false" class="text-xs" style="color: #e55050;">Domain check failed — please try a different name.</p>
+                  <p v-else-if="isSlugAvailable === false" class="text-xs" style="color: #e55050;">This site name is already taken.</p>
+                </div>
+                <div
+                  v-if="siteSlug && isSlugAvailable === true && isDnsAvailable === true"
+                  class="flex items-center gap-2 rounded-lg px-3.5 py-2.5 border"
+                  style="background: var(--bg-lavender); border-color: rgba(125,104,200,0.18);"
+                >
+                  <span class="text-[13px] font-semibold" style="color: var(--accent);">https://{{ siteSlug }}.streamed.space</span>
+                </div>
+              </div>
+
+              <!-- CUSTOM DOMAIN MODE (Scenario 2 only) -->
+              <div v-else-if="hasCustomDomain" class="space-y-5">
+                <div class="space-y-1.5">
+                  <label class="text-[11px] font-semibold uppercase tracking-wider" style="color: var(--text-secondary);">Custom domain</label>
+                  <div
+                    class="flex items-stretch rounded-[10px] overflow-hidden border-[1.5px]"
+                    :style="{
+                      borderColor: isDnsAvailable === true ? '#1d9e75' : isDnsNotRegistered ? '#f59e0b' : isDnsAvailable === false ? '#e55050' : 'var(--border-input)',
+                      background: 'var(--bg-input)',
+                    }"
+                  >
+                    <input
+                      v-model="dnsInput"
+                      type="text"
+                      placeholder="e.g. mycompany.com"
+                      class="flex-1 min-w-0 px-3.5 py-2.5 text-[15px] outline-none bg-transparent"
+                      style="color: var(--text-primary);"
+                    />
+                  </div>
+                  <p v-if="dnsValidationError" class="text-xs" style="color: #e55050;">{{ dnsValidationError }}</p>
+                  <p v-else-if="isCheckingDns" class="text-xs" style="color: var(--text-secondary);">Checking DNS availability…</p>
+                  <p v-else-if="isDnsAvailable === true" class="text-xs" style="color: #1d9e75;">{{ dnsInput }} is active and ready</p>
+                  <!-- NOT_REGISTERED: domain available for purchase -->
+                  <div
+                    v-else-if="isDnsNotRegistered"
+                    class="flex items-start gap-3 rounded-xl px-4 py-3.5 border mt-1.5"
+                    style="background: color-mix(in srgb, #f59e0b 6%, transparent); border-color: color-mix(in srgb, #f59e0b 25%, transparent);"
+                  >
+                    <svg class="w-4 h-4 mt-0.5 shrink-0" viewBox="0 0 16 16" fill="none" style="color: #f59e0b;">
+                      <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.4"/>
+                      <path d="M8 5v4M8 11v.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                    </svg>
+                    <div class="flex-1 space-y-2.5">
+                      <p class="text-xs leading-relaxed" style="color: #f59e0b;">
+                        <strong>{{ dnsInput.trim() }}</strong> is not registered yet. You can purchase it from one of these registrars:
+                      </p>
+                      <div class="flex flex-wrap gap-2">
+                        <a
+                          v-for="r in domainRegistrars"
+                          :key="r.name"
+                          :href="r.getUrl(dnsInput.trim())"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold border transition-all duration-200 hover:scale-[1.03] hover:shadow-sm cursor-pointer"
+                          style="background: var(--bg-surface); border-color: var(--border); color: var(--text-primary);"
+                        >
+                          {{ r.name }}
+                          <svg class="w-3 h-3" viewBox="0 0 12 12" fill="none" style="color: var(--text-secondary);"><path d="M3.5 8.5l5-5M8.5 3.5H5M8.5 3.5V7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- Generic DNS error (registered but inactive, or other errors) -->
+                  <p v-else-if="isDnsAvailable === false" class="text-xs" style="color: #e55050;">{{ dnsError || 'Domain not available or inactive' }}</p>
+                </div>
+
+                <div
+                  v-if="isDnsAvailable === true"
+                  class="flex items-start gap-3 rounded-xl px-4 py-3.5 border"
+                  style="background: color-mix(in srgb, var(--accent) 6%, transparent); border-color: color-mix(in srgb, var(--accent) 20%, transparent);"
+                >
+                  <svg class="w-4 h-4 mt-0.5 shrink-0" viewBox="0 0 16 16" fill="none" style="color: var(--accent);">
+                    <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.4"/>
+                    <path d="M8 5v4M8 11v.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                  </svg>
+                  <p class="text-xs leading-relaxed" style="color: var(--text-secondary);">
+                    Next you'll verify a super admin email at <strong style="color: var(--text-primary);">@{{ dnsInput }}</strong>, then verify domain ownership via DNS.
+                  </p>
+                </div>
+              </div>
+
+              <!-- Scenario 3 (company email): show subdomain input using company name as slug -->
+              <div v-else-if="isCompanyEmail" class="space-y-5">
+                <div class="space-y-1.5">
+                  <label class="text-[11px] font-semibold uppercase tracking-wider" style="color: var(--text-secondary);">Site name</label>
+                  <div
+                    class="flex items-stretch rounded-[10px] overflow-hidden border-[1.5px]"
+                    :style="{
+                      borderColor: isFocused ? 'var(--accent)' : 'var(--border-input)',
                       background: 'var(--bg-input)',
                     }"
                   >
@@ -374,46 +533,6 @@
                   style="background: var(--bg-lavender); border-color: rgba(125,104,200,0.18);"
                 >
                   <span class="text-[13px] font-semibold" style="color: var(--accent);">https://{{ siteSlug }}.streamed.space</span>
-                </div>
-              </div>
-
-              <!-- CUSTOM DOMAIN MODE (Scenario 2 only) -->
-              <div v-else class="space-y-5">
-                <div class="space-y-1.5">
-                  <label class="text-[11px] font-semibold uppercase tracking-wider" style="color: var(--text-secondary);">Custom domain</label>
-                  <div
-                    class="flex items-stretch rounded-[10px] overflow-hidden border-[1.5px]"
-                    :style="{
-                      borderColor: isDnsAvailable === true ? '#1d9e75' : isDnsAvailable === false ? '#e55050' : 'var(--border-input)',
-                      background: 'var(--bg-input)',
-                    }"
-                  >
-                    <input
-                      v-model="dnsInput"
-                      type="text"
-                      placeholder="e.g. mycompany.com"
-                      class="flex-1 min-w-0 px-3.5 py-2.5 text-[15px] outline-none bg-transparent"
-                      style="color: var(--text-primary);"
-                    />
-                  </div>
-                  <p v-if="dnsValidationError" class="text-xs" style="color: #e55050;">{{ dnsValidationError }}</p>
-                  <p v-else-if="isCheckingDns" class="text-xs" style="color: var(--text-secondary);">Checking DNS availability…</p>
-                  <p v-else-if="isDnsAvailable === true" class="text-xs" style="color: #1d9e75;">{{ dnsInput }} is active and ready</p>
-                  <p v-else-if="isDnsAvailable === false" class="text-xs" style="color: #e55050;">{{ dnsError || 'Domain not available or inactive' }}</p>
-                </div>
-
-                <div
-                  v-if="isDnsAvailable === true"
-                  class="flex items-start gap-3 rounded-xl px-4 py-3.5 border"
-                  style="background: color-mix(in srgb, var(--accent) 6%, transparent); border-color: color-mix(in srgb, var(--accent) 20%, transparent);"
-                >
-                  <svg class="w-4 h-4 mt-0.5 shrink-0" viewBox="0 0 16 16" fill="none" style="color: var(--accent);">
-                    <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.4"/>
-                    <path d="M8 5v4M8 11v.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-                  </svg>
-                  <p class="text-xs leading-relaxed" style="color: var(--text-secondary);">
-                    Next you'll verify a super admin email at <strong style="color: var(--text-primary);">@{{ dnsInput }}</strong>, then verify domain ownership via DNS.
-                  </p>
                 </div>
               </div>
 
@@ -452,7 +571,7 @@
                 </div>
                 <h2 class="text-[22px] font-bold tracking-tight" style="color: var(--text-primary);">Verify Super Admin</h2>
                 <p class="text-sm leading-relaxed max-w-80 mx-auto" style="color: var(--text-secondary);">
-                  Enter an email address at your custom domain <strong style="color: var(--text-primary);">@{{ dnsInput.trim() }}</strong>. We'll send a 5-digit OTP to verify ownership.
+                  Enter a name for the super admin at your custom domain <strong style="color: var(--text-primary);">@{{ dnsInput.trim() }}</strong>. We'll send a 5-digit OTP to verify ownership.
                 </p>
               </div>
 
@@ -465,11 +584,12 @@
                   <path d="M8 5v4M8 11v.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
                 </svg>
                 <p class="text-xs leading-relaxed" style="color: var(--text-secondary);">
-                  This person will be the super admin of your organization. The email must end with <strong style="color: var(--text-primary);">@{{ dnsInput.trim() }}</strong>.
+                  This person will be the super admin of your organization. The full email will be <strong style="color: var(--text-primary);">{{ superAdminEmailPrefix.trim() || 'name' }}@{{ dnsInput.trim() }}</strong>.
                 </p>
               </div>
 
               <div v-if="!superAdminOtpSent" class="space-y-4">
+                <!-- Super Admin Name -->
                 <div class="space-y-1.5">
                   <label class="text-[11px] font-semibold uppercase tracking-wider" style="color: var(--text-secondary);">Super Admin Name</label>
                   <div
@@ -485,9 +605,14 @@
                       placeholder="Enter Super admin name"
                       class="flex-1 min-w-0 px-3.5 py-2.5 text-[15px] outline-none bg-transparent"
                       style="color: var(--text-primary);"
+                      @focus="superAdminNameFocused = true"
+                      @blur="superAdminNameFocused = false"
                     />
                   </div>
+                  <p v-if="superAdminNameError" class="text-xs" style="color: #e55050;">{{ superAdminNameError }}</p>
                 </div>
+
+                <!-- FIX 5: Email prefix input — user types only the part before @domain -->
                 <div class="space-y-1.5">
                   <label class="text-[11px] font-semibold uppercase tracking-wider" style="color: var(--text-secondary);">Super Admin Email</label>
                   <div
@@ -498,60 +623,24 @@
                     }"
                   >
                     <input
-                      v-model="superAdminEmail"
-                      type="email"
-                      :placeholder="`admin@${dnsInput.trim() || 'yourdomain.com'}`"
+                      v-model="superAdminEmailPrefix"
+                      type="text"
+                      placeholder="admin"
                       class="flex-1 min-w-0 px-3.5 py-2.5 text-[15px] outline-none bg-transparent"
                       style="color: var(--text-primary);"
                       @focus="superAdminEmailFocused = true"
                       @blur="superAdminEmailFocused = false"
                       @keyup.enter="sendSuperAdminOtp"
                     />
+                    <!-- Fixed @domain suffix -->
+                    <div class="flex items-center px-3.5 border-l shrink-0" style="background: var(--bg-surface); border-color: var(--border);">
+                      <span class="text-[13px] font-semibold select-none" style="color: var(--text-secondary);">@{{ dnsInput.trim() }}</span>
+                    </div>
                   </div>
-                  
+                  <p v-if="superAdminEmailError" class="text-xs" style="color: #e55050;">{{ superAdminEmailError }}</p>
                 </div>
-               <div class="space-y-1.5">
-  <label
-    class="text-[11px] font-semibold uppercase tracking-wider"
-    style="color: var(--text-secondary);"
-  >
-    Super Admin Role
-  </label>
 
-  <div
-  class="flex items-stretch rounded-[10px] overflow-hidden border-[1.5px]"
-  :style="{
-    borderColor: 'var(--border-input)',
-    background: 'var(--bg-input)',
-  }"
->
-  <select
-    v-model="superAdminRole"
-    disabled
-    class="flex-1 min-w-0 px-3.5 py-2.5 text-[15px] outline-none bg-transparent"
-    style="color: var(--text-primary); opacity: 1;"
-  >
-    <option
-      v-for="role in allRoles"
-      :key="role._id"
-      :value="role._id"
-    >
-      {{ role?.title}}
-    </option>
-  </select>
-</div>
-
-  <!-- Optional role description -->
-  <p
-    v-if="superAdminRole"
-    class="text-[11px]"
-    style="color: var(--text-secondary);"
-  >
-    {{
-      allRoles.find(role => role.slug === superAdminRole)?.description
-    }}
-  </p>
-</div>
+                <!-- Super Admin Password -->
                 <div class="space-y-1.5">
                   <label class="text-[11px] font-semibold uppercase tracking-wider" style="color: var(--text-secondary);">Super Admin Password</label>
                   <div
@@ -567,14 +656,17 @@
                       placeholder="*****"
                       class="flex-1 min-w-0 px-3.5 py-2.5 text-[15px] outline-none bg-transparent"
                       style="color: var(--text-primary);"
+                      @focus="superAdminPasswordFocused = true"
+                      @blur="superAdminPasswordFocused = false"
                       @keyup.enter="sendSuperAdminOtp"
                     />
                   </div>
+                  <p v-if="superAdminPasswordError" class="text-xs" style="color: #e55050;">{{ superAdminPasswordError }}</p>
                 </div>
-                <p v-if="superAdminEmailError" class="text-xs" style="color: #e55050;">{{ superAdminEmailError }}</p>
+
                 <button
                   type="button"
-                  :disabled="isSendingOtp || !superAdminEmail.trim()"
+                  :disabled="isSendingOtp || !superAdminEmailPrefix.trim()"
                   class="w-full flex items-center justify-center gap-2 cursor-pointer py-3 rounded-[9px] font-bold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   style="background: var(--accent); color: var(--accent-text);"
                   @click="sendSuperAdminOtp"
@@ -657,6 +749,7 @@
             :active="activeStep === 6"
             :abort="!!companySlugError"
             :loading="isLoaderRunning"
+            :profileType="selected"
             @complete="onProvisioningComplete"
           />
         </div>
@@ -1060,21 +1153,35 @@ const { mutateAsync: verifyOtp } = useVerifySuperAdminOtp()
 const superAdminRole = ref("")
 const superAdminName = ref("")
 const superAdminPassword = ref("")
+
+// FIX 5: Separate email prefix from full email
+// User only types the part before @domain; full email is computed
+const superAdminEmailPrefix = ref('')
+const superAdminEmail = computed(() => {
+  const prefix = superAdminEmailPrefix.value.trim()
+  const domain = dnsInput.value.trim()
+  if (!prefix || !domain) return ''
+  return `${prefix}@${domain}`
+})
+
 const allRoles = computed(() => {
   const raw = rolesData.value?.data ?? rolesData.value ?? []
   return Array.isArray(raw) ? raw : []
 })
+
+// FIX 4: Auto-resolve superAdminRole from roles list — never shown to user
+// Match the super admin role that belongs to the CURRENT company (after createProfile)
 watchEffect(() => {
   if (!allRoles.value?.length) return
-
-  const role = allRoles.value.find(r =>
-    r.is_super_admin && r.company_id
-  )
-
-  if (role) {
-    superAdminRole.value = role._id
+  const currentCompanyId = companyID.value ?? localStorage.getItem('company_id') ?? ''
+  // Prefer the super admin role matching the current company
+  const matchedRole = allRoles.value.find(r => r.is_super_admin && r.company_id === currentCompanyId)
+    || allRoles.value.find(r => r.is_super_admin && r.company_id)
+  if (matchedRole) {
+    superAdminRole.value = matchedRole._id
   }
 })
+
 // ─── Stores & Router ──────────────────────────────────────────────────────────
 const workspaceStore = useWorkspaceStore()
 const authStore = useAuthStore()
@@ -1137,19 +1244,7 @@ onMounted(async () => {
         return
       }
 
-      // Detect custom company email
-      if (hasCustomDomainEmail.value && customEmailDomain.value) {
-        website.value = customEmailDomain.value
-
-        // user wants to create a team
-        if (selectedGoal.value === 'team') {
-          await createProfile({
-            website: customEmailDomain.value,
-          })
-
-          return
-        }
-      }
+      // (Legacy dead code referencing hasCustomDomainEmail/customEmailDomain removed)
     }
   } catch (error) {
     console.error('Failed to fetch profile', error)
@@ -1191,16 +1286,27 @@ const hasCustomDomain = ref(false)
 const dnsInput = ref('')
 const isCheckingDns = ref(false)
 const isDnsAvailable = ref(null)
+const isDnsNotRegistered = ref(false)
 const dnsError = ref(null)
 const dnsValidationError = ref(null)
 const isDnsLocked = ref(false)
 
+// ─── Domain registrar links (shown when domain is not registered) ─────────────
+const domainRegistrars = [
+  { name: 'GoDaddy',    getUrl: (d) => `https://www.godaddy.com/domainsearch/find?domainToCheck=${encodeURIComponent(d)}` },
+  { name: 'Namecheap',  getUrl: (d) => `https://www.namecheap.com/domains/registration/results/?domain=${encodeURIComponent(d)}` },
+  { name: 'Cloudflare', getUrl: () => `https://www.cloudflare.com/products/registrar/` },
+  { name: 'Hostinger',  getUrl: (d) => `https://www.hostinger.com/domain-name-search?query=${encodeURIComponent(d)}` },
+  { name: 'Porkbun',    getUrl: (d) => `https://porkbun.com/checkout/search?q=${encodeURIComponent(d)}` },
+]
+
 // ─── Step 51 — Super Admin OTP (Scenario 2 custom domain only) ───────────────
-const superAdminEmail = ref('')
 const superAdminEmailError = ref('')
 const superAdminEmailFocused = ref(false)
-const superAdminNameError =ref(false)
-const superAdminPasswordError = ref(false)
+const superAdminNameFocused = ref(false)
+const superAdminNameError = ref('')
+const superAdminPasswordError = ref('')
+const superAdminPasswordFocused = ref(false)
 const superAdminOtpSent = ref(false)
 const isSendingOtp = ref(false)
 const isVerifyingOtp = ref(false)
@@ -1209,6 +1315,26 @@ const otpInputRefs = ref([])
 const otpError = ref('')
 const otpResendCountdown = ref(0)
 let otpResendTimer = null
+
+function startOtpResendCountdown(seconds = 60) {
+  otpResendCountdown.value = seconds
+  if (otpResendTimer) clearInterval(otpResendTimer)
+  otpResendTimer = setInterval(() => {
+    otpResendCountdown.value--
+    if (otpResendCountdown.value <= 0) {
+      clearInterval(otpResendTimer)
+      otpResendTimer = null
+    }
+  }, 1000)
+}
+
+function stopCountdown() {
+  if (otpResendTimer) {
+    clearInterval(otpResendTimer)
+    otpResendTimer = null
+  }
+  otpResendCountdown.value = 0
+}
 
 // ─── Step 8 — domain verification (Scenario 2 custom domain only) ─────────────
 const domainPhase = ref('idle')
@@ -1307,8 +1433,6 @@ const options = Object.freeze([
 ])
 
 // ─── Computed: claim domain for Step 9 ────────────────────────────────────────
-// Scenario 3 (company email): user's own email domain (auto-verified)
-// Scenario 2 (gmail + custom domain): domain entered in Step 5
 const claimDomain = computed(() => {
   if (isCompanyEmail.value) return userEmailDomain.value
   return dnsInput.value.trim()
@@ -1346,10 +1470,11 @@ const domainStatusStyle = computed(() => {
 const isCreateSiteDisabled = computed(() => {
   if (creatingProfile.value) return true
 
-  // Scenario 3 (company email): subdomain only — no DNS checks needed
+  // Scenario 3 (company email): subdomain only — slug check only, no DNS checks
   if (isCompanyEmail.value) {
-    if (!dnsInput.value) return true
+    if (!siteName.value) return true
     if (isCheckingSlug.value) return true
+    if (isSlugAvailable.value !== true) return true
     return false
   }
 
@@ -1363,10 +1488,12 @@ const isCreateSiteDisabled = computed(() => {
     return false
   }
 
-  // Scenario 2b: generic email + subdomain
+  // Scenario 2b: generic email + subdomain (slug + DNS both must pass)
   if (!siteName.value) return true
   if (isCheckingSlug.value) return true
   if (isSlugAvailable.value !== true) return true
+  if (isCheckingDns.value) return true
+  if (isDnsAvailable.value !== true) return true
   return false
 })
 
@@ -1482,16 +1609,26 @@ watch(role,        (v) => { if (v && errors.value.role)                errors.va
 watch(companySize, (v) => { if (v && errors.value.companySize)         errors.value.companySize = undefined })
 watch(workType,    (v) => { if (v && errors.value.workType)            errors.value.workType    = undefined })
 
-// Pre-fill site name when arriving at step 5
+// ─── FIX 2: Pre-fill site name / dnsInput with company name when entering step 5 ──
+// For non-company emails: siteName uses company/school name (slug format)
+// For company emails: siteName uses company/school name too (slug format)
+// dnsInput is NEVER auto-filled from company name — it's either typed (custom domain)
+// or set from the user's email domain (company email scenario, handled separately)
 watch(activeStep, (step) => {
-  if (step === 5 && !dnsInput.value) {
-    if (isCompanyEmail.value && userEmailDomain.value) {
-      // Use full email domain
+  if (step === 5) {
+    // Auto-fill siteName from the entered company/school name (FIX 2)
+    if (!siteName.value) {
+      if (selected.value === 'team' && team.value.trim()) {
+        siteName.value = generateSlug(team.value)
+      } else if (selected.value === 'school' && schoolName.value.trim()) {
+        siteName.value = generateSlug(schoolName.value)
+      }
+    }
+
+    // For company emails: auto-fill dnsInput with the email domain (not company name)
+    // This is what was there before and stays unchanged
+    if (isCompanyEmail.value && !dnsInput.value && userEmailDomain.value) {
       dnsInput.value = userEmailDomain.value.toLowerCase().trim()
-    } else if (selected.value === 'team' && team.value.trim()) {
-      dnsInput.value = generateSlug(team.value)
-    } else if (selected.value === 'school' && schoolName.value.trim()) {
-      dnsInput.value = generateSlug(schoolName.value)
     }
   }
 
@@ -1507,12 +1644,20 @@ watch(
   }
 )
 
+// ─── Slug is generated only when entering Step 5 (see watch(activeStep) above) ──
+// Removed: watchers on team/schoolName that prematurely generated slugs during Step 2
+
 // ─── Debounced slug check ─────────────────────────────────────────────────────
 let slugDebounceTimer = null
 
 watch(siteName, (val) => {
   siteSlug.value = generateSlug(val)
   isSlugAvailable.value = null
+  // Also reset DNS state for subdomain mode (non-company-email scenario)
+  if (!isCompanyEmail.value && !hasCustomDomain.value) {
+    isDnsAvailable.value = null
+    dnsError.value = null
+  }
   if (slugDebounceTimer) clearTimeout(slugDebounceTimer)
   if (!siteSlug.value) { isCheckingSlug.value = false; return }
   isCheckingSlug.value = true
@@ -1526,20 +1671,64 @@ watch(siteName, (val) => {
     } finally {
       if (siteSlug.value === captured) isCheckingSlug.value = false
     }
+    // FIX 3: After slug is available, also run DNS check on the slug domain
+    // Only for generic email subdomain mode (not company email, not custom domain)
+    if (!isCompanyEmail.value && !hasCustomDomain.value && isSlugAvailable.value === true && captured) {
+      runSubdomainDnsCheck(captured)
+    }
   }, 600)
 })
 
-// ─── Debounced DNS check (Scenario 2 custom domain only) ─────────────────────
+// ─── FIX 3: DNS check triggered after slug availability confirmed (subdomain mode) ──
 const DOMAIN_RE = /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,10}$/
+
+async function runSubdomainDnsCheck(slug) {
+  // For subdomain mode we check {slug}.streamed.space as the domain
+  const subdomain = `${slug}.streamed.space`
+  isCheckingDns.value = true
+  isDnsAvailable.value = null
+  dnsError.value = null
+  try {
+    const result = await workspaceStore.fetchDnsCheck(subdomain)
+    if (!result) {
+      isDnsAvailable.value = null
+      dnsError.value = 'Could not verify subdomain. Please try again.'
+    } else {
+      const isRegistered = result?.is_registered === true
+      const isActive     = result?.is_active     === true
+      if (isActive) {
+        isDnsAvailable.value = true
+        dnsError.value = null
+      } else if (isRegistered && !isActive) {
+        isDnsAvailable.value = false
+        dnsError.value = 'Subdomain DNS is not yet active.'
+      } else {
+        // Not registered yet is fine for a new subdomain
+        isDnsAvailable.value = true
+        dnsError.value = null
+      }
+    }
+  } catch {
+    // DNS check failure is non-blocking for subdomain mode — allow proceed
+    isDnsAvailable.value = true
+    dnsError.value = null
+  } finally {
+    isCheckingDns.value = false
+  }
+}
+
+// ─── Debounced DNS check (Scenario 2 custom domain mode only) ────────────────
 let dnsDebounceTimer = null
 
 watch(dnsInput, (val) => {
-  // Never run DNS checks for Scenario 3 (company email)
+  // Only run this watcher for custom domain mode (not company email, not subdomain)
   if (isCompanyEmail.value) return
+  if (!hasCustomDomain.value) return
   if (isDnsLocked.value) return
 
   const trimmed = val.trim()
   isDnsAvailable.value     = null
+  isDnsNotRegistered.value = false
   dnsError.value           = null
   dnsValidationError.value = null
   if (dnsDebounceTimer) clearTimeout(dnsDebounceTimer)
@@ -1562,15 +1751,17 @@ watch(dnsInput, (val) => {
         const isRegistered = result?.is_registered === true
         const isActive     = result?.is_active     === true
         if (isRegistered && isActive) {
-          isDnsAvailable.value = true;
-           createProfile({ payload: buildProfilePayload(true) })
+          // FIX 1: Removed createProfile call here — only check availability, do NOT call createProfile
+          isDnsAvailable.value = true
           dnsError.value       = null
         } else if (isRegistered && !isActive) {
           isDnsAvailable.value = false
           dnsError.value       = 'This domain is registered but DNS is not active yet.'
         } else {
-          isDnsAvailable.value = false
-          dnsError.value       = null
+          // NOT_REGISTERED: domain not found — show purchase suggestion instead of error
+          isDnsAvailable.value     = false
+          isDnsNotRegistered.value = true
+          dnsError.value           = null
         }
       }
     } catch (err) {
@@ -1597,8 +1788,11 @@ function isSlugConflictMsg(msg) {
   )
 }
 
+// Track whether we need to go to Step 51 (super admin) after company creation
+const pendingSuperAdminStep = ref(false)
+
 const { mutate: createProfile, isPending: creatingProfile } = useCreateCompany({
-  onSuccess: (data) => {
+  onSuccess: async (data) => {
     const payload = data?.data ?? data
     if (!payload || payload?.status === false) {
       const msg = payload?.message ?? ''
@@ -1609,6 +1803,7 @@ const { mutate: createProfile, isPending: creatingProfile } = useCreateCompany({
       activeStep.value      = 5
       isProvisioning.value  = false
       isLoaderRunning.value = false
+      pendingSuperAdminStep.value = false
       return
     }
     const id     = payload?.company_id ?? payload?._id
@@ -1619,6 +1814,24 @@ const { mutate: createProfile, isPending: creatingProfile } = useCreateCompany({
     domainLink.value  = domain
     localStorage.setItem('company_id', id ?? '')
     siteCreated.value = true
+
+    // Scenario 2a: company created, now go to super admin verification
+    if (pendingSuperAdminStep.value) {
+      pendingSuperAdminStep.value = false
+      isProvisioning.value  = false
+      isLoaderRunning.value = false
+      // Refetch roles so we get the super admin role for the new company
+      await refetchRoles()
+      // Re-resolve superAdminRole for the newly created company
+      const currentCompanyId = id
+      const matchedRole = allRoles.value.find(r => r.is_super_admin && r.company_id === currentCompanyId)
+        || allRoles.value.find(r => r.is_super_admin && r.company_id)
+      if (matchedRole) {
+        superAdminRole.value = matchedRole._id
+      }
+      activeStep.value = 51
+      return
+    }
     // isLoaderRunning stays true; LoadingCreateProfile animation drives timing
   },
   onError: (error) => {
@@ -1630,6 +1843,7 @@ const { mutate: createProfile, isPending: creatingProfile } = useCreateCompany({
     activeStep.value      = 5
     isProvisioning.value  = false
     isLoaderRunning.value = false
+    pendingSuperAdminStep.value = false
   },
 })
 
@@ -1716,9 +1930,15 @@ function toggleCustomDomain() {
   if (isCompanyEmail.value) return
 
   hasCustomDomain.value = !hasCustomDomain.value
-  if (!hasCustomDomain.value) {
+  if (hasCustomDomain.value) {
+    // Auto-fill domain input with the current slug when toggling on (generic email only)
+    if (!isCompanyEmail.value && siteSlug.value) {
+      dnsInput.value = siteSlug.value
+    }
+  } else {
     dnsInput.value            = ''
     isDnsAvailable.value      = null
+    isDnsNotRegistered.value  = false
     dnsError.value            = null
     dnsValidationError.value  = null
     isCheckingDns.value       = false
@@ -1757,15 +1977,11 @@ function buildProfilePayload(includeSite = false) {
     like_to_manage: selectedModules.value,
     heard_about_us: referralSources.value,
   }
-  if (
-  dnsInput.value.trim()
-) {
-  base.custom_domain = dnsInput.value
-}
+  if (dnsInput.value.trim()) {
+    base.custom_domain = dnsInput.value
+  }
   if (includeSite && siteSlug.value) {
     base.site_slug = siteSlug.value
-    // Custom domain fields only for Scenario 2a (gmail + custom domain verified)
-    
   }
   if (selected.value === 'team') {
     return { ...base, title: team.value, type: 'team', role_id: role.value, company_size: companySize.value }
@@ -1824,7 +2040,6 @@ function onProvisioningComplete() {
   isLoaderRunning.value = false
 
   if (selected.value === 'personal') {
-    // Personal: no workspace was created, go straight to finish
     router.push({ path: '/finish-profile', query: { welcome: '1', type: 'personal' } })
     return
   }
@@ -1834,41 +2049,52 @@ function onProvisioningComplete() {
 }
 
 // ─── Super Admin OTP Actions (Step 51, Scenario 2a only) ─────────────────────
+// FIX 5: Validate only the prefix (before @domain)
 function validateSuperAdminEmail() {
-  const email  = superAdminEmail.value.trim()
-  const domain = dnsInput.value.trim()
+  const prefix = superAdminEmailPrefix.value.trim()
   superAdminEmailError.value = ''
-  if (!email) {
-    superAdminEmailError.value = 'Please enter a super admin email.'
+
+  if (!prefix) {
+    superAdminEmailError.value = 'Please enter the super admin email name.'
     return false
   }
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  if (!emailRegex.test(email)) {
-    superAdminEmailError.value = 'Please enter a valid email address.'
+
+  // Ensure prefix has no @ or invalid characters
+  if (prefix.includes('@')) {
+    superAdminEmailError.value = 'Please enter only the part before @. The domain is already set.'
     return false
   }
-  const emailDomain = email.split('@')[1]?.toLowerCase()
-  if (emailDomain !== domain.toLowerCase()) {
-    superAdminEmailError.value = `Email must end with @${domain} to match your custom domain.`
+
+  const prefixRegex = /^[a-zA-Z0-9._%+\-]+$/
+  if (!prefixRegex.test(prefix)) {
+    superAdminEmailError.value = 'Please enter a valid email name (letters, numbers, dots, hyphens).'
     return false
   }
+
   return true
 }
+
+const superAdminUserId = ref(null)
 const { mutateAsync: createCompanyUser } = useCreateCompanyUser()
+
 async function sendSuperAdminOtp() {
   if (!validateSuperAdminEmail()) return
   isSendingOtp.value = true
   superAdminEmailError.value = ''
   try {
     const companyIdRaw = companyID.value ?? localStorage.getItem('company_id') ?? ''
-    await createCompanyUser({
-  u_email: superAdminEmail.value.trim(),
-  domain: dnsInput.value.trim(),
-  company_id: companyIdRaw,
-  u_full_name: superAdminName.value.trim(),
-  company_role_id: superAdminRole.value,
-  u_password: superAdminPassword.value.trim(),
-})
+    // FIX 4: Pass superAdminRole directly (resolved from roles list, not from UI input)
+    // FIX 5: Pass the computed full email (prefix + @domain)
+    const result = await createCompanyUser({
+      u_email: superAdminEmail.value,
+      domain: dnsInput.value.trim(),
+      company_id: companyIdRaw,
+      u_full_name: superAdminName.value.trim(),
+      company_role_id: superAdminRole.value,
+      u_password: superAdminPassword.value.trim(),
+    })
+    // Store the created user id for OTP verification
+    superAdminUserId.value = result?.data?._id ?? result?._id ?? null
     superAdminOtpSent.value = true
     otpDigits.value = ['', '', '', '', '']
     otpError.value  = ''
@@ -1895,10 +2121,8 @@ async function verifySuperAdminOtp() {
     const companyIdRaw =
       companyID.value ?? localStorage.getItem('company_id') ?? ''
 
-    const userId = superAdminUserId.value // IMPORTANT: you must store this after user creation
-
     await verifyOtp({
-      user_id: userId,
+      user_id: superAdminUserId.value,
       otp,
       company_id: companyIdRaw,
     })
@@ -1928,10 +2152,8 @@ async function resendSuperAdminOtp() {
     const companyIdRaw =
       companyID.value ?? localStorage.getItem('company_id') ?? ''
 
-    const userId = superAdminUserId.value
-
     await sendOtp({
-      user_id: userId,
+      user_id: superAdminUserId.value,
       company_id: companyIdRaw,
     })
 
@@ -2066,8 +2288,7 @@ async function switchVerificationMethod(method) {
   } catch (err) {
     recheckError.value = err?.response?.data?.message ?? err?.message ?? 'Failed to switch verification method.'
   } finally {
-    isSwitchingMethod.value = false;
-    
+    isSwitchingMethod.value = false
   }
 }
 
@@ -2240,6 +2461,7 @@ async function continueHandler() {
     }
     if (selected.value === 'personal') {
       isUpdatingProfile.value = true
+      isLoaderRunning.value = true
       try {
         await updateUserProfile({
           u_work_to_do:   personalRole.value,
@@ -2247,12 +2469,9 @@ async function continueHandler() {
           like_to_manage: selectedModules.value,
           heard_about_us: referralSources.value,
         })
-        // Show the loader screen (isLoaderRunning=false → completes quickly)
         activeStep.value      = 6
-        isLoaderRunning.value = false
       } catch {
         // stay on step 4 if the API call fails
-      } finally {
         isUpdatingProfile.value = false
         isLoaderRunning.value = false
       }
@@ -2277,13 +2496,19 @@ async function continueHandler() {
 async function continueSiteHandler() {
   if (isCreateSiteDisabled.value) return
 
-  // Scenario 2a: gmail + custom domain verified → super admin OTP first
+  // Scenario 2a: gmail + custom domain verified → create company first, then super admin OTP
   if (!isCompanyEmail.value && hasCustomDomain.value && isDnsAvailable.value === true) {
-    activeStep.value = 51
+    // FIX 1: Must call createProfile BEFORE going to step 51
+    // The super admin step needs company_id and company_role_id
+    pendingSuperAdminStep.value = true
+    isProvisioning.value  = true
+    isLoaderRunning.value = true
+    activeStep.value      = 6  // show loading while company is being created
+    createProfile({ payload: buildProfilePayload(true) })
     return
   }
 
-  // Scenario 2b or 3b: provision workspace immediately
+  // Scenario 2b or 3: provision workspace
   activeStep.value      = 6
   isProvisioning.value  = true
   isLoaderRunning.value = true

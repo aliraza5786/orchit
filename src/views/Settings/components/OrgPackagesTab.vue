@@ -7,6 +7,8 @@ import PricingSkeleton from "../../../components/skeletons/PricingSkeleton.vue";
 import { useAuthStore } from "../../../stores/auth";
 import { useRouter } from "vue-router";
 import { useUpgradePackage } from "../../../queries/usePackages";
+import { useListDomains, useCompanyRolesWithoutPermission } from "../../../queries/useCommon";
+import { useCompanyUsers } from "../../../queries/useCompanyUsers";
 import { toast } from "vue-sonner";
 
 const props = defineProps<{
@@ -32,6 +34,23 @@ const isOwner = computed(() => membershipRole.value === 'owner')
 const canUpgradePackage = computed(() =>
   isOwner.value || can('package.change')
 )
+
+// ── Verification checks ───────────────────────────────────────────────────────
+const companyId = computed<string>(() => localStorage.getItem('company_id') || '')
+
+const { data: domainsData } = useListDomains()
+const domains = computed(() => domainsData.value?.domains ?? [])
+const hasVerifiedDomain = computed(() => domains.value.some((d: any) => d.status === 'verified'))
+
+const { data: rolesData } = useCompanyRolesWithoutPermission()
+const allRoles = computed(() => rolesData.value?.data ?? rolesData.value ?? [])
+const superAdminRoles = computed(() => allRoles.value.filter((r: any) => r.is_super_admin).map((r: any) => r._id))
+
+const { data: usersData } = useCompanyUsers(computed(() => ({ company_id: companyId.value })).value)
+const members = computed(() => usersData.value?.data?.users ?? usersData.value?.users ?? [])
+const hasVerifiedSuperAdmin = computed(() => members.value.some((m: any) => m.company_role_id && superAdminRoles.value.includes(m.company_role_id)))
+
+const isSetupComplete = computed(() => hasVerifiedDomain.value && hasVerifiedSuperAdmin.value)
 
 // ── Current active plan detection ─────────────────────────────────────────────
 // Covers the most common field names the API might return
@@ -86,6 +105,17 @@ function handleClick(plan: any) {
 
   if (!canUpgradePackage.value) {
     return toast.error("You don't have permission to upgrade packages")
+  }
+
+  if (!isSetupComplete.value) {
+    if (!hasVerifiedDomain.value && !hasVerifiedSuperAdmin.value) {
+      toast.error('Please verify your domain and super admin first before upgrading.')
+    } else if (!hasVerifiedDomain.value) {
+      toast.error('Please verify your domain first before upgrading.')
+    } else {
+      toast.error('Please verify your super admin first before upgrading.')
+    }
+    return
   }
 
   if (authStore.isAuthenticated) {
@@ -354,8 +384,9 @@ if (currentInterval.value === 'year') {
             <button
               v-else
               @click="handleClick(plan)"
-              :disabled="(isUpgrading && upgradingPackageId === plan.packageId) || !canUpgradePackage"
+              :disabled="(isUpgrading && upgradingPackageId === plan.packageId) || !canUpgradePackage || !isSetupComplete"
               class="w-full py-[14px] cursor-pointer rounded-[12px] font-normal text-[14px] transition relative z-10 shadow-[0_4px_6px_-4px_rgba(0,0,0,0.1)] disabled:opacity-50 disabled:cursor-not-allowed"
+              :title="!isSetupComplete ? 'Please verify domain and super admin first' : ''"
               :class="[
                 isDark
                   ? plan.highlighted

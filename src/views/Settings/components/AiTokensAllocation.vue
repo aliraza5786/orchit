@@ -185,7 +185,12 @@
         <div
           v-for="user in users"
           :key="user.id"
-          class="flex items-center gap-3 bg-bg-card border border-border/40 rounded-xl px-4 py-3 transition-all duration-200 hover:border-border/70 hover:shadow-md hover:shadow-black/10 hover:-translate-y-0.5 group/member"
+          class="flex items-center gap-3 bg-bg-card border border-border/40 rounded-xl px-4 py-3 transition-all duration-200 group/member relative"
+          :class="[
+            (user.isVerified && hasVerifiedDomain)
+              ? 'hover:border-border/70 hover:shadow-md hover:shadow-black/10 hover:-translate-y-0.5' 
+              : 'opacity-60 grayscale-[0.5] cursor-not-allowed bg-bg-card/50'
+          ]"
         >
           <!-- Avatar -->
           <div
@@ -197,7 +202,15 @@
 
           <!-- Name + role -->
           <div class="min-w-0 flex-1">
-            <p class="text-sm font-semibold text-text-primary truncate">{{ user.name }}</p>
+            <div class="flex items-center gap-2">
+              <p class="text-sm font-semibold text-text-primary truncate">{{ user.name }}</p>
+              <span v-if="!user.isVerified" class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-md bg-red-500/10 text-red-400 border border-red-500/20 shrink-0">
+                Unverified
+              </span>
+              <span v-if="!hasVerifiedDomain" class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-500 border border-amber-500/20 shrink-0">
+                Domain Not Verified
+              </span>
+            </div>
             <p class="text-xs text-text-secondary mt-0.5">{{ user.role }}</p>
           </div>
 
@@ -217,12 +230,14 @@
               <div class="flex items-center justify-end gap-1">
                 <button
                   @click="user.percentage = Math.max(1, user.percentage - 1)"
-                  class="w-5 h-5 rounded flex items-center justify-center border border-border/50 text-text-secondary hover:border-red-400/50 hover:text-red-400 hover:bg-red-400/5 text-base leading-none transition-all duration-150 active:scale-90"
+                  :disabled="!user.isVerified || !hasVerifiedDomain"
+                  class="w-5 h-5 rounded flex items-center justify-center border border-border/50 text-text-secondary hover:border-red-400/50 hover:text-red-400 hover:bg-red-400/5 text-base leading-none transition-all duration-150 active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:border-border/50 disabled:hover:text-text-secondary"
                 >−</button>
-                <span class="text-sm font-bold w-9 text-center transition-all duration-150" :style="{ color: user.color }">{{ user.percentage }}%</span>
+                <span class="text-sm font-bold w-9 text-center transition-all duration-150" :style="{ color: (user.isVerified && hasVerifiedDomain) ? user.color : 'var(--text-secondary)' }">{{ user.percentage }}%</span>
                 <button
                   @click="user.percentage = Math.min(100, user.percentage + 1)"
-                  class="w-5 h-5 rounded flex items-center justify-center border border-border/50 text-text-secondary hover:border-emerald-400/50 hover:text-emerald-400 hover:bg-emerald-400/5 text-base leading-none transition-all duration-150 active:scale-90"
+                  :disabled="!user.isVerified || !hasVerifiedDomain"
+                  class="w-5 h-5 rounded flex items-center justify-center border border-border/50 text-text-secondary hover:border-emerald-400/50 hover:text-emerald-400 hover:bg-emerald-400/5 text-base leading-none transition-all duration-150 active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:border-border/50 disabled:hover:text-text-secondary"
                 >+</button>
               </div>
               <p class="text-[10px] text-text-secondary mt-1">{{ ((user.percentage / 100) * totalBudget).toLocaleString() }} tkns</p>
@@ -233,7 +248,8 @@
                 type="number"
                 min="0"
                 :max="totalBudget"
-                class="w-full text-right text-xs font-semibold text-text-primary bg-border/10 border border-border/40 rounded-md px-2 py-1 outline-none focus:border-accent/50 hover:border-border/70 transition-colors duration-150 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                :disabled="!user.isVerified || !hasVerifiedDomain"
+                class="w-full text-right text-xs font-semibold text-text-primary bg-border/10 border border-border/40 rounded-md px-2 py-1 outline-none focus:border-accent/50 hover:border-border/70 transition-colors duration-150 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
               />
               <p class="text-[10px] text-text-secondary mt-1">{{ ((user.tokens / totalBudget) * 100).toFixed(1) }}% of budget</p>
             </template>
@@ -398,7 +414,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { useCompanyTokenAllocation, useSetUserAllocation, useSetAllocationMode } from '../../../queries/useCommon'
+import { useCompanyTokenAllocation, useSetUserAllocation, useSetAllocationMode, useListDomains } from '../../../queries/useCommon'
 
 const allocationMode = ref<'percentage' | 'custom'>('percentage')
 const range = ref('30d')
@@ -408,6 +424,10 @@ const saveError = ref<string | null>(null)
 const { data: allocationData } = useCompanyTokenAllocation()
 const { mutateAsync: setUserAllocation, isPending: isSaving } = useSetUserAllocation()
 const { mutateAsync: setAllocationMode } = useSetAllocationMode()
+
+const { data: domainsData } = useListDomains()
+const domains = computed(() => domainsData.value?.domains ?? [])
+const hasVerifiedDomain = computed(() => domains.value.some((d: any) => d.status === 'verified'))
 
 interface UserAllocation {
   id: string
@@ -420,6 +440,7 @@ interface UserAllocation {
   usedThisMonth: number
   sparkLine: string
   sparkPath: string
+  isVerified: boolean
 }
 
 function buildSpark(values: number[]) {
@@ -473,6 +494,7 @@ const apiUsers = computed<UserAllocation[]>(() => {
       role: u.membership_role
         ? u.membership_role.charAt(0).toUpperCase() + u.membership_role.slice(1)
         : 'Member',
+      isVerified: (apiUser?.u_is_verified !== false) && (apiUser?.u_is_verfied !== false) && (u.membership_status !== 'pending_super_admin_otp'),
       color: colorPalette[idx % colorPalette.length],
       percentage,
       tokens: allocatedTokens,
