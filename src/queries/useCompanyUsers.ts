@@ -301,3 +301,45 @@ export const useConfirmDomainDeletion = (
     ...options,
   })
 }
+export function useSendSuperAdminOtp() {
+  return useMutation({
+    mutationFn: ({
+      user_id,
+      company_id,
+    }: {
+      user_id: string
+      company_id: string
+    }) =>
+      request({
+        url: `/workspace/company/users/${user_id}/send-super-admin-otp`,
+        method: 'POST',
+        data: {
+          company_id,
+        },
+      }),
+  })
+}
+
+export function useVerifySuperAdminOtp() {
+  return useMutation({
+    mutationFn: ({
+      user_id,
+      otp,
+      company_id,
+    }: {
+      user_id: string
+      otp: string
+      company_id: string
+    }) =>
+      request({
+        url: `/workspace/company/users/${user_id}/verify-super-admin-otp`,
+        method: 'POST',
+        data: {
+          otp,
+          company_id,
+        },
+      }),
+  })
+}
+
+
