@@ -288,17 +288,34 @@ export const useVerifyDomain = (options: Record<string, unknown> = {}) => {
   })
 }
 
-export const useListDomains = (options: Record<string, unknown> = {}) => {
-  const companyId = getCompanyId()
+export const useListDomains = (
+  companyIdOrOptions?: string | Ref<any> | ComputedRef<any> | Record<string, any>,
+  maybeOptions: Record<string, any> = {}
+) => {
+  const isId = typeof companyIdOrOptions === 'string' || isRef(companyIdOrOptions) || (typeof companyIdOrOptions === 'object' && companyIdOrOptions !== null && 'effect' in companyIdOrOptions) // duck typing for computed
+  
+  const companyId = computed(() => {
+    if (isId) {
+      return isRef(companyIdOrOptions) ? companyIdOrOptions.value : companyIdOrOptions
+    }
+    const options = companyIdOrOptions as Record<string, any>
+    return options?.company_id || getCompanyId()
+  })
+
+  const options = (isId ? maybeOptions : (companyIdOrOptions as Record<string, any>)) || {}
 
   return useQuery<ListDomainsData>({
     queryKey: ['company-domains', companyId],
-    queryFn: ({ signal }) =>
-      request<ListDomainsData>({
-        url: `company-domains?company_id=${companyId}`,
+    queryFn: ({ signal }) => {
+      const id = companyId.value
+      if (!id) return Promise.reject(new Error('No company ID'))
+      return request<ListDomainsData>({
+        url: `company-domains?company_id=${id}`,
         method: 'GET',
         signal,
-      }),
+      })
+    },
+    enabled: computed(() => !!companyId.value),
     ...options,
   })
 }

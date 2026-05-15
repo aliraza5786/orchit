@@ -12,7 +12,9 @@
       <button
       v-if="canCreateRole"
         @click="openCreateModal"
-        class="px-4 py-2.5 bg-accent text-white text-sm font-semibold rounded-lg hover:bg-accent/90 active:scale-95 transition-all shadow-lg shadow-accent/20 whitespace-nowrap self-start sm:self-auto"
+        :disabled="!hasVerifiedDomain"
+        :title="!hasVerifiedDomain ? 'Please verify your domain first' : ''"
+        class="px-4 py-2.5 bg-accent text-white text-sm font-semibold rounded-lg hover:bg-accent/90 active:scale-95 transition-all shadow-lg shadow-accent/20 whitespace-nowrap self-start sm:self-auto disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <i class="fa-solid fa-plus mr-2"></i> Create role
       </button>
@@ -133,7 +135,8 @@
           </p>
           <button
             @click="openCreateModal"
-            class="px-4 py-2 bg-accent text-white text-sm font-semibold rounded-lg hover:bg-accent/90 transition-all"
+            :disabled="!hasVerifiedDomain"
+            class="px-4 py-2 bg-accent text-white text-sm font-semibold rounded-lg hover:bg-accent/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <i class="fa-solid fa-plus mr-2"></i> Create first custom role
           </button>
@@ -244,7 +247,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { toast } from 'vue-sonner'
-import { useCompanyRolesWithoutPermission } from '../../../queries/useCommon'
+import { useCompanyRolesWithoutPermission, useListDomains } from '../../../queries/useCommon'
 import EditCompanyRole from './EditCompanyRole.vue'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -306,6 +309,10 @@ const canDeleteRole = computed(() =>
 const canViewRole = computed(() =>
   isOwner.value || can('role.read')
 )
+
+const { data: domainsData } = useListDomains()
+const domains = computed(() => domainsData.value?.domains ?? [])
+const hasVerifiedDomain = computed(() => domains.value.some((d: any) => d.status === 'verified'))
 // ── Fetch all roles ───────────────────────────────────────────────────────────
 const { data: rolesData, isLoading: isRolesLoading, refetch: refetchRoles } = useCompanyRolesWithoutPermission()
 
@@ -336,6 +343,10 @@ const showModal     = ref(false)
 const modalMode  = ref<'view' | 'edit' | 'create'>('create')
 const modalRole  = ref<CompanyRole | null>(null)
 function openCreateModal() {
+  if (!hasVerifiedDomain.value) {
+    toast.error('Please verify your domain first before creating new roles.')
+    return
+  }
   modalMode.value = 'create'
   modalRole.value = null
   showModal.value = true

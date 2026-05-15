@@ -189,6 +189,46 @@
         </div>
       </section>
 
+      <!-- Owner Details Section -->
+      <section v-if="owner" class="rounded-2xl p-6 border border-border/40 bg-bg-card/20">
+        <div class="mb-6">
+          <h3 class="text-lg font-bold text-text-primary flex items-center gap-2">
+            <i class="fa-solid fa-crown text-amber-500"></i>
+            Workspace Owner
+          </h3>
+          <p class="text-sm text-text-secondary mt-1">The primary administrator responsible for this organization.</p>
+        </div>
+
+        <div class="flex items-center gap-4 p-4 rounded-xl border border-border/60 bg-bg-body/50">
+          <div class="relative">
+            <img v-if="owner.u_profile_image" :src="owner.u_profile_image" class="w-14 h-14 rounded-full object-cover border-2 border-accent/20" alt="Owner avatar" />
+            <div v-else class="w-14 h-14 rounded-full bg-gradient-to-br from-accent to-accent-hover flex items-center justify-center text-white font-bold text-lg">
+              {{ getInitials(owner.u_full_name) }}
+            </div>
+            <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 border-2 border-bg-body rounded-full flex items-center justify-center" v-if="owner.u_is_verfied">
+              <i class="fa-solid fa-check text-[10px] text-white"></i>
+            </div>
+          </div>
+          
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2">
+              <h4 class="text-sm font-bold text-text-primary truncate">{{ owner.u_full_name }}</h4>
+              <span class="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 text-[10px] font-bold uppercase tracking-wider border border-amber-500/20">Owner</span>
+            </div>
+            <p class="text-xs text-text-secondary mt-0.5 truncate">{{ owner.u_email }}</p>
+            <p v-if="owner.u_job_title || owner.u_department" class="text-[10px] text-text-tertiary mt-1">
+              {{ owner.u_job_title }} {{ owner.u_job_title && owner.u_department ? '•' : '' }} {{ owner.u_department }}
+            </p>
+          </div>
+
+          <div class="hidden sm:block">
+             <div class="px-3 py-1.5 rounded-lg bg-bg-card border border-border/60 text-[11px] text-text-secondary">
+                Joined {{ new Date(owner.created_at).toLocaleDateString() }}
+             </div>
+          </div>
+        </div>
+      </section>
+
       <!-- Actions -->
       <div class="flex flex-col sm:flex-row gap-3 justify-start">
         <button @click="saveOrg" :disabled="isSaving || !isFormValid || !canUpdateOrg" class="px-6 py-2.5 bg-accent text-white cursor-pointer text-sm font-semibold rounded-lg hover:bg-accent/90 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-accent/20">
@@ -197,8 +237,10 @@
           </span>
           <span v-else><i class="fa-solid fa-check mr-2"></i> Save changes</span>
         </button>
-        <button @click="openDeleteModal" class="px-6 py-2.5 text-sm font-semibold cursor-pointer rounded-lg border border-red-500/30 text-red-600 hover:bg-red-500/10 transition-all active:scale-95">
-          <i class="fa-solid fa-trash mr-2"></i> Delete organization
+        <button @click="openDeleteModal" :disabled="isDomainsLoading" class="px-6 py-2.5 text-sm font-semibold cursor-pointer rounded-lg border border-red-500/30 text-red-600 hover:bg-red-500/10 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-wait">
+          <i v-if="isDomainsLoading" class="fa-solid fa-circle-notch fa-spin mr-2"></i>
+          <i v-else class="fa-solid fa-trash mr-2"></i> 
+          Delete organization
         </button>
       </div>
 
@@ -505,20 +547,7 @@ import { uploadPrivateFile } from '../../../queries/useCommon'
 import CreateOrganizationInline from './CreateOrganizationInline.vue'
 import { useAuthStore } from '../../../stores/auth'
 import { useListDomains } from '../../../queries/useCommon'
-import { useVerifyPasswordForDeletion, useConfirmDomainDeletion, type VerifyPasswordForDeletionPayload, type ConfirmDomainDeletionPayload } from '../../../queries/useCompanyUsers'
-const { data: domainsData } = useListDomains()
-const domains = computed(() => domainsData.value?.domains ?? [])
-const deletingDomainId = computed(() => domains.value?.[0]?._id)
-const verifyPassword = ref<((payload: VerifyPasswordForDeletionPayload) => Promise<any>) | null>(null)
-const confirmDeletion = ref<((payload: ConfirmDomainDeletionPayload) => Promise<any>) | null>(null)
-
-watch(deletingDomainId, (id) => {
-  if (!id) return
-  const { mutateAsync: vp } = useVerifyPasswordForDeletion(id)
-  const { mutateAsync: cd } = useConfirmDomainDeletion(id)
-  verifyPassword.value = vp
-  confirmDeletion.value = cd
-}, { immediate: true })
+import { useVerifyPasswordForDeletion, useConfirmDomainDeletion, type VerifyPasswordForDeletionPayload, type ConfirmDomainDeletionPayload, useCompanyUsers } from '../../../queries/useCompanyUsers'
 // ─── Props ────────────────────────────────────────────────────────────────────
 const props = defineProps<{
   forceCreate?: boolean
@@ -539,6 +568,46 @@ const selectedCompanyId = ref(
   localStorage.getItem('company_id') || props.profile?.active_company_id
 )
 
+watch(() => props.profile?.active_company_id, (id) => {
+  if (id && !selectedCompanyId.value) {
+    selectedCompanyId.value = id
+  }
+}, { immediate: true })
+
+// Reactive domains list for deletion
+const { data: domainsData, isLoading: isDomainsLoading } = useListDomains(selectedCompanyId)
+
+const domains = computed(() => {
+  const raw = domainsData.value ?? domainsData.value
+  if (Array.isArray(raw)) return raw
+  return raw?.domains ?? []
+})
+const deletingDomainId = computed(() => domains.value?.[0]?._id)
+const verifyPassword = ref<((payload: VerifyPasswordForDeletionPayload) => Promise<any>) | null>(null)
+const confirmDeletion = ref<((payload: ConfirmDomainDeletionPayload) => Promise<any>) | null>(null)
+
+watch(deletingDomainId, (id) => {
+  if (!id) {
+    verifyPassword.value = null
+    confirmDeletion.value = null
+    return
+  }
+  const { mutateAsync: vp } = useVerifyPasswordForDeletion(id)
+  const { mutateAsync: cd } = useConfirmDomainDeletion(id)
+  verifyPassword.value = vp
+  confirmDeletion.value = cd
+}, { immediate: true })
+
+const ownerParams = reactive({
+  company_id: selectedCompanyId,
+  membership_role: 'owner',
+})
+const { data: usersData } = useCompanyUsers(ownerParams as any)
+const owner = computed(() => {
+  const raw = usersData.value?.data?.users ?? usersData.value?.users ?? []
+  return Array.isArray(raw) ? raw[0] : null
+})
+
 function handleCompanyChange(e: any) {
   selectedCompanyId.value = e.detail
 }
@@ -552,6 +621,17 @@ const isOwner         = computed(() => membershipRole.value === 'owner')
 
 function can(permission: string) {
   return permissions.value.includes(permission)
+}
+
+function getInitials(name: string) {
+  if (!name) return '?'
+  return name
+    .trim()
+    .split(/\s+/)
+    .map((w) => w[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase()
 }
 
 const canUpdateOrg = computed(() =>
@@ -594,7 +674,7 @@ const originalValues = ref({
   title: '', slug: '', company_size: '', work_to_do: '', logo: '', description: '',
 })
 
-const hasChanges = ref(false)
+// hasChanges is now a computed property
 
 const isFormValid = computed(() =>
   orgName.value.trim().length > 0 &&
@@ -622,22 +702,18 @@ watch(currentCompany, (company) => {
     logo: company.logo ?? '',
     description: company.description ?? '',
   }
-
-  hasChanges.value = false
 }, { immediate: true })
 
-watch(
-  [orgName, orgSlug, orgSize, industry, orgLogoPreview, orgDescription],
-  () => {
-    hasChanges.value =
-      orgName.value.trim() !== originalValues.value.title ||
-      orgSlug.value.trim() !== originalValues.value.slug ||
-      orgSize.value !== originalValues.value.company_size ||
-      industry.value !== originalValues.value.work_to_do ||
-      orgDescription.value !== originalValues.value.description ||
-      (orgLogoPreview.value ?? originalValues.value.logo) !== originalValues.value.logo
-  }
-)
+const hasChanges = computed(() => {
+  const nameChanged = orgName.value.trim() !== originalValues.value.title
+  const slugChanged = orgSlug.value.trim() !== originalValues.value.slug
+  const sizeChanged = orgSize.value !== originalValues.value.company_size
+  const industryChanged = industry.value !== originalValues.value.work_to_do
+  const descChanged = orgDescription.value.trim() !== originalValues.value.description
+  const logoChanged = orgLogoPreview.value !== null && orgLogoPreview.value !== originalValues.value.logo
+
+  return nameChanged || slugChanged || sizeChanged || industryChanged || descChanged || logoChanged
+})
 // ─── Slug availability ────────────────────────────────────────────────────────
 const checkSlugAvailability = useDebounceFn(async (slug: string) => {
   if (!slug || slug === currentCompany.value?.slug) {
@@ -701,8 +777,16 @@ const { mutate: updateCompany, isPending: isSaving } = useUpdateCompanyProfile({
       return
     }
     saveError.value   = ''
-    hasChanges.value  = false
     orgLogoPreview.value = null
+    // Reset original values to current state to clear hasChanges
+    originalValues.value = {
+      title: orgName.value,
+      slug: orgSlug.value,
+      company_size: orgSize.value,
+      work_to_do: industry.value,
+      logo: orgData.value.logo,
+      description: orgDescription.value,
+    }
     toast.success(payload?.message || 'Organization updated successfully')
     queryClient.invalidateQueries({ queryKey: ['profile'] })
   },
@@ -789,6 +873,21 @@ const deletionTimeline = [
 ]
 
 function openDeleteModal() {
+  if (!selectedCompanyId.value) {
+    toast.error('Organization ID not found. Please refresh the page.')
+    return
+  }
+
+  if (!deletingDomainId.value) {
+    console.warn('[OrganizationTab] Cannot open delete modal: deletingDomainId is missing', {
+      domains: domains.value,
+      companyId: selectedCompanyId.value,
+      domainsData: domainsData.value
+    })
+    toast.error('Organization domains not loaded yet. Please wait a moment or refresh.')
+    return
+  }
+
   deleteModal.open        = true
   deleteModal.step        = 0
   deleteModal.loading     = false
@@ -875,7 +974,7 @@ async function doPasswordStep() {
     return
   }
   if (!verifyPassword.value) {
-    deleteModal.errors.password = 'Organization not loaded yet. Please try again.'
+    deleteModal.errors.password = 'Organization verification context missing. Please refresh.'
     return
   }
 

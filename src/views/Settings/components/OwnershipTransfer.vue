@@ -113,17 +113,24 @@
           <div
             v-for="member in filteredMembers"
             :key="member.id"
-            @click="openConfirmModal(member)"
-            class="flex items-center gap-3 px-5 py-3.5 cursor-pointer transition-all duration-150 hover:bg-border/5 group/row"
+            @click="member.isVerified && openConfirmModal(member)"
+            class="flex items-center gap-3 px-5 py-3.5 transition-all duration-150 group/row"
+            :class="member.isVerified ? 'cursor-pointer hover:bg-border/5' : 'opacity-60 cursor-not-allowed'"
           >
             <div
-              class="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-transform duration-200 group-hover/row:scale-105"
+              class="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-transform duration-200"
+              :class="member.isVerified ? 'group-hover/row:scale-105' : ''"
               :style="{ background: member.color + '22', color: member.color, border: `1.5px solid ${member.color}44` }"
             >{{ member.initials }}</div>
             <div class="min-w-0 flex-1">
               <div class="flex items-center gap-2">
                 <p class="text-sm font-semibold text-text-primary truncate">{{ member.name }}</p>
                 <span
+                  v-if="!member.isVerified"
+                  class="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide bg-amber-400/10 border border-amber-400/20 text-amber-500"
+                >Unverified</span>
+                <span
+                  v-else
                   class="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide border"
                   :class="member.role === 'Admin'
                     ? 'bg-purple-400/10 border-purple-400/20 text-purple-400'
@@ -132,7 +139,11 @@
               </div>
               <p class="text-xs text-text-secondary truncate mt-0.5">{{ member.email }}</p>
             </div>
-            <div title="Transfer Ownership" class="shrink-0 ml-1 w-7 h-7 rounded-lg border border-border/40 flex items-center justify-center text-text-secondary/40 group-hover/row:border-accent/40 group-hover/row:text-accent group-hover/row:bg-accent/5 transition-all duration-150">
+            <div
+              v-if="member.isVerified"
+              title="Transfer Ownership"
+              class="shrink-0 ml-1 w-7 h-7 rounded-lg border border-border/40 flex items-center justify-center text-text-secondary/40 group-hover/row:border-accent/40 group-hover/row:text-accent group-hover/row:bg-accent/5 transition-all duration-150"
+            >
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
                 
@@ -499,6 +510,7 @@ interface Member {
   lastActive: string
   isYou?: boolean
   since?: string
+  isVerified?: boolean
 }
 
 interface RawUser extends TransferUser {
@@ -507,6 +519,8 @@ interface RawUser extends TransferUser {
   last_active_at?: string
   updated_at?: string
   created_at?: string
+  u_is_verified?: boolean
+  u_is_verfied?: boolean
 }
 
 type TransferState = 'idle' | 'pending' | 'success'
@@ -620,6 +634,7 @@ const allMembers = computed<Member[]>(() => {
         role: role.charAt(0).toUpperCase() + role.slice(1).toLowerCase(),
         color: getColor(index + 1),
         lastActive: formatLastActive(u.last_active_at ?? u.updated_at ?? u.created_at),
+        isVerified: u.u_is_verified !== false && u.u_is_verfied !== false,
       }
     })
 })

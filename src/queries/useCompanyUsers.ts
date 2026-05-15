@@ -17,7 +17,7 @@ export interface CompanyUser {
   u_is_verfied: boolean
   created_at: string
   membership_role: 'owner' | 'admin' | 'member' | 'viewer'
-  membership_status: 'active' | 'suspended' | 'deactivated' | 'pending'
+  membership_status: 'active' | 'suspended' | 'deactivated' | 'pending' | 'pending_super_admin_otp'
   accepted_at: string | null
 }
 

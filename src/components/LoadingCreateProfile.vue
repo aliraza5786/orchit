@@ -46,10 +46,10 @@
 
       <!-- Title -->
       <p class="text-[15px] font-medium text-text-primary mb-1 text-center">
-        Creating your profile
+        {{ titleText }}
       </p>
       <p class="text-[13px] text-text-secondary mb-5 text-center">
-        Please wait while we set up your account.
+        {{ subtitleText }}
       </p>
 
       <!-- Progress Bar -->
@@ -142,18 +142,41 @@ const props = defineProps({
   active: { type: Boolean, required: true },
   loading: { type: Boolean, required: true },
   abort: { type: Boolean, default: false },
+  profileType: { type: String, default: 'team' }
 })
 
 const emit = defineEmits(['complete'])
 
-const provisionSteps = [
-  { label: 'Creating your profile' },
-  { label: 'Validating your information' },
-  { label: 'Setting up your preferences' },
-  { label: 'Initializing your account' },
-  { label: 'Securing your data' },
-  { label: 'Finalizing setup' },
-]
+const titleText = computed(() => {
+  if (props.profileType === 'personal') return 'Creating your profile'
+  return 'Creating and setting up your organization'
+})
+
+const subtitleText = computed(() => {
+  if (props.profileType === 'personal') return 'Please wait while we set up your account.'
+  return 'Please wait while we configure your workspace.'
+})
+
+const provisionSteps = computed(() => {
+  if (props.profileType === 'personal') {
+    return [
+      { label: 'Creating your profile' },
+      { label: 'Validating your information' },
+      { label: 'Setting up your preferences' },
+      { label: 'Initializing your account' },
+      { label: 'Securing your data' },
+      { label: 'Finalizing setup' },
+    ]
+  }
+  return [
+    { label: 'Creating your organization' },
+    { label: 'Provisioning workspace' },
+    { label: 'Applying modules and preferences' },
+    { label: 'Setting up permissions' },
+    { label: 'Securing your data' },
+    { label: 'Finalizing setup' },
+  ]
+})
 
 const provisionStep = ref(0)
 const isLaunching = ref(false)
@@ -166,7 +189,7 @@ let particleInterval = null
 const SPARK_COLORS = ['#EF9F27', '#FAC775', '#BA7517', '#1D9E75', '#5DCAA5']
 
 const progressWidth = computed(() =>
-  Math.round((provisionStep.value / provisionSteps.length) * 100) + '%'
+  Math.round((provisionStep.value / provisionSteps.value.length) * 100) + '%'
 )
 
 const rocketStyle = computed(() => {
@@ -236,11 +259,11 @@ function startLoading() {
   const interval = setInterval(() => {
     if (!props.loading) return
 
-    if (provisionStep.value < provisionSteps.length) {
+    if (provisionStep.value < provisionSteps.value.length) {
       provisionStep.value++
     }
 
-    if (provisionStep.value >= provisionSteps.length) {
+    if (provisionStep.value >= provisionSteps.value.length) {
       clearInterval(interval)
       finishLaunch()
     }
