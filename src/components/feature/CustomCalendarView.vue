@@ -621,10 +621,7 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.custom-calendar {
-  font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-}
+ 
 
 .nav-btn-sm {
   width: 32px;

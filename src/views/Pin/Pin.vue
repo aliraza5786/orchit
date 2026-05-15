@@ -288,7 +288,7 @@
             <Button
               @click="emitAddColumn"
               variant="primary"
-              class="px-3 py-1 bg-primary-color cursor-pointer text-white rounded"
+              class="px-3 py-1 bg-primary-color hover:bg-primary-color cursor-pointer text-white rounded"
             >
               {{ addingList ? "Adding..." : "Add list" }}
             </Button>

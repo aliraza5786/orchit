@@ -701,11 +701,7 @@ const handleTaskClick = (task: any) => {
   </div>
 </template>
 
-<style scoped>
-.custom-gantt {
-  font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-}
+<style scoped> 
 .segment-btn {
   padding: 0 0.75rem;
   height: 100%;

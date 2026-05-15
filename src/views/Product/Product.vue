@@ -358,7 +358,7 @@
                 <Button
                   @click="emitAddColumn"
                   varaint="primary"
-                  class="px-3 py-1 bg-primary-color cursor-pointer text-white rounded"
+                  class="px-3 py-1 bg-primary-color  hover:bg-primary-color cursor-pointer text-white rounded"
                   >{{ addingList ? "Adding..." : "Add list" }}</Button
                 >
                 <i class="fa-solid fa-close" @click="setActiveAddList"></i>

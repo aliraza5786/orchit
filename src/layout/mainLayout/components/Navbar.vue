@@ -42,7 +42,7 @@
 
       <!-- Primary nav -->
       <ul
-        class="relative hidden items-stretch py-4 gap-9 text-sm font-medium text-text-primary md:flex"
+        class="relative hidden items-stretch py-2 gap-9 text-sm font-medium text-text-primary md:flex"
         ref="linksContainerRef"
       >
         <!-- Sliding underline indicator -->

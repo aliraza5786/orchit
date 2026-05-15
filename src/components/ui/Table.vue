@@ -3,7 +3,7 @@
     :aria-busy="loading ? 'true' : 'false'" aria-live="polite">
     <table class="min-w-max text-left text-sm border-separate border-spacing-y-2 w-full" role="grid">
       <!-- Header -->
-      <thead v-if="showHeader" class="sticky top-0 z-[1] bg-bg-surface font-semibold text-text-secondary/90">
+      <thead v-if="showHeader" class="sticky top-0 z-[1] font-semibold text-text-secondary/90" :class="headerBgClass || 'bg-bg-surface'">
         <tr role="row">
           <th v-for="(col, cIdx) in resolvedColumns" :key="col.key" scope="col" :style="columnStyle(col)"
             class="select-none whitespace-nowrap px-4.5 py-2 text-sm font-medium capitalize text-text-primary"
@@ -69,7 +69,9 @@
 
     <!-- Pagination bar -->
     <div v-if="showPagination && pagination"
-      class="flex items-center mt-auto sticky bottom-0 bg-bg-surface justify-between gap-3 border-t border-border px-3 py-2 sm:flex-row min-w-[700px]" role="navigation"
+      class="flex items-center mt-auto sticky bottom-0 justify-between gap-3 border-t border-border px-3 py-2 sm:flex-row min-w-[700px]" 
+      :class="paginationBgClass || 'bg-bg-surface'"
+      role="navigation"
       aria-label="Pagination">
       <div class="text-xs text-text-secondary sm:text-sm">
         <template v-if="!loading">
@@ -159,6 +161,8 @@ const props = withDefaults(
     rowClass?: (row: Row, idx: number) => string
     defaultSort?: { key: string; dir: 'asc' | 'desc' }
     sorters?: Record<string, (a: Row, b: Row, dir: 'asc' | 'desc') => number>
+    headerBgClass?: string
+    paginationBgClass?: string
   }>(),
   {
     pagination:true,
@@ -171,6 +175,8 @@ const props = withDefaults(
     pageSizes: () => [10, 20, 50, 100],
     hover: true,
     striped: false,
+    headerBgClass: 'bg-bg-surface',
+    paginationBgClass: 'bg-bg-surface'
   }
 )
 

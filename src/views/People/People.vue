@@ -133,7 +133,7 @@
             >
               <template #item="{ element: group }">
                 <div
-                  class="flex flex-col bg-bg-body rounded-md mb-1"
+                  class="flex flex-col bg-bg-body rounded-md mb-2"
                   :class="{
                     'snap-center min-w-[270px] max-w-[270px]': isMobile,
                     'min-w-[270px] max-w-[270px]': !isMobile,
@@ -241,7 +241,7 @@
 
         <!-- TALENT KANBAN -->
         <template v-else>
-          <div class="flex flex-1 overflow-x-auto gap-2 scrollbar-visible pt-2 pb-1 overflow-y-hidden">
+          <div class="flex flex-1 overflow-x-auto gap-2 scrollbar-visible pt-2 overflow-y-hidden">
             <KanbanBoard
               :plusIcon="selected_view_id === 'team' && canCreateCard"
               v-if="filteredBoard?.length > 0"

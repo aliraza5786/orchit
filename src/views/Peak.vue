@@ -13,7 +13,7 @@
             <p class="text-sm text-text-secondary mt-2">Last update on {{ formatDateTime(lastUpdateDate) }}</p>
 
             <!-- Cards Row -->
-            <div class="flex gap-2.5 overflow-x-auto w-full py-8 custom_scroll_bar">
+            <div class="flex gap-2.5 overflow-x-auto w-full py-4 scrollbar-visible" >
               <!-- Loading skeletons -->
               <template v-if="isLoading">
                 <SkeletonCard v-for="n in 3" :key="n" />

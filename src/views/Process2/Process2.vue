@@ -42,7 +42,7 @@
 
     <!-- Board Area -->
     <div v-if="!isPending" class="flex-1 w-full px-2 overflow-hidden flex flex-col">
-      <div class="flex-1 overflow-x-auto flex items-start gap-2 custom_scroll_bar py-2">
+      <div class="flex-1 overflow-x-auto flex items-start gap-2 scrollbar-visible py-2">
         <!-- Kanban Board -->
         <ProcessKanbanBoard
           v-if="filteredList?.length > 0"

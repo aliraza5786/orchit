@@ -92,9 +92,10 @@ export const useWorkspacesPrompt = () =>
   });
 
 export const useWorkspaces = (
-  page: Ref<number>,
-  limit: Ref<number>,
-  filter?: Ref<string>
+  page?: MaybeRef<number | undefined>,
+  limit?: MaybeRef<number | undefined>,
+  filter?: Ref<string>,
+  isPaginated?: MaybeRef<boolean | undefined>
 ) => {
   const companyId = computed(() => {
     const hostname = window.location.hostname
@@ -134,6 +135,7 @@ export const useWorkspaces = (
       unref(limit),
       unref(filter) ?? 'all',
       unref(companyId),
+      unref(isPaginated)
     ]),
 
     queryFn: async () => {
@@ -141,8 +143,23 @@ export const useWorkspaces = (
       const limitVal = unref(limit)
       const filterVal = unref(filter) ?? 'all'
       const company = unref(companyId)
+      const isPaginatedVal = unref(isPaginated)
 
-      let url = `/workspace/all?page=${pageVal}&limit=${limitVal}&filter=${filterVal}`
+      let url = `/workspace/all?filter=${filterVal}`
+
+      if (isPaginatedVal !== undefined) {
+        url += `&is_paginated=${isPaginatedVal}`
+      }
+
+      // Only add page/limit if not explicitly disabled
+      if (isPaginatedVal !== false) {
+        if (pageVal) {
+          url += `&page=${pageVal}`
+        }
+        if (limitVal) {
+          url += `&limit=${limitVal}`
+        }
+      }
 
       if (company) {
         url += `&company_id=${company}`
