@@ -241,3 +241,63 @@ export function useChangeCompanyUserPassword(
     onError: options?.onError,
   })
 }
+
+// organization delete
+// ─── Domain Deletion (Password + OTP) ────────────────────────────────────────
+
+export interface VerifyPasswordForDeletionPayload {
+  password: string
+}
+
+export interface VerifyPasswordForDeletionData {
+  message: string
+}
+
+export interface ConfirmDomainDeletionPayload {
+  otp: string
+}
+
+export interface ConfirmDomainDeletionData {
+  message: string
+}
+
+export const useVerifyPasswordForDeletion = (
+  domainId: string,
+  options: Record<string, unknown> = {}
+) => {
+  return useMutation<VerifyPasswordForDeletionData, Error, VerifyPasswordForDeletionPayload>({
+    mutationKey: ['verify-password-for-deletion', domainId],
+    mutationFn: (payload) => {
+      const companyId = localStorage.getItem("company_id")
+      return request<VerifyPasswordForDeletionData>({
+        url: `company-domains/${domainId}/verify-password`,
+        method: 'POST',
+        data: { ...payload, company_id: companyId },
+      })
+    },
+    ...options,
+  })
+}
+
+export const useConfirmDomainDeletion = (
+  domainId: string,
+  options: Record<string, unknown> = {}
+) => {
+  const queryClient = useQueryClient()
+
+  return useMutation<ConfirmDomainDeletionData, Error, ConfirmDomainDeletionPayload>({
+    mutationKey: ['confirm-domain-deletion', domainId],
+    mutationFn: (payload) => {
+     const companyId = localStorage.getItem("company_id")
+      return request<ConfirmDomainDeletionData>({
+        url: `company-domains/${domainId}/confirm-delete`,
+        method: 'POST',
+        data: { ...payload, company_id: companyId },
+      })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['company-domains'] })
+    },
+    ...options,
+  })
+}

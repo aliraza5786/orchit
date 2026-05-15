@@ -10,44 +10,54 @@
         <!-- ═══════════════════════════════════════════════════════
              STEP 1 — How will you use Orchit AI?
         ════════════════════════════════════════════════════════════ -->
-        <div class="mb-6 md:mb-12 space-y-2" v-show="activeStep === 1">
-          <h2 class="text-[24px] lg:text-[32px] leading-8 lg:leading-11 font-medium text-text-primary" v-once>
-            How will you use Orchit AI?
-          </h2>
-          <p class="text-[14px] md:text-base sm:text-nowrap font-medium text-text-secondary" v-once>
-            This will help us personalize your experience in Orchit AI.
-          </p>
+        <div v-show="activeStep === 1">
+          <div class="mb-6 md:mb-12 space-y-2">
+            <h2 class="text-[24px] lg:text-[32px] leading-8 lg:leading-11 font-medium text-text-primary">
+              How will you use Orchit AI?
+            </h2>
+            <p class="text-[14px] md:text-base sm:text-nowrap font-medium text-text-secondary">
+              This will help us personalize your experience in Orchit AI.
+            </p>
+          </div>
+
+          <!-- Scenario 3: company email hint banner -->
+          <div
+            v-if="isCompanyEmail"
+            class="mb-5 flex items-start gap-3 rounded-xl px-4 py-3.5 border"
+            style="background: color-mix(in srgb, var(--accent) 8%, transparent); border-color: color-mix(in srgb, var(--accent) 25%, transparent);"
+          >
+            <svg class="w-4 h-4 mt-0.5 shrink-0" viewBox="0 0 16 16" fill="none" style="color: var(--accent);">
+              <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.4"/>
+              <path d="M8 5v4M8 11v.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            </svg>
+            <p class="text-sm leading-relaxed" style="color: var(--accent);">
+              We detected a company email (<strong>{{ userEmailDomain }}</strong>). Team workspace is recommended — your domain will be auto-verified.
+            </p>
+          </div>
+
+          <div class="how_help_steps grid sm:grid-cols-3 gap-4">
+            <label
+              v-for="option in options"
+              :key="option._id"
+              class="group border rounded-xl py-4 px-2.5 cursor-pointer sm:aspect-square transition-all duration-200 ease-out hover:shadow-md hover:-translate-y-1 hover:border-accent/50 hover:bg-accent/5 active:scale-[0.98]"
+              :class="optionClass(option._id)"
+            >
+              <input type="radio" class="hidden" v-model="selected" :value="option._id" />
+              <div class="flex flex-col items-center">
+                <img :src="option.icon" class="w-12 h-12 transition-transform duration-200 group-hover:scale-110" />
+                <h3 class="font-medium text-sm text-text-primary mt-4">{{ option.title }}</h3>
+                <p class="text-[11px] text-text-secondary mt-2 text-center">{{ option.description }}</p>
+                <span
+                  v-if="isCompanyEmail && option._id === 'team'"
+                  class="mt-2 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
+                  style="background: color-mix(in srgb, var(--accent) 15%, transparent); color: var(--accent);"
+                >
+                  Recommended
+                </span>
+              </div>
+            </label>
+          </div>
         </div>
-
-        <div class="how_help_steps grid sm:grid-cols-3 gap-4" v-show="activeStep === 1">
-  <label
-    v-for="option in options"
-    :key="option._id"
-    class="group border rounded-xl py-4 px-2.5 cursor-pointer sm:aspect-square
-           transition-all duration-200 ease-out
-           hover:shadow-md hover:-translate-y-1 hover:border-accent/50 hover:bg-accent/5
-           active:scale-[0.98]"
-    :class="optionClass(option._id)"
-    v-memo="[selected, option._id]"
-  >
-    <input type="radio" class="hidden" v-model="selected" :value="option._id" />
-
-    <div class="flex flex-col items-center">
-      <img
-        :src="option.icon"
-        class="w-12 h-12 transition-transform duration-200 group-hover:scale-110"
-      />
-
-      <h3 class="font-medium text-sm text-text-primary mt-4">
-        {{ option.title }}
-      </h3>
-
-      <p class="text-[11px] text-text-secondary mt-2 text-center">
-        {{ option.description }}
-      </p>
-    </div>
-  </label>
-</div>
 
         <!-- ═══════════════════════════════════════════════════════
              STEP 2 — About Company / You / School
@@ -62,43 +72,15 @@
           <h2 class="text-[24px] lg:text-[32px] leading-8 lg:leading-11 font-medium text-text-primary" v-if="selected === 'school'">
             Tell us about your School
           </h2>
-          <p class="text-[14px] md:text-base sm:text-nowrap font-medium text-text-secondary" v-once>
+          <p class="text-[14px] md:text-base sm:text-nowrap font-medium text-text-secondary">
             This will help us personalize your experience in Orchit AI.
           </p>
         </div>
 
         <div class="space-y-6" v-show="activeStep === 2 && selected === 'team'">
-          <BaseTextField
-  ref="teamRef"
-  v-model="team"
-  label="Company Name"
-  placeholder="Company name"
-  size="lg"
-  :error="!!errors.team"
-  :message="errors.team"
-/>
-
-<BaseSelectField
-  ref="roleRef"
-  v-model="role"
-  label="What role do you perform in your company?"
-  :options="staticRolesList"
-  placeholder="Select Role"
-  size="lg"
-  :error="!!errors.role"
-  :message="errors.role"
-/>
-
-<BaseSelectField
-  ref="companySizeRef"
-  v-model="companySize"
-  label="What's your company size?"
-  :options="companySizeOptions"
-  placeholder="Select Company size"
-  size="lg"
-  :error="!!errors.companySize"
-  :message="errors.companySize"
-/>
+          <BaseTextField ref="teamRef" v-model="team" label="Company Name" placeholder="Company name" size="lg" :error="!!errors.team" :message="errors.team" />
+          <BaseSelectField ref="roleRef" v-model="role" label="What role do you perform in your company?" :options="staticRolesList" placeholder="Select Role" size="lg" :error="!!errors.role" :message="errors.role" />
+          <BaseSelectField ref="companySizeRef" v-model="companySize" label="What's your company size?" :options="companySizeOptions" placeholder="Select Company size" size="lg" :error="!!errors.companySize" :message="errors.companySize" />
         </div>
 
         <div class="space-y-6" v-show="activeStep === 2 && selected === 'personal'">
@@ -125,19 +107,17 @@
           </div>
           <div class="flex flex-wrap gap-3">
             <button
-            v-for="module in activeModules"
-            :key="module.id"
-            type="button"
-            @click="toggleModule(module.id)"
-            class="px-4 py-2 rounded-full border text-sm cursor-pointer transition-all duration-200 hover:scale-[1.03] hover:shadow-sm"
-            :class="
-              selectedModules.includes(module.id)
+              v-for="module in activeModules"
+              :key="module.id"
+              type="button"
+              @click="toggleModule(module.id)"
+              class="px-4 py-2 rounded-full border text-sm cursor-pointer transition-all duration-200 hover:scale-[1.03] hover:shadow-sm"
+              :class="selectedModules.includes(module.id)
                 ? 'bg-accent/30 border-accent text-text-primary hover:bg-accent/40'
-                : 'border-border text-text-secondary hover:border-accent hover:text-text-primary hover:bg-accent/10'
-            "
-          >
-            {{ module.label }}
-          </button>
+                : 'border-border text-text-secondary hover:border-accent hover:text-text-primary hover:bg-accent/10'"
+            >
+              {{ module.label }}
+            </button>
           </div>
           <p v-if="errors.selectedModules" class="text-xs text-red-500">{{ errors.selectedModules }}</p>
         </div>
@@ -151,221 +131,330 @@
             <p class="text-text-secondary text-sm md:text-base">This helps us tailor your workspace experience.</p>
           </div>
           <div class="grid grid-cols-2 gap-4">
-           <button
-            v-for="item in workTypeOptions"
-            :key="item.id"
-            @click="workType = item.id"
-            type="button"
-            class="flex items-center gap-3 p-4 rounded-xl cursor-pointer border text-left transition-all duration-200 hover:shadow-sm hover:scale-[1.02]"
-            :class="
-              workType === item.id
-                ? 'bg-accent/30 border-accent'
-                : 'border-border hover:border-accent hover:bg-accent/10'
-            "
-          >
-            <FontAwesomeIcon
-              :icon="['fas', item.icon]"
-              class="text-lg text-text-primary transition-colors duration-200"
-            />
-            <span class="text-sm font-medium text-text-primary">
-              {{ item.label }}
-            </span>
-          </button>
+            <button
+              v-for="item in workTypeOptions"
+              :key="item.id"
+              @click="workType = item.id"
+              type="button"
+              class="flex items-center gap-3 p-4 rounded-xl cursor-pointer border text-left transition-all duration-200 hover:shadow-sm hover:scale-[1.02]"
+              :class="workType === item.id ? 'bg-accent/30 border-accent' : 'border-border hover:border-accent hover:bg-accent/10'"
+            >
+              <FontAwesomeIcon :icon="['fas', item.icon]" class="text-lg text-text-primary transition-colors duration-200" />
+              <span class="text-sm font-medium text-text-primary">{{ item.label }}</span>
+            </button>
           </div>
           <p v-if="errors.workType" class="text-xs text-red-500 mt-2">{{ errors.workType }}</p>
         </div>
 
         <!-- ═══════════════════════════════════════════════════════
              STEP 5 — Create your site
+             ─────────────────────────────────────────────────────
+             Scenario 1 (personal): never reaches here
+             Scenario 2 (gmail team/school): subdomain OR custom domain toggle
+             Scenario 3 (company email any type): subdomain only + auto-verified banner
         ════════════════════════════════════════════════════════════ -->
-        
         <div v-if="activeStep === 5" class="flex items-center justify-center w-full min-h-full py-3">
-  <div class="w-full max-w-115">
-    <div
-      class="rounded-2xl border p-8 md:p-10 space-y-7"
-      style="background: var(--bg-card); border-color: var(--border);"
-    >
+          <div class="w-full max-w-115">
+            <div class="rounded-2xl border p-8 md:p-10 space-y-7" style="background: var(--bg-card); border-color: var(--border);">
 
-      <!-- HEADER -->
-      <div class="text-center space-y-3">
-        <div
-          class="w-14 h-14 rounded-[14px] border flex items-center justify-center mx-auto"
-          style="background: var(--bg-lavender); border-color: rgba(125,104,200,0.2);"
-        >
-          <img src="/src/assets/global/favicon.png" alt="logo" />
-        </div>
+              <div class="text-center space-y-3">
+                <div class="w-14 h-14 rounded-[14px] border flex items-center justify-center mx-auto" style="background: var(--bg-lavender); border-color: rgba(125,104,200,0.2);">
+                  <img src="/src/assets/global/favicon.png" alt="logo" />
+                </div>
+                <h2 class="text-[22px] font-bold tracking-tight" style="color: var(--text-primary);">Create your workspace</h2>
+                <p class="text-sm leading-relaxed max-w-80 mx-auto" style="color: var(--text-secondary);">
+                  Set up your team's home. You can always change these settings later.
+                </p>
+              </div>
 
-        <h2 class="text-[22px] font-bold tracking-tight" style="color: var(--text-primary);">
-          Create your workspace
-        </h2>
+              <!-- Scenario 3: domain auto-detected banner -->
+              <div
+                v-if="isCompanyEmail"
+                class="flex items-start gap-3 rounded-xl px-4 py-3.5 border"
+                style="background: color-mix(in srgb, #1d9e75 8%, transparent); border-color: color-mix(in srgb, #1d9e75 25%, transparent);"
+              >
+                <svg class="w-4 h-4 mt-0.5 shrink-0" viewBox="0 0 16 16" fill="none" style="color: #1d9e75;">
+                  <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.4"/>
+                  <path d="M5 8l2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <p class="text-sm leading-relaxed" style="color: #1d9e75;">
+                  Your company domain <strong>{{ userEmailDomain }}</strong> is auto-detected. No custom domain setup or super-admin verification needed.
+                </p>
+              </div>
 
-        <p class="text-sm leading-relaxed max-w-80 mx-auto" style="color: var(--text-secondary);">
-          Set up your team's home. You can always change these settings later.
-        </p>
-      </div>
+              <!-- Scenario 2: MODE SWITCH toggle (generic email only) -->
+              <button
+                v-if="!isCompanyEmail"
+                type="button"
+                class="w-full flex items-center justify-between gap-4 px-5 py-4 rounded-xl border-2 transition-all duration-200 text-left"
+                :style="{
+                  borderColor: hasCustomDomain ? 'var(--accent)' : 'var(--border)',
+                  background: hasCustomDomain ? 'color-mix(in srgb, var(--accent) 8%, transparent)' : 'var(--bg-surface)',
+                }"
+                @click="toggleCustomDomain"
+              >
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-semibold" :style="{ color: hasCustomDomain ? 'var(--accent)' : 'var(--text-primary)' }">
+                    {{ hasCustomDomain ? 'Custom domain enabled' : 'Subdomain enabled' }}
+                  </p>
+                  <p class="text-xs" style="color: var(--text-secondary);">
+                    Click to switch to {{ hasCustomDomain ? 'subdomain (.streamed.space)' : 'custom domain' }}
+                  </p>
+                </div>
+                <div
+                  class="w-10 h-6 rounded-full border-2 flex items-center transition-all duration-300 shrink-0 px-0.5"
+                  :style="{
+                    borderColor: hasCustomDomain ? 'var(--accent)' : 'var(--border)',
+                    background: hasCustomDomain ? 'var(--accent)' : 'transparent',
+                    justifyContent: hasCustomDomain ? 'flex-end' : 'flex-start',
+                  }"
+                >
+                  <div class="w-4 h-4 rounded-full bg-white shadow-sm transition-all duration-300" />
+                </div>
+              </button>
 
-      <!-- ─────────────────────────────────────────────
-           MODE SWITCH (FULLY REVERSIBLE)
-      ───────────────────────────────────────────── -->
-      <button
-        type="button"
-        class="w-full flex items-center justify-between gap-4 px-5 py-4 rounded-xl border-2 transition-all duration-200 text-left"
-        :style="{
-          borderColor: hasCustomDomain ? 'var(--accent)' : 'var(--border)',
-          background: hasCustomDomain
-            ? 'color-mix(in srgb, var(--accent) 8%, transparent)'
-            : 'var(--bg-surface)',
-        }"
-        @click="toggleCustomDomain"
-      >
-        <div class="flex-1 min-w-0">
-          <p class="text-sm font-semibold"
-             :style="{ color: hasCustomDomain ? 'var(--accent)' : 'var(--text-primary)' }">
-            {{ hasCustomDomain ? 'Custom domain enabled' : 'Subdomain enabled' }}
-          </p>
+              <!-- SUBDOMAIN MODE: shown for Scenario 3 always, Scenario 2 when hasCustomDomain===false -->
+              <div  class="space-y-5" v-if="!hasCustomDomain && !isCompanyEmail">
+                <div class="space-y-1.5" >
+                  <label class="text-[11px] font-semibold uppercase tracking-wider" style="color: var(--text-secondary);">Site name</label>
+                  <div
+                    class="flex items-stretch rounded-[10px] overflow-hidden border-[1.5px]"
+                    :style="{
+                      borderColor: isFocused && isSlugAvailable ? 'var(--accent)'
+                                 : isFocused && isAnyUnavailable ? '#e55050'
+                                 : 'var(--border-input)',
+                      background: 'var(--bg-input)',
+                    }"
+                  >
+                    <input
+                      v-model="siteName"
+                      type="text"
+                      placeholder="e.g. acme, my-team"
+                      class="flex-1 min-w-0 px-3.5 py-2.5 text-[15px] outline-none bg-transparent"
+                      @focus="isFocused = true"
+                      @blur="isFocused = false"
+                      style="color: var(--text-primary);"
+                    />
+                    <div class="flex items-center px-3.5 border-l" style="background: var(--bg-surface); border-color: var(--border);">
+                      <span class="text-[13px] font-semibold" style="color: var(--text-secondary);">.streamed.space</span>
+                    </div>
+                  </div>
+                  <p v-if="isCheckingSlug" class="text-xs" style="color: var(--text-secondary);">Checking availability…</p>
+                  <p v-else-if="isSlugAvailable === true" class="text-xs" style="color: #1d9e75;">{{ siteSlug }}.streamed.space is available</p>
+                  <p v-else-if="isSlugAvailable === false" class="text-xs" style="color: #e55050;">This site name is already taken.</p>
+                </div>
+                <div
+                  v-if="siteSlug && isSlugAvailable === true"
+                  class="flex items-center gap-2 rounded-lg px-3.5 py-2.5 border"
+                  style="background: var(--bg-lavender); border-color: rgba(125,104,200,0.18);"
+                >
+                  <span class="text-[13px] font-semibold" style="color: var(--accent);">https://{{ siteSlug }}.streamed.space</span>
+                </div>
+              </div>
 
-          <p class="text-xs" style="color: var(--text-secondary);">
-            Click to switch to {{ hasCustomDomain ? 'subdomain (.streamed.space)' : 'custom domain' }}
-          </p>
-        </div>
+              <!-- CUSTOM DOMAIN MODE (Scenario 2 only) -->
+              <div v-else class="space-y-5">
+                <div class="space-y-1.5">
+                  <label class="text-[11px] font-semibold uppercase tracking-wider" style="color: var(--text-secondary);">Custom domain</label>
+                  <div
+                    class="flex items-stretch rounded-[10px] overflow-hidden border-[1.5px]"
+                    :style="{
+                      borderColor: isDnsAvailable === true ? '#1d9e75' : isDnsAvailable === false ? '#e55050' : 'var(--border-input)',
+                      background: 'var(--bg-input)',
+                    }"
+                  >
+                    <input
+                      v-model="dnsInput"
+                      type="text"
+                      placeholder="e.g. mycompany.com"
+                      class="flex-1 min-w-0 px-3.5 py-2.5 text-[15px] outline-none bg-transparent"
+                      style="color: var(--text-primary);"
+                    />
+                  </div>
+                  <p v-if="dnsValidationError" class="text-xs" style="color: #e55050;">{{ dnsValidationError }}</p>
+                  <p v-else-if="isCheckingDns" class="text-xs" style="color: var(--text-secondary);">Checking DNS availability…</p>
+                  <p v-else-if="isDnsAvailable === true" class="text-xs" style="color: #1d9e75;">{{ dnsInput }} is active and ready</p>
+                  <p v-else-if="isDnsAvailable === false" class="text-xs" style="color: #e55050;">{{ dnsError || 'Domain not available or inactive' }}</p>
+                </div>
 
-        <!-- toggle visual -->
-        <div
-          class="w-10 h-6 rounded-full border-2 flex items-center transition-all duration-300 shrink-0 px-0.5"
-          :style="{
-            borderColor: hasCustomDomain ? 'var(--accent)' : 'var(--border)',
-            background: hasCustomDomain ? 'var(--accent)' : 'transparent',
-            justifyContent: hasCustomDomain ? 'flex-end' : 'flex-start',
-          }"
-        >
-          <div class="w-4 h-4 rounded-full bg-white shadow-sm transition-all duration-300" />
-        </div>
-      </button>
+                <div
+                  v-if="isDnsAvailable === true"
+                  class="flex items-start gap-3 rounded-xl px-4 py-3.5 border"
+                  style="background: color-mix(in srgb, var(--accent) 6%, transparent); border-color: color-mix(in srgb, var(--accent) 20%, transparent);"
+                >
+                  <svg class="w-4 h-4 mt-0.5 shrink-0" viewBox="0 0 16 16" fill="none" style="color: var(--accent);">
+                    <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.4"/>
+                    <path d="M8 5v4M8 11v.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                  </svg>
+                  <p class="text-xs leading-relaxed" style="color: var(--text-secondary);">
+                    Next you'll verify a super admin email at <strong style="color: var(--text-primary);">@{{ dnsInput }}</strong>, then verify domain ownership via DNS.
+                  </p>
+                </div>
+              </div>
 
-      <!-- ═══════════════════════════════════════
-           SUBDOMAIN MODE (DEFAULT)
-      ═══════════════════════════════════════ -->
-      <div v-if="!hasCustomDomain" class="space-y-5">
-
-        <!-- SITE NAME -->
-        <div class="space-y-1.5">
-          <label class="text-[11px] font-semibold uppercase tracking-wider"
-                 style="color: var(--text-secondary);">
-            Site name
-          </label>
-
-          <div
-            class="flex items-stretch rounded-[10px] overflow-hidden border-[1.5px]"
-            :style="{
-              borderColor: isFocused && isSlugAvailable ? 'var(--accent)'
-                         : isFocused && isAnyUnavailable ? '#e55050'
-                         : 'var(--border-input)',
-              background: 'var(--bg-input)',
-            }"
-          >
-            <input
-              v-model="siteName"
-              type="text"
-              placeholder="e.g. acme, my-team"
-              class="flex-1 min-w-0 px-3.5 py-2.5 text-[15px] outline-none bg-transparent"
-              @focus="isFocused = true"
-              @blur="isFocused = false"
-              style="color: var(--text-primary);"
-            />
-
-            <div class="flex items-center px-3.5 border-l"
-                 style="background: var(--bg-surface); border-color: var(--border);">
-              <span class="text-[13px] font-semibold"
-                    style="color: var(--text-secondary);">
-                .streamed.space
-              </span>
+              <button
+                type="button"
+                :disabled="isCreateSiteDisabled"
+                class="w-full flex items-center justify-center gap-2 cursor-pointer py-3 rounded-[9px] font-bold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                style="background: var(--accent); color: var(--accent-text);"
+                @click="continueSiteHandler"
+              >
+                <span v-if="creatingProfile" class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                <span>{{ hasCustomDomain ? `Continue with ${dnsInput}` : 'Create site' }}</span>
+              </button>
             </div>
           </div>
-
-          <p v-if="isCheckingSlug" class="text-xs" style="color: var(--text-secondary);">
-            Checking availability…
-          </p>
-
-          <p v-else-if="isSlugAvailable === true" class="text-xs" style="color: #1d9e75;">
-            {{ siteSlug }}.streamed.space is available
-          </p>
-
-          <p v-else-if="isSlugAvailable === false" class="text-xs" style="color: #e55050;">
-            This site name is already taken.
-          </p>
         </div>
 
-        <!-- PREVIEW -->
-        <div
-          v-if="siteSlug && isSlugAvailable === true"
-          class="flex items-center gap-2 rounded-lg px-3.5 py-2.5 border"
-          style="background: var(--bg-lavender); border-color: rgba(125,104,200,0.18);"
-        >
-          <span class="text-[13px] font-semibold" style="color: var(--accent);">
-            https://{{ siteSlug }}.streamed.space
-          </span>
-        </div>
+        <!-- ═══════════════════════════════════════════════════════
+             STEP 51 — Super Admin Verification
+             ONLY for Scenario 2 (gmail + team/school + custom domain)
+        ════════════════════════════════════════════════════════════ -->
+        <div v-if="activeStep === 51" class="flex items-center justify-center w-full min-h-full py-3">
+          <div class="w-full max-w-115">
+            <div class="rounded-2xl border p-8 md:p-10 space-y-7" style="background: var(--bg-card); border-color: var(--border);">
 
-      </div>
+              <div class="text-center space-y-3">
+                <div
+                  class="w-14 h-14 rounded-[14px] border flex items-center justify-center mx-auto"
+                  style="background: color-mix(in srgb, var(--accent) 12%, transparent); border-color: color-mix(in srgb, var(--accent) 25%, transparent);"
+                >
+                  <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" style="color: var(--accent);">
+                    <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.5"/>
+                    <path d="M4 20c0-4 3.582-7 8-7s8 3 8 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    <path d="M17 11l1.5 1.5L21 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+                <h2 class="text-[22px] font-bold tracking-tight" style="color: var(--text-primary);">Verify Super Admin</h2>
+                <p class="text-sm leading-relaxed max-w-80 mx-auto" style="color: var(--text-secondary);">
+                  Enter an email address at your custom domain <strong style="color: var(--text-primary);">@{{ dnsInput.trim() }}</strong>. We'll send a 5-digit OTP to verify ownership.
+                </p>
+              </div>
 
-      <!-- ═══════════════════════════════════════
-           CUSTOM DOMAIN MODE
-      ═══════════════════════════════════════ -->
-      <div v-else class="space-y-5">
+              <div
+                class="flex items-start gap-3 rounded-xl px-4 py-3.5 border"
+                style="background: color-mix(in srgb, var(--accent) 6%, transparent); border-color: color-mix(in srgb, var(--accent) 20%, transparent);"
+              >
+                <svg class="w-4 h-4 mt-0.5 shrink-0" viewBox="0 0 16 16" fill="none" style="color: var(--accent);">
+                  <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.4"/>
+                  <path d="M8 5v4M8 11v.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                </svg>
+                <p class="text-xs leading-relaxed" style="color: var(--text-secondary);">
+                  This person will be the super admin of your organization. The email must end with <strong style="color: var(--text-primary);">@{{ dnsInput.trim() }}</strong>.
+                </p>
+              </div>
 
-        <div class="space-y-1.5">
-          <label class="text-[11px] font-semibold uppercase tracking-wider"
-                 style="color: var(--text-secondary);">
-            Custom domain
-          </label>
+              <div v-if="!superAdminOtpSent" class="space-y-4">
+                <div class="space-y-1.5">
+                  <label class="text-[11px] font-semibold uppercase tracking-wider" style="color: var(--text-secondary);">Super Admin Email</label>
+                  <div
+                    class="flex items-stretch rounded-[10px] overflow-hidden border-[1.5px] transition-colors"
+                    :style="{
+                      borderColor: superAdminEmailError ? '#e55050' : superAdminEmailFocused ? 'var(--accent)' : 'var(--border-input)',
+                      background: 'var(--bg-input)',
+                    }"
+                  >
+                    <input
+                      v-model="superAdminEmail"
+                      type="email"
+                      :placeholder="`admin@${dnsInput.trim() || 'yourdomain.com'}`"
+                      class="flex-1 min-w-0 px-3.5 py-2.5 text-[15px] outline-none bg-transparent"
+                      style="color: var(--text-primary);"
+                      @focus="superAdminEmailFocused = true"
+                      @blur="superAdminEmailFocused = false"
+                      @keyup.enter="sendSuperAdminOtp"
+                    />
+                  </div>
+                  <p v-if="superAdminEmailError" class="text-xs" style="color: #e55050;">{{ superAdminEmailError }}</p>
+                </div>
 
-          <div
-            class="flex items-stretch rounded-[10px] overflow-hidden border-[1.5px]"
-            :style="{
-              borderColor: isDnsAvailable === true ? '#1d9e75'
-                         : isDnsAvailable === false ? '#e55050'
-                         : 'var(--border-input)',
-              background: 'var(--bg-input)',
-            }"
-          >
-            <input
-              v-model="dnsInput"
-              type="text"
-              placeholder="e.g. mycompany.com"
-              class="flex-1 min-w-0 px-3.5 py-2.5 text-[15px] outline-none bg-transparent"
-              style="color: var(--text-primary);"
-            />
+                <button
+                  type="button"
+                  :disabled="isSendingOtp || !superAdminEmail.trim()"
+                  class="w-full flex items-center justify-center gap-2 cursor-pointer py-3 rounded-[9px] font-bold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  style="background: var(--accent); color: var(--accent-text);"
+                  @click="sendSuperAdminOtp"
+                >
+                  <span v-if="isSendingOtp" class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                  <span>{{ isSendingOtp ? 'Sending OTP…' : 'Send Verification Code' }}</span>
+                </button>
+              </div>
+
+              <div v-else class="space-y-5">
+                <div class="text-center space-y-1">
+                  <p class="text-sm font-semibold" style="color: var(--text-primary);">
+                    Code sent to <span style="color: var(--accent);">{{ superAdminEmail }}</span>
+                  </p>
+                  <p class="text-xs" style="color: var(--text-secondary);">Enter the 5-digit code below</p>
+                </div>
+
+                <div class="flex items-center justify-center gap-3">
+                  <input
+                    v-for="(_, idx) in 5"
+                    :key="idx"
+                    :ref="el => { if (el) otpInputRefs[idx] = el }"
+                    v-model="otpDigits[idx]"
+                    type="text"
+                    inputmode="numeric"
+                    maxlength="1"
+                    class="w-12 h-14 text-center text-xl font-bold rounded-xl border-2 outline-none transition-all duration-200 bg-transparent"
+                    :style="{
+                      borderColor: otpError ? '#e55050' : otpDigits[idx] ? 'var(--accent)' : 'var(--border-input)',
+                      color: 'var(--text-primary)',
+                      background: otpDigits[idx] ? 'color-mix(in srgb, var(--accent) 8%, transparent)' : 'var(--bg-input)',
+                    }"
+                    @input="onOtpInput(idx, $event)"
+                    @keydown="onOtpKeydown(idx, $event)"
+                    @paste="onOtpPaste($event)"
+                  />
+                </div>
+
+                <p v-if="otpError" class="text-xs text-center" style="color: #e55050;">{{ otpError }}</p>
+
+                <button
+                  type="button"
+                  :disabled="isVerifyingOtp || otpDigits.join('').length !== 5"
+                  class="w-full flex items-center justify-center gap-2 cursor-pointer py-3 rounded-[9px] font-bold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  style="background: var(--accent); color: var(--accent-text);"
+                  @click="verifySuperAdminOtp"
+                >
+                  <span v-if="isVerifyingOtp" class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                  <span>{{ isVerifyingOtp ? 'Verifying…' : 'Verify & Continue' }}</span>
+                </button>
+
+                <div class="text-center">
+                  <p class="text-xs" style="color: var(--text-secondary);">
+                    Didn't receive the code?
+                    <button
+                      v-if="otpResendCountdown === 0"
+                      type="button"
+                      class="font-semibold ml-1 transition-opacity hover:opacity-70"
+                      style="color: var(--accent);"
+                      @click="resendSuperAdminOtp"
+                      :disabled="isSendingOtp"
+                    >
+                      Resend
+                    </button>
+                    <span v-else class="ml-1 font-semibold" style="color: var(--text-secondary);">
+                      Resend in {{ otpResendCountdown }}s
+                    </span>
+                  </p>
+                </div>
+
+                <div class="text-center">
+                  <button
+                    type="button"
+                    class="text-xs transition-opacity hover:opacity-70"
+                    style="color: var(--text-secondary);"
+                    @click="resetSuperAdminFlow"
+                  >
+                    Change email address
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
-
-          <p v-if="isCheckingDns" class="text-xs" style="color: var(--text-secondary);">
-            Checking DNS availability…
-          </p>
-
-          <p v-else-if="isDnsAvailable === true" class="text-xs" style="color: #1d9e75;">
-            {{ dnsInput }} is active and ready
-          </p>
-
-          <p v-else-if="isDnsAvailable === false" class="text-xs" style="color: #e55050;">
-            Domain not available or inactive
-          </p>
         </div>
-
-      </div>
-<button
-  type="button"
-  :disabled="isCreateSiteDisabled || (hasCustomDomain && isDnsAvailable !== true)"
-  class="w-full flex items-center justify-center gap-2 cursor-pointer py-3 rounded-[9px] font-bold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-  style="background: var(--accent); color: var(--accent-text);"
-  @click="continueSiteHandler"
->
-  <span>
-    {{ hasCustomDomain ? `Create site with ${dnsInput}` : 'Create site' }}
-  </span>
-</button>
-
-    </div>
-  </div>
-</div>
 
         <!-- ═══════════════════════════════════════════════════════
              STEP 6 — Loading / provisioning
@@ -395,11 +484,9 @@
                 @click="toggleReferral(item.id)"
                 type="button"
                 class="px-4 py-3 rounded-xl border text-sm cursor-pointer font-medium transition-all duration-200 hover:scale-[1.02] hover:shadow-sm"
-                :class="
-                  referralSources.includes(item.id)
-                    ? 'bg-accent/30 border-accent hover:bg-accent/40'
-                    : 'border-border hover:border-accent hover:bg-accent/10 text-text-secondary hover:text-text-primary'
-                "
+                :class="referralSources.includes(item.id)
+                  ? 'bg-accent/30 border-accent hover:bg-accent/40'
+                  : 'border-border hover:border-accent hover:bg-accent/10 text-text-secondary hover:text-text-primary'"
               >
                 {{ item.label }}
               </button>
@@ -416,14 +503,12 @@
         </div>
 
         <!-- ═══════════════════════════════════════════════════════
-             STEP 8 — Domain Verification (custom domain only)
+             STEP 8 — Domain Verification
+             ONLY for Scenario 2 (gmail + team/school + custom domain)
+             Scenario 3 skips this entirely (domain auto-verified)
         ════════════════════════════════════════════════════════════ -->
-        <div
-          v-if="activeStep === 8"
-          class="flex items-center justify-center min-h-full"
-        >
+        <div v-if="activeStep === 8" class="flex items-center justify-center min-h-full">
           <div class="w-full max-w-120 space-y-6">
-            <!-- Header -->
             <div class="space-y-1.5">
               <div class="flex items-center gap-3">
                 <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style="background: color-mix(in srgb, var(--accent) 14%, transparent); border: 1.5px solid color-mix(in srgb, var(--accent) 25%, transparent);">
@@ -439,9 +524,6 @@
               </div>
             </div>
 
-            <!-- ── Step 8 Phase: input → register → verify ── -->
-
-            <!-- Not started yet: offer to verify -->
             <div v-if="domainPhase === 'idle'" class="rounded-2xl border p-6 space-y-5" style="background: var(--bg-card); border-color: var(--border);">
               <div class="flex items-start gap-4">
                 <div class="w-10 h-10 rounded-xl shrink-0 flex items-center justify-center" style="background: color-mix(in srgb, #1d9e75 10%, transparent); border: 1.5px solid color-mix(in srgb, #1d9e75 20%, transparent);">
@@ -450,11 +532,10 @@
                 <div class="flex-1">
                   <p class="text-sm font-semibold text-text-primary mb-0.5">Your workspace is ready!</p>
                   <p class="text-xs leading-relaxed" style="color: var(--text-secondary);">
-                    You can verify your custom domain <strong style="color: var(--text-primary);">{{ dnsInput.trim() }}</strong> to use it as your workspace URL. This step is optional but recommended for custom branding.
+                    Verify your custom domain <strong style="color: var(--text-primary);">{{ dnsInput.trim() }}</strong> to use it as your workspace URL. This step is optional but recommended.
                   </p>
                 </div>
               </div>
-
               <div class="flex gap-3">
                 <button
                   type="button"
@@ -476,54 +557,23 @@
               </div>
             </div>
 
-            <!-- Phase: verifying -->
             <div v-else-if="domainPhase === 'verify'" class="space-y-4">
-
-              <!-- Domain pill with status -->
               <div class="flex items-center gap-2.5 px-4 py-3 rounded-xl border" style="background: var(--bg-surface); border-color: var(--border);">
                 <svg class="w-4 h-4 shrink-0" viewBox="0 0 20 20" fill="none" style="color: var(--accent);">
                   <circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.5"/>
                   <path d="M10 2.5c0 0-3 3.5-3 7.5s3 7.5 3 7.5M10 2.5c0 0 3 3.5 3 7.5s-3 7.5-3 7.5M2.5 10h15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
                 </svg>
                 <span class="text-sm font-semibold" style="color: var(--text-primary);">{{ dnsInput.trim() }}</span>
-                <span
-                  class="ml-auto text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
-                  :style="domainStatusStyle"
-                >
-                  {{ domainStatusLabel }}
-                </span>
-                <button
-                  v-if="currentDomain?.status !== 'verified'"
-                  type="button"
-                  class="text-xs font-medium ml-1 transition-opacity hover:opacity-70"
-                  style="color: var(--text-secondary);"
-                  @click="domainPhase = 'idle'"
-                >
-                  Cancel
-                </button>
+                <span class="ml-auto text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full" :style="domainStatusStyle">{{ domainStatusLabel }}</span>
+                <button v-if="currentDomain?.status !== 'verified'" type="button" class="text-xs font-medium ml-1 transition-opacity hover:opacity-70" style="color: var(--text-secondary);" @click="domainPhase = 'idle'">Cancel</button>
               </div>
 
-              <!-- Method switched notice -->
-              <div
-                v-if="methodSwitched"
-                class="flex items-start gap-3 rounded-lg px-4 py-3 border"
-                style="background: color-mix(in srgb, #f59e0b 8%, transparent); border-color: color-mix(in srgb, #f59e0b 30%, transparent);"
-              >
-                <svg class="w-4 h-4 mt-0.5 shrink-0" viewBox="0 0 16 16" fill="none" style="color: #f59e0b;">
-                  <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.4"/>
-                  <path d="M8 5v4M8 11v.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-                </svg>
-                <p class="text-xs leading-relaxed" style="color: #f59e0b;">
-                  Apex domain detected — CNAME is not supported on root domains. We've automatically switched to <strong>TXT verification</strong>.
-                </p>
+              <div v-if="methodSwitched" class="flex items-start gap-3 rounded-lg px-4 py-3 border" style="background: color-mix(in srgb, #f59e0b 8%, transparent); border-color: color-mix(in srgb, #f59e0b 30%, transparent);">
+                <svg class="w-4 h-4 mt-0.5 shrink-0" viewBox="0 0 16 16" fill="none" style="color: #f59e0b;"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.4"/><path d="M8 5v4M8 11v.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+                <p class="text-xs leading-relaxed" style="color: #f59e0b;">Apex domain detected — CNAME is not supported on root domains. We've automatically switched to <strong>TXT verification</strong>.</p>
               </div>
 
-              <!-- Verified banner -->
-              <div
-                v-if="currentDomain?.status === 'verified'"
-                class="flex items-center gap-3 px-4 py-3 rounded-xl border"
-                style="background: color-mix(in srgb, #1d9e75 8%, transparent); border-color: color-mix(in srgb, #1d9e75 25%, transparent);"
-              >
+              <div v-if="currentDomain?.status === 'verified'" class="flex items-center gap-3 px-4 py-3 rounded-xl border" style="background: color-mix(in srgb, #1d9e75 8%, transparent); border-color: color-mix(in srgb, #1d9e75 25%, transparent);">
                 <span class="flex items-center justify-center w-6 h-6 rounded-full shrink-0" style="background: #1d9e75;">
                   <svg class="w-3.5 h-3.5" viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </span>
@@ -533,7 +583,6 @@
                 </div>
               </div>
 
-              <!-- Verification method tabs (only when not verified) -->
               <div v-if="currentDomain?.status !== 'verified'" class="space-y-3">
                 <p class="text-[11px] font-semibold uppercase tracking-wider" style="color: var(--text-secondary);">Verification method</p>
                 <div class="grid grid-cols-3 gap-2 p-1 rounded-xl" style="background: var(--bg-surface); border: 1px solid var(--border);">
@@ -555,41 +604,25 @@
                 </div>
               </div>
 
-              <!-- Instructions panel -->
               <div v-if="currentInstructions && currentDomain?.status !== 'verified'" class="space-y-3">
-                <!-- CNAME / TXT -->
                 <template v-if="currentInstructions.method === 'cname' || currentInstructions.method === 'txt'">
-                  <p class="text-xs leading-relaxed" style="color: var(--text-secondary);">
-                    Add the following DNS record at your DNS host (GoDaddy, Cloudflare, Namecheap, etc.)
-                  </p>
+                  <p class="text-xs leading-relaxed" style="color: var(--text-secondary);">Add the following DNS record at your DNS host (GoDaddy, Cloudflare, Namecheap, etc.)</p>
                   <div class="rounded-xl overflow-hidden border" style="border-color: var(--border);">
                     <div class="grid grid-cols-2 divide-x" style="background: var(--bg-surface); border-bottom: 1px solid var(--border); divide-color: var(--border);">
-                      <div class="px-4 py-2.5">
-                        <p class="text-[10px] font-bold uppercase tracking-wider mb-0.5" style="color: var(--text-secondary);">Type</p>
-                        <p class="text-sm font-bold" style="color: var(--text-primary);">{{ currentInstructions.record_type }}</p>
-                      </div>
-                      <div class="px-4 py-2.5">
-                        <p class="text-[10px] font-bold uppercase tracking-wider mb-0.5" style="color: var(--text-secondary);">TTL</p>
-                        <p class="text-sm font-bold" style="color: var(--text-primary);">{{ currentInstructions.ttl_recommended }}s</p>
-                      </div>
+                      <div class="px-4 py-2.5"><p class="text-[10px] font-bold uppercase tracking-wider mb-0.5" style="color: var(--text-secondary);">Type</p><p class="text-sm font-bold" style="color: var(--text-primary);">{{ currentInstructions.record_type }}</p></div>
+                      <div class="px-4 py-2.5"><p class="text-[10px] font-bold uppercase tracking-wider mb-0.5" style="color: var(--text-secondary);">TTL</p><p class="text-sm font-bold" style="color: var(--text-primary);">{{ currentInstructions.ttl_recommended }}s</p></div>
                     </div>
                     <div class="divide-y" style="divide-color: var(--border);">
                       <div class="px-4 py-3 flex items-center justify-between gap-3">
-                        <div class="min-w-0 flex-1">
-                          <p class="text-[10px] font-bold uppercase tracking-wider mb-0.5" style="color: var(--text-secondary);">Host / Name</p>
-                          <p class="text-sm font-mono break-all" style="color: var(--text-primary);">{{ currentInstructions.record_host }}</p>
-                        </div>
+                        <div class="min-w-0 flex-1"><p class="text-[10px] font-bold uppercase tracking-wider mb-0.5" style="color: var(--text-secondary);">Host / Name</p><p class="text-sm font-mono break-all" style="color: var(--text-primary);">{{ currentInstructions.record_host }}</p></div>
                         <button type="button" @click="copyToClipboard(currentInstructions.record_host, 'host')" class="shrink-0 p-1.5 rounded-lg cursor-pointer transition-all hover:scale-110" style="color: var(--text-secondary);">
                           <svg v-if="copiedField !== 'host'" class="w-4 h-4" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M2 11V3a1 1 0 011-1h8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
                           <svg v-else class="w-4 h-4" viewBox="0 0 16 16" fill="none" style="color: #1d9e75;"><path d="M3 8l3.5 3.5L13 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
                         </button>
                       </div>
                       <div class="px-4 py-3 flex items-center justify-between gap-3">
-                        <div class="min-w-0 flex-1">
-                          <p class="text-[10px] font-bold uppercase tracking-wider mb-0.5" style="color: var(--text-secondary);">Value / Points to</p>
-                          <p class="text-sm font-mono break-all" style="color: var(--text-primary);">{{ currentInstructions.record_value }}</p>
-                        </div>
-                        <button type="button" @click="copyToClipboard(currentInstructions.record_value, 'value')" class="shrink-0 p-1.5 rounded-lg cursor-pointer transition-all hover:scale-110 hover:color-accent" style="color: var(--text-secondary);">
+                        <div class="min-w-0 flex-1"><p class="text-[10px] font-bold uppercase tracking-wider mb-0.5" style="color: var(--text-secondary);">Value / Points to</p><p class="text-sm font-mono break-all" style="color: var(--text-primary);">{{ currentInstructions.record_value }}</p></div>
+                        <button type="button" @click="copyToClipboard(currentInstructions.record_value, 'value')" class="shrink-0 p-1.5 rounded-lg cursor-pointer transition-all hover:scale-110" style="color: var(--text-secondary);">
                           <svg v-if="copiedField !== 'value'" class="w-4 h-4" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M2 11V3a1 1 0 011-1h8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
                           <svg v-else class="w-4 h-4" viewBox="0 0 16 16" fill="none" style="color: #1d9e75;"><path d="M3 8l3.5 3.5L13 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
                         </button>
@@ -599,40 +632,25 @@
                   <p class="text-xs leading-relaxed px-1" style="color: var(--text-secondary);">{{ currentInstructions.note }}</p>
                 </template>
 
-                <!-- HTTP File -->
                 <template v-else-if="currentInstructions.method === 'http'">
-                  <p class="text-xs leading-relaxed" style="color: var(--text-secondary);">
-                    Upload a verification file to your web server so it's reachable at the URL below.
-                  </p>
+                  <p class="text-xs leading-relaxed" style="color: var(--text-secondary);">Upload a verification file to your web server so it's reachable at the URL below.</p>
                   <div class="rounded-xl overflow-hidden border divide-y" style="border-color: var(--border); divide-color: var(--border);">
                     <div class="px-4 py-3 flex items-center justify-between gap-3">
-                      <div class="min-w-0 flex-1">
-                        <p class="text-[10px] font-bold uppercase tracking-wider mb-0.5" style="color: var(--text-secondary);">File URL (must be accessible)</p>
-                        <p class="text-sm font-mono break-all" style="color: var(--text-primary);">{{ currentInstructions.file_url }}</p>
-                      </div>
+                      <div class="min-w-0 flex-1"><p class="text-[10px] font-bold uppercase tracking-wider mb-0.5" style="color: var(--text-secondary);">File URL</p><p class="text-sm font-mono break-all" style="color: var(--text-primary);">{{ currentInstructions.file_url }}</p></div>
                       <button type="button" @click="copyToClipboard(currentInstructions.file_url, 'file_url')" class="shrink-0 p-1.5 rounded-lg transition-all hover:scale-110" style="color: var(--text-secondary);">
                         <svg v-if="copiedField !== 'file_url'" class="w-4 h-4" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M2 11V3a1 1 0 011-1h8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
                         <svg v-else class="w-4 h-4" viewBox="0 0 16 16" fill="none" style="color: #1d9e75;"><path d="M3 8l3.5 3.5L13 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
                       </button>
                     </div>
                     <div class="px-4 py-3 flex items-center justify-between gap-3">
-                      <div class="min-w-0 flex-1">
-                        <p class="text-[10px] font-bold uppercase tracking-wider mb-0.5" style="color: var(--text-secondary);">File content</p>
-                        <p class="text-sm font-mono break-all" style="color: var(--text-primary);">{{ currentInstructions.file_content }}</p>
-                      </div>
+                      <div class="min-w-0 flex-1"><p class="text-[10px] font-bold uppercase tracking-wider mb-0.5" style="color: var(--text-secondary);">File content</p><p class="text-sm font-mono break-all" style="color: var(--text-primary);">{{ currentInstructions.file_content }}</p></div>
                       <button type="button" @click="copyToClipboard(currentInstructions.file_content, 'file_content')" class="shrink-0 p-1.5 rounded-lg transition-all hover:scale-110" style="color: var(--text-secondary);">
                         <svg v-if="copiedField !== 'file_content'" class="w-4 h-4" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M2 11V3a1 1 0 011-1h8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
                         <svg v-else class="w-4 h-4" viewBox="0 0 16 16" fill="none" style="color: #1d9e75;"><path d="M3 8l3.5 3.5L13 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
                       </button>
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    :disabled="isDownloadingFile"
-                    class="w-full flex items-center justify-center gap-2 py-2.5 rounded-[9px] text-sm font-semibold border transition-all duration-200 hover:shadow-sm"
-                    style="border-color: var(--border); background: var(--bg-surface); color: var(--text-primary);"
-                    @click="downloadVerificationFile"
-                  >
+                  <button type="button" :disabled="isDownloadingFile" class="w-full flex items-center justify-center gap-2 py-2.5 rounded-[9px] text-sm font-semibold border transition-all duration-200 hover:shadow-sm" style="border-color: var(--border); background: var(--bg-surface); color: var(--text-primary);" @click="downloadVerificationFile">
                     <span v-if="isDownloadingFile" class="w-4 h-4 rounded-full border-2 border-accent/30 border-t-accent animate-spin" />
                     <svg v-else class="w-4 h-4" viewBox="0 0 16 16" fill="none" style="color: var(--accent);"><path d="M8 2v8M5 7l3 3 3-3M2 11v2a1 1 0 001 1h10a1 1 0 001-1v-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     <span>Download streamed-verify.txt</span>
@@ -641,146 +659,46 @@
                 </template>
               </div>
 
-              <!-- Last check error -->
-              <div
-                v-if="currentDomain?.last_check_result?.error && currentDomain?.status !== 'verified'"
-                class="flex items-start gap-3 rounded-lg px-4 py-3 border"
-                style="background: color-mix(in srgb, #e55050 6%, transparent); border-color: color-mix(in srgb, #e55050 25%, transparent);"
-              >
-                <svg class="w-4 h-4 mt-0.5 shrink-0" viewBox="0 0 16 16" fill="none" style="color: #e55050;">
-                  <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.4"/>
-                  <path d="M8 5v4M8 11v.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-                </svg>
+              <div v-if="currentDomain?.last_check_result?.error && currentDomain?.status !== 'verified'" class="flex items-start gap-3 rounded-lg px-4 py-3 border" style="background: color-mix(in srgb, #e55050 6%, transparent); border-color: color-mix(in srgb, #e55050 25%, transparent);">
+                <svg class="w-4 h-4 mt-0.5 shrink-0" viewBox="0 0 16 16" fill="none" style="color: #e55050;"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.4"/><path d="M8 5v4M8 11v.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
                 <div>
                   <p class="text-xs font-semibold mb-0.5" style="color: #e55050;">Verification check failed</p>
                   <p class="text-xs" style="color: var(--text-secondary);">{{ currentDomain?.last_check_result?.error }}</p>
-                  <p
-                    v-if="currentDomain?.last_check_result?.observed"
-                    class="text-xs mt-1"
-                    style="color: var(--text-secondary);"
-                  >
-                    Observed:
-
-                    <span
-                      class="font-mono font-medium break-all"
-                      style="color: var(--text-primary);"
-                    >
-                      {{
-                        typeof currentDomain?.last_check_result?.observed === 'string'
-                          ? currentDomain.last_check_result.observed.slice(0, 120) + '...'
-                          : currentDomain.last_check_result.observed?.join(', ')
-                      }}
-                    </span>
-                  </p>
                 </div>
               </div>
 
-              <!-- Rate limit countdown -->
-              <div
-                v-if="retryCountdown > 0 && currentDomain?.status !== 'verified'"
-                class="flex items-center gap-3 px-4 py-3 rounded-xl border"
-                style="background: var(--bg-surface); border-color: var(--border);"
-              >
-                <svg class="w-4 h-4 shrink-0" viewBox="0 0 16 16" fill="none" style="color: var(--text-secondary);">
-                  <circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.3"/>
-                  <path d="M8 4.5v4l2.5 1.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-                </svg>
-                <p class="text-xs" style="color: var(--text-secondary);">
-                  Please wait <span class="font-bold tabular-nums" style="color: var(--text-primary);">{{ retryCountdown }}s</span> before checking again.
-                </p>
+              <div v-if="retryCountdown > 0 && currentDomain?.status !== 'verified'" class="flex items-center gap-3 px-4 py-3 rounded-xl border" style="background: var(--bg-surface); border-color: var(--border);">
+                <svg class="w-4 h-4 shrink-0" viewBox="0 0 16 16" fill="none" style="color: var(--text-secondary);"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.3"/><path d="M8 4.5v4l2.5 1.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                <p class="text-xs" style="color: var(--text-secondary);">Please wait <span class="font-bold tabular-nums" style="color: var(--text-primary);">{{ retryCountdown }}s</span> before checking again.</p>
                 <div class="ml-auto flex-1 max-w-20 h-1 rounded-full overflow-hidden" style="background: var(--border);">
-                  <div
-                    class="h-full rounded-full transition-all duration-1000"
-                    style="background: var(--accent);"
-                    :style="{ width: `${(retryCountdown / retryTotal) * 100}%` }"
-                  />
+                  <div class="h-full rounded-full transition-all duration-1000" style="background: var(--accent);" :style="{ width: `${(retryCountdown / retryTotal) * 100}%` }" />
                 </div>
               </div>
 
-              <!-- Recheck button -->
               <div v-if="currentDomain?.status !== 'verified'" class="space-y-2">
+                <button type="button" :disabled="isRechecking || retryCountdown > 0" class="w-full flex items-center justify-center cursor-pointer gap-2 py-3 rounded-[9px] text-[15px] font-bold tracking-wide transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:brightness-110 hover:shadow-md hover:-translate-y-[1px]" style="background: var(--accent); color: var(--accent-text); box-shadow: 0 2px 0 rgba(0,0,0,0.12);" @click="recheckVerification">
+                  <span v-if="isRechecking" class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                  <svg v-else class="w-5 h-5" viewBox="0 0 24 24" fill="none"><path d="M20 12a8 8 0 10-3 6.3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M20 4v6h-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  <span>{{ isRechecking ? 'Checking…' : "I've added the record — verify now" }}</span>
+                </button>
+                <button type="button" class="w-full py-2.5 rounded-[9px] cursor-pointer text-sm font-medium border transition-all duration-200 hover:bg-surface hover:text-text-primary hover:border-accent hover:-translate-y-[1px] hover:shadow-sm" style="border-color: var(--border); background: transparent; color: var(--text-secondary);" @click="skipDomainVerification">Skip for now</button>
+              </div>
 
-  <!-- PRIMARY BUTTON -->
-  <button
-    type="button"
-    :disabled="isRechecking || retryCountdown > 0"
-    class="w-full flex items-center justify-center cursor-pointer gap-2 py-3 rounded-[9px] text-[15px] font-bold tracking-wide transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:brightness-110 hover:shadow-md hover:-translate-y-[1px]"
-    style="background: var(--accent); color: var(--accent-text); box-shadow: 0 2px 0 rgba(0,0,0,0.12);"
-    @click="recheckVerification"
-  >
-    <span v-if="isRechecking" class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-
-    <svg v-else class="w-5 h-5" viewBox="0 0 24 24" fill="none">
-      <path
-        d="M20 12a8 8 0 10-3 6.3"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-      />
-      <path
-        d="M20 4v6h-6"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      />
-      <path
-        d="M9 12l2 2 4-4"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      />
-    </svg>
-
-    <span>{{ isRechecking ? 'Checking…' : "I've added the record — verify now" }}</span>
-  </button>
-
-  <!-- SECONDARY BUTTON -->
-  <button
-    type="button"
-    class="w-full py-2.5 rounded-[9px] cursor-pointer text-sm font-medium border transition-all duration-200 hover:bg-surface hover:text-text-primary hover:border-accent hover:-translate-y-[1px] hover:shadow-sm"
-    style="border-color: var(--border); background: transparent; color: var(--text-secondary);"
-    @click="skipDomainVerification"
-  >
-    Skip for now
-  </button>
-
-</div>
-
-              <!-- Verified: set primary & proceed to enrol users -->
               <div v-if="currentDomain?.status === 'verified'" class="space-y-3">
-                <button
-                  v-if="!currentDomain.is_primary"
-                  type="button"
-                  :disabled="isSettingPrimary"
-                  class="w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all duration-200 text-left"
-                  style="border-color: var(--border); background: var(--bg-surface);"
-                  @click="setPrimaryDomain"
-                >
+                <button v-if="!currentDomain.is_primary" type="button" :disabled="isSettingPrimary" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all duration-200 text-left" style="border-color: var(--border); background: var(--bg-surface);" @click="setPrimaryDomain">
                   <svg class="w-5 h-5 shrink-0" viewBox="0 0 20 20" fill="none" style="color: #f59e0b;"><path d="M10 2l2.24 5.14L18 8.27l-4 3.86.94 5.87L10 15.4l-4.94 2.6.94-5.87-4-3.86 5.76-1.13L10 2z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
-                  <div class="flex-1">
-                    <p class="text-sm font-semibold" style="color: var(--text-primary);">Set as primary domain</p>
-                    <p class="text-xs" style="color: var(--text-secondary);">Use {{ dnsInput.trim() }} as your main workspace URL</p>
-                  </div>
+                  <div class="flex-1"><p class="text-sm font-semibold" style="color: var(--text-primary);">Set as primary domain</p><p class="text-xs" style="color: var(--text-secondary);">Use {{ dnsInput.trim() }} as your main workspace URL</p></div>
                   <span v-if="isSettingPrimary" class="w-4 h-4 rounded-full border-2 border-accent/30 border-t-accent animate-spin" />
                 </button>
                 <div v-else class="flex items-center gap-2 px-4 py-2.5 rounded-xl" style="background: color-mix(in srgb, #f59e0b 10%, transparent); border: 1px solid color-mix(in srgb, #f59e0b 25%, transparent);">
                   <svg class="w-4 h-4 shrink-0" viewBox="0 0 20 20" fill="#f59e0b"><path d="M10 2l2.24 5.14L18 8.27l-4 3.86.94 5.87L10 15.4l-4.94 2.6.94-5.87-4-3.86 5.76-1.13L10 2z"/></svg>
                   <p class="text-xs font-semibold" style="color: #f59e0b;">Primary domain</p>
                 </div>
-
-                <button
-                  type="button"
-                  class="w-full flex items-center justify-center gap-2 py-3 rounded-[9px] text-[15px] font-bold tracking-wide transition-all duration-200"
-                  style="background: var(--accent); color: var(--accent-text); box-shadow: 0 2px 0 rgba(0,0,0,0.12);"
-                  @click="proceedToEnrolUsers"
-                >
+                <button type="button" class="w-full flex items-center justify-center gap-2 py-3 rounded-[9px] text-[15px] font-bold tracking-wide transition-all duration-200" style="background: var(--accent); color: var(--accent-text); box-shadow: 0 2px 0 rgba(0,0,0,0.12);" @click="proceedToEnrolUsers">
                   Continue — Enrol users
                   <svg class="w-4 h-4" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </button>
               </div>
-
               <p v-if="recheckError" class="text-xs text-center" style="color: #e55050;">{{ recheckError }}</p>
             </div>
           </div>
@@ -789,32 +707,25 @@
         <!-- ═══════════════════════════════════════════════════════
              STEP 9 — Enrol Domain Users
         ════════════════════════════════════════════════════════════ -->
-        <div v-if="activeStep === 9" class="flex items-center justify-center min-h-full">
+        <div v-if="activeStep === 9 && !isCompanyEmail" class="flex items-center justify-center min-h-full">
           <div class="w-full max-w-130 space-y-6">
-
-            <!-- Header -->
             <div class="space-y-1.5">
               <h2 class="text-[24px] lg:text-[28px] font-bold text-text-primary">
                 {{ selected === 'school' ? 'Add classmates to your workspace' : 'Add team members to your workspace' }}
               </h2>
               <p class="text-sm leading-relaxed" style="color: var(--text-secondary);">
-                These users were found under <strong style="color: var(--text-primary);">{{ dnsInput.trim() }}</strong>. Select who you'd like to enrol.
+                These users were found under <strong style="color: var(--text-primary);">{{ claimDomain }}</strong>. Select who you'd like to enrol.
               </p>
             </div>
 
-            <!-- Loading state -->
             <div v-if="isLoadingDomainUsers" class="space-y-3">
               <div v-for="i in 4" :key="i" class="flex items-center gap-3 px-4 py-3.5 rounded-xl border animate-pulse" style="border-color: var(--border); background: var(--bg-card);">
                 <div class="w-4 h-4 rounded shrink-0" style="background: var(--bg-surface);" />
                 <div class="w-9 h-9 rounded-full shrink-0" style="background: var(--bg-surface);" />
-                <div class="flex-1 space-y-1.5">
-                  <div class="h-3 rounded w-32" style="background: var(--bg-surface);" />
-                  <div class="h-2.5 rounded w-48" style="background: var(--bg-surface);" />
-                </div>
+                <div class="flex-1 space-y-1.5"><div class="h-3 rounded w-32" style="background: var(--bg-surface);" /><div class="h-2.5 rounded w-48" style="background: var(--bg-surface);" /></div>
               </div>
             </div>
 
-            <!-- Error state -->
             <div v-else-if="domainUsersError" class="flex items-start gap-3 px-4 py-4 rounded-xl border" style="background: color-mix(in srgb, #e55050 6%, transparent); border-color: color-mix(in srgb, #e55050 25%, transparent);">
               <svg class="w-4 h-4 mt-0.5 shrink-0" viewBox="0 0 16 16" fill="none" style="color: #e55050;"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.4"/><path d="M8 5v4M8 11v.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
               <div class="flex-1">
@@ -824,52 +735,24 @@
               </div>
             </div>
 
-            <!-- Empty state -->
             <div v-else-if="!isLoadingDomainUsers && domainUsers.length === 0" class="flex flex-col items-center gap-3 py-10 px-6 rounded-2xl border text-center" style="border-color: var(--border); background: var(--bg-card);">
               <svg class="w-10 h-10" viewBox="0 0 40 40" fill="none" style="color: var(--text-secondary);"><circle cx="20" cy="14" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M8 34c0-6.627 5.373-12 12-12s12 5.373 12 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-              <div>
-                <p class="text-sm font-semibold text-text-primary mb-0.5">No users found</p>
-                <p class="text-xs" style="color: var(--text-secondary);">No accounts were found under {{ dnsInput.trim() }} yet.</p>
-              </div>
-              <button
-                type="button"
-                class="mt-2 px-5 py-2.5 rounded-[9px] text-sm font-bold transition-all"
-                style="background: var(--accent); color: var(--accent-text);"
-                @click="finishOnboarding"
-              >
-                Finish setup
-              </button>
+              <div><p class="text-sm font-semibold text-text-primary mb-0.5">No users found</p><p class="text-xs" style="color: var(--text-secondary);">No accounts were found under {{ claimDomain }} yet.</p></div>
+              <button type="button" class="mt-2 px-5 py-2.5 rounded-[9px] text-sm font-bold transition-all" style="background: var(--accent); color: var(--accent-text);" @click="finishOnboarding">Finish setup</button>
             </div>
 
-            <!-- Users list -->
             <template v-else>
-              <!-- Select all / none toolbar -->
               <div class="flex items-center justify-between px-1">
                 <p class="text-xs font-medium" style="color: var(--text-secondary);">
                   <span class="font-bold" style="color: var(--text-primary);">{{ selectedDomainUserIds.length }}</span> of {{ domainUsers.length }} selected
                 </p>
                 <div class="flex gap-3">
-                  <button
-                    type="button"
-                    class="text-xs font-semibold transition-opacity hover:opacity-70"
-                    style="color: var(--accent);"
-                    @click="selectAllDomainUsers"
-                  >
-                    Select all
-                  </button>
+                  <button type="button" class="text-xs font-semibold transition-opacity hover:opacity-70" style="color: var(--accent);" @click="selectAllDomainUsers">Select all</button>
                   <span style="color: var(--border);">|</span>
-                  <button
-                    type="button"
-                    class="text-xs font-semibold transition-opacity hover:opacity-70"
-                    style="color: var(--text-secondary);"
-                    @click="selectedDomainUserIds = []"
-                  >
-                    Clear
-                  </button>
+                  <button type="button" class="text-xs font-semibold transition-opacity hover:opacity-70" style="color: var(--text-secondary);" @click="selectedDomainUserIds = []">Clear</button>
                 </div>
               </div>
 
-              <!-- User cards -->
               <div class="space-y-2 max-h-[380px] overflow-y-auto pr-1 custom-scroll">
                 <button
                   v-for="user in domainUsers"
@@ -882,55 +765,30 @@
                   }"
                   @click="toggleDomainUser(user._id)"
                 >
-                  <!-- Checkbox -->
-                  <div
-                    class="w-4 h-4 rounded flex items-center justify-center shrink-0 transition-all duration-150 border-2"
-                    :style="{
-                      background: selectedDomainUserIds.includes(user._id) ? 'var(--accent)' : 'transparent',
-                      borderColor: selectedDomainUserIds.includes(user._id) ? 'var(--accent)' : 'var(--border)',
-                    }"
-                  >
+                  <div class="w-4 h-4 rounded flex items-center justify-center shrink-0 transition-all duration-150 border-2" :style="{ background: selectedDomainUserIds.includes(user._id) ? 'var(--accent)' : 'transparent', borderColor: selectedDomainUserIds.includes(user._id) ? 'var(--accent)' : 'var(--border)' }">
                     <svg v-if="selectedDomainUserIds.includes(user._id)" class="w-2.5 h-2.5" viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
                   </div>
-
-                  <!-- Avatar -->
                   <div class="w-9 h-9 rounded-full shrink-0 flex items-center justify-center text-sm font-bold text-white overflow-hidden" :style="{ background: getUserAvatarColor(user._id) }">
                     <img v-if="user.u_profile_picture" :src="user.u_profile_picture" class="w-full h-full object-cover" :alt="user.u_full_name" />
                     <span v-else>{{ getUserInitials(user.u_full_name) }}</span>
                   </div>
-
-                  <!-- Info -->
                   <div class="flex-1 min-w-0">
                     <p class="text-sm font-semibold text-text-primary truncate">{{ user.u_full_name }}</p>
                     <p class="text-xs truncate" style="color: var(--text-secondary);">{{ user.u_email }}</p>
                   </div>
-
-                  <!-- Role badge -->
-                  <span v-if="user.u_role" class="text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0" style="background: var(--bg-surface); color: var(--text-secondary); border: 1px solid var(--border);">
-                    {{ user.u_role }}
-                  </span>
+                  <span v-if="user.u_role" class="text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0" style="background: var(--bg-surface); color: var(--text-secondary); border: 1px solid var(--border);">{{ user.u_role }}</span>
                 </button>
               </div>
 
-              <!-- Enrol error -->
               <p v-if="enrolError" class="text-xs text-center" style="color: #e55050;">{{ enrolError }}</p>
-
-              <!-- Enrol success -->
               <div v-if="enrolSuccess" class="flex items-center gap-2.5 px-4 py-3 rounded-xl" style="background: color-mix(in srgb, #1d9e75 8%, transparent); border: 1px solid color-mix(in srgb, #1d9e75 20%, transparent);">
                 <svg class="w-4 h-4 shrink-0" viewBox="0 0 16 16" fill="none" style="color: #1d9e75;"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.4"/><path d="M5 8l2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 <p class="text-xs font-medium" style="color: #1d9e75;">{{ enrolSuccess }}</p>
               </div>
 
-              <!-- Action buttons -->
               <div class="flex items-center justify-between pt-2">
-                <Button variant="secondary" size="md" :disabled="isEnrolling" @click="skipEnrol">
-                  <span>Skip for now</span>
-                </Button>
-                <Button
-                  size="md"
-                  :disabled="isEnrolling || selectedDomainUserIds.length === 0"
-                  @click="enrolSelectedUsers"
-                >
+                <Button variant="secondary" size="md" :disabled="isEnrolling" @click="skipEnrol"><span>Skip for now</span></Button>
+                <Button size="md" :disabled="isEnrolling || selectedDomainUserIds.length === 0" @click="enrolSelectedUsers">
                   <div class="flex items-center gap-2">
                     <span v-if="isEnrolling" class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
                     <span>{{ isEnrolling ? 'Enrolling…' : `Enrol ${selectedDomainUserIds.length} user${selectedDomainUserIds.length !== 1 ? 's' : ''}` }}</span>
@@ -946,18 +804,11 @@
         ════════════════════════════════════════════════════════════ -->
         <div class="flex justify-between items-center mt-10 md:mt-5" v-if="showBottomNav">
           <Button v-if="activeStep !== 1 && !siteCreated" variant="secondary" size="md" type="button" :disabled="isAnyMutating" @click="goBack">
-            <div class="flex items-center gap-1">
-              <FontAwesomeIcon :icon="['fas', 'arrow-left']" /> Back
-            </div>
+            <div class="flex items-center gap-1"><FontAwesomeIcon :icon="['fas', 'arrow-left']" /> Back</div>
           </Button>
           <div v-else-if="activeStep !== 1" />
           <div class="flex gap-4 items-center ml-auto">
-            <Button
-              :disabled="isAnyMutating"
-              size="md"
-              type="submit"
-              @click="continueHandler"
-            >
+            <Button :disabled="isAnyMutating || (activeStep === 1 && !selected)" size="md" type="submit" @click="continueHandler">
               <div class="flex items-center gap-2">
                 <span v-if="isAnyMutating" class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
                 <span>Continue</span>
@@ -971,41 +822,20 @@
 
       <!-- Workspace creation error modal -->
       <Transition enter-active-class="transition duration-150 ease-out" enter-from-class="opacity-0 scale-95" enter-to-class="opacity-100 scale-100" leave-active-class="transition duration-100 ease-in" leave-from-class="opacity-100 scale-100" leave-to-class="opacity-0 scale-95">
-        <div
-          v-if="companySlugError"
-          class="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm px-4"
-          @click.self="dismissErrorModal"
-        >
+        <div v-if="companySlugError" class="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm px-4" @click.self="dismissErrorModal">
           <div class="w-full max-w-md rounded-2xl bg-bg-dropdown p-6 shadow-xl ring-1 ring-black/5">
             <div class="mb-4 flex h-13 w-13 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
               <i class="fa-solid fa-triangle-exclamation text-red-500 text-lg"></i>
             </div>
-            <h3 class="text-md font-semibold text-text-primary mb-1">
-              {{ isNameConflictError ? 'Site name already taken' : 'Something went wrong' }}
-            </h3>
+            <h3 class="text-md font-semibold text-text-primary mb-1">{{ isNameConflictError ? 'Site name already taken' : 'Something went wrong' }}</h3>
             <p class="text-sm text-text-secondary leading-relaxed mb-5">{{ companySlugError }}</p>
             <div class="flex gap-2">
-              <button
-                v-if="isNameConflictError"
-                type="button"
-                class="flex-1 rounded-lg border border-black/10 bg-bg-dropdown px-3 py-2.5 text-sm font-medium text-text-secondary hover:border-black/20 hover:text-text-primary transition cursor-pointer"
-                @click="companySlugError = null"
-              >
-                Change name here
-              </button>
-              <button
-                v-else
-                type="button"
-                class="flex-1 rounded-lg border border-black/10 bg-bg-dropdown px-3 py-2.5 text-sm font-medium text-text-secondary hover:border-black/20 hover:text-text-primary transition cursor-pointer"
-                @click="dismissErrorModal"
-              >
-                Go to Dashboard
-              </button>
+              <button v-if="isNameConflictError" type="button" class="flex-1 rounded-lg border border-black/10 bg-bg-dropdown px-3 py-2.5 text-sm font-medium text-text-secondary hover:border-black/20 hover:text-text-primary transition cursor-pointer" @click="companySlugError = null">Change name here</button>
+              <button v-else type="button" class="flex-1 rounded-lg border border-black/10 bg-bg-dropdown px-3 py-2.5 text-sm font-medium text-text-secondary hover:border-black/20 hover:text-text-primary transition cursor-pointer" @click="dismissErrorModal">Go to Dashboard</button>
             </div>
           </div>
         </div>
       </Transition>
-
     </template>
   </AuthLayout>
 </template>
@@ -1021,7 +851,7 @@ import BaseSelectField from '../../components/ui/BaseSelectField.vue'
 import BaseTextField from '../../components/ui/BaseTextField.vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useCreateCompany, useUpdateCompany, useInviteCompany } from '../../services/auth'
-import { updateProfile as updateUserProfile } from '../../services/user'
+import { updateProfile as updateUserProfile, getProfile } from '../../services/user'
 import { useWorkspaceStore } from '../../stores/workspace'
 import { useAuthStore } from '../../stores/auth'
 import LoadingCreateProfile from '../../components/LoadingCreateProfile.vue'
@@ -1036,8 +866,69 @@ const authStore = useAuthStore()
 const router = useRouter()
 const route = useRoute()
 const isLoaderRunning = ref(false)
+const profileData = ref(null)
+
 // ─── Error map ────────────────────────────────────────────────────────────────
 const errors = ref({})
+
+// ─── Generic email providers ──────────────────────────────────────────────────
+const GENERIC_EMAIL_PROVIDERS = new Set([
+  'gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'icloud.com',
+  'live.com', 'msn.com', 'aol.com', 'protonmail.com', 'mail.com',
+  'zoho.com', 'yandex.com', 'inbox.com', 'gmx.com', 'fastmail.com',
+  'tutanota.com', 'hey.com', 'pm.me', 'googlemail.com',
+])
+
+// ─── Computed: user email & domain ────────────────────────────────────────────
+const userEmail = computed(() =>
+  profileData.value?.u_email ||
+  authStore.user?.u_email ||
+  authStore.user?.email ||
+  ''
+)
+
+const userEmailDomain = computed(() => {
+  const email = userEmail.value
+  if (!email || !email.includes('@')) return ''
+  return email.split('@')[1].toLowerCase().trim()
+})
+
+/**
+ * isCompanyEmail
+ * true  → Scenario 3: company domain, skip DNS/super-admin/domain-verify
+ * false → Scenario 1/2: generic email
+ */
+const isCompanyEmail = computed(() => {
+  const domain = userEmailDomain.value
+  if (!domain) return false
+  return !GENERIC_EMAIL_PROVIDERS.has(domain)
+})
+
+onMounted(async () => {
+  try {
+    const res = await getProfile()
+
+    if (res?.status) {
+      profileData.value = res.data
+
+      // Detect custom company email
+      if (hasCustomDomainEmail.value && customEmailDomain.value) {
+        website.value = customEmailDomain.value
+
+        // user wants to create a team
+        if (selectedGoal.value === 'team') {
+          await createProfile({
+            website: customEmailDomain.value,
+          })
+
+          return
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Failed to fetch profile', error)
+  }
+})
 
 // ─── Step & Selection ─────────────────────────────────────────────────────────
 const selected = ref('team')
@@ -1046,6 +937,7 @@ const siteCreated = ref(false)
 const teamRef = ref(null)
 const roleRef = ref(null)
 const companySizeRef = ref(null)
+
 // ─── Step 2 ───────────────────────────────────────────────────────────────────
 const role = ref('')
 const team = ref('')
@@ -1068,7 +960,7 @@ const isCheckingSlug = ref(false)
 const isSlugAvailable = ref(null)
 const companySlugError = ref(null)
 
-// ─── Step 5 — custom domain ───────────────────────────────────────────────────
+// ─── Step 5 — custom domain (Scenario 2 only) ────────────────────────────────
 const hasCustomDomain = ref(false)
 const dnsInput = ref('')
 const isCheckingDns = ref(false)
@@ -1077,8 +969,20 @@ const dnsError = ref(null)
 const dnsValidationError = ref(null)
 const isDnsLocked = ref(false)
 
-// ─── Step 8 — domain verification ────────────────────────────────────────────
-// 'idle' = offer to verify | 'verify' = showing instructions
+// ─── Step 51 — Super Admin OTP (Scenario 2 custom domain only) ───────────────
+const superAdminEmail = ref('')
+const superAdminEmailError = ref('')
+const superAdminEmailFocused = ref(false)
+const superAdminOtpSent = ref(false)
+const isSendingOtp = ref(false)
+const isVerifyingOtp = ref(false)
+const otpDigits = ref(['', '', '', '', ''])
+const otpInputRefs = ref([])
+const otpError = ref('')
+const otpResendCountdown = ref(0)
+let otpResendTimer = null
+
+// ─── Step 8 — domain verification (Scenario 2 custom domain only) ─────────────
 const domainPhase = ref('idle')
 const isRegisteringDomain = ref(false)
 const currentDomain = ref(null)
@@ -1092,7 +996,7 @@ const isDownloadingFile = ref(false)
 const isSettingPrimary = ref(false)
 const copiedField = ref(null)
 
-// Rate limit countdown
+// Rate-limit countdown
 const retryCountdown = ref(0)
 const retryTotal = ref(30)
 let countdownTimer = null
@@ -1110,27 +1014,18 @@ const enrolSuccess = ref(null)
 const referralSources = ref([])
 const joinLink = ref('')
 const domainLink = ref('')
-const isCopied = ref(false)
 const companyID = ref()
 const isProvisioning = ref(false)
 const isUpdatingProfile = ref(false)
 
-// ─── Domain Registrars ────────────────────────────────────────────────────────
-const domainRegistrars = [
-  { name: 'GoDaddy',   url: 'https://www.godaddy.com/domainsearch/find?checkAvail=1&tmskey=&domainToCheck=' },
-  { name: 'Namecheap', url: 'https://www.namecheap.com/domains/registration/results/?domain=' },
-  { name: 'Google',    url: 'https://domains.google.com/registrar/search?searchTerm=' },
-  { name: 'Porkbun',   url: 'https://porkbun.com/checkout/search?q=' },
-]
-
-// ─── Verification method options ──────────────────────────────────────────────
+// ─── Verification methods ─────────────────────────────────────────────────────
 const verificationMethods = [
   { value: 'cname', label: 'CNAME' },
   { value: 'txt',   label: 'TXT' },
   { value: 'http',  label: 'HTTP File' },
 ]
 
-// ─── Static roles list ────────────────────────────────────────────────────────
+// ─── Static data ──────────────────────────────────────────────────────────────
 const staticRolesList = Object.freeze([
   { title: 'CEO / Founder',        _id: 'ceo_founder' },
   { title: 'CTO / Technical Lead', _id: 'cto_tech_lead' },
@@ -1146,6 +1041,50 @@ const staticRolesList = Object.freeze([
   { title: 'Teacher / Lecturer',   _id: 'teacher_lecturer' },
   { title: 'Other',                _id: 'other' },
 ])
+
+const companySizeOptions = Object.freeze([
+  { title: '1 – 10',         _id: '1–10' },
+  { title: '11 – 50',        _id: '11–50' },
+  { title: '51 – 200',       _id: '51–200' },
+  { title: '201 – 500',      _id: '201–500' },
+  { title: '501 – 1,000',    _id: '501–1000' },
+  { title: '1,001 – 5,000',  _id: '1001–5000' },
+  { title: '5,001 – 10,000', _id: '5001–10000' },
+  { title: '10,001+',        _id: '10001+' },
+])
+
+const educationOptions = Object.freeze([
+  { title: 'School',       _id: 'school' },
+  { title: 'College',      _id: 'college' },
+  { title: 'University',   _id: 'university' },
+  { title: 'Postgraduate', _id: 'postgraduate' },
+])
+
+const referralOptions = [
+  { id: 'google',      label: 'Google Search' },
+  { id: 'social',      label: 'Social Media' },
+  { id: 'friend',      label: 'Friend / Colleague' },
+  { id: 'youtube',     label: 'YouTube' },
+  { id: 'twitter',     label: 'X (Twitter)' },
+  { id: 'producthunt', label: 'Product Hunt' },
+  { id: 'ads',         label: 'Ads' },
+  { id: 'blog',        label: 'Blog / Article' },
+  { id: 'other',       label: 'Other' },
+]
+
+const options = Object.freeze([
+  { _id: 'team',     title: 'For my team',      description: 'Collaborate on your docs and projects.',             icon: teamIcon },
+  { _id: 'personal', title: 'For personal use', description: 'Write better. Think more clearly. Stay organised.', icon: personalIcon },
+  { _id: 'school',   title: 'For school',       description: 'Keep notes, research and tasks in one place.',       icon: schoolIcon },
+])
+
+// ─── Computed: claim domain for Step 9 ────────────────────────────────────────
+// Scenario 3 (company email): user's own email domain (auto-verified)
+// Scenario 2 (gmail + custom domain): domain entered in Step 5
+const claimDomain = computed(() => {
+  if (isCompanyEmail.value) return userEmailDomain.value
+  return dnsInput.value.trim()
+})
 
 // ─── Computed: slug helpers ───────────────────────────────────────────────────
 const isFullyAvailable = computed(() => isSlugAvailable.value === true)
@@ -1175,9 +1114,18 @@ const domainStatusStyle = computed(() => {
   return { background: 'color-mix(in srgb, #f59e0b 12%, transparent)', color: '#f59e0b' }
 })
 
-// ─── Computed: step 5 disabled state ─────────────────────────────────────────
+// ─── Computed: Step 5 disabled state ──────────────────────────────────────────
 const isCreateSiteDisabled = computed(() => {
   if (creatingProfile.value) return true
+
+  // Scenario 3 (company email): subdomain only — no DNS checks needed
+  if (isCompanyEmail.value) {
+    if (!dnsInput.value) return true
+    if (isCheckingSlug.value) return true
+    return false
+  }
+
+  // Scenario 2: generic email + custom domain
   if (hasCustomDomain.value) {
     if (!dnsInput.value.trim()) return true
     if (dnsValidationError.value) return true
@@ -1186,15 +1134,17 @@ const isCreateSiteDisabled = computed(() => {
     if (isDnsAvailable.value !== true) return true
     return false
   }
+
+  // Scenario 2b: generic email + subdomain
   if (!siteName.value) return true
   if (isCheckingSlug.value) return true
   if (isSlugAvailable.value !== true) return true
   return false
 })
 
-// ─── Computed: bottom nav visibility ─────────────────────────────────────────
+// ─── Computed: bottom nav visibility ──────────────────────────────────────────
 const showBottomNav = computed(() => {
-  if ([5, 6, 7, 8, 9].includes(activeStep.value)) return false
+  if ([5, 6, 7, 8, 9, 51].includes(activeStep.value)) return false
   return true
 })
 
@@ -1232,10 +1182,7 @@ const moduleOptionsMap = {
     { id: 'task_management',   label: 'Task Management' },
   ],
 }
-
-const activeModules = computed(
-  () => moduleOptionsMap[selected.value] || []
-)
+const activeModules = computed(() => moduleOptionsMap[selected.value] || [])
 
 // ─── Computed: work type ──────────────────────────────────────────────────────
 const workTypeOptionsMap = {
@@ -1268,44 +1215,7 @@ const workTypeOptionsMap = {
 }
 const workTypeOptions = computed(() => workTypeOptionsMap[selected.value] || [])
 
-// ─── Static data ──────────────────────────────────────────────────────────────
-const options = Object.freeze([
-  { _id: 'team',     title: 'For my team',      description: 'Collaborate on your docs and projects.',             icon: teamIcon },
-  { _id: 'personal', title: 'For personal use', description: 'Write better. Think more clearly. Stay organised.', icon: personalIcon },
-  { _id: 'school',   title: 'For school',       description: 'Keep notes, research and tasks in one place.',       icon: schoolIcon },
-])
-
-const companySizeOptions = Object.freeze([
-  { title: '1 – 10',         _id: '1–10' },
-  { title: '11 – 50',        _id: '11–50' },
-  { title: '51 – 200',       _id: '51–200' },
-  { title: '201 – 500',      _id: '201–500' },
-  { title: '501 – 1,000',    _id: '501–1000' },
-  { title: '1,001 – 5,000',  _id: '1001–5000' },
-  { title: '5,001 – 10,000', _id: '5001–10000' },
-  { title: '10,001+',        _id: '10001+' },
-])
-
-const educationOptions = Object.freeze([
-  { title: 'School',       _id: 'school' },
-  { title: 'College',      _id: 'college' },
-  { title: 'University',   _id: 'university' },
-  { title: 'Postgraduate', _id: 'postgraduate' },
-])
-
-const referralOptions = [
-  { id: 'google',      label: 'Google Search' },
-  { id: 'social',      label: 'Social Media' },
-  { id: 'friend',      label: 'Friend / Colleague' },
-  { id: 'youtube',     label: 'YouTube' },
-  { id: 'twitter',     label: 'X (Twitter)' },
-  { id: 'producthunt', label: 'Product Hunt' },
-  { id: 'ads',         label: 'Ads' },
-  { id: 'blog',        label: 'Blog / Article' },
-  { id: 'other',       label: 'Other' },
-]
-
-// ─── Step labels ──────────────────────────────────────────────────────────────
+// ─── Computed: step labels ────────────────────────────────────────────────────
 const stepLabels = computed(() => {
   if (selected.value === 'personal') {
     return ['Purpose', 'About You', 'Modules', 'Work Type', 'Done']
@@ -1319,6 +1229,7 @@ const stepLabels = computed(() => {
 const displayStep = computed(() => {
   if (activeStep.value <= 4) return activeStep.value
   if (activeStep.value === 5) return 5
+  if (activeStep.value === 51) return 5  // super admin sub-step shows as step 5
   if (activeStep.value >= 6) return stepLabels.value.length
   return activeStep.value
 })
@@ -1332,17 +1243,10 @@ function armHistoryGuard() {
 }
 
 function handlePopState(event) {
-  if (activeStep.value < 6) return   
+  if (activeStep.value < 6) return
   event.preventDefault?.()
-  history.pushState(SENTINEL, '')   
+  history.pushState(SENTINEL, '')
 }
-watch(activeStep, (step) => {
-  if (step === 6) armHistoryGuard()
-  if (step === 5 && !siteName.value) {
-    if (selected.value === 'team'   && team.value.trim())       siteName.value = generateSlug(team.value)
-    if (selected.value === 'school' && schoolName.value.trim()) siteName.value = generateSlug(schoolName.value)
-  }
-})
 
 // ─── Watchers ─────────────────────────────────────────────────────────────────
 watch(team,        (v) => { if (v?.trim() && errors.value.team)        errors.value.team        = undefined })
@@ -1350,12 +1254,30 @@ watch(role,        (v) => { if (v && errors.value.role)                errors.va
 watch(companySize, (v) => { if (v && errors.value.companySize)         errors.value.companySize = undefined })
 watch(workType,    (v) => { if (v && errors.value.workType)            errors.value.workType    = undefined })
 
+// Pre-fill site name when arriving at step 5
 watch(activeStep, (step) => {
-  if (step === 5 && !siteName.value) {
-    if (selected.value === 'team'   && team.value.trim())       siteName.value = generateSlug(team.value)
-    if (selected.value === 'school' && schoolName.value.trim()) siteName.value = generateSlug(schoolName.value)
+  if (step === 5 && !dnsInput.value) {
+    if (isCompanyEmail.value && userEmailDomain.value) {
+      // Use full email domain
+      dnsInput.value = userEmailDomain.value.toLowerCase().trim()
+    } else if (selected.value === 'team' && team.value.trim()) {
+      dnsInput.value = generateSlug(team.value)
+    } else if (selected.value === 'school' && schoolName.value.trim()) {
+      dnsInput.value = generateSlug(schoolName.value)
+    }
   }
+
+  if (step === 6) armHistoryGuard()
 })
+
+watch(
+  () => activeStep.value,
+  (step) => {
+    if (step === 2 && selected.value === 'team') {
+      nextTick(() => { teamRef.value?.focus?.() })
+    }
+  }
+)
 
 // ─── Debounced slug check ─────────────────────────────────────────────────────
 let slugDebounceTimer = null
@@ -1379,14 +1301,15 @@ watch(siteName, (val) => {
   }, 600)
 })
 
-// ─── Regex: valid domain with TLD ─────────────────────────────────────────────
+// ─── Debounced DNS check (Scenario 2 custom domain only) ─────────────────────
 const DOMAIN_RE = /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,10}$/
-
-// ─── Debounced DNS check ──────────────────────────────────────────────────────
 let dnsDebounceTimer = null
 
 watch(dnsInput, (val) => {
+  // Never run DNS checks for Scenario 3 (company email)
+  if (isCompanyEmail.value) return
   if (isDnsLocked.value) return
+
   const trimmed = val.trim()
   isDnsAvailable.value     = null
   dnsError.value           = null
@@ -1454,9 +1377,9 @@ const { mutate: createProfile, isPending: creatingProfile } = useCreateCompany({
       companySlugError.value = isNameConflictError.value
         ? 'This site name is already taken. Please choose a different one on this page.'
         : (msg || 'Something went wrong while creating your workspace. Please try again.')
-      // API failed — send user back to step 5 so they can fix the name
-      activeStep.value     = 5
-      isProvisioning.value = false
+      activeStep.value      = 5
+      isProvisioning.value  = false
+      isLoaderRunning.value = false
       return
     }
     const id     = payload?.company_id ?? payload?._id
@@ -1467,8 +1390,7 @@ const { mutate: createProfile, isPending: creatingProfile } = useCreateCompany({
     domainLink.value  = domain
     localStorage.setItem('company_id', id ?? '')
     siteCreated.value = true
-    // Step 6 and isProvisioning are already set — loader is already showing.
-    // LoadingCreateProfile will call onProvisioningComplete() when done.
+    // isLoaderRunning stays true; LoadingCreateProfile animation drives timing
   },
   onError: (error) => {
     const msg = error?.response?.data?.message ?? error?.message ?? ''
@@ -1476,20 +1398,39 @@ const { mutate: createProfile, isPending: creatingProfile } = useCreateCompany({
     companySlugError.value = isNameConflictError.value
       ? 'This site name is already taken. Please choose a different one on this page.'
       : (msg || 'Something went wrong while creating your workspace. Please try again.')
-    // API errored — send user back to step 5
-    activeStep.value     = 5
-    isProvisioning.value = false
+    activeStep.value      = 5
+    isProvisioning.value  = false
     isLoaderRunning.value = false
   },
 })
+
 const { mutate: updateProfile, isPending: updatingProfile } = useUpdateCompany({
   onSuccess: async () => {
-    // After updating profile, go to step 7 (referral) if no custom domain
-    // or step 8 (domain verify offer) if custom domain
-    if (hasCustomDomain.value && isDnsAvailable.value === true && (selected.value === 'team' || selected.value === 'school')) {
+    // Scenario 2a: generic email + custom domain → domain verification step
+    if (!isCompanyEmail.value && hasCustomDomain.value && isDnsAvailable.value === true) {
       activeStep.value = 8
       return
     }
+
+   // Scenario 3: company email → skip domain enrolment
+if (isCompanyEmail.value) {
+  await authStore.bootstrap()
+
+  if (workspaceStore.pricing) {
+    router.push('/dashboard?stripePayment=true')
+    return
+  }
+
+  if (workspaceStore.workspace) {
+    router.push('/create-workspace')
+    return
+  }
+
+  await finishOnboarding()
+  return
+}
+
+    // Scenario 2b: generic email + subdomain → go straight to finish
     await authStore.bootstrap()
     if (workspaceStore.pricing) {
       router.push('/dashboard?stripePayment=true')
@@ -1499,17 +1440,7 @@ const { mutate: updateProfile, isPending: updatingProfile } = useUpdateCompany({
       router.push('/create-workspace')
       return
     }
-    const token        = localStorage.getItem('token')
-    const companyIdRaw = companyID.value ?? localStorage.getItem('company_id') ?? ''
-    const encode       = (s) => btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '.')
-    const query = {
-      siteSlug:   siteSlug.value,
-      domainLink: domainLink.value ?? '',
-      type:       selected.value,
-    }
-    if (token)        query._auth = encode(token)
-    if (companyIdRaw) query._cid  = encode(companyIdRaw)
-    router.push({ path: '/finish-profile', query })
+    routeToFinishProfile()
   },
   onError: () => { activeStep.value = 5 },
 })
@@ -1533,6 +1464,7 @@ function optionClass(id) {
     ? 'border-accent bg-accent/10 shadow-sm'
     : 'border-border'
 }
+
 function toggleModule(id) {
   if (selectedModules.value.includes(id)) {
     selectedModules.value = selectedModules.value.filter(m => m !== id)
@@ -1551,6 +1483,9 @@ function toggleReferral(id) {
 }
 
 function toggleCustomDomain() {
+  // Scenario 3: company email users cannot switch to custom domain mode
+  if (isCompanyEmail.value) return
+
   hasCustomDomain.value = !hasCustomDomain.value
   if (!hasCustomDomain.value) {
     dnsInput.value            = ''
@@ -1565,7 +1500,7 @@ function toggleCustomDomain() {
     methodSwitched.value      = false
     recheckError.value        = null
     stopCountdown()
-    workspaceStore.clearDomainVerification()
+    workspaceStore.clearDomainVerification?.()
   }
 }
 
@@ -1593,11 +1528,15 @@ function buildProfilePayload(includeSite = false) {
     like_to_manage: selectedModules.value,
     heard_about_us: referralSources.value,
   }
+  if (
+  dnsInput.value.trim()
+) {
+  base.custom_domain = dnsInput.value
+}
   if (includeSite && siteSlug.value) {
     base.site_slug = siteSlug.value
-    if (hasCustomDomain.value && isDnsAvailable.value === true && dnsInput.value.trim()) {
-      base.custom_domain = dnsInput.value.trim()
-    }
+    // Custom domain fields only for Scenario 2a (gmail + custom domain verified)
+    
   }
   if (selected.value === 'team') {
     return { ...base, title: team.value, type: 'team', role_id: role.value, company_size: companySize.value }
@@ -1611,6 +1550,21 @@ function buildProfilePayload(includeSite = false) {
   return base
 }
 
+function routeToFinishProfile() {
+  const companyIdRaw = companyID.value ?? localStorage.getItem('company_id') ?? ''
+  const token        = localStorage.getItem('token')
+  if (token) setAuthCookie(token)
+  const encode = (s) => btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '.')
+  const query = {
+    siteSlug:   siteSlug.value,
+    domainLink: domainLink.value ?? '',
+    type:       selected.value,
+  }
+  if (token)        query._auth = encode(token)
+  if (companyIdRaw) query._cid  = encode(companyIdRaw)
+  router.push({ path: '/finish-profile', query })
+}
+
 async function finishOnboarding() {
   const companyIdRaw = companyID.value ?? localStorage.getItem('company_id') ?? ''
   const token        = localStorage.getItem('token')
@@ -1621,7 +1575,8 @@ async function finishOnboarding() {
     domainLink: domainLink.value ?? '',
     type:       selected.value,
   }
-  if (hasCustomDomain.value && isDnsAvailable.value === true && dnsInput.value.trim()) {
+  // Only attach customDomain for Scenario 2a
+  if (!isCompanyEmail.value && hasCustomDomain.value && isDnsAvailable.value === true && dnsInput.value.trim()) {
     query.customDomain = dnsInput.value.trim()
   }
   if (token)        query._auth = encode(token)
@@ -1636,7 +1591,7 @@ function dismissErrorModal() {
   }
 }
 
-// ─── Countdown timer helpers ──────────────────────────────────────────────────
+// ─── Countdown helpers ────────────────────────────────────────────────────────
 function startCountdown(seconds) {
   stopCountdown()
   retryTotal.value     = seconds
@@ -1655,24 +1610,209 @@ function stopCountdown() {
   retryCountdown.value = 0
 }
 
+// ─── OTP Resend countdown ─────────────────────────────────────────────────────
+function startOtpResendCountdown(seconds = 60) {
+  if (otpResendTimer) clearInterval(otpResendTimer)
+  otpResendCountdown.value = seconds
+  otpResendTimer = setInterval(() => {
+    otpResendCountdown.value--
+    if (otpResendCountdown.value <= 0) {
+      clearInterval(otpResendTimer)
+      otpResendTimer = null
+    }
+  }, 1000)
+}
+
 // ─── Provisioning complete callback ──────────────────────────────────────────
+/**
+ * Called by LoadingCreateProfile when its animation finishes.
+ *
+ * Personal flows (Scenarios 1 & 3-personal):
+ *   createProfile was NOT called → siteCreated stays false → loader calls
+ *   onProvisioningComplete immediately. Route directly to finish-profile.
+ *
+ * Team/school flows:
+ *   createProfile was called → siteCreated=true → go to step 7 (referral).
+ */
 function onProvisioningComplete() {
-  isLoaderRunning.value = false 
+  isLoaderRunning.value = false
+
+  if (selected.value === 'personal') {
+    // Personal: no workspace was created, go straight to finish
+    router.push({ path: '/finish-profile', query: { welcome: '1', type: 'personal' } })
+    return
+  }
+
+  // Team/school: continue to referral step
   activeStep.value = 7
 }
 
-// ─── Domain Verification Actions (Step 8) ────────────────────────────────────
+// ─── Super Admin OTP Actions (Step 51, Scenario 2a only) ─────────────────────
+function validateSuperAdminEmail() {
+  const email  = superAdminEmail.value.trim()
+  const domain = dnsInput.value.trim()
+  superAdminEmailError.value = ''
+  if (!email) {
+    superAdminEmailError.value = 'Please enter a super admin email.'
+    return false
+  }
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(email)) {
+    superAdminEmailError.value = 'Please enter a valid email address.'
+    return false
+  }
+  const emailDomain = email.split('@')[1]?.toLowerCase()
+  if (emailDomain !== domain.toLowerCase()) {
+    superAdminEmailError.value = `Email must end with @${domain} to match your custom domain.`
+    return false
+  }
+  return true
+}
+
+async function sendSuperAdminOtp() {
+  if (!validateSuperAdminEmail()) return
+  isSendingOtp.value = true
+  superAdminEmailError.value = ''
+  try {
+    const companyIdRaw = companyID.value ?? localStorage.getItem('company_id') ?? ''
+    await workspaceStore.sendSuperAdminOtp({
+      email:      superAdminEmail.value.trim(),
+      domain:     dnsInput.value.trim(),
+      company_id: companyIdRaw,
+    })
+    superAdminOtpSent.value = true
+    otpDigits.value = ['', '', '', '', '']
+    otpError.value  = ''
+    startOtpResendCountdown(60)
+    await nextTick()
+    otpInputRefs.value[0]?.focus()
+  } catch (err) {
+    const msg = err?.response?.data?.message ?? err?.message ?? 'Failed to send OTP. Please try again.'
+    superAdminEmailError.value = msg
+    toast.error(msg)
+  } finally {
+    isSendingOtp.value = false
+  }
+}
+
+async function resendSuperAdminOtp() {
+  if (otpResendCountdown.value > 0 || isSendingOtp.value) return
+  isSendingOtp.value = true
+  otpError.value     = ''
+  try {
+    const companyIdRaw = companyID.value ?? localStorage.getItem('company_id') ?? ''
+    await workspaceStore.sendSuperAdminOtp({
+      email:      superAdminEmail.value.trim(),
+      domain:     dnsInput.value.trim(),
+      company_id: companyIdRaw,
+    })
+    otpDigits.value = ['', '', '', '', '']
+    startOtpResendCountdown(60)
+    toast.success('New OTP sent!')
+    await nextTick()
+    otpInputRefs.value[0]?.focus()
+  } catch (err) {
+    otpError.value = err?.response?.data?.message ?? 'Failed to resend OTP.'
+  } finally {
+    isSendingOtp.value = false
+  }
+}
+
+function resetSuperAdminFlow() {
+  superAdminOtpSent.value     = false
+  otpDigits.value             = ['', '', '', '', '']
+  otpError.value              = ''
+  superAdminEmailError.value  = ''
+  if (otpResendTimer) clearInterval(otpResendTimer)
+  otpResendCountdown.value    = 0
+}
 
 /**
- * User clicked "Verify my domain" on the idle offer screen.
- * Calls POST /verify to register and get instructions.
+ * verifySuperAdminOtp
+ * After OTP is verified → provision workspace (step 6).
+ * Payload includes custom_domain + super_admin_email.
  */
+async function verifySuperAdminOtp() {
+  const code = otpDigits.value.join('')
+  if (code.length !== 5) {
+    otpError.value = 'Please enter all 5 digits of the OTP.'
+    return
+  }
+  isVerifyingOtp.value = true
+  otpError.value       = ''
+  try {
+    const companyIdRaw = companyID.value ?? localStorage.getItem('company_id') ?? ''
+    await workspaceStore.verifySuperAdminOtp({
+      email:      superAdminEmail.value.trim(),
+      otp:        code,
+      domain:     dnsInput.value.trim(),
+      company_id: companyIdRaw,
+    })
+    // OTP verified → provision workspace
+    activeStep.value      = 6
+    isProvisioning.value  = true
+    isLoaderRunning.value = true
+    createProfile({ payload: buildProfilePayload(true) })
+  } catch (err) {
+    const msg = err?.response?.data?.message ?? err?.message ?? 'Invalid OTP. Please try again.'
+    otpError.value  = msg
+    otpDigits.value = ['', '', '', '', '']
+    await nextTick()
+    otpInputRefs.value[0]?.focus()
+  } finally {
+    isVerifyingOtp.value = false
+  }
+}
+
+// ─── OTP Input handlers ───────────────────────────────────────────────────────
+function onOtpInput(idx, event) {
+  const val   = event.target.value
+  const digit = val.replace(/\D/g, '').slice(-1)
+  otpDigits.value[idx] = digit
+  otpError.value = ''
+  if (digit && idx < 4) {
+    nextTick(() => otpInputRefs.value[idx + 1]?.focus())
+  }
+  if (otpDigits.value.join('').length === 5) {
+    nextTick(() => verifySuperAdminOtp())
+  }
+}
+
+function onOtpKeydown(idx, event) {
+  if (event.key === 'Backspace') {
+    if (!otpDigits.value[idx] && idx > 0) {
+      otpDigits.value[idx - 1] = ''
+      nextTick(() => otpInputRefs.value[idx - 1]?.focus())
+    } else {
+      otpDigits.value[idx] = ''
+    }
+    otpError.value = ''
+  } else if (event.key === 'ArrowLeft' && idx > 0) {
+    otpInputRefs.value[idx - 1]?.focus()
+  } else if (event.key === 'ArrowRight' && idx < 4) {
+    otpInputRefs.value[idx + 1]?.focus()
+  }
+}
+
+function onOtpPaste(event) {
+  event.preventDefault()
+  const pasted = (event.clipboardData || window.clipboardData).getData('text')
+  const digits = pasted.replace(/\D/g, '').slice(0, 5).split('')
+  digits.forEach((d, i) => { if (i < 5) otpDigits.value[i] = d })
+  otpError.value = ''
+  const lastIdx = Math.min(digits.length - 1, 4)
+  nextTick(() => {
+    otpInputRefs.value[lastIdx]?.focus()
+    if (otpDigits.value.join('').length === 5) verifySuperAdminOtp()
+  })
+}
+
+// ─── Domain Verification Actions (Step 8, Scenario 2a only) ──────────────────
 async function startDomainVerificationPhase() {
   if (isRegisteringDomain.value) return
   isRegisteringDomain.value = true
   recheckError.value        = null
   methodSwitched.value      = false
-
   try {
     const result = await workspaceStore.verifyDomain(
       dnsInput.value.trim(),
@@ -1689,11 +1829,9 @@ async function startDomainVerificationPhase() {
     const status = err?.response?.status
     const msg    = err?.response?.data?.message ?? err?.message ?? 'Failed to register domain. Please try again.'
     toast.error(msg)
-    if (status === 409) {
-      recheckError.value = 'This domain is already claimed by another workspace.'
-    } else {
-      recheckError.value = msg
-    }
+    recheckError.value = status === 409
+      ? 'This domain is already claimed by another workspace.'
+      : msg
   } finally {
     isRegisteringDomain.value = false
   }
@@ -1715,11 +1853,9 @@ async function recheckVerification() {
     }
   } catch (err) {
     const msg = err?.response?.data?.message ?? err?.message ?? 'Verification check failed. Please try again.'
-    if (err?.response?.status === 400 && msg.toLowerCase().includes('disabled')) {
-      recheckError.value = 'This domain has been disabled. Please contact support.'
-    } else {
-      recheckError.value = msg
-    }
+    recheckError.value = (err?.response?.status === 400 && msg.toLowerCase().includes('disabled'))
+      ? 'This domain has been disabled. Please contact support.'
+      : msg
   } finally {
     isRechecking.value = false
   }
@@ -1728,34 +1864,22 @@ async function recheckVerification() {
 async function switchVerificationMethod(method) {
   if (!currentDomain.value || isSwitchingMethod.value) return
   if (method === selectedVerificationMethod.value) return
-
-  // ✅ FIX: immediate UI update
   selectedVerificationMethod.value = method
-
   isSwitchingMethod.value = true
   recheckError.value = null
-
   try {
-    const result = await workspaceStore.verifyDomain(
-      dnsInput.value.trim(),
-      method
-    )
-
-    currentDomain.value = result.domain
-    currentInstructions.value = result.instructions
-
-    // keep backend as final truth
+    const result = await workspaceStore.verifyDomain(dnsInput.value.trim(), method)
+    currentDomain.value              = result.domain
+    currentInstructions.value        = result.instructions
     selectedVerificationMethod.value = result.domain.verification_method
-    methodSwitched.value = false
+    methodSwitched.value             = false
   } catch (err) {
-    recheckError.value =
-      err?.response?.data?.message ??
-      err?.message ??
-      'Failed to switch verification method.'
+    recheckError.value = err?.response?.data?.message ?? err?.message ?? 'Failed to switch verification method.'
   } finally {
     isSwitchingMethod.value = false
   }
 }
+
 async function downloadVerificationFile() {
   if (!currentDomain.value || isDownloadingFile.value) return
   isDownloadingFile.value = true
@@ -1782,7 +1906,7 @@ async function setPrimaryDomain() {
 }
 
 function skipDomainVerification() {
- finishOnboarding()
+  proceedToEnrolUsers()
 }
 
 async function proceedToEnrolUsers() {
@@ -1791,13 +1915,12 @@ async function proceedToEnrolUsers() {
 }
 
 // ─── Domain User Enrolment (Step 9) ──────────────────────────────────────────
-
 async function loadDomainUsers() {
   const companyIdRaw = companyID.value ?? localStorage.getItem('company_id') ?? ''
   if (!companyIdRaw) return
-  isLoadingDomainUsers.value = true
-  domainUsersError.value     = null
-  domainUsers.value          = []
+  isLoadingDomainUsers.value  = true
+  domainUsersError.value      = null
+  domainUsers.value           = []
   selectedDomainUserIds.value = []
   try {
     const users = await workspaceStore.listDomainUsers(companyIdRaw)
@@ -1811,11 +1934,8 @@ async function loadDomainUsers() {
 
 function toggleDomainUser(userId) {
   const idx = selectedDomainUserIds.value.indexOf(userId)
-  if (idx === -1) {
-    selectedDomainUserIds.value.push(userId)
-  } else {
-    selectedDomainUserIds.value.splice(idx, 1)
-  }
+  if (idx === -1) selectedDomainUserIds.value.push(userId)
+  else selectedDomainUserIds.value.splice(idx, 1)
 }
 
 function selectAllDomainUsers() {
@@ -1825,18 +1945,15 @@ function selectAllDomainUsers() {
 async function enrolSelectedUsers() {
   if (selectedDomainUserIds.value.length === 0) return
   const companyIdRaw = companyID.value ?? localStorage.getItem('company_id') ?? ''
-  isEnrolling.value = true
-  enrolError.value  = null
+  isEnrolling.value  = true
+  enrolError.value   = null
   enrolSuccess.value = null
   try {
-    const result = await workspaceStore.enrolDomainUsers(companyIdRaw, selectedDomainUserIds.value)
+    const result   = await workspaceStore.enrolDomainUsers(companyIdRaw, selectedDomainUserIds.value)
     const enrolled = result?.enrolled ?? selectedDomainUserIds.value.length
     const skipped  = result?.skipped ?? 0
     enrolSuccess.value = `${enrolled} user${enrolled !== 1 ? 's' : ''} enrolled successfully${skipped > 0 ? `, ${skipped} skipped` : ''}.`
-    // Brief pause to show success, then finish
-    setTimeout(() => {
-      finishOnboarding()
-    }, 1500)
+    setTimeout(() => { finishOnboarding() }, 1500)
   } catch (err) {
     enrolError.value = err?.response?.data?.message ?? err?.message ?? 'Failed to enrol users. Please try again.'
   } finally {
@@ -1898,6 +2015,14 @@ function goBack() {
 }
 
 async function continueHandler() {
+
+  // ── Step 1: select use case ──────────────────────────────────────────────
+  if (activeStep.value === 1) {
+    activeStep.value++
+    return
+  }
+
+  // ── Step 2: validate about info ──────────────────────────────────────────
   if (activeStep.value === 2) {
     if (selected.value === 'team'     && !validateCompanyStep())  return
     if (selected.value === 'personal' && !validatePersonalStep()) return
@@ -1906,6 +2031,7 @@ async function continueHandler() {
     return
   }
 
+  // ── Step 3: select modules ───────────────────────────────────────────────
   if (activeStep.value === 3) {
     if (selectedModules.value.length === 0) {
       errors.value.selectedModules = 'Please select at least one option.'
@@ -1915,11 +2041,17 @@ async function continueHandler() {
     return
   }
 
+  // ── Step 4: work type + branching ────────────────────────────────────────
   if (activeStep.value === 4) {
     if (!workType.value) {
       errors.value.workType = 'Please select what kind of work you do.'
       return
     }
+
+    // ── PERSONAL FLOW (Scenarios 1 & 3a): save profile then show loader ──
+    // No workspace to create. The loader animation plays but isLoaderRunning
+    // stays false so it completes immediately and calls onProvisioningComplete,
+    // which routes straight to /finish-profile for personal users.
     if (selected.value === 'personal') {
       isUpdatingProfile.value = true
       try {
@@ -1929,29 +2061,25 @@ async function continueHandler() {
           like_to_manage: selectedModules.value,
           heard_about_us: referralSources.value,
         })
-        activeStep.value = 6
+        // Show the loader screen (isLoaderRunning=false → completes quickly)
+        activeStep.value      = 6
+        isLoaderRunning.value = false
+      } catch {
+        // stay on step 4 if the API call fails
       } finally {
         isUpdatingProfile.value = false
-        isLoaderRunning.value=false
       }
       return
     }
+
+    // ── TEAM / SCHOOL: go to site creation ───────────────────────────────
     activeStep.value = 5
     return
   }
 
+  // ── Step 7: referral sources → determine next step by scenario ──────────
   if (activeStep.value === 7) {
-    if (selected.value === 'personal') {
-      await updateUserProfile({
-        u_work_to_do:   personalRole.value,
-        work_to_do:     workType.value,
-        like_to_manage: selectedModules.value,
-        heard_about_us: referralSources.value,
-      })
-      isLoaderRunning.value=false
-      router.push({ path: '/finish-profile', query: { welcome: '1', type: 'personal' } })
-      return
-    }
+    // Team/school: updateProfile → onSuccess handles routing per scenario
     updateProfile({ payload: buildProfilePayload() })
     return
   }
@@ -1959,38 +2087,41 @@ async function continueHandler() {
   activeStep.value++
 }
 
+/**
+ * continueSiteHandler — Step 5 "Create site" button.
+ *
+ * Scenario 2a (gmail + custom domain, DNS verified):
+ *   → Step 51 (super admin OTP). Provisioning happens AFTER OTP is verified.
+ *
+ * Scenario 2b (gmail + subdomain):
+ *   → Step 6 (loader) + provision immediately.
+ *
+ * Scenario 3b (company email + team/school, subdomain only):
+ *   → Step 6 (loader) + provision immediately.
+ *   No DNS check, no super admin, no domain verify needed.
+ */
 async function continueSiteHandler() {
   if (isCreateSiteDisabled.value) return
-  activeStep.value = 6
-  isProvisioning.value = true
-  isLoaderRunning.value = true 
+
+  // Scenario 2a: gmail + custom domain verified → super admin OTP first
+  if (!isCompanyEmail.value && hasCustomDomain.value && isDnsAvailable.value === true) {
+    activeStep.value = 51
+    return
+  }
+
+  // Scenario 2b or 3b: provision workspace immediately
+  activeStep.value      = 6
+  isProvisioning.value  = true
+  isLoaderRunning.value = true
   createProfile({ payload: buildProfilePayload(true) })
 }
-// ─── onMounted / onUnmounted ──────────────────────────────────────────────────
-onMounted(() => {
-  if (route.query.mode === 'company') {
-    selected.value   = 'team'
-    activeStep.value = 2
-  }
-  window.addEventListener('popstate', handlePopState)
-  gsap.to('.rocket', { y: -10, rotation: -5, repeat: -1, yoyo: true, duration: 0.6, ease: 'power1.inOut' })
-  gsap.to('.trail',  { scaleY: 1.3, opacity: 0.9, repeat: -1, yoyo: true, duration: 0.5 })
-})
 
+// ─── onUnmounted ──────────────────────────────────────────────────────────────
 onUnmounted(() => {
   window.removeEventListener('popstate', handlePopState)
   stopCountdown()
+  if (otpResendTimer) clearInterval(otpResendTimer)
 })
-watch(
-  () => activeStep.value,
-  (step) => {
-    if (step === 2 && selected.value === 'team') {
-      nextTick(() => {
-        teamRef.value?.focus?.()
-      })
-    }
-  }
-)
 </script>
 
 <style scoped>
@@ -2033,16 +2164,9 @@ watch(
   scrollbar-width: thin;
   scrollbar-color: var(--border) transparent;
 }
-.custom-scroll::-webkit-scrollbar {
-  width: 4px;
-}
-.custom-scroll::-webkit-scrollbar-track {
-  background: transparent;
-}
-.custom-scroll::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 9999px;
-}
+.custom-scroll::-webkit-scrollbar { width: 4px; }
+.custom-scroll::-webkit-scrollbar-track { background: transparent; }
+.custom-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 9999px; }
 @keyframes rocketShake {
   0%   { transform: translateY(0px) rotate(0deg); }
   25%  { transform: translateY(-1px) rotate(-1deg); }
