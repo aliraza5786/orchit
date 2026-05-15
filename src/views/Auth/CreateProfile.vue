@@ -2,10 +2,135 @@
   <AuthLayout
     :steps="stepLabels"
     :activeStep="displayStep"
-    :showSteps="activeStep !== 6"
+    :showSteps="activeStep !== 6 && !associatedCompany"
   >
     <template #form>
       <div class="max-w-125 mx-auto w-full min-h-full py-5 flex flex-col justify-center">
+
+        <!-- ═══════════════════════════════════════════════════════
+             LOCKED STATE — Email associated with an existing company
+        ════════════════════════════════════════════════════════════ -->
+        <div v-if="associatedCompany" class="flex items-center justify-center min-h-full">
+          <div class="w-full max-w-md">
+
+            <!-- Card -->
+            <div
+              class="relative rounded-2xl border overflow-hidden"
+              style="background: var(--bg-card); border-color: var(--border);"
+            >
+              <!-- Gradient accent stripe at the top -->
+              <div class="h-1.5 w-full" style="background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 50%, #7c3aed));"></div>
+
+              <div class="p-8 space-y-6">
+
+                <!-- Icon + heading -->
+                <div class="flex flex-col items-center text-center space-y-4">
+                  <!-- Animated shield / lock icon -->
+                  <div
+                    class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                    style="background: color-mix(in srgb, var(--accent) 12%, transparent); border: 1.5px solid color-mix(in srgb, var(--accent) 25%, transparent);"
+                  >
+                    <svg class="w-8 h-8" viewBox="0 0 24 24" fill="none" style="color: var(--accent);">
+                      <path d="M12 2L4 6v6c0 5.25 3.5 10.15 8 11.35C16.5 22.15 20 17.25 20 12V6l-8-4z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+                      <rect x="9" y="11" width="6" height="5" rx="1" stroke="currentColor" stroke-width="1.4"/>
+                      <path d="M12 11V9a1.5 1.5 0 013 0v2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                    </svg>
+                  </div>
+
+                  <div class="space-y-1.5">
+                    <h2 class="text-[22px] font-bold tracking-tight" style="color: var(--text-primary);">Your email is already claimed</h2>
+                    <p class="text-sm leading-relaxed max-w-xs mx-auto" style="color: var(--text-secondary);">
+                      This email address is associated with an existing organisation on Orchit AI. You cannot create a new company while this association is active.
+                    </p>
+                  </div>
+                </div>
+
+                <!-- Company card -->
+                <div
+                  class="flex items-center gap-4 rounded-xl px-4 py-4 border"
+                  style="background: var(--bg-surface); border-color: var(--border);"
+                >
+                  <!-- Company logo or initials -->
+                  <div
+                    class="w-12 h-12 rounded-xl shrink-0 flex items-center justify-center overflow-hidden text-white font-bold text-base"
+                    style="background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 60%, #7c3aed));"
+                  >
+                    <img
+                      v-if="associatedCompany.logo"
+                      :src="associatedCompany.logo"
+                      :alt="associatedCompany.title"
+                      class="w-full h-full object-cover"
+                    />
+                    <span v-else>{{ associatedCompany.title?.charAt(0)?.toUpperCase() || '?' }}</span>
+                  </div>
+
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-bold text-text-primary truncate">{{ associatedCompany.title }}</p>
+                    <p class="text-xs mt-0.5 truncate" style="color: var(--text-secondary);">
+                      <span class="font-mono">{{ associatedCompany.slug }}</span>.streamed.space
+                    </p>
+                  </div>
+
+                  <!-- Locked badge -->
+                  <span
+                    class="shrink-0 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full"
+                    style="background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);"
+                  >Associated</span>
+                </div>
+
+                <!-- Info banner -->
+                <div
+                  class="flex items-start gap-3 rounded-xl px-4 py-3.5 border"
+                  style="background: color-mix(in srgb, #f59e0b 6%, transparent); border-color: color-mix(in srgb, #f59e0b 25%, transparent);"
+                >
+                  <svg class="w-4 h-4 mt-0.5 shrink-0" viewBox="0 0 16 16" fill="none" style="color: #f59e0b;">
+                    <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.4"/>
+                    <path d="M8 5v4M8 11v.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                  </svg>
+                  <p class="text-xs leading-relaxed" style="color: #f59e0b;">
+                    We've notified the admin of <strong>{{ associatedCompany.title }}</strong>. If they approve, you'll be added to their organisation. Check back after receiving a confirmation email.
+                  </p>
+                </div>
+
+                <!-- What happens next -->
+                <div class="space-y-3">
+                  <p class="text-[11px] font-bold uppercase tracking-wider" style="color: var(--text-secondary);">What happens next?</p>
+                  <div class="space-y-2">
+                    <div v-for="(step, idx) in [
+                      { icon: 'M3 8l2 2 4-4', label: 'A notification has been sent to the admin of ' + associatedCompany.title },
+                      { icon: 'M8 4v8M4 8h8', label: 'The admin reviews your request and can add you to their workspace' },
+                      { icon: 'M5 8l2 2 4-4', label: 'Once accepted, you will receive an email with access instructions' },
+                    ]" :key="idx" class="flex items-start gap-3">
+                      <div
+                        class="w-5 h-5 rounded-full shrink-0 flex items-center justify-center text-[10px] font-bold mt-0.5"
+                        style="background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent);"
+                      >{{ idx + 1 }}</div>
+                      <p class="text-xs leading-relaxed" style="color: var(--text-secondary);">{{ step.label }}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Sign out action -->
+                <button
+                  type="button"
+                  class="w-full flex items-center justify-center gap-2 py-3 rounded-[9px] text-sm font-semibold border transition-all duration-200 hover:opacity-80"
+                  style="border-color: var(--border); background: transparent; color: var(--text-secondary);"
+                  @click="authStore.logout(); router.push('/login')"
+                >
+                  <svg class="w-4 h-4" viewBox="0 0 16 16" fill="none">
+                    <path d="M6 3H3a1 1 0 00-1 1v8a1 1 0 001 1h3M10 5l3 3-3 3M13 8H6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  Sign out and use a different account
+                </button>
+
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Normal onboarding steps (hidden when locked) -->
+        <template v-if="!associatedCompany">
 
         <!-- ═══════════════════════════════════════════════════════
              STEP 1 — How will you use Orchit AI?
@@ -346,6 +471,24 @@
 
               <div v-if="!superAdminOtpSent" class="space-y-4">
                 <div class="space-y-1.5">
+                  <label class="text-[11px] font-semibold uppercase tracking-wider" style="color: var(--text-secondary);">Super Admin Name</label>
+                  <div
+                    class="flex items-stretch rounded-[10px] overflow-hidden border-[1.5px] transition-colors"
+                    :style="{
+                      borderColor: superAdminNameError ? '#e55050' : superAdminNameFocused ? 'var(--accent)' : 'var(--border-input)',
+                      background: 'var(--bg-input)',
+                    }"
+                  >
+                    <input
+                      v-model="superAdminName"
+                      type="text"
+                      placeholder="Enter Super admin name"
+                      class="flex-1 min-w-0 px-3.5 py-2.5 text-[15px] outline-none bg-transparent"
+                      style="color: var(--text-primary);"
+                    />
+                  </div>
+                </div>
+                <div class="space-y-1.5">
                   <label class="text-[11px] font-semibold uppercase tracking-wider" style="color: var(--text-secondary);">Super Admin Email</label>
                   <div
                     class="flex items-stretch rounded-[10px] overflow-hidden border-[1.5px] transition-colors"
@@ -365,9 +508,70 @@
                       @keyup.enter="sendSuperAdminOtp"
                     />
                   </div>
-                  <p v-if="superAdminEmailError" class="text-xs" style="color: #e55050;">{{ superAdminEmailError }}</p>
+                  
                 </div>
+               <div class="space-y-1.5">
+  <label
+    class="text-[11px] font-semibold uppercase tracking-wider"
+    style="color: var(--text-secondary);"
+  >
+    Super Admin Role
+  </label>
 
+  <div
+  class="flex items-stretch rounded-[10px] overflow-hidden border-[1.5px]"
+  :style="{
+    borderColor: 'var(--border-input)',
+    background: 'var(--bg-input)',
+  }"
+>
+  <select
+    v-model="superAdminRole"
+    disabled
+    class="flex-1 min-w-0 px-3.5 py-2.5 text-[15px] outline-none bg-transparent"
+    style="color: var(--text-primary); opacity: 1;"
+  >
+    <option
+      v-for="role in allRoles"
+      :key="role._id"
+      :value="role._id"
+    >
+      {{ role?.title}}
+    </option>
+  </select>
+</div>
+
+  <!-- Optional role description -->
+  <p
+    v-if="superAdminRole"
+    class="text-[11px]"
+    style="color: var(--text-secondary);"
+  >
+    {{
+      allRoles.find(role => role.slug === superAdminRole)?.description
+    }}
+  </p>
+</div>
+                <div class="space-y-1.5">
+                  <label class="text-[11px] font-semibold uppercase tracking-wider" style="color: var(--text-secondary);">Super Admin Password</label>
+                  <div
+                    class="flex items-stretch rounded-[10px] overflow-hidden border-[1.5px] transition-colors"
+                    :style="{
+                      borderColor: superAdminPasswordError ? '#e55050' : superAdminPasswordFocused ? 'var(--accent)' : 'var(--border-input)',
+                      background: 'var(--bg-input)',
+                    }"
+                  >
+                    <input
+                      v-model="superAdminPassword"
+                      type="password"
+                      placeholder="*****"
+                      class="flex-1 min-w-0 px-3.5 py-2.5 text-[15px] outline-none bg-transparent"
+                      style="color: var(--text-primary);"
+                      @keyup.enter="sendSuperAdminOtp"
+                    />
+                  </div>
+                </div>
+                <p v-if="superAdminEmailError" class="text-xs" style="color: #e55050;">{{ superAdminEmailError }}</p>
                 <button
                   type="button"
                   :disabled="isSendingOtp || !superAdminEmail.trim()"
@@ -439,17 +643,6 @@
                       Resend in {{ otpResendCountdown }}s
                     </span>
                   </p>
-                </div>
-
-                <div class="text-center">
-                  <button
-                    type="button"
-                    class="text-xs transition-opacity hover:opacity-70"
-                    style="color: var(--text-secondary);"
-                    @click="resetSuperAdminFlow"
-                  >
-                    Change email address
-                  </button>
                 </div>
               </div>
             </div>
@@ -816,6 +1009,7 @@
             </Button>
           </div>
         </div>
+        </template><!-- end v-if="!associatedCompany" -->
       </div>
 
       <div class="max-w-125 md:mx-auto w-full space-y-6"></div>
@@ -841,7 +1035,7 @@
 </template>
 
 <script setup>
-import { ref, watch, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, watch, computed, onMounted, onUnmounted, nextTick, watchEffect} from 'vue'
 import AuthLayout from '../../layout/AuthLayout/AuthLayout.vue'
 import teamIcon from '../../assets/platform/team.svg'
 import personalIcon from '../../assets/platform/personal-use.svg'
@@ -855,11 +1049,32 @@ import { updateProfile as updateUserProfile, getProfile } from '../../services/u
 import { useWorkspaceStore } from '../../stores/workspace'
 import { useAuthStore } from '../../stores/auth'
 import LoadingCreateProfile from '../../components/LoadingCreateProfile.vue'
+import { useCreateCompanyUser, useSendSuperAdminOtp, useVerifySuperAdminOtp } from '../../queries/useCompanyUsers'
 import gsap from 'gsap'
 import { toast } from 'vue-sonner'
-
+import { useCompanyRolesWithoutPermission } from '../../queries/useCommon'
 defineOptions({ name: 'OnboardingFlow' })
+const { data: rolesData, isLoading: isRolesLoading, refetch: refetchRoles } = useCompanyRolesWithoutPermission()
+const { mutateAsync: sendOtp } = useSendSuperAdminOtp()
+const { mutateAsync: verifyOtp } = useVerifySuperAdminOtp()
+const superAdminRole = ref("")
+const superAdminName = ref("")
+const superAdminPassword = ref("")
+const allRoles = computed(() => {
+  const raw = rolesData.value?.data ?? rolesData.value ?? []
+  return Array.isArray(raw) ? raw : []
+})
+watchEffect(() => {
+  if (!allRoles.value?.length) return
 
+  const role = allRoles.value.find(r =>
+    r.is_super_admin && r.company_id
+  )
+
+  if (role) {
+    superAdminRole.value = role._id
+  }
+})
 // ─── Stores & Router ──────────────────────────────────────────────────────────
 const workspaceStore = useWorkspaceStore()
 const authStore = useAuthStore()
@@ -867,6 +1082,9 @@ const router = useRouter()
 const route = useRoute()
 const isLoaderRunning = ref(false)
 const profileData = ref(null)
+
+// ─── Associated company (email already claimed) ───────────────────────────────
+const associatedCompany = ref(null)
 
 // ─── Error map ────────────────────────────────────────────────────────────────
 const errors = ref({})
@@ -910,6 +1128,14 @@ onMounted(async () => {
 
     if (res?.status) {
       profileData.value = res.data
+
+      // ── Check for associated company (email already claimed by an org) ──
+      const ac = res.data?.associated_company
+      if (ac && ac._id) {
+        associatedCompany.value = ac
+        // Page is locked — nothing else to do
+        return
+      }
 
       // Detect custom company email
       if (hasCustomDomainEmail.value && customEmailDomain.value) {
@@ -973,6 +1199,8 @@ const isDnsLocked = ref(false)
 const superAdminEmail = ref('')
 const superAdminEmailError = ref('')
 const superAdminEmailFocused = ref(false)
+const superAdminNameError =ref(false)
+const superAdminPasswordError = ref(false)
 const superAdminOtpSent = ref(false)
 const isSendingOtp = ref(false)
 const isVerifyingOtp = ref(false)
@@ -1334,7 +1562,8 @@ watch(dnsInput, (val) => {
         const isRegistered = result?.is_registered === true
         const isActive     = result?.is_active     === true
         if (isRegistered && isActive) {
-          isDnsAvailable.value = true
+          isDnsAvailable.value = true;
+           createProfile({ payload: buildProfilePayload(true) })
           dnsError.value       = null
         } else if (isRegistered && !isActive) {
           isDnsAvailable.value = false
@@ -1591,49 +1820,6 @@ function dismissErrorModal() {
   }
 }
 
-// ─── Countdown helpers ────────────────────────────────────────────────────────
-function startCountdown(seconds) {
-  stopCountdown()
-  retryTotal.value     = seconds
-  retryCountdown.value = seconds
-  countdownTimer = setInterval(() => {
-    retryCountdown.value--
-    if (retryCountdown.value <= 0) stopCountdown()
-  }, 1000)
-}
-
-function stopCountdown() {
-  if (countdownTimer) {
-    clearInterval(countdownTimer)
-    countdownTimer = null
-  }
-  retryCountdown.value = 0
-}
-
-// ─── OTP Resend countdown ─────────────────────────────────────────────────────
-function startOtpResendCountdown(seconds = 60) {
-  if (otpResendTimer) clearInterval(otpResendTimer)
-  otpResendCountdown.value = seconds
-  otpResendTimer = setInterval(() => {
-    otpResendCountdown.value--
-    if (otpResendCountdown.value <= 0) {
-      clearInterval(otpResendTimer)
-      otpResendTimer = null
-    }
-  }, 1000)
-}
-
-// ─── Provisioning complete callback ──────────────────────────────────────────
-/**
- * Called by LoadingCreateProfile when its animation finishes.
- *
- * Personal flows (Scenarios 1 & 3-personal):
- *   createProfile was NOT called → siteCreated stays false → loader calls
- *   onProvisioningComplete immediately. Route directly to finish-profile.
- *
- * Team/school flows:
- *   createProfile was called → siteCreated=true → go to step 7 (referral).
- */
 function onProvisioningComplete() {
   isLoaderRunning.value = false
 
@@ -1668,22 +1854,24 @@ function validateSuperAdminEmail() {
   }
   return true
 }
-
+const { mutateAsync: createCompanyUser } = useCreateCompanyUser()
 async function sendSuperAdminOtp() {
   if (!validateSuperAdminEmail()) return
   isSendingOtp.value = true
   superAdminEmailError.value = ''
   try {
     const companyIdRaw = companyID.value ?? localStorage.getItem('company_id') ?? ''
-    await workspaceStore.sendSuperAdminOtp({
-      email:      superAdminEmail.value.trim(),
-      domain:     dnsInput.value.trim(),
-      company_id: companyIdRaw,
-    })
+    await createCompanyUser({
+  u_email: superAdminEmail.value.trim(),
+  domain: dnsInput.value.trim(),
+  company_id: companyIdRaw,
+  u_full_name: superAdminName.value.trim(),
+  company_role_id: superAdminRole.value,
+  u_password: superAdminPassword.value.trim(),
+})
     superAdminOtpSent.value = true
     otpDigits.value = ['', '', '', '', '']
     otpError.value  = ''
-    startOtpResendCountdown(60)
     await nextTick()
     otpInputRefs.value[0]?.focus()
   } catch (err) {
@@ -1695,72 +1883,75 @@ async function sendSuperAdminOtp() {
   }
 }
 
-async function resendSuperAdminOtp() {
-  if (otpResendCountdown.value > 0 || isSendingOtp.value) return
-  isSendingOtp.value = true
-  otpError.value     = ''
-  try {
-    const companyIdRaw = companyID.value ?? localStorage.getItem('company_id') ?? ''
-    await workspaceStore.sendSuperAdminOtp({
-      email:      superAdminEmail.value.trim(),
-      domain:     dnsInput.value.trim(),
-      company_id: companyIdRaw,
-    })
-    otpDigits.value = ['', '', '', '', '']
-    startOtpResendCountdown(60)
-    toast.success('New OTP sent!')
-    await nextTick()
-    otpInputRefs.value[0]?.focus()
-  } catch (err) {
-    otpError.value = err?.response?.data?.message ?? 'Failed to resend OTP.'
-  } finally {
-    isSendingOtp.value = false
-  }
-}
-
-function resetSuperAdminFlow() {
-  superAdminOtpSent.value     = false
-  otpDigits.value             = ['', '', '', '', '']
-  otpError.value              = ''
-  superAdminEmailError.value  = ''
-  if (otpResendTimer) clearInterval(otpResendTimer)
-  otpResendCountdown.value    = 0
-}
-
-/**
- * verifySuperAdminOtp
- * After OTP is verified → provision workspace (step 6).
- * Payload includes custom_domain + super_admin_email.
- */
 async function verifySuperAdminOtp() {
-  const code = otpDigits.value.join('')
-  if (code.length !== 5) {
-    otpError.value = 'Please enter all 5 digits of the OTP.'
-    return
-  }
+  const otp = otpDigits.value.join('').trim()
+
+  if (otp.length !== 5) return
+
   isVerifyingOtp.value = true
-  otpError.value       = ''
+  otpError.value = ''
+
   try {
-    const companyIdRaw = companyID.value ?? localStorage.getItem('company_id') ?? ''
-    await workspaceStore.verifySuperAdminOtp({
-      email:      superAdminEmail.value.trim(),
-      otp:        code,
-      domain:     dnsInput.value.trim(),
+    const companyIdRaw =
+      companyID.value ?? localStorage.getItem('company_id') ?? ''
+
+    const userId = superAdminUserId.value // IMPORTANT: you must store this after user creation
+
+    await verifyOtp({
+      user_id: userId,
+      otp,
       company_id: companyIdRaw,
     })
-    // OTP verified → provision workspace
-    activeStep.value      = 6
-    isProvisioning.value  = true
-    isLoaderRunning.value = true
-    createProfile({ payload: buildProfilePayload(true) })
+
+    toast.success('Super admin verified successfully')
+
+    // proceed to next step
+    activeStep.value++
+
   } catch (err) {
-    const msg = err?.response?.data?.message ?? err?.message ?? 'Invalid OTP. Please try again.'
-    otpError.value  = msg
-    otpDigits.value = ['', '', '', '', '']
-    await nextTick()
-    otpInputRefs.value[0]?.focus()
+    const msg =
+      err?.response?.data?.message ??
+      err?.message ??
+      'Invalid or expired OTP'
+
+    otpError.value = msg
   } finally {
     isVerifyingOtp.value = false
+  }
+}
+
+async function resendSuperAdminOtp() {
+  isSendingOtp.value = true
+  otpError.value = ''
+
+  try {
+    const companyIdRaw =
+      companyID.value ?? localStorage.getItem('company_id') ?? ''
+
+    const userId = superAdminUserId.value
+
+    await sendOtp({
+      user_id: userId,
+      company_id: companyIdRaw,
+    })
+
+    otpDigits.value = ['', '', '', '', '']
+    startOtpResendCountdown(60)
+
+    await nextTick()
+    otpInputRefs.value[0]?.focus()
+
+    toast.success('OTP resent successfully')
+
+  } catch (err) {
+    const msg =
+      err?.response?.data?.message ??
+      err?.message ??
+      'Failed to resend OTP'
+
+    otpError.value = msg
+  } finally {
+    isSendingOtp.value = false
   }
 }
 
@@ -1844,7 +2035,6 @@ async function recheckVerification() {
   try {
     const { data, retryAfter } = await workspaceStore.recheckDomain(currentDomain.value._id)
     if (retryAfter !== null) {
-      startCountdown(retryAfter)
       return
     }
     if (data) {
@@ -1876,7 +2066,8 @@ async function switchVerificationMethod(method) {
   } catch (err) {
     recheckError.value = err?.response?.data?.message ?? err?.message ?? 'Failed to switch verification method.'
   } finally {
-    isSwitchingMethod.value = false
+    isSwitchingMethod.value = false;
+    
   }
 }
 
@@ -2047,11 +2238,6 @@ async function continueHandler() {
       errors.value.workType = 'Please select what kind of work you do.'
       return
     }
-
-    // ── PERSONAL FLOW (Scenarios 1 & 3a): save profile then show loader ──
-    // No workspace to create. The loader animation plays but isLoaderRunning
-    // stays false so it completes immediately and calls onProvisioningComplete,
-    // which routes straight to /finish-profile for personal users.
     if (selected.value === 'personal') {
       isUpdatingProfile.value = true
       try {
@@ -2068,6 +2254,7 @@ async function continueHandler() {
         // stay on step 4 if the API call fails
       } finally {
         isUpdatingProfile.value = false
+        isLoaderRunning.value = false
       }
       return
     }
@@ -2087,19 +2274,6 @@ async function continueHandler() {
   activeStep.value++
 }
 
-/**
- * continueSiteHandler — Step 5 "Create site" button.
- *
- * Scenario 2a (gmail + custom domain, DNS verified):
- *   → Step 51 (super admin OTP). Provisioning happens AFTER OTP is verified.
- *
- * Scenario 2b (gmail + subdomain):
- *   → Step 6 (loader) + provision immediately.
- *
- * Scenario 3b (company email + team/school, subdomain only):
- *   → Step 6 (loader) + provision immediately.
- *   No DNS check, no super admin, no domain verify needed.
- */
 async function continueSiteHandler() {
   if (isCreateSiteDisabled.value) return
 
@@ -2116,12 +2290,6 @@ async function continueSiteHandler() {
   createProfile({ payload: buildProfilePayload(true) })
 }
 
-// ─── onUnmounted ──────────────────────────────────────────────────────────────
-onUnmounted(() => {
-  window.removeEventListener('popstate', handlePopState)
-  stopCountdown()
-  if (otpResendTimer) clearInterval(otpResendTimer)
-})
 </script>
 
 <style scoped>
