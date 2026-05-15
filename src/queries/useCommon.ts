@@ -469,15 +469,11 @@ export interface TokenApiResponse<T> {
 }
 
 const TOKEN_ALLOC_KEY = 'token-allocation'
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 2.1 – Get my allocation
-// ─────────────────────────────────────────────────────────────────────────────
 export const useMyPersonalTokenAllocation = (options: Record<string, unknown> = {}) => {
-  return useQuery<TokenApiResponse<MyAllocationData>>({
+  return useQuery<MyAllocationData>({
     queryKey: [TOKEN_ALLOC_KEY, 'me'],
     queryFn: ({ signal }) =>
-      request<TokenApiResponse<MyAllocationData>>({
+      request<MyAllocationData>({  // ← match the query generic
         url: `billing/token-allocation/me`,
         method: 'GET',
         signal,
@@ -488,13 +484,14 @@ export const useMyPersonalTokenAllocation = (options: Record<string, unknown> = 
     ...options,
   })
 }
+
 export const useMyTokenAllocation = (options: Record<string, unknown> = {}) => {
   const companyId = getCompanyId()
 
-  return useQuery<TokenApiResponse<MyAllocationData>>({
+  return useQuery<MyAllocationData>({  // ← remove wrapper here too
     queryKey: [TOKEN_ALLOC_KEY, 'me', companyId],
     queryFn: ({ signal }) =>
-      request<TokenApiResponse<MyAllocationData>>({
+      request<MyAllocationData>({  // ← match
         url: `billing/token-allocation/me?company_id=${companyId}`,
         method: 'GET',
         signal,

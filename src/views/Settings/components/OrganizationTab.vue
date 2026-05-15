@@ -69,7 +69,7 @@
           </div>
           <button
             @click="isCreatingOrg = true"
-            class="px-6 py-3 bg-accent text-white text-sm font-semibold rounded-lg hover:bg-accent/90 active:scale-95 transition-all shadow-lg shadow-accent/20"
+            class="px-6 py-3 bg-accent text-white  cursor-pointer text-sm font-semibold rounded-lg hover:bg-accent/90 active:scale-95 transition-all shadow-lg shadow-accent/20"
           >
             <i class="fa-solid fa-sparkles mr-2"></i> Create organization
           </button>
