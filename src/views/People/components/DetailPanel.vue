@@ -16,7 +16,7 @@
         @click="$emit('close')"
         aria-label="Close panel"
       >
-        <i class="fa-solid fa-close"></i>
+        <i class="fa-solid fa-xmark text-[16px]"></i>
       </button>
     </div>
 

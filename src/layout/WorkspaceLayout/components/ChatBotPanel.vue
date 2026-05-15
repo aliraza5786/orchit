@@ -843,9 +843,9 @@
           class="text-sm font-semibold flex items-center gap-1.5 min-w-0 flex-1"
         >
           <div
-            class="w-6 h-6 rounded-lg bg-gradient-to-br from-primary-color/20 to-primary-color/5 flex items-center justify-center"
+            class="w-7 h-7 rounded-full flex items-center justify-center"
           >
-            <i class="fa-solid fa-sparkles text-primary-color text-[10px]"></i>
+            <i class="fa-solid fa-sparkles text-primary-color text-[14px]"></i>
           </div>
           <Dropdown
             :inSpace="true"
