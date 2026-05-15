@@ -357,7 +357,7 @@
                   <label class="text-[11px] font-semibold uppercase tracking-wider text-text-secondary block text-center">6-digit code</label>
                   <div class="flex justify-center gap-2">
                     <input
-                      v-for="(_, i) in 6"
+                      v-for="(_, i) in 5"
                       :key="i"
                       :ref="el => { if (el) otpRefs[i] = el }"
                       v-model="deleteModal.otpDigits[i]"
@@ -394,7 +394,7 @@
                   <button type="button" class="flex-1 rounded-lg border border-black/10 dark:border-white/10 bg-transparent px-3 py-2.5 text-sm font-medium text-text-secondary hover:text-text-primary hover:border-black/20 transition cursor-pointer" @click="goDeleteStep(0)">
                     Back
                   </button>
-                  <button type="button" class="flex-[1.5] rounded-lg bg-red-600 px-3 py-2.5 text-sm font-semibold text-white hover:bg-red-700 transition cursor-pointer flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed" :disabled="deleteModal.loading || deleteModal.otpDigits.join('').length < 6" @click="doOtpStep">
+                  <button type="button" class="flex-[1.5] rounded-lg bg-red-600 px-3 py-2.5 text-sm font-semibold text-white hover:bg-red-700 transition cursor-pointer flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed" :disabled="deleteModal.loading || deleteModal.otpDigits.join('').length < 5" @click="doOtpStep">
                     <span v-if="deleteModal.loading" class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
                     <span>{{ deleteModal.loading ? 'Verifying...' : 'Verify code' }}</span>
                   </button>
@@ -499,12 +499,26 @@ import { ref, computed, watch, reactive, nextTick, onBeforeUnmount, onMounted } 
 import { toast } from 'vue-sonner'
 import { useDebounceFn } from '@vueuse/core'
 import { useWorkspaceStore } from '../../../stores/workspace'
-import { useUpdateCompanyProfile, useDeleteOrganization } from '../../../services/auth'
+import { useUpdateCompanyProfile } from '../../../services/auth'
 import { useQueryClient } from '@tanstack/vue-query'
 import { uploadPrivateFile } from '../../../queries/useCommon'
 import CreateOrganizationInline from './CreateOrganizationInline.vue'
 import { useAuthStore } from '../../../stores/auth'
+import { useListDomains } from '../../../queries/useCommon'
+import { useVerifyPasswordForDeletion, useConfirmDomainDeletion, type VerifyPasswordForDeletionPayload, type ConfirmDomainDeletionPayload } from '../../../queries/useCompanyUsers'
+const { data: domainsData } = useListDomains()
+const domains = computed(() => domainsData.value?.domains ?? [])
+const deletingDomainId = computed(() => domains.value?.[0]?._id)
+const verifyPassword = ref<((payload: VerifyPasswordForDeletionPayload) => Promise<any>) | null>(null)
+const confirmDeletion = ref<((payload: ConfirmDomainDeletionPayload) => Promise<any>) | null>(null)
 
+watch(deletingDomainId, (id) => {
+  if (!id) return
+  const { mutateAsync: vp } = useVerifyPasswordForDeletion(id)
+  const { mutateAsync: cd } = useConfirmDomainDeletion(id)
+  verifyPassword.value = vp
+  confirmDeletion.value = cd
+}, { immediate: true })
 // ─── Props ────────────────────────────────────────────────────────────────────
 const props = defineProps<{
   forceCreate?: boolean
@@ -739,7 +753,7 @@ const deleteModal = reactive({
   showPassword:  false,
 
   // Step 1 — OTP
-  otpDigits:     ['', '', '', '', '', ''],
+  otpDigits:     ['', '', '', '', ''],
   timerSeconds:  299,
 
   // Step 2
@@ -780,7 +794,7 @@ function openDeleteModal() {
   deleteModal.loading     = false
   deleteModal.password    = ''
   deleteModal.showPassword = false
-  deleteModal.otpDigits   = ['', '', '', '', '', '']
+  deleteModal.otpDigits   = ['', '', '', '', '']
   deleteModal.confirmName = ''
   deleteModal.errors      = { password: '', otp: '', confirmName: '' }
   deleteModal.timerSeconds = 299
@@ -825,7 +839,7 @@ function onOtpInput(index: number, event: Event) {
   const val = (event.target as HTMLInputElement).value.replace(/\D/g, '')
   deleteModal.otpDigits[index] = val.slice(-1)
   deleteModal.errors.otp = ''
-  if (val && index < 5) {
+  if (val && index < 4) {
     nextTick(() => otpRefs.value[index + 1]?.focus())
   }
 }
@@ -838,7 +852,7 @@ function onOtpKeydown(index: number, event: KeyboardEvent) {
 
 function onOtpPaste(event: ClipboardEvent) {
   event.preventDefault()
-  const text = event.clipboardData?.getData('text').replace(/\D/g, '').slice(0, 6) ?? ''
+  const text = event.clipboardData?.getData('text').replace(/\D/g, '').slice(0, 5) ?? ''
   text.split('').forEach((char, i) => { deleteModal.otpDigits[i] = char })
   nextTick(() => {
     const focusIdx = Math.min(text.length, 5)
@@ -855,53 +869,29 @@ async function resendOtp() {
   toast.success('A new code has been sent to your email.')
 }
 
-// ── Step handlers ──────────────────────────────────────────────────────────
-
 async function doPasswordStep() {
   if (!deleteModal.password.trim()) {
     deleteModal.errors.password = 'Please enter your password.'
     return
   }
+  if (!verifyPassword.value) {
+    deleteModal.errors.password = 'Organization not loaded yet. Please try again.'
+    return
+  }
+
   deleteModal.loading = true
   try {
-    // TODO: replace with your real verify-password API call
-    // await authStore.verifyPassword(deleteModal.password)
-    await new Promise(r => setTimeout(r, 800)) // ← remove when wired up
-
+    await verifyPassword.value({ password: deleteModal.password })
     deleteModal.errors.password = ''
     deleteModal.loading = false
     goDeleteStep(1)
     startTimer()
     nextTick(() => otpRefs.value[0]?.focus())
-
-    // TODO: trigger OTP send to user's email here
-    // await authStore.sendDeleteOtp()
     toast.info('A verification code has been sent to your email.')
   } catch (err: any) {
     deleteModal.loading = false
-    deleteModal.errors.password = err?.response?.data?.message ?? 'Incorrect password. Please try again.'
-  }
-}
-
-async function doOtpStep() {
-  const code = deleteModal.otpDigits.join('')
-  if (code.length < 6) {
-    deleteModal.errors.otp = 'Please enter all 6 digits.'
-    return
-  }
-  deleteModal.loading = true
-  try {
-    // TODO: replace with your real verify-OTP API call
-    // await authStore.verifyDeleteOtp(code)
-    await new Promise(r => setTimeout(r, 800)) // ← remove when wired up
-
-    deleteModal.errors.otp = ''
-    deleteModal.loading = false
-    stopTimer()
-    goDeleteStep(2)
-  } catch (err: any) {
-    deleteModal.loading = false
-    deleteModal.errors.otp = err?.response?.data?.message ?? 'Invalid code. Please try again.'
+    deleteModal.errors.password =
+      err?.response?.data?.message ?? 'Incorrect password. Please try again.'
   }
 }
 
@@ -910,40 +900,37 @@ async function doConfirmStep() {
     deleteModal.errors.confirmName = 'Name does not match. Check capitalization and spacing.'
     return
   }
+  if (!confirmDeletion.value) {
+    deleteModal.errors.confirmName = 'Organization not loaded yet. Please try again.'
+    return
+  }
+
   deleteModal.loading = true
-  deleteOrganization({
-    payload: { company_id: localStorage.getItem('company_id') },
-  })
-}
-
-// ── Delete mutation ────────────────────────────────────────────────────────
-const { mutate: deleteOrganization} = useDeleteOrganization({
-  onSuccess: async (data: any) => {
-    const payload = data?.data ?? data
+  try {
+    await confirmDeletion.value({ otp: deleteModal.otpDigits.join('') })
     deleteModal.loading = false
-
-    if (!payload || payload?.status === false) {
-      deleteModal.errors.confirmName = payload?.message || 'Failed to delete organization. Please try again.'
-      toast.error(payload?.message || 'Failed to delete organization')
-      return
-    }
-
-    // Advance to success step
     goDeleteStep(3)
-
-    // Trigger server-side email notification (handled by API), then refresh
     try {
       authStore.clearCompany()
       await queryClient.invalidateQueries({ queryKey: ['me'] })
       await queryClient.invalidateQueries({ queryKey: ['profile'] })
     } catch { /* non-critical */ }
-  },
-
-  onError: (error: any) => {
+  } catch (err: any) {
     deleteModal.loading = false
-    const msg = error?.response?.data?.message || error?.message || 'Failed to delete organization'
+    const msg = err?.response?.data?.message || err?.message || 'Failed to delete organization'
     deleteModal.errors.confirmName = msg
     toast.error(msg)
-  },
-})
+  }
+}
+async function doOtpStep() {
+  const code = deleteModal.otpDigits.join('')
+  if (code.length < 5) {
+    deleteModal.errors.otp = 'Please enter all 5 digits.'
+    return
+  }
+  // Just move forward — OTP will be submitted at the final step
+  stopTimer()
+  goDeleteStep(2)
+}
+
 </script>
