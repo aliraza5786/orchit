@@ -870,16 +870,16 @@
           </Dropdown>
         </h5>
 
-        <div class="flex items-center gap-0.5 shrink-0">
+        <div class="flex items-center gap-1 shrink-0">
           <button
-            class="shrink-0 flex items-center text-text-primary justify-center w-7 h-7 rounded-lg hover:bg-orchit-white/5 active:scale-[.98] transition-colors border-0 cursor-pointer"
+            class="shrink-0 flex items-center text-text-primary justify-center w-8 h-8 rounded-lg hover:bg-orchit-white/5 active:scale-[.98] transition-colors border-0 cursor-pointer"
             @click="showHistoryPanel = !showHistoryPanel"
             title="Chat history"
           >
             <i class="fa-regular fa-clock-rotate-left text-[16px]"></i>
           </button>
           <button
-            class="shrink-0 flex items-center text-text-primary justify-center w-7 h-7 rounded-lg hover:bg-orchit-white/5 active:scale-[.98] transition-colors border-0 cursor-pointer"
+            class="shrink-0 flex items-center text-text-primary justify-center w-8 h-8 rounded-lg hover:bg-orchit-white/5 active:scale-[.98] transition-colors border-0 cursor-pointer"
             @click="startNewChat"
             title="New chat"
           >
@@ -887,7 +887,7 @@
           </button>
           <button
             v-if="!isExpanded"
-            class="shrink-0 hidden sm:flex items-center text-text-primary justify-center w-7 h-7 rounded-lg hover:bg-orchit-white/5 active:scale-[.98] transition-colors border-0 cursor-pointer"
+            class="shrink-0 hidden sm:flex items-center text-text-primary justify-center w-8 h-8 rounded-lg hover:bg-orchit-white/5 active:scale-[.98] transition-colors border-0 cursor-pointer"
             @click="expandPanel"
             title="Expand"
           >
@@ -895,21 +895,21 @@
           </button>
           <button
             v-else
-            class="shrink-0 hidden sm:flex items-center text-text-primary justify-center w-7 h-7 rounded-lg hover:bg-orchit-white/5 active:scale-[.98] transition-colors border-0 cursor-pointer"
+            class="shrink-0 hidden sm:flex items-center text-text-primary justify-center w-8 h-8 rounded-lg hover:bg-orchit-white/5 active:scale-[.98] transition-colors border-0 cursor-pointer"
             @click="compressPanel"
             title="Compress"
           >
             <i class="fa-solid fa-compress text-[16px]"></i>
           </button>
           <button
-            class="shrink-0 flex items-center text-text-primary justify-center w-7 h-7 rounded-lg hover:bg-orchit-white/5 active:scale-[.98] transition-colors border-0 cursor-pointer"
+            class="shrink-0 flex items-center text-text-primary justify-center w-8 h-8 rounded-lg hover:bg-orchit-white/5 active:scale-[.98] transition-colors border-0 cursor-pointer"
             @click="openConfigPanel"
             :title="showConfigPanel ? 'Preview Data' : 'Agent Configuration'"
           >
             <i class="fa-regular fa-gear text-[16px]"></i>
           </button>
           <button
-            class="shrink-0 flex items-center text-text-primary justify-center w-7 h-7 rounded-lg hover:bg-orchit-white/5 active:scale-[.98] transition-colors border-0 cursor-pointer"
+            class="shrink-0 flex items-center text-text-primary justify-center w-8 h-8 rounded-lg hover:bg-orchit-white/5 active:scale-[.98] transition-colors border-0 cursor-pointer"
             @click="closeHandler"
             title="Close"
           >
