@@ -290,7 +290,7 @@ function orgInitials(title: string) {
         <div v-if="!hasOrgs" class="mt-2">
           <button
             @click="switchMode('org')"
-            class="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-dashed border-border/80 text-text-secondary hover:text-accent hover:border-accent/40 text-[12px] font-medium transition-all"
+            class="w-full flex items-center justify-center cursor-pointer gap-2 px-3 py-2 rounded-lg border border-dashed border-border/80 text-text-secondary hover:text-accent hover:border-accent/40 text-[12px] font-medium transition-all"
           >
             <i class="fa-solid fa-plus text-[10px]"></i>
             Create an organization

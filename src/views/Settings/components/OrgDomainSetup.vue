@@ -232,7 +232,7 @@
                 <button
                   v-if="canManageDomain"
                   @click="openEditModal(domain)"
-                  class="p-1.5 rounded-lg border border-transparent text-text-secondary hover:bg-accent/10 hover:border-accent/20 hover:text-accent transition-all"
+                  class="p-1.5 rounded-lg border cursor-pointer border-transparent text-text-secondary hover:bg-accent/10 hover:border-accent/20 hover:text-accent transition-all"
                   title="Edit domain"
                 >
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -286,7 +286,7 @@
                 <button
                   v-if="canVerifyDomain"
                   @click="openVerifyModal(domain)"
-                  class="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all active:scale-95"
+                  class="shrink-0 inline-flex items-center cursor-pointer gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all active:scale-95"
                   style="background: var(--accent); color: white;"
                 >
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -397,184 +397,460 @@
               </div>
 
               <!-- ── Domain Users Section ──────────────────────────────────── -->
-              <div class="border-t border-border/30 px-4 py-4 space-y-4">
-                <div class="flex items-center justify-between gap-3">
-                  <div>
-                    <h4 class="text-sm font-bold text-text-primary flex items-center gap-2">
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-accent">
-                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                        <circle cx="9" cy="7" r="4"/>
-                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                      </svg>
-                      Domain Users
-                      <span class="text-[10px] font-medium text-text-secondary bg-bg-body border border-border/50 px-1.5 py-0.5 rounded-full">
-                        {{ domainUsersForDomain(domain._id).length }}
-                      </span>
-                    </h4>
-                    <p class="text-xs text-text-secondary mt-0.5">
-                      Users associated with this domain. Enroll them into your workspace.
-                    </p>
-                  </div>
-                  <button
-                    @click="loadDomainUsers(domain._id)"
-                    :disabled="loadingDomainUsers === domain._id"
-                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold border border-border/50 text-text-secondary rounded-lg hover:border-accent/40 hover:text-accent transition-all disabled:opacity-50"
-                  >
-                    <svg
-                      v-if="loadingDomainUsers === domain._id"
-                      class="animate-spin"
-                      width="11" height="11"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2.5"
-                    >
-                      <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
-                    </svg>
-                    <svg v-else width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                      <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>
-                    </svg>
-                    Refresh
-                  </button>
+              <!-- ── Domain Users Section (replace the old one inside verified block) ──────── -->
+<div class="border-t border-border/30 px-4 py-4 space-y-4">
+
+  <!-- Section header -->
+  <div class="flex items-center justify-between gap-3">
+    <div>
+      <h4 class="text-sm font-bold text-text-primary flex items-center gap-2">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-accent">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+        Domain Users
+        <span class="text-[10px] font-medium text-text-secondary bg-bg-body border border-border/50 px-1.5 py-0.5 rounded-full">
+          {{ domainUsersForDomain(domain._id).length }}
+        </span>
+      </h4>
+      <p class="text-xs text-text-secondary mt-0.5">
+        Select users to add them to your organization.
+      </p>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <!-- Confirm transfer button — only when users selected -->
+      <Transition
+        enter-active-class="transition-all duration-200 ease-out"
+        enter-from-class="opacity-0 scale-95"
+        enter-to-class="opacity-100 scale-100"
+        leave-active-class="transition-all duration-150 ease-in"
+        leave-from-class="opacity-100 scale-100"
+        leave-to-class="opacity-0 scale-95"
+      >
+        <button
+          v-if="(domainSelectedIds[domain._id] ?? []).length > 0"
+          @click="openTransferModal(domain._id, domain.domain)"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-500 text-white text-xs font-semibold rounded-lg hover:bg-green-600 active:scale-95 transition-all shadow-md shadow-green-500/20"
+        >
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <polyline points="16 11 18 13 22 9"/>
+          </svg>
+          Confirm
+          <span class="bg-white/25 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
+            {{ (domainSelectedIds[domain._id] ?? []).length }}
+          </span>
+        </button>
+      </Transition>
+
+      <!-- Refresh button -->
+      <button
+        @click="loadDomainUsers(domain._id)"
+        :disabled="loadingDomainUsers === domain._id"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold border border-border/50 text-text-secondary rounded-lg hover:border-accent/40 hover:text-accent transition-all disabled:opacity-50"
+      >
+        <svg
+          v-if="loadingDomainUsers === domain._id"
+          class="animate-spin" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+        ><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+        <svg v-else width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>
+        </svg>
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading skeleton -->
+  <div v-if="loadingDomainUsers === domain._id" class="space-y-2">
+    <div v-for="i in 3" :key="i" class="flex items-center gap-3 px-3.5 py-3 rounded-xl border border-border/30 animate-pulse">
+      <div class="w-4 h-4 rounded bg-border/20 shrink-0"></div>
+      <div class="w-8 h-8 rounded-full bg-border/20 shrink-0"></div>
+      <div class="flex-1 space-y-1.5">
+        <div class="h-3 w-32 bg-border/20 rounded"></div>
+        <div class="h-2.5 w-40 bg-border/15 rounded"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- No users found -->
+  <template v-else-if="domainUsersLoaded.has(domain._id) && domainUsersForDomain(domain._id).length === 0">
+    <div class="flex flex-col items-center justify-center py-8 px-4 text-center border border-dashed border-border/40 rounded-xl">
+      <div class="w-10 h-10 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center mb-3">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="text-accent">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+        </svg>
+      </div>
+      <h4 class="text-sm font-bold text-text-primary mb-1">No domain users found</h4>
+      <p class="text-xs text-text-secondary mb-4 max-w-xs leading-relaxed">
+        No users are associated with this domain yet. Create the first user to get started.
+      </p>
+      <button
+        @click="openCreateUserModal(domain._id)"
+        class="inline-flex items-center gap-2 px-4 py-2 bg-accent text-white text-xs font-semibold rounded-lg hover:bg-accent/90 transition-all"
+      >
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        Create first user
+      </button>
+    </div>
+  </template>
+
+  <!-- Users list with checkboxes -->
+  <template v-else-if="domainUsersForDomain(domain._id).length > 0">
+
+    <!-- Select all row -->
+    <div class="flex items-center justify-between px-1">
+      <div class="flex items-center gap-2.5">
+        <button
+          @click="toggleDomainSelectAll(domain._id)"
+          class="w-4 h-4 rounded border flex items-center justify-center transition-all shrink-0"
+          :class="isDomainAllSelected(domain._id)
+            ? 'bg-accent border-accent'
+            : isDomainPartiallySelected(domain._id)
+              ? 'bg-accent/20 border-accent/60'
+              : 'border-border/60 bg-transparent hover:border-accent/40'"
+        >
+          <i
+            v-if="isDomainAllSelected(domain._id) || isDomainPartiallySelected(domain._id)"
+            class="text-white text-[8px]"
+            :class="isDomainAllSelected(domain._id) ? 'fa-solid fa-check' : 'fa-solid fa-minus'"
+          ></i>
+        </button>
+        <span class="text-[11px] text-text-secondary font-medium select-none">
+          Select all
+          <span v-if="(domainSelectedIds[domain._id] ?? []).length > 0" class="text-accent font-semibold ml-0.5">
+            ({{ (domainSelectedIds[domain._id] ?? []).length }} selected)
+          </span>
+        </span>
+      </div>
+
+      <button
+        v-if="(domainSelectedIds[domain._id] ?? []).length > 0"
+        @click="clearDomainSelection(domain._id)"
+        class="text-[11px] text-text-secondary hover:text-text-primary transition-all"
+      >
+        Clear
+      </button>
+    </div>
+
+    <!-- User rows -->
+    <div class="space-y-2">
+      <div
+        v-for="user in domainUsersForDomain(domain._id)"
+        :key="user._id"
+        @click="toggleDomainUser(domain._id, user._id)"
+        class="flex items-center gap-3 px-3.5 py-3 rounded-xl border transition-all cursor-pointer select-none group"
+        :class="(domainSelectedIds[domain._id] ?? []).includes(user._id)
+          ? 'border-green-500/40 bg-green-500/5'
+          : 'border-border/40 bg-bg-body/40 hover:border-border/70 hover:bg-bg-body/60'"
+      >
+        <!-- Checkbox -->
+        <div
+          class="w-4 h-4 rounded border flex items-center justify-center transition-all shrink-0"
+          :class="(domainSelectedIds[domain._id] ?? []).includes(user._id)
+            ? 'bg-green-500 border-green-500'
+            : 'border-border/60 group-hover:border-green-500/50'"
+        >
+          <svg
+            v-if="(domainSelectedIds[domain._id] ?? []).includes(user._id)"
+            width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3.5"
+          ><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+
+        <!-- Avatar -->
+        <div
+          class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 overflow-hidden transition-all"
+          :class="(domainSelectedIds[domain._id] ?? []).includes(user._id)
+            ? 'bg-green-500/20 text-green-600'
+            : 'bg-gradient-to-br from-accent/30 to-accent/10 text-accent'"
+        >
+          <img v-if="user.u_profile_picture" :src="user.u_profile_picture" class="w-full h-full object-cover" :alt="user.u_full_name" />
+          <span v-else>{{ getInitials(user.u_full_name) }}</span>
+        </div>
+
+        <!-- Info -->
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="text-sm font-semibold text-text-primary truncate">{{ user.u_full_name }}</span>
+          </div>
+          <p class="text-xs text-text-secondary truncate">{{ user.u_email }}</p>
+        </div>
+
+        <!-- Right indicator -->
+        <svg
+          class="shrink-0 transition-all"
+          :class="(domainSelectedIds[domain._id] ?? []).includes(user._id)
+            ? 'text-green-500 opacity-100'
+            : 'text-border/60 opacity-0 group-hover:opacity-100'"
+          width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        >
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+          <polyline points="22 4 12 14.01 9 11.01"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Bottom actions row -->
+    <div class="flex items-center justify-between gap-3 pt-1">
+      <button
+        @click="openCreateUserModal(domain._id)"
+        class="inline-flex items-center gap-1.5 text-xs font-medium text-text-secondary hover:text-accent transition-all"
+      >
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        Add another user
+      </button>
+
+      <button
+        @click="openTransferModal(domain._id, domain.domain)"
+        :disabled="!(domainSelectedIds[domain._id] ?? []).length"
+        class="inline-flex items-center gap-2 px-4 py-2 bg-green-500 text-white text-xs font-semibold rounded-lg hover:bg-green-600 active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-md shadow-green-500/20"
+      >
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <polyline points="16 11 18 13 22 9"/>
+        </svg>
+        Confirm
+        <span v-if="(domainSelectedIds[domain._id] ?? []).length > 0">
+          {{ (domainSelectedIds[domain._id] ?? []).length }} user{{ (domainSelectedIds[domain._id] ?? []).length !== 1 ? 's' : '' }}
+        </span>
+      </button>
+    </div>
+  </template>
+
+  <!-- Prompt to load (initial state) -->
+  <template v-else>
+    <button
+      @click="loadDomainUsers(domain._id)"
+      class="w-full py-3 rounded-xl border border-dashed border-border/40 text-xs font-medium text-text-secondary hover:border-accent/40 hover:text-accent transition-all flex items-center justify-center gap-2"
+    >
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+      </svg>
+      Load domain users
+    </button>
+  </template>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════
+     TRANSFER CONFIRMATION MODAL
+     Place this just before the closing </div> of the main template,
+     alongside your other modals (verify, edit, create user)
+═══════════════════════════════════════════════════════════ -->
+<Transition
+  enter-active-class="transition duration-200 ease-out"
+  enter-from-class="opacity-0"
+  enter-to-class="opacity-100"
+  leave-active-class="transition duration-150 ease-in"
+  leave-from-class="opacity-100"
+  leave-to-class="opacity-0"
+>
+  <div
+    v-if="showTransferModal"
+    class="fixed inset-0 z-[60] flex items-center justify-center bg-black/55 backdrop-blur-sm px-4"
+    @click.self="showTransferModal = false"
+  >
+    <Transition
+      enter-active-class="transition duration-250 ease-out"
+      enter-from-class="opacity-0 scale-95 translate-y-3"
+      enter-to-class="opacity-100 scale-100 translate-y-0"
+      leave-active-class="transition duration-150 ease-in"
+      leave-from-class="opacity-100 scale-100"
+      leave-to-class="opacity-0 scale-95"
+      appear
+    >
+      <div
+        v-if="showTransferModal"
+        class="w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden"
+        style="background: var(--bg-card); border: 1px solid var(--border);"
+      >
+        <!-- Modal header -->
+        <div class="px-6 pt-6 pb-5 border-b" style="border-color: var(--border);">
+          <div class="flex items-start gap-4">
+            <!-- Warning icon -->
+            <div
+              class="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
+              style="background: color-mix(in srgb, #f59e0b 12%, transparent); border: 1.5px solid color-mix(in srgb, #f59e0b 30%, transparent);"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+            </div>
+            <div class="flex-1 min-w-0">
+              <h3 class="text-base font-bold text-text-primary">Confirm User Transfer</h3>
+              <p class="text-xs text-text-secondary mt-1 leading-relaxed">
+                You are about to add
+                <span class="font-semibold text-text-primary">
+                  {{ transferSelectedUsers.length }} user{{ transferSelectedUsers.length !== 1 ? 's' : '' }}
+                </span>
+                with the
+                <code
+                  class="px-1.5 py-0.5 rounded text-[11px] font-mono font-semibold"
+                  style="background: color-mix(in srgb, var(--accent) 10%, transparent); color: var(--accent);"
+                >@{{ transferDomainName }}</code>
+                email domain to your organization.
+              </p>
+            </div>
+            <button
+              @click="showTransferModal = false"
+              class="p-1.5 rounded-lg text-text-secondary hover:bg-border/20 hover:text-text-primary transition-all shrink-0 -mt-1 -mr-1"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Modal body -->
+        <div class="px-6 py-5 space-y-4 max-h-[60vh] overflow-y-auto custom-scroll">
+
+          <!-- Selected users preview -->
+          <div class="rounded-xl overflow-hidden border" style="border-color: var(--border);">
+            <div
+              class="flex items-center gap-2 px-3 py-2 border-b"
+              style="background: var(--bg-surface); border-color: var(--border);"
+            >
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-text-secondary">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+              <span class="text-[10px] font-bold uppercase tracking-wider text-text-secondary">
+                Users to transfer ({{ transferSelectedUsers.length }})
+              </span>
+            </div>
+
+            <div class="divide-y" style="divide-color: var(--border);">
+              <div
+                v-for="user in transferSelectedUsers.slice(0, 4)"
+                :key="user._id"
+                class="flex items-center gap-3 px-3 py-2.5"
+              >
+                <div
+                  class="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 overflow-hidden"
+                  style="background: color-mix(in srgb, var(--accent) 15%, transparent); color: var(--accent);"
+                >
+                  <img v-if="user.u_profile_picture" :src="user.u_profile_picture" class="w-full h-full object-cover" :alt="user.u_full_name" />
+                  <span v-else>{{ getInitials(user.u_full_name) }}</span>
                 </div>
-
-                <!-- Loading domain users skeleton -->
-                <div v-if="loadingDomainUsers === domain._id" class="space-y-2">
-                  <div
-                    v-for="i in 3"
-                    :key="i"
-                    class="flex items-center gap-3 px-3.5 py-3 rounded-xl border border-border/30 animate-pulse"
-                  >
-                    <div class="w-8 h-8 rounded-full bg-border/20 shrink-0"></div>
-                    <div class="flex-1 space-y-1.5">
-                      <div class="h-3 w-32 bg-border/20 rounded"></div>
-                      <div class="h-2.5 w-40 bg-border/15 rounded"></div>
-                    </div>
-                    <div class="w-4 h-4 rounded-full bg-border/20 shrink-0"></div>
-                  </div>
+                <div class="min-w-0 flex-1">
+                  <p class="text-xs font-semibold text-text-primary truncate">{{ user.u_full_name }}</p>
+                  <p class="text-[11px] text-text-secondary truncate">{{ user.u_email }}</p>
                 </div>
-
-                <!-- No users found — offer to create -->
-                <template v-else-if="domainUsersLoaded.has(domain._id) && domainUsersForDomain(domain._id).length === 0">
-                  <div class="flex flex-col items-center justify-center py-8 px-4 text-center border border-dashed border-border/40 rounded-xl">
-                    <div class="w-10 h-10 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center mb-3">
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="text-accent">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-                      </svg>
-                    </div>
-                    <h4 class="text-sm font-bold text-text-primary mb-1">No domain users found</h4>
-                    <p class="text-xs text-text-secondary mb-4 max-w-xs leading-relaxed">
-                      No users are associated with this domain yet. Create the first user to set up your workspace admin.
-                    </p>
-                    <button
-                      @click="openCreateUserModal(domain._id)"
-                      class="inline-flex items-center gap-2 px-4 py-2 bg-accent text-white text-xs font-semibold rounded-lg hover:bg-accent/90 transition-all"
-                    >
-                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-                      </svg>
-                      Create first user
-                    </button>
-                  </div>
-                </template>
-
-                <!-- Users list with super admin selection -->
-                <template v-else-if="domainUsersForDomain(domain._id).length > 0">
-                  <!-- Super admin required notice -->
-                  <div
-                    v-if="!enrolledSuperAdminForDomain(domain._id)"
-                    class="flex items-start gap-3 rounded-lg px-3.5 py-3 border"
-                    style="background: color-mix(in srgb, var(--accent) 6%, transparent); border-color: color-mix(in srgb, var(--accent) 25%, transparent);"
-                  >
-                    <svg class="w-4 h-4 mt-0.5 shrink-0 text-accent" viewBox="0 0 16 16" fill="none">
-                      <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.4"/>
-                      <path d="M8 5v4M8 11v.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-                    </svg>
-                    <p class="text-xs leading-relaxed text-text-secondary">
-                      <span class="font-semibold text-accent">Select a Super Admin</span> — One user must be designated as admin.
-                      All other users will be enrolled as viewers.
-                    </p>
-                  </div>
-
-                  <!-- Users grid -->
-                  <div class="space-y-2">
-                    <div
-                      v-for="user in domainUsersForDomain(domain._id)"
-                      :key="user._id"
-                      class="flex items-center gap-3 px-3.5 py-3 rounded-xl border transition-all cursor-pointer"
-                      :class="selectedSuperAdmin[domain._id] === user._id
-                        ? 'border-accent/50 bg-accent/8'
-                        : 'border-border/40 bg-bg-body/40 hover:border-border/70'"
-                      @click="toggleSuperAdmin(domain._id, user._id)"
-                    >
-                      <div class="w-8 h-8 rounded-full bg-gradient-to-br from-accent/30 to-accent/10 flex items-center justify-center text-xs font-bold text-accent shrink-0 overflow-hidden">
-                        <img v-if="user.u_profile_picture" :src="user.u_profile_picture" class="w-full h-full object-cover" :alt="user.u_full_name" />
-                        <span v-else>{{ getInitials(user.u_full_name) }}</span>
-                      </div>
-                      <div class="flex-1 min-w-0">
-                        <div class="flex items-center gap-2">
-                          <span class="text-sm font-semibold text-text-primary truncate">{{ user.u_full_name }}</span>
-                          <span
-                            v-if="selectedSuperAdmin[domain._id] === user._id"
-                            class="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded-full bg-accent/20 text-accent"
-                          >Super Admin</span>
-                          <span v-else class="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-border/20 text-text-secondary">Viewer</span>
-                        </div>
-                        <p class="text-xs text-text-secondary truncate">{{ user.u_email }}</p>
-                      </div>
-                      <div
-                        class="w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-all"
-                        :class="selectedSuperAdmin[domain._id] === user._id ? 'border-accent bg-accent' : 'border-border/60'"
-                      >
-                        <div v-if="selectedSuperAdmin[domain._id] === user._id" class="w-1.5 h-1.5 rounded-full bg-white"></div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Enroll actions -->
-                  <div class="flex items-center justify-between gap-3 pt-1">
-                    <button
-                      @click="openCreateUserModal(domain._id)"
-                      class="inline-flex items-center gap-1.5 text-xs font-medium text-text-secondary hover:text-accent transition-all"
-                    >
-                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-                      </svg>
-                      Add another user
-                    </button>
-                    <button
-                      @click="enrollUsers(domain._id)"
-                      :disabled="!selectedSuperAdmin[domain._id] || enrollingDomainId === domain._id"
-                      class="inline-flex items-center gap-2 px-4 py-2 bg-accent text-white text-xs font-semibold rounded-lg hover:bg-accent/90 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                    >
-                      <svg v-if="enrollingDomainId === domain._id" class="animate-spin" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                        <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
-                      </svg>
-                      <svg v-else width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-                        <circle cx="9" cy="7" r="4"/>
-                        <line x1="19" y1="8" x2="19" y2="14"/>
-                        <line x1="22" y1="11" x2="16" y2="11"/>
-                      </svg>
-                      Enroll {{ domainUsersForDomain(domain._id).length }} user{{ domainUsersForDomain(domain._id).length !== 1 ? 's' : '' }}
-                    </button>
-                  </div>
-                </template>
-
-                <!-- Prompt to load -->
-                <template v-else>
-                  <button
-                    @click="loadDomainUsers(domain._id)"
-                    class="w-full py-3 rounded-xl border border-dashed border-border/40 text-xs font-medium text-text-secondary hover:border-accent/40 hover:text-accent transition-all flex items-center justify-center gap-2"
-                  >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-                    </svg>
-                    Load domain users
-                  </button>
-                </template>
+                <svg class="shrink-0 text-green-500" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
               </div>
+
+              <!-- Overflow -->
+              <div
+                v-if="transferSelectedUsers.length > 4"
+                class="flex items-center gap-3 px-3 py-2.5"
+              >
+                <div
+                  class="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
+                  style="background: var(--bg-surface); border: 1px solid var(--border);"
+                >
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-text-secondary">
+                    <circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>
+                  </svg>
+                </div>
+                <p class="text-xs text-text-secondary">
+                  +{{ transferSelectedUsers.length - 4 }} more user{{ transferSelectedUsers.length - 4 !== 1 ? 's' : '' }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Impact heading -->
+          <p class="text-[11px] font-bold uppercase tracking-wider text-text-secondary">
+            Once confirmed, this action may impact:
+          </p>
+
+          <!-- Impact items -->
+          <div class="space-y-2">
+            <div
+              v-for="impact in transferImpacts"
+              :key="impact.label"
+              class="flex items-start gap-3 rounded-xl px-3.5 py-3 border transition-all"
+              style="border-color: var(--border); background: var(--bg-surface);"
+            >
+              <div
+                class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
+                :style="{ background: impact.bg, border: `1px solid ${impact.border}` }"
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" :stroke="impact.color" stroke-width="2">
+                  <component :is="'path'" v-for="(d, i) in impact.paths" :key="i" :d="d"/>
+                </svg>
+              </div>
+              <div>
+                <p class="text-xs font-semibold text-text-primary">{{ impact.label }}</p>
+                <p class="text-[11px] text-text-secondary mt-0.5 leading-relaxed">{{ impact.description }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- 48h notice -->
+          <div
+            class="flex items-start gap-3 rounded-xl px-4 py-3 border"
+            style="background: color-mix(in srgb, #3b82f6 6%, transparent); border-color: color-mix(in srgb, #3b82f6 20%, transparent);"
+          >
+            <svg class="shrink-0 mt-0.5" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+            </svg>
+            <p class="text-xs leading-relaxed" style="color: #3b82f6;">
+              Please review carefully. You have up to
+              <strong style="color: #2563eb;">48 hours</strong>
+              to confirm, or you can confirm immediately to apply the changes now.
+            </p>
+          </div>
+        </div>
+
+        <!-- Modal footer -->
+        <div class="px-6 py-4 border-t flex flex-col-reverse sm:flex-row items-center gap-2.5 sm:justify-end" style="border-color: var(--border);">
+          <button
+            @click="showTransferModal = false"
+            :disabled="isTransferring"
+            class="w-full sm:w-auto px-5 py-2.5 text-sm font-medium rounded-lg border transition-all text-text-secondary hover:text-text-primary hover:border-border disabled:opacity-50"
+            style="border-color: var(--border);"
+          >
+            Cancel
+          </button>
+
+          <button
+            @click="handleConfirmTransfer"
+            :disabled="isTransferring"
+            class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-bold rounded-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed shadow-lg"
+            style="background: #22c55e; color: white; box-shadow: 0 4px 14px color-mix(in srgb, #22c55e 30%, transparent);"
+          >
+            <svg
+              v-if="isTransferring"
+              class="animate-spin" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"
+            ><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+            <svg v-else width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <polyline points="16 11 18 13 22 9"/>
+            </svg>
+            {{ isTransferring ? 'Confirming…' : 'Confirm Users' }}
+          </button>
+        </div>
+      </div>
+    </Transition>
+  </div>
+</Transition>
             </template>
           </div>
         </div>
@@ -1379,16 +1655,11 @@ async function saveEditDomain() {
 const domainUsersMap     = ref<Record<string, any[]>>({})
 const domainUsersLoaded  = ref<Set<string>>(new Set())
 const loadingDomainUsers = ref<string | null>(null)
-const selectedSuperAdmin = ref<Record<string, string>>({})
-const enrolledAdminsMap  = ref<Record<string, string>>({})
-const enrollingDomainId  = ref<string | null>(null)
 
 function domainUsersForDomain(domainId: string): any[] {
   return domainUsersMap.value[domainId] ?? []
 }
-function enrolledSuperAdminForDomain(domainId: string): boolean {
-  return !!enrolledAdminsMap.value[domainId]
-}
+
 
 async function loadDomainUsers(domainId: string) {
   loadingDomainUsers.value = domainId
@@ -1401,35 +1672,6 @@ async function loadDomainUsers(domainId: string) {
     toast.error(err?.response?.data?.message ?? 'Failed to load domain users.')
   } finally {
     loadingDomainUsers.value = null
-  }
-}
-
-function toggleSuperAdmin(domainId: string, userId: string) {
-  if (selectedSuperAdmin.value[domainId] === userId) {
-    const copy = { ...selectedSuperAdmin.value }
-    delete copy[domainId]
-    selectedSuperAdmin.value = copy
-  } else {
-    selectedSuperAdmin.value = { ...selectedSuperAdmin.value, [domainId]: userId }
-  }
-}
-
-async function enrollUsers(domainId: string) {
-  const superAdminId = selectedSuperAdmin.value[domainId]
-  if (!superAdminId) return
-  enrollingDomainId.value = domainId
-  try {
-    const companyId = localStorage.getItem('company_id') ?? ''
-    const allUsers  = domainUsersForDomain(domainId)
-    const allIds    = allUsers.map((u) => u._id)
-    await workspaceStore.enrolDomainUsers(companyId, allIds)
-    enrolledAdminsMap.value = { ...enrolledAdminsMap.value, [domainId]: superAdminId }
-    toast.success(`${allIds.length} user${allIds.length !== 1 ? 's' : ''} enrolled successfully. The selected user has been set as admin.`)
-    await refetch()
-  } catch (err: any) {
-    toast.error(err?.response?.data?.message ?? 'Failed to enroll users.')
-  } finally {
-    enrollingDomainId.value = null
   }
 }
 
@@ -1716,6 +1958,129 @@ function pendingBannerStyle(status: CompanyDomain['status']): Record<string, str
 function pendingIconStyle(status: CompanyDomain['status']): Record<string, string> {
   if (status === 'failed') return { color: '#e55050' }
   return { color: '#f59e0b' }
+}
+// domain users
+// ─── ADD THESE to your existing <script setup> ───────────────────────────────
+// Place after the existing domainUsersMap / domainUsersLoaded / loadingDomainUsers refs
+
+// Per-domain checkbox selection: { [domainId]: string[] }
+const domainSelectedIds = ref<Record<string, string[]>>({})
+
+// Transfer modal state
+const showTransferModal   = ref(false)
+const isTransferring      = ref(false)
+const transferDomainId    = ref<string | null>(null)
+const transferDomainName  = ref('')
+
+// Derived list of full user objects for the currently open transfer modal
+const transferSelectedUsers = computed(() => {
+  if (!transferDomainId.value) return []
+  const ids   = domainSelectedIds.value[transferDomainId.value] ?? []
+  const users = domainUsersMap.value[transferDomainId.value] ?? []
+  return users.filter((u: any) => ids.includes(u._id))
+})
+
+// Impact cards data (static)
+const transferImpacts = [
+  {
+    label:       'Billing & Subscription',
+    description: 'Adding users may increase your seat count and affect your current billing cycle.',
+    color:  '#f59e0b',
+    bg:     'color-mix(in srgb, #f59e0b 10%, transparent)',
+    border: 'color-mix(in srgb, #f59e0b 25%, transparent)',
+    paths:  ['M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z'],
+  },
+  {
+    label:       'User Counts & Seat Allocation',
+    description: 'These users will occupy seats in your organisation\'s subscription plan.',
+    color:  '#3b82f6',
+    bg:     'color-mix(in srgb, #3b82f6 10%, transparent)',
+    border: 'color-mix(in srgb, #3b82f6 25%, transparent)',
+    paths:  ['M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2', 'M23 21v-2a4 4 0 0 0-3-3.87', 'M16 3.13a4 4 0 0 1 0 7.75'],
+  },
+  {
+    label:       'Roles, Permissions & Access',
+    description: 'Transferred users receive default roles. Review and adjust permissions after confirming.',
+    color:  '#a855f7',
+    bg:     'color-mix(in srgb, #a855f7 10%, transparent)',
+    border: 'color-mix(in srgb, #a855f7 25%, transparent)',
+    paths:  ['M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'],
+  },
+  {
+    label:       'Organisation Settings & Controls',
+    description: 'Admins will gain visibility and control over these users\' accounts and activity.',
+    color:  '#6b7280',
+    bg:     'color-mix(in srgb, #6b7280 10%, transparent)',
+    border: 'color-mix(in srgb, #6b7280 25%, transparent)',
+    paths:  [
+      'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z',
+      'M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z',
+    ],
+  },
+]
+
+// ── Checkbox helpers ──────────────────────────────────────────────────────────
+function toggleDomainUser(domainId: string, userId: string) {
+  const current = domainSelectedIds.value[domainId] ?? []
+  const idx = current.indexOf(userId)
+  domainSelectedIds.value = {
+    ...domainSelectedIds.value,
+    [domainId]: idx === -1 ? [...current, userId] : current.filter((i) => i !== userId),
+  }
+}
+
+function toggleDomainSelectAll(domainId: string) {
+  const allIds  = (domainUsersMap.value[domainId] ?? []).map((u: any) => u._id)
+  const current = domainSelectedIds.value[domainId] ?? []
+  const allSel  = allIds.every((id) => current.includes(id))
+  domainSelectedIds.value = {
+    ...domainSelectedIds.value,
+    [domainId]: allSel ? [] : allIds,
+  }
+}
+
+function clearDomainSelection(domainId: string) {
+  domainSelectedIds.value = { ...domainSelectedIds.value, [domainId]: [] }
+}
+
+function isDomainAllSelected(domainId: string): boolean {
+  const allIds  = (domainUsersMap.value[domainId] ?? []).map((u: any) => u._id)
+  const current = domainSelectedIds.value[domainId] ?? []
+  return allIds.length > 0 && allIds.every((id) => current.includes(id))
+}
+
+function isDomainPartiallySelected(domainId: string): boolean {
+  const allIds  = (domainUsersMap.value[domainId] ?? []).map((u: any) => u._id)
+  const current = domainSelectedIds.value[domainId] ?? []
+  return current.some((id) => allIds.includes(id)) && !isDomainAllSelected(domainId)
+}
+
+// ── Transfer modal ────────────────────────────────────────────────────────────
+function openTransferModal(domainId: string, domainName: string) {
+  if (!(domainSelectedIds.value[domainId] ?? []).length) return
+  transferDomainId.value   = domainId
+  transferDomainName.value = domainName
+  showTransferModal.value  = true
+}
+
+async function handleConfirmTransfer() {
+  if (!transferDomainId.value) return
+  isTransferring.value = true
+  try {
+    const companyId = localStorage.getItem('company_id') ?? ''
+    const ids = domainSelectedIds.value[transferDomainId.value] ?? []
+    await workspaceStore.enrolDomainUsers(companyId, ids)
+    toast.success(
+      `${ids.length} user${ids.length !== 1 ? 's' : ''} successfully added to your organisation.`
+    )
+    clearDomainSelection(transferDomainId.value)
+    showTransferModal.value = false
+    await refetch()
+  } catch (err: any) {
+    toast.error(err?.response?.data?.message ?? 'Transfer failed. Please try again.')
+  } finally {
+    isTransferring.value = false
+  }
 }
 </script>
 

@@ -100,11 +100,11 @@
             class="w-5 h-5 rounded border-2 flex items-center justify-center transition-all shrink-0"
             :class="isBulkAllSelected
               ? 'bg-accent border-accent'
-              : 'border-accent/60 bg-transparent'"
+              : 'border-accent/70 bg-bg-secondary'"
             :title="isBulkAllSelected ? 'Deselect all' : 'Select all on this page'"
           >
             <i
-              class="text-white text-[9px]"
+              class="text-secondary text-[9px]"
               :class="isBulkAllSelected ? 'fa-solid fa-check' : 'fa-solid fa-minus'"
             ></i>
           </button>
@@ -226,13 +226,14 @@
   :key="member._id"
   class="flex items-center gap-4 px-4 py-3.5 rounded-xl border transition-all group"
   :class="
-    bulkSelectedIds.includes(member._id)
+    !member.is_owner && bulkSelectedIds.includes(member._id)
       ? 'border-accent/40 bg-accent/5'
       : 'border-border/40 bg-bg-body/50 hover:border-border/70 hover:bg-bg-body/80'
   "
 >
   <!-- Checkbox -->
   <button
+  v-if="!member.is_owner"
     @click="toggleBulkMember(member._id)"
     class="w-4 h-4 rounded border border-border flex items-center justify-center transition-all shrink-0 mt-0.5"
     :class="
@@ -255,7 +256,7 @@
   <!-- Avatar -->
   <div
     class="w-9 h-9 rounded-full bg-gradient-to-br from-accent/40 to-accent/10 flex items-center justify-center text-xs font-bold text-accent flex-shrink-0 overflow-hidden cursor-pointer"
-    @click="toggleBulkMember(member._id)"
+    @click="!member.is_owner && toggleBulkMember(member._id)"
   >
     <img
       v-if="member.u_profile_image"
@@ -271,9 +272,10 @@
 
   <!-- Info -->
   <div
-    class="flex-1 min-w-0 cursor-pointer"
-    @click="toggleBulkMember(member._id)"
-  >
+  class="flex-1 min-w-0"
+  :class="!member.is_owner ? 'cursor-pointer' : 'cursor-default'"
+  @click="!member.is_owner && toggleBulkMember(member._id)"
+>
     <div class="flex items-center gap-2 flex-wrap">
       <!-- Name -->
       <span class="text-sm font-semibold text-text-primary truncate">
@@ -722,9 +724,11 @@ const bulkSelectedIds = ref<string[]>([])
 
 const bulkActionLoading = ref(false)
 const selectedBulkAction = ref<'deactivate' | 'activate' | 'delete' | null>(null)
-
-/** IDs visible on the current page */
-const currentPageIds = computed(() => paginatedMembers.value.map((m) => m._id))
+const currentPageIds = computed(() =>
+  paginatedMembers.value
+    .filter((m) => !m.is_owner)   // ← add this filter
+    .map((m) => m._id)
+)
 
 const isBulkAllSelected = computed(() =>
   currentPageIds.value.length > 0 &&

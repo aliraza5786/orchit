@@ -59,7 +59,9 @@ const currentInterval = computed(() =>
 )
 
 function isCurrentPlan(plan: any): boolean {
-  if (!currentPackageId.value && !currentPackageSlug.value) return false
+  if (!currentPackageId.value && !currentPackageSlug.value) {
+    return plan.packageType === 'free'  // ← was: return false
+  }
   if (currentPackageId.value && plan.packageId === currentPackageId.value) return true
   if (currentPackageSlug.value && plan.slug === currentPackageSlug.value) return true
   return false

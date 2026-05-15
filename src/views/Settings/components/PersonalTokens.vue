@@ -77,8 +77,9 @@ import { useMyPersonalTokenAllocation } from '../../../queries/useCommon'
 import type { MyAllocationSummaryShared, MyAllocationSummaryEqualCustom } from '../../../queries/useCommon'
 
 const { data: allocationData } = useMyPersonalTokenAllocation()
+console.log("token allocations data", allocationData.value);
 
-const summary = computed(() => allocationData.value?.data?.summary ?? null)
+const summary = computed(() => allocationData.value?.summary ?? null)
 
 const stats = computed(() => {
   const s = summary.value
@@ -87,7 +88,7 @@ const stats = computed(() => {
   const allocated = s.mode === 'shared' ? s.company_total : s.user_allocated
   const used      = s.user_used
 
-  const periodEnd      = allocationData.value?.data?.period_end
+  const periodEnd      = allocationData.value?.period_end
   const resetDate      = periodEnd ? new Date(periodEnd) : null
   const daysUntilReset = resetDate
     ? Math.max(0, Math.ceil((resetDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
