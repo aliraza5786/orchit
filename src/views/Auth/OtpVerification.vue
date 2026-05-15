@@ -158,7 +158,7 @@ async function verifyCode() {
     }
 
     // Default → onboarding
-    router.push('/create-profile')
+    router.replace('/create-profile')
 
   } catch (err: any) {
     otpError.value = err?.response?.data?.message || 'Invalid code, please try again.'
@@ -282,7 +282,13 @@ function handlePaste(index: number, e: ClipboardEvent) {
   }
   
   // ---- Mount / Unmount ----
-  onMounted(() => {
+  onMounted(async () => {
+    // If already authenticated and verified, redirect away from this page
+    if (authStore.isAuthenticated) {
+      router.replace('/create-profile')
+      return
+    }
+
     // autofocus first input once the DOM is ready
     setTimeout(() => focusIdx(0), 0)
     startCooldown()

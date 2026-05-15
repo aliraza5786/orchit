@@ -1598,6 +1598,7 @@ function armHistoryGuard() {
 }
 
 function handlePopState(event) {
+  // Only lock history from step 6 onwards
   if (activeStep.value < 6) return
   event.preventDefault?.()
   history.pushState(SENTINEL, '')
@@ -1615,6 +1616,11 @@ watch(workType,    (v) => { if (v && errors.value.workType)            errors.va
 // dnsInput is NEVER auto-filled from company name — it's either typed (custom domain)
 // or set from the user's email domain (company email scenario, handled separately)
 watch(activeStep, (step) => {
+  // ── Sync with URL for back-button support ──
+  if (Number(route.query.step) !== step) {
+    router.push({ query: { ...route.query, step } })
+  }
+
   if (step === 5) {
     // Auto-fill siteName from the entered company/school name (FIX 2)
     if (!siteName.value) {
@@ -1626,13 +1632,31 @@ watch(activeStep, (step) => {
     }
 
     // For company emails: auto-fill dnsInput with the email domain (not company name)
-    // This is what was there before and stays unchanged
     if (isCompanyEmail.value && !dnsInput.value && userEmailDomain.value) {
       dnsInput.value = userEmailDomain.value.toLowerCase().trim()
     }
   }
 
   if (step === 6) armHistoryGuard()
+})
+
+// Sync URL → Step (Back/Forward button support)
+watch(() => route.query.step, (step) => {
+  if (step) {
+    const s = Number(step)
+    if (activeStep.value !== s) {
+      activeStep.value = s
+    }
+  } else if (activeStep.value !== 1) {
+    activeStep.value = 1
+  }
+})
+
+onMounted(() => {
+  // Restore step from URL on refresh
+  if (route.query.step) {
+    activeStep.value = Number(route.query.step)
+  }
 })
 
 watch(

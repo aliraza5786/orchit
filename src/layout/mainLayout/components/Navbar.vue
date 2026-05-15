@@ -155,7 +155,7 @@
                   <div class="mt-4 flex justify-center">
                     <button 
                       @click="openAccountSettings"
-                      class="px-5 py-1.5 rounded-full border border-border hover:bg-bg-dropdown-menu-hover text-sm font-medium transition-all active:scale-95"
+                      class="px-5 py-1.5 rounded-full cursor-pointer border border-border hover:bg-bg-dropdown-menu-hover text-sm font-medium transition-all active:scale-95"
                     >
                       Manage your profile
                     </button>
