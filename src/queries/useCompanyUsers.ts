@@ -12,7 +12,7 @@ export interface CompanyUser {
   u_department: string | null
   u_location: string | null
   is_active: boolean
-  is_owner: boolean 
+  is_owner: boolean
   company_role_id: string | null
   u_is_verfied: boolean
   created_at: string
@@ -36,7 +36,7 @@ export interface CreateCompanyUserPayload {
   u_email: string
   u_password: string
   company_role_id?: string
-  role?:string
+  role?: string
 }
 
 export interface UpdateCompanyUserPayload {
@@ -262,41 +262,37 @@ export interface ConfirmDomainDeletionData {
 }
 
 export const useVerifyPasswordForDeletion = (
-  domainId: string,
+  companyId: string,
   options: Record<string, unknown> = {}
 ) => {
-  return useMutation<VerifyPasswordForDeletionData, Error, VerifyPasswordForDeletionPayload>({
-    mutationKey: ['verify-password-for-deletion', domainId],
-    mutationFn: (payload) => {
-      const companyId = localStorage.getItem("company_id")
-      return request<VerifyPasswordForDeletionData>({
-        url: `company-domains/${domainId}/verify-password`,
+  return useMutation<any, Error, VerifyPasswordForDeletionPayload>({
+    mutationKey: ['verify-password-for-deletion', companyId],
+    mutationFn: (payload) =>
+      request({
+        url: `profile/company/${companyId}/verify-password`,
         method: 'POST',
-        data: { ...payload, company_id: companyId },
-      })
-    },
+        data: payload,
+      }),
     ...options,
   })
 }
 
 export const useConfirmDomainDeletion = (
-  domainId: string,
+  companyId: string,
   options: Record<string, unknown> = {}
 ) => {
   const queryClient = useQueryClient()
-
-  return useMutation<ConfirmDomainDeletionData, Error, ConfirmDomainDeletionPayload>({
-    mutationKey: ['confirm-domain-deletion', domainId],
-    mutationFn: (payload) => {
-     const companyId = localStorage.getItem("company_id")
-      return request<ConfirmDomainDeletionData>({
-        url: `company-domains/${domainId}/confirm-delete`,
+  return useMutation<any, Error, ConfirmDomainDeletionPayload>({
+    mutationKey: ['confirm-company-deletion', companyId],
+    mutationFn: (payload) =>
+      request({
+        url: `profile/company/${companyId}/confirm-delete`,
         method: 'POST',
-        data: { ...payload, company_id: companyId },
-      })
-    },
+        data: payload,
+      }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['company-domains'] })
+      queryClient.invalidateQueries({ queryKey: ['profile'] })
+      queryClient.invalidateQueries({ queryKey: ['me'] })
     },
     ...options,
   })

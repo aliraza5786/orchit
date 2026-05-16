@@ -1,1366 +1,684 @@
 <template>
-  <div class="w-full space-y-6 flex-1">
-
-    <!-- ── Skeleton loader ──────────────────────────────────────────────────── -->
+  <div class="space-y-6">
+    <!-- ── Skeleton Loading ────────────────────────────────────────────────── -->
     <template v-if="isLoading">
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 animate-pulse">
-        <div class="space-y-2">
-          <div class="h-5 w-40 bg-border/20 rounded-lg"></div>
-          <div class="h-3.5 w-64 bg-border/15 rounded-lg"></div>
+      <div class="space-y-6 animate-pulse">
+        <div class="flex items-center justify-between">
+          <div class="space-y-2">
+            <div class="h-6 w-40 bg-border/40 rounded-lg"></div>
+            <div class="h-4 w-64 bg-border/20 rounded-md"></div>
+          </div>
+          <div class="h-10 w-32 bg-border/40 rounded-lg"></div>
         </div>
-        <div class="h-9 w-32 bg-border/20 rounded-lg self-start sm:self-auto"></div>
-      </div>
-
-      <div class="space-y-3">
-        <div
-          v-for="i in 2"
-          :key="i"
-          class="bg-bg-card border border-border/40 rounded-xl overflow-hidden animate-pulse"
-        >
-          <!-- Card header skeleton -->
-          <div class="flex items-center justify-between px-4 py-3.5">
-            <div class="flex items-center gap-3">
-              <div class="w-8 h-8 rounded-lg bg-border/20 shrink-0"></div>
-              <div class="space-y-1.5">
-                <div class="h-3.5 w-36 bg-border/20 rounded"></div>
-                <div class="h-2.5 w-24 bg-border/15 rounded"></div>
-              </div>
-            </div>
-            <div class="flex items-center gap-2">
-              <div class="h-5 w-16 bg-border/20 rounded-full"></div>
-              <div class="w-7 h-7 bg-border/15 rounded-lg"></div>
-              <div class="w-7 h-7 bg-border/15 rounded-lg"></div>
-            </div>
-          </div>
-          <!-- Card footer skeleton -->
-          <div class="border-t border-border/20 px-4 py-3 flex gap-5">
-            <div class="h-3 w-20 bg-border/15 rounded"></div>
-            <div class="h-3 w-20 bg-border/15 rounded"></div>
-            <div class="h-3 w-24 bg-border/15 rounded"></div>
-            <div class="ml-auto h-3 w-16 bg-border/15 rounded"></div>
-          </div>
+        <div class="grid gap-4">
+          <div v-for="i in 2" :key="i" class="h-24 w-full bg-border/20 rounded-xl"></div>
         </div>
       </div>
-
-      <!-- Info banner skeleton -->
-      <div class="h-12 bg-border/10 border border-border/20 rounded-xl animate-pulse"></div>
     </template>
 
-    <template v-else>
-      <!-- ── Header ──────────────────────────────────────────────────────── -->
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h3 class="text-lg font-bold text-text-primary flex items-center gap-2">
-            <span
-              class="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-accent/10 text-accent border border-accent/20"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="2" y1="12" x2="22" y2="12"/>
-                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-              </svg>
-            </span>
-            Domain Setup
-          </h3>
-          <p class="text-sm text-text-secondary mt-1">
-            Connect and manage custom domains for your organization.
-          </p>
-        </div>
-
-        <button
-          v-if="canAddDomain"
-          :disabled="hasDomain"
-          @click="openAddModal"
-          class="inline-flex items-center disabled:opacity-40 disabled:cursor-not-allowed gap-2 px-4 py-2.5 bg-accent text-white text-sm font-semibold rounded-lg hover:bg-accent/90 active:scale-95 transition-all shadow-lg shadow-accent/20 self-start sm:self-auto whitespace-nowrap"
-        >
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+    <!-- ── Error State ─────────────────────────────────────────────────────── -->
+    <template v-else-if="fetchError">
+      <div class="flex flex-col items-center justify-center py-16 px-4 text-center rounded-2xl border-2 border-dashed border-border/60 bg-border/5">
+        <div class="w-14 h-14 rounded-full bg-red-500/10 flex items-center justify-center mb-4">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
           </svg>
-          Add domain
-        </button>
-      </div>
-
-      <!-- ── Add domain inline form ───────────────────────────────────────── -->
-      <Transition
-        enter-active-class="transition-all duration-200 ease-out"
-        enter-from-class="opacity-0 scale-95"
-        enter-to-class="opacity-100 scale-100"
-        leave-active-class="transition-all duration-150 ease-in"
-        leave-from-class="opacity-100 scale-100"
-        leave-to-class="opacity-0 scale-95"
-      >
-        <div
-          v-if="showAddModal"
-          class="bg-bg-card border border-border/50 rounded-xl p-5 space-y-4"
-        >
-          <div class="flex items-center justify-between">
-            <h4 class="text-sm font-bold text-text-primary">Connect a domain</h4>
-            <button
-              @click="closeAddModal"
-              class="p-1.5 rounded-lg text-text-secondary hover:bg-border/20 hover:text-text-primary transition-all"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-              </svg>
-            </button>
-          </div>
-          <div class="space-y-1.5">
-            <label class="text-xs font-semibold text-text-secondary uppercase tracking-wider">Domain name</label>
-            <div class="flex gap-2">
-              <input
-                v-model="newDomain"
-                type="text"
-                placeholder="yourdomain.com"
-                class="flex-1 px-3.5 py-2.5 text-sm text-text-primary bg-border/10 border border-border/40 rounded-lg outline-none focus:border-accent/50 focus:bg-accent/5 transition-all placeholder:text-text-secondary/40"
-                :disabled="isAdding || !canAddDomain"
-                @keyup.enter="addDomain"
-              />
-              <button
-                @click="addDomain"
-                :disabled="!newDomain.trim() || isAdding || !canAddDomain"
-                class="px-4 py-2.5 text-sm font-semibold bg-accent text-white rounded-lg hover:bg-accent/90 active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1.5"
-              >
-                <svg
-                  v-if="isAdding"
-                  class="animate-spin"
-                  width="12" height="12"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2.5"
-                >
-                  <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
-                </svg>
-                {{ isAdding ? 'Connecting…' : 'Connect' }}
-              </button>
-            </div>
-            <p v-if="addError" class="text-xs text-red-400 flex items-center gap-1.5 mt-1">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-              </svg>
-              {{ addError }}
-            </p>
-          </div>
-          <p class="text-xs text-text-secondary leading-relaxed">
-            Enter your root domain (e.g.
-            <span class="font-mono text-text-primary bg-border/20 px-1.5 py-0.5 rounded">acme.com</span>).
-            We'll guide you through adding the required DNS records after connecting.
-          </p>
         </div>
-      </Transition>
-
-      <!-- ── Domain list ──────────────────────────────────────────────────── -->
-      <div
-        v-if="fetchError"
-        class="flex items-center gap-3 bg-red-500/5 border border-red-500/20 rounded-xl px-4 py-3.5"
-      >
-        <svg class="shrink-0 text-red-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-        </svg>
-        <p class="text-xs text-red-400">Failed to load domains. Please try again.</p>
-        <button @click="refetch()" class="ml-auto text-xs font-semibold text-red-400 hover:underline">
-          Retry
-        </button>
+        <h3 class="text-lg font-bold text-text-primary mb-1">Failed to load domains</h3>
+        <p class="text-sm text-text-secondary max-w-xs mb-6">There was an issue fetching your connection settings. Please try again.</p>
+        <button
+          @click="() => refetch()"
+          class="px-6 py-2.5 rounded-xl bg-accent text-white font-bold transition-all hover:scale-105 active:scale-95"
+        >Try again</button>
       </div>
+    </template>
 
-      <template v-else>
-        <!-- Empty state -->
-        <div
-          v-if="domains.length === 0"
-          class="flex flex-col items-center justify-center py-16 px-4 text-center border border-dashed border-border/40 rounded-xl"
-        >
-          <div class="w-12 h-12 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center mb-3">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="text-accent">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="2" y1="12" x2="22" y2="12"/>
-              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-            </svg>
-          </div>
-          <h3 class="text-sm font-bold text-text-primary mb-1">No domains connected</h3>
-          <p class="text-xs text-text-secondary mb-5 max-w-xs leading-relaxed">
-            Connect a custom domain to give your workspace a professional, branded URL.
-          </p>
-          <button
-            v-if="canAddDomain"
-            :disabled="hasDomain"
-            @click="openAddModal"
-            class="inline-flex items-center disabled:opacity-40 disabled:cursor-not-allowed gap-2 px-4 py-2 bg-accent text-white text-sm font-semibold rounded-lg hover:bg-accent/90 transition-all"
-          >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-            </svg>
-            Connect your first domain
-          </button>
-        </div>
+    <!-- ── Main Content ────────────────────────────────────────────────────── -->
+    <template v-else>
+      <!-- ════════════════════════════════════════════════════════
+           STEP 0: DOMAIN DASHBOARD (LIST)
+      ═══════════════════════════════════════════════════════════ -->
+      <div v-if="setupStep === 0" class="space-y-6">
+        <!-- AFTER -->
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+  <div>
+    <h2 class="text-xl font-black tracking-tight text-text-primary">Domain Management</h2>
+    <p class="text-sm text-text-secondary">Configure and verify custom domains for your workspace.</p>
+  </div>
+  <button
+    v-if="canAddDomain && domains.length"
+    @click="initWizard(null)"
+    class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-accent text-white font-black text-sm transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-accent/20 shrink-0"
+  >
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+    </svg>
+    Add Domain
+  </button>
+</div>
 
-        <!-- Domain cards -->
-        <div v-else class="space-y-3">
+        <!-- AFTER -->
+<div v-if="!domains.length" class="flex flex-col items-center justify-center py-16 px-4 text-center rounded-2xl border-2 border-dashed border-border/60 bg-border/5">
+  <div class="w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center mb-6 rotate-3">
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5">
+      <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+    </svg>
+  </div>
+  <h3 class="text-lg font-bold text-text-primary mb-2">No domains connected yet</h3>
+  <p class="text-sm text-text-secondary max-w-sm mb-8 leading-relaxed">
+    Connect a custom domain to professionalize your workspace. You'll need access to your DNS provider.
+  </p>
+  <button
+    v-if="canAddDomain"
+    @click="initWizard(null)"
+    class="flex items-center gap-2 px-6 py-3 rounded-xl bg-accent text-white font-black transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-accent/20"
+  >
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+    </svg>
+    Add Custom Domain
+  </button>
+</div>
+
+        <div v-else class="grid gap-4">
           <div
             v-for="domain in domains"
             :key="domain._id"
-            class="bg-bg-card border border-border/40 rounded-xl overflow-hidden hover:border-border/70 transition-all"
+            class="group relative overflow-hidden rounded-2xl border transition-all duration-300 hover:shadow-xl hover:shadow-accent/5"
+            :style="{ background: 'var(--bg-card)', borderColor: 'var(--border)' }"
           >
-            <!-- Card header -->
-            <div class="flex items-center justify-between px-4 py-3.5">
-              <div class="flex items-center gap-3 min-w-0">
-                <div class="w-8 h-8 rounded-lg bg-border/15 border border-border/30 flex items-center justify-center shrink-0">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="text-text-secondary">
-                    <circle cx="12" cy="12" r="10"/>
-                    <line x1="2" y1="12" x2="22" y2="12"/>
-                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-                  </svg>
-                </div>
-                <div class="min-w-0">
-                  <div class="flex items-center gap-2 flex-wrap">
-                    <p class="text-sm font-semibold text-text-primary truncate">{{ domain.domain }}</p>
-                    <span
-                      v-if="domain.is_primary"
-                      class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-accent/15 text-accent border border-accent/20"
-                    >Primary</span>
+            <!-- Domain Header -->
+            <div class="p-5 sm:p-6">
+              <div class="flex flex-col sm:flex-row sm:items-center gap-5">
+                <!-- Icon & Info -->
+                <div class="flex items-center gap-4 flex-1 min-w-0">
+                  <div
+                    class="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 border"
+                    :style="{ background: 'var(--bg-surface)', borderColor: 'var(--border)' }"
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="1.8">
+                      <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                    </svg>
                   </div>
-                  <p class="text-xs text-text-secondary mt-0.5">Added {{ formatDate(domain.created_at) }}</p>
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-2 mb-0.5">
+                      <h4 class="text-base font-bold text-text-primary truncate">{{ domain.domain }}</h4>
+                      <span v-if="domain.is_primary" class="shrink-0 px-2 py-0.5 rounded-md bg-accent/10 text-accent text-[10px] font-black uppercase tracking-wider">Primary</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                      <span :class="statusBadgeClass(domain.status)">
+                        <span :class="statusDotClass(domain.status)"></span>
+                        {{ statusLabel(domain.status) }}
+                      </span>
+                      <span class="text-[11px] font-medium text-text-secondary">Added {{ formatDate(domain.created_at) }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex items-center gap-2 shrink-0">
+                  <button
+                    v-if="domain.status === 'verified' && !domain.is_primary && canSetPrimaryDomain"
+                    @click="setPrimary(domain._id)"
+                    :disabled="isSettingPrimary"
+                    class="p-2.5 rounded-xl text-text-secondary hover:bg-accent/5 hover:text-accent transition-all disabled:opacity-30"
+                    title="Set as primary"
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                    </svg>
+                  </button>
+
+                  <button
+                    v-if="canManageDomain"
+                    @click="initWizard(domain)"
+                    class="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold border border-border bg-surface text-text-primary hover:border-accent/30 hover:bg-accent/5 transition-all"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                    </svg>
+                    Edit
+                  </button>
+
+                  <button
+                    v-if="domain.status !== 'verified' && canVerifyDomain"
+                    @click="initWizard(domain)"
+                    class="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold bg-accent text-accent-text transition-all hover:brightness-110 shadow-lg shadow-accent/20"
+                  >
+                    Verify Setup
+                  </button>
                 </div>
               </div>
 
-              <div class="flex items-center gap-1.5 shrink-0 ml-3">
-                <span :class="statusBadgeClass(domain.status)">
-                  <span :class="statusDotClass(domain.status)"></span>
-                  {{ statusLabel(domain.status) }}
-                </span>
-
-                <!-- Edit domain button -->
-                <button
-                  v-if="canManageDomain"
-                  @click="openEditModal(domain)"
-                  class="p-1.5 rounded-lg border cursor-pointer border-transparent text-text-secondary hover:bg-accent/10 hover:border-accent/20 hover:text-accent transition-all"
-                  title="Edit domain"
-                >
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                  </svg>
-                </button>
-
-                <!-- Set primary button -->
-                <button
-                  v-if="canSetPrimaryDomain && domain.status === 'verified' && !domain.is_primary"
-                  @click="setPrimary(domain._id)"
-                  :disabled="isSettingPrimary"
-                  class="p-1.5 rounded-lg border border-transparent text-text-secondary hover:bg-accent/10 hover:border-accent/20 hover:text-accent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  title="Set as primary domain"
-                >
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            <!-- Pending / Verifying / Failed banner -->
-            <div
-              v-if="domain.status === 'pending' || domain.status === 'verifying' || domain.status === 'failed'"
-              class="border-t border-border/30 px-4 py-3.5 space-y-3"
-            >
+              <!-- Pending Banner -->
               <div
-                class="flex items-start gap-3 rounded-lg px-3.5 py-3 border"
+                v-if="domain.status !== 'verified'"
+                class="mt-5 p-4 rounded-xl border flex items-start gap-3"
                 :style="pendingBannerStyle(domain.status)"
               >
-                <svg class="w-4 h-4 mt-0.5 shrink-0" viewBox="0 0 16 16" fill="none" :style="pendingIconStyle(domain.status)">
-                  <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.4"/>
-                  <path d="M8 5v4M8 11v.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                <svg class="shrink-0 mt-0.5" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" :style="pendingIconStyle(domain.status)">
+                  <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
                 </svg>
-                <div class="flex-1 min-w-0">
-                  <p class="text-xs font-semibold mb-0.5" :style="pendingIconStyle(domain.status)">
-                    {{ domain.status === 'failed' ? 'Verification failed' : 'Domain verification required' }}
+                <div class="flex-1">
+                  <p class="text-xs font-bold mb-0.5" :style="pendingIconStyle(domain.status)">
+                    {{ domain.status === 'failed' ? 'Verification Failed' : 'Pending Verification' }}
                   </p>
-                  <p class="text-xs leading-relaxed text-text-secondary">
-                    <template v-if="domain.status === 'failed'">
-                      The last DNS check failed. Please ensure your DNS records are correct and try again.
-                    </template>
-                    <template v-else>
-                      Your domain <strong class="text-text-primary">{{ domain.domain }}</strong> is not yet verified.
-                      Add the required DNS record at your registrar and verify to activate it.
-                    </template>
+                  <p class="text-xs text-text-secondary leading-relaxed">
+                    This domain is not yet active. Please complete the DNS verification steps to start using it.
                   </p>
                 </div>
-                <button
-                  v-if="canVerifyDomain"
-                  @click="openVerifyModal(domain)"
-                  class="shrink-0 inline-flex items-center cursor-pointer gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all active:scale-95"
-                  style="background: var(--accent); color: white;"
-                >
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <polyline points="20 6 9 17 4 12"/>
-                  </svg>
-                  Verify domain
-                </button>
               </div>
-
-              <!-- DNS records table -->
-              <div v-if="domain.instructions" class="rounded-lg border border-border/30 overflow-hidden">
-                <div class="grid grid-cols-12 gap-2 px-3 py-2 bg-border/10 border-b border-border/20">
-                  <p class="col-span-2 text-[10px] font-semibold uppercase tracking-wider text-text-secondary">Type</p>
-                  <p class="col-span-4 text-[10px] font-semibold uppercase tracking-wider text-text-secondary">Name</p>
-                  <p class="col-span-5 text-[10px] font-semibold uppercase tracking-wider text-text-secondary">Value</p>
-                  <p class="col-span-1 text-[10px] font-semibold uppercase tracking-wider text-text-secondary text-right">Status</p>
-                </div>
-                <div class="grid grid-cols-12 gap-2 px-3 py-2.5 items-center">
-                  <div class="col-span-2">
-                    <span class="inline-block px-1.5 py-0.5 text-[10px] font-bold rounded bg-border/20 text-text-secondary font-mono">
-                      {{ domain.instructions.record_type }}
-                    </span>
-                  </div>
-                  <div class="col-span-4 flex items-center gap-1.5 min-w-0">
-                    <p class="text-xs font-mono text-text-primary truncate">{{ getRecordHost(domain.instructions) }}</p>
-                    <button @click="copy(getRecordHost(domain.instructions))" class="copy-btn shrink-0">
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="9" y="9" width="13" height="13" rx="2"/>
-                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-                      </svg>
-                    </button>
-                  </div>
-                  <div class="col-span-5 flex items-center gap-1.5 min-w-0">
-                    <p class="text-xs font-mono text-text-secondary truncate">{{ getRecordValue(domain.instructions) }}</p>
-                    <button @click="copy(getRecordValue(domain.instructions))" class="copy-btn shrink-0">
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="9" y="9" width="13" height="13" rx="2"/>
-                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-                      </svg>
-                    </button>
-                  </div>
-                  <div class="col-span-1 flex justify-end">
-                    <span v-if="domain.last_check_result?.ok" class="text-emerald-400">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                        <polyline points="20 6 9 17 4 12"/>
-                      </svg>
-                    </span>
-                    <span v-else class="text-amber-400">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-                      </svg>
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <p v-if="domain.last_check_result && !domain.last_check_result.ok" class="text-xs text-amber-400 flex items-center gap-1.5">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-                </svg>
-                {{ domain.last_check_result.error }}
-              </p>
-              <p class="text-xs text-text-secondary leading-relaxed">
-                <svg class="inline mr-1 mb-0.5 text-amber-400" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-                </svg>
-                DNS changes can take up to <span class="font-semibold text-text-primary">24 hours</span> to propagate.
-              </p>
             </div>
 
-            <!-- ── Verified domain footer + Users section ─────────────────── -->
-            <template v-else-if="domain.status === 'verified'">
-              <div class="border-t border-border/30 px-4 py-3 flex flex-wrap items-center gap-x-5 gap-y-2">
-                <div class="flex items-center gap-1.5 text-xs text-text-secondary">
-                  <svg
-                    :class="domain.ssl_status === 'active' ? 'text-emerald-400' : 'text-text-secondary/40'"
-                    width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                  >
-                    <polyline points="20 6 9 17 4 12"/>
+            <!-- Domain Users Expansion -->
+            <div class="border-t border-border/40">
+              <button
+                @click="loadDomainUsers(domain._id)"
+                class="w-full flex items-center justify-between px-6 py-3 text-xs font-bold text-text-secondary hover:text-text-primary transition-all bg-border/5"
+              >
+                <div class="flex items-center gap-2">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
                   </svg>
-                  SSL {{ sslStatusLabel(domain.ssl_status) }}
+                  <span>Domain Users</span>
+                  <span v-if="domainUsersMap[domain._id]" class="ml-1 px-1.5 py-0.5 rounded-full bg-border text-[10px]">{{ domainUsersMap[domain._id].length }}</span>
                 </div>
-                <div class="flex items-center gap-1.5 text-xs text-text-secondary">
-                  <svg class="text-emerald-400" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <polyline points="20 6 9 17 4 12"/>
-                  </svg>
-                  DNS verified
+                <svg
+                  class="transition-transform duration-300"
+                  :class="{ 'rotate-180': domainUsersLoaded.has(domain._id) }"
+                  width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                ><path d="M6 9l6 6 6-6"/></svg>
+              </button>
+
+              <Transition
+                enter-active-class="transition-all duration-300 ease-out"
+                enter-from-class="max-h-0 opacity-0"
+                enter-to-class="max-h-[1000px] opacity-100"
+                leave-active-class="transition-all duration-200 ease-in"
+                leave-from-class="max-h-[1000px] opacity-100"
+                leave-to-class="max-h-0 opacity-0"
+              >
+                <div v-if="domainUsersLoaded.has(domain._id)" class="overflow-hidden">
+                  <div class="p-4 sm:p-6 space-y-4">
+                    <!-- User List Header -->
+                    <div class="flex items-center justify-between mb-2">
+                      <div class="flex items-center gap-3">
+                        <label class="flex items-center gap-2 cursor-pointer group/cb">
+                          <div
+                            class="w-4 h-4 rounded border flex items-center justify-center transition-all"
+                            :class="[
+                              isDomainAllSelected(domain._id) ? 'bg-accent border-accent' : 'border-border group-hover/cb:border-accent/50'
+                            ]"
+                            @click.stop="toggleDomainSelectAll(domain._id)"
+                          >
+                            <svg v-if="isDomainAllSelected(domain._id)" width="10" height="10" viewBox="0 0 10 10" fill="none">
+                              <path d="M2 5l2 2 4-4" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <div v-else-if="isDomainPartiallySelected(domain._id)" class="w-2 h-0.5 bg-accent rounded-full"></div>
+                          </div>
+                          <span class="text-[11px] font-bold text-text-secondary uppercase tracking-wider">Select All</span>
+                        </label>
+                        <button
+                          v-if="(domainSelectedIds[domain._id] ?? []).length"
+                          @click="openTransferModal(domain._id, domain.domain)"
+                          class="px-3 py-1.5 rounded-lg bg-green-500 text-white text-[10px] font-black uppercase tracking-wider transition-all hover:brightness-110 shadow-lg shadow-green-500/20"
+                        >
+                          Enrol Selected ({{ domainSelectedIds[domain._id].length }})
+                        </button>
+                      </div>
+                      <button
+                        @click="openCreateUserModal(domain._id)"
+                        class="text-[11px] font-black text-accent uppercase tracking-widest hover:underline"
+                      >+ Create User</button>
+                    </div>
+
+                    <!-- User Items -->
+                    <div class="grid gap-2">
+                      <div
+                        v-for="user in domainUsersMap[domain._id]"
+                        :key="user._id"
+                        class="flex items-center gap-4 p-3 rounded-xl border border-border/40 bg-border/5 transition-all hover:bg-border/10 hover:border-border"
+                      >
+                        <div
+                          class="w-4 h-4 rounded border flex items-center justify-center cursor-pointer transition-all shrink-0"
+                          :class="[
+                            (domainSelectedIds[domain._id] ?? []).includes(user._id) ? 'bg-accent border-accent' : 'border-border'
+                          ]"
+                          @click="toggleDomainUser(domain._id, user._id)"
+                        >
+                          <svg v-if="(domainSelectedIds[domain._id] ?? []).includes(user._id)" width="10" height="10" viewBox="0 0 10 10" fill="none">
+                            <path d="M2 5l2 2 4-4" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                          </svg>
+                        </div>
+
+                        <div class="w-8 h-8 rounded-full bg-border/20 flex items-center justify-center text-[10px] font-bold text-text-secondary uppercase">
+                          {{ getInitials(user.u_full_name) }}
+                        </div>
+
+                        <div class="flex-1 min-w-0">
+                          <p class="text-xs font-bold text-text-primary truncate">{{ user.u_full_name }}</p>
+                          <p class="text-[10px] text-text-secondary truncate">{{ user.u_email }}</p>
+                        </div>
+
+                        <span
+                          class="px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider"
+                          :class="user.is_active ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'"
+                        >
+                          {{ user.is_active ? 'Active' : 'Inactive' }}
+                        </span>
+                      </div>
+
+                      <div v-if="!domainUsersMap[domain._id]?.length" class="py-10 text-center">
+                        <p class="text-xs text-text-secondary italic">No users found for this domain.</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div v-if="domain.verified_at" class="flex items-center gap-1.5 text-xs text-text-secondary">
-                  <svg class="text-emerald-400" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <polyline points="20 6 9 17 4 12"/>
-                  </svg>
-                  Verified {{ formatDate(domain.verified_at) }}
-                </div>
-                <a
-                  :href="`https://${domain.domain}`"
-                  target="_blank"
-                  rel="noopener"
-                  class="ml-auto inline-flex items-center gap-1.5 text-xs font-semibold text-accent hover:underline"
-                >
-                  Visit site
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-                    <polyline points="15 3 21 3 21 9"/>
-                    <line x1="10" y1="14" x2="21" y2="3"/>
-                  </svg>
-                </a>
-              </div>
-
-              <!-- ── Domain Users Section ──────────────────────────────────── -->
-              <!-- ── Domain Users Section (replace the old one inside verified block) ──────── -->
-<div class="border-t border-border/30 px-4 py-4 space-y-4">
-
-  <!-- Section header -->
-  <div class="flex items-center justify-between gap-3">
-    <div>
-      <h4 class="text-sm font-bold text-text-primary flex items-center gap-2">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-accent">
-          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-          <circle cx="9" cy="7" r="4"/>
-          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-        </svg>
-        Domain Users
-        <span class="text-[10px] font-medium text-text-secondary bg-bg-body border border-border/50 px-1.5 py-0.5 rounded-full">
-          {{ domainUsersForDomain(domain._id).length }}
-        </span>
-      </h4>
-      <p class="text-xs text-text-secondary mt-0.5">
-        Select users to add them to your organization.
-      </p>
-    </div>
-
-    <div class="flex items-center gap-2">
-      <!-- Confirm transfer button — only when users selected -->
-      <Transition
-        enter-active-class="transition-all duration-200 ease-out"
-        enter-from-class="opacity-0 scale-95"
-        enter-to-class="opacity-100 scale-100"
-        leave-active-class="transition-all duration-150 ease-in"
-        leave-from-class="opacity-100 scale-100"
-        leave-to-class="opacity-0 scale-95"
-      >
-        <button
-          v-if="(domainSelectedIds[domain._id] ?? []).length > 0"
-          @click="openTransferModal(domain._id, domain.domain)"
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-500 text-white text-xs font-semibold rounded-lg hover:bg-green-600 active:scale-95 transition-all shadow-md shadow-green-500/20"
-        >
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-            <circle cx="9" cy="7" r="4"/>
-            <polyline points="16 11 18 13 22 9"/>
-          </svg>
-          Confirm
-          <span class="bg-white/25 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
-            {{ (domainSelectedIds[domain._id] ?? []).length }}
-          </span>
-        </button>
-      </Transition>
-
-      <!-- Refresh button -->
-      <button
-        @click="loadDomainUsers(domain._id)"
-        :disabled="loadingDomainUsers === domain._id"
-        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold border border-border/50 text-text-secondary rounded-lg hover:border-accent/40 hover:text-accent transition-all disabled:opacity-50"
-      >
-        <svg
-          v-if="loadingDomainUsers === domain._id"
-          class="animate-spin" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-        ><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-        <svg v-else width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>
-        </svg>
-        Refresh
-      </button>
-    </div>
-  </div>
-
-  <!-- Loading skeleton -->
-  <div v-if="loadingDomainUsers === domain._id" class="space-y-2">
-    <div v-for="i in 3" :key="i" class="flex items-center gap-3 px-3.5 py-3 rounded-xl border border-border/30 animate-pulse">
-      <div class="w-4 h-4 rounded bg-border/20 shrink-0"></div>
-      <div class="w-8 h-8 rounded-full bg-border/20 shrink-0"></div>
-      <div class="flex-1 space-y-1.5">
-        <div class="h-3 w-32 bg-border/20 rounded"></div>
-        <div class="h-2.5 w-40 bg-border/15 rounded"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- No users found -->
-  <template v-else-if="domainUsersLoaded.has(domain._id) && domainUsersForDomain(domain._id).length === 0">
-    <div class="flex flex-col items-center justify-center py-8 px-4 text-center border border-dashed border-border/40 rounded-xl">
-      <div class="w-10 h-10 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center mb-3">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="text-accent">
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-        </svg>
-      </div>
-      <h4 class="text-sm font-bold text-text-primary mb-1">No domain users found</h4>
-      <p class="text-xs text-text-secondary mb-4 max-w-xs leading-relaxed">
-        No users are associated with this domain yet. Create the first user to get started.
-      </p>
-      <button
-        @click="openCreateUserModal(domain._id)"
-        class="inline-flex items-center gap-2 px-4 py-2 bg-accent text-white text-xs font-semibold rounded-lg hover:bg-accent/90 transition-all"
-      >
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-        </svg>
-        Create first user
-      </button>
-    </div>
-  </template>
-
-  <!-- Users list with checkboxes -->
-  <template v-else-if="domainUsersForDomain(domain._id).length > 0">
-
-    <!-- Select all row -->
-    <div class="flex items-center justify-between px-1">
-      <div class="flex items-center gap-2.5">
-        <button
-          @click="toggleDomainSelectAll(domain._id)"
-          class="w-4 h-4 rounded border flex items-center justify-center transition-all shrink-0"
-          :class="isDomainAllSelected(domain._id)
-            ? 'bg-accent border-accent'
-            : isDomainPartiallySelected(domain._id)
-              ? 'bg-accent/20 border-accent/60'
-              : 'border-border/60 bg-transparent hover:border-accent/40'"
-        >
-          <i
-            v-if="isDomainAllSelected(domain._id) || isDomainPartiallySelected(domain._id)"
-            class="text-white text-[8px]"
-            :class="isDomainAllSelected(domain._id) ? 'fa-solid fa-check' : 'fa-solid fa-minus'"
-          ></i>
-        </button>
-        <span class="text-[11px] text-text-secondary font-medium select-none">
-          Select all
-          <span v-if="(domainSelectedIds[domain._id] ?? []).length > 0" class="text-accent font-semibold ml-0.5">
-            ({{ (domainSelectedIds[domain._id] ?? []).length }} selected)
-          </span>
-        </span>
-      </div>
-
-      <button
-        v-if="(domainSelectedIds[domain._id] ?? []).length > 0"
-        @click="clearDomainSelection(domain._id)"
-        class="text-[11px] text-text-secondary hover:text-text-primary transition-all"
-      >
-        Clear
-      </button>
-    </div>
-
-    <!-- User rows -->
-    <div class="space-y-2">
-      <div
-        v-for="user in domainUsersForDomain(domain._id)"
-        :key="user._id"
-        @click="toggleDomainUser(domain._id, user._id)"
-        class="flex items-center gap-3 px-3.5 py-3 rounded-xl border transition-all cursor-pointer select-none group"
-        :class="(domainSelectedIds[domain._id] ?? []).includes(user._id)
-          ? 'border-green-500/40 bg-green-500/5'
-          : 'border-border/40 bg-bg-body/40 hover:border-border/70 hover:bg-bg-body/60'"
-      >
-        <!-- Checkbox -->
-        <div
-          class="w-4 h-4 rounded border flex items-center justify-center transition-all shrink-0"
-          :class="(domainSelectedIds[domain._id] ?? []).includes(user._id)
-            ? 'bg-green-500 border-green-500'
-            : 'border-border/60 group-hover:border-green-500/50'"
-        >
-          <svg
-            v-if="(domainSelectedIds[domain._id] ?? []).includes(user._id)"
-            width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3.5"
-          ><polyline points="20 6 9 17 4 12"/></svg>
-        </div>
-
-        <!-- Avatar -->
-        <div
-          class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 overflow-hidden transition-all"
-          :class="(domainSelectedIds[domain._id] ?? []).includes(user._id)
-            ? 'bg-green-500/20 text-green-600'
-            : 'bg-gradient-to-br from-accent/30 to-accent/10 text-accent'"
-        >
-          <img v-if="user.u_profile_picture" :src="user.u_profile_picture" class="w-full h-full object-cover" :alt="user.u_full_name" />
-          <span v-else>{{ getInitials(user.u_full_name) }}</span>
-        </div>
-
-        <!-- Info -->
-        <div class="flex-1 min-w-0">
-          <div class="flex items-center gap-2 flex-wrap">
-            <span class="text-sm font-semibold text-text-primary truncate">{{ user.u_full_name }}</span>
+              </Transition>
+            </div>
           </div>
-          <p class="text-xs text-text-secondary truncate">{{ user.u_email }}</p>
         </div>
 
-        <!-- Right indicator -->
-        <svg
-          class="shrink-0 transition-all"
-          :class="(domainSelectedIds[domain._id] ?? []).includes(user._id)
-            ? 'text-green-500 opacity-100'
-            : 'text-border/60 opacity-0 group-hover:opacity-100'"
-          width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-        >
-          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-          <polyline points="22 4 12 14.01 9 11.01"/>
-        </svg>
+        <!-- Info banner -->
+        <div class="flex items-start gap-3 bg-blue-500/5 border border-blue-500/15 rounded-xl px-4 py-3.5">
+          <svg class="shrink-0 mt-0.5 text-blue-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+          </svg>
+          <p class="text-xs text-blue-400 leading-relaxed">
+            Only verified domains can serve your workspace. Make sure all required DNS records are added at your
+            domain registrar (e.g. GoDaddy, Namecheap, Cloudflare) before clicking
+            <span class="font-semibold">Verify domain</span>.
+          </p>
+        </div>
       </div>
-    </div>
 
-    <!-- Bottom actions row -->
-    <div class="flex items-center justify-between gap-3 pt-1">
-      <button
-        @click="openCreateUserModal(domain._id)"
-        class="inline-flex items-center gap-1.5 text-xs font-medium text-text-secondary hover:text-accent transition-all"
-      >
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-        </svg>
-        Add another user
-      </button>
-
-      <button
-        @click="openTransferModal(domain._id, domain.domain)"
-        :disabled="!(domainSelectedIds[domain._id] ?? []).length"
-        class="inline-flex items-center gap-2 px-4 py-2 bg-green-500 text-white text-xs font-semibold rounded-lg hover:bg-green-600 active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-md shadow-green-500/20"
-      >
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-          <circle cx="9" cy="7" r="4"/>
-          <polyline points="16 11 18 13 22 9"/>
-        </svg>
-        Confirm
-        <span v-if="(domainSelectedIds[domain._id] ?? []).length > 0">
-          {{ (domainSelectedIds[domain._id] ?? []).length }} user{{ (domainSelectedIds[domain._id] ?? []).length !== 1 ? 's' : '' }}
-        </span>
-      </button>
-    </div>
-  </template>
-
-  <!-- Prompt to load (initial state) -->
-  <template v-else>
-    <button
-      @click="loadDomainUsers(domain._id)"
-      class="w-full py-3 rounded-xl border border-dashed border-border/40 text-xs font-medium text-text-secondary hover:border-accent/40 hover:text-accent transition-all flex items-center justify-center gap-2"
-    >
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-      </svg>
-      Load domain users
-    </button>
-  </template>
-</div>
-
-
-<!-- ════════════════════════════════════════════════════════
-     TRANSFER CONFIRMATION MODAL
-     Place this just before the closing </div> of the main template,
-     alongside your other modals (verify, edit, create user)
-═══════════════════════════════════════════════════════════ -->
-<Transition
-  enter-active-class="transition duration-200 ease-out"
-  enter-from-class="opacity-0"
-  enter-to-class="opacity-100"
-  leave-active-class="transition duration-150 ease-in"
-  leave-from-class="opacity-100"
-  leave-to-class="opacity-0"
->
-  <div
-    v-if="showTransferModal"
-    class="fixed inset-0 z-[60] flex items-center justify-center bg-black/55 backdrop-blur-sm px-4"
-    @click.self="showTransferModal = false"
-  >
-    <Transition
-      enter-active-class="transition duration-250 ease-out"
-      enter-from-class="opacity-0 scale-95 translate-y-3"
-      enter-to-class="opacity-100 scale-100 translate-y-0"
-      leave-active-class="transition duration-150 ease-in"
-      leave-from-class="opacity-100 scale-100"
-      leave-to-class="opacity-0 scale-95"
-      appear
-    >
-      <div
-        v-if="showTransferModal"
-        class="w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden"
-        style="background: var(--bg-card); border: 1px solid var(--border);"
-      >
-        <!-- Modal header -->
-        <div class="px-6 pt-6 pb-5 border-b" style="border-color: var(--border);">
-          <div class="flex items-start gap-4">
-            <!-- Warning icon -->
+      <!-- ════════════════════════════════════════════════════════
+           DOMAIN WIZARD (STEPS 1-5)
+      ═══════════════════════════════════════════════════════════ -->
+      <div v-else class="max-w-2xl mx-auto py-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <!-- Wizard Header -->
+        <div class="mb-8 flex items-center justify-between">
+          <button
+            @click="setupStep = 0"
+            class="flex items-center gap-2 text-xs font-black text-text-secondary uppercase tracking-widest hover:text-text-primary transition-all group"
+          >
+            <svg class="transition-transform group-hover:-translate-x-1" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+              <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+            </svg>
+            Back to Dashboard
+          </button>
+          <div class="flex items-center gap-2">
             <div
-              class="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
-              style="background: color-mix(in srgb, #f59e0b 12%, transparent); border: 1.5px solid color-mix(in srgb, #f59e0b 30%, transparent);"
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2">
-                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-                <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-              </svg>
-            </div>
-            <div class="flex-1 min-w-0">
-              <h3 class="text-base font-bold text-text-primary">Confirm User Transfer</h3>
-              <p class="text-xs text-text-secondary mt-1 leading-relaxed">
-                You are about to add
-                <span class="font-semibold text-text-primary">
-                  {{ transferSelectedUsers.length }} user{{ transferSelectedUsers.length !== 1 ? 's' : '' }}
-                </span>
-                with the
-                <code
-                  class="px-1.5 py-0.5 rounded text-[11px] font-mono font-semibold"
-                  style="background: color-mix(in srgb, var(--accent) 10%, transparent); color: var(--accent);"
-                >@{{ transferDomainName }}</code>
-                email domain to your organization.
-              </p>
+              v-for="s in 5"
+              :key="s"
+              class="h-1.5 rounded-full transition-all duration-500"
+              :class="[
+                setupStep === s ? 'w-8 bg-accent' : setupStep > s ? 'w-4 bg-emerald-500' : 'w-4 bg-border'
+              ]"
+            ></div>
+          </div>
+        </div>
+
+        <!-- ── Step 1: Domain Entry ─────────────────────────────────────────── -->
+        <div v-if="setupStep === 1" class="space-y-6">
+          <div class="text-center space-y-2">
+            <h2 class="text-2xl font-black text-text-primary">Connect your domain</h2>
+            <p class="text-sm text-text-secondary">Enter the domain name you want to connect to your workspace.</p>
+          </div>
+          <div class="bg-card border border-border p-8 rounded-3xl space-y-6 shadow-xl shadow-border/20">
+            <div class="space-y-2">
+              <label class="text-[11px] font-black text-text-secondary uppercase tracking-widest px-1">Domain Name</label>
+              <div class="relative group">
+                <input
+                  v-model="newDomainInput"
+                  type="text"
+                  placeholder="domain.com"
+                  class="w-full pl-5 pr-5 py-4 bg-surface border-2 border-border/40 rounded-2xl outline-none text-base font-bold text-text-primary transition-all focus:border-accent group-hover:border-border"
+                />
+              </div>
+              <p v-if="addError" class="text-[11px] font-bold text-red-500 px-1">{{ addError }}</p>
             </div>
             <button
-              @click="showTransferModal = false"
-              class="p-1.5 rounded-lg text-text-secondary hover:bg-border/20 hover:text-text-primary transition-all shrink-0 -mt-1 -mr-1"
+              @click="addDomain"
+              :disabled="isAddingDomain || !newDomainInput.trim()"
+              class="w-full py-4 rounded-2xl bg-accent text-white font-black text-base transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3 shadow-xl shadow-accent/25"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-              </svg>
+              <span v-if="isAddingDomain" class="w-5 h-5 border-3 border-white/30 border-t-white rounded-full animate-spin"></span>
+              {{ isAddingDomain ? 'Processing...' : 'Continue to DNS Setup' }}
             </button>
           </div>
         </div>
 
-        <!-- Modal body -->
-        <div class="px-6 py-5 space-y-4 max-h-[60vh] overflow-y-auto custom-scroll">
+        <!-- ── Step 2: DNS Setup ────────────────────────────────────────────── -->
+        <div v-else-if="setupStep === 2" class="space-y-6">
+          <div class="text-center space-y-2">
+            <h2 class="text-2xl font-black text-text-primary">Configure DNS Settings</h2>
+            <p class="text-sm text-text-secondary">Add these records to your domain's DNS settings at your registrar.</p>
+          </div>
 
-          <!-- Selected users preview -->
-          <div class="rounded-xl overflow-hidden border" style="border-color: var(--border);">
-            <div
-              class="flex items-center gap-2 px-3 py-2 border-b"
-              style="background: var(--bg-surface); border-color: var(--border);"
-            >
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-text-secondary">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                <circle cx="9" cy="7" r="4"/>
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-              </svg>
-              <span class="text-[10px] font-bold uppercase tracking-wider text-text-secondary">
-                Users to transfer ({{ transferSelectedUsers.length }})
-              </span>
+          <div v-if="wizardInstructions" class="bg-card border border-border p-8 rounded-3xl space-y-6 shadow-xl shadow-border/20">
+            <!-- Record Info -->
+            <div class="grid grid-cols-2 gap-4 p-4 rounded-2xl bg-surface border border-border">
+              <div class="space-y-1">
+                <p class="text-[10px] font-black text-text-secondary uppercase tracking-widest">Record Type</p>
+                <p class="text-sm font-black text-text-primary">{{ getRecordType(wizardInstructions) }}</p>
+              </div>
+              <div class="space-y-1">
+                <p class="text-[10px] font-black text-text-secondary uppercase tracking-widest">Recommended TTL</p>
+                <p class="text-sm font-black text-text-primary">{{ wizardInstructions.ttl_recommended ? wizardInstructions.ttl_recommended + 's' : 'N/A' }}</p>
+              </div>
             </div>
 
-            <div class="divide-y" style="divide-color: var(--border);">
-              <div
-                v-for="user in transferSelectedUsers.slice(0, 4)"
-                :key="user._id"
-                class="flex items-center gap-3 px-3 py-2.5"
-              >
-                <div
-                  class="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 overflow-hidden"
-                  style="background: color-mix(in srgb, var(--accent) 15%, transparent); color: var(--accent);"
-                >
-                  <img v-if="user.u_profile_picture" :src="user.u_profile_picture" class="w-full h-full object-cover" :alt="user.u_full_name" />
-                  <span v-else>{{ getInitials(user.u_full_name) }}</span>
-                </div>
-                <div class="min-w-0 flex-1">
-                  <p class="text-xs font-semibold text-text-primary truncate">{{ user.u_full_name }}</p>
-                  <p class="text-[11px] text-text-secondary truncate">{{ user.u_email }}</p>
-                </div>
-                <svg class="shrink-0 text-green-500" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <polyline points="20 6 9 17 4 12"/>
+            <!-- Host Field -->
+            <div class="space-y-2">
+              <div class="flex items-center justify-between px-1">
+                <label class="text-[11px] font-black text-text-secondary uppercase tracking-widest">Host / Name</label>
+                <button @click="copy(getRecordHost(wizardInstructions))" class="text-[10px] font-black text-accent uppercase tracking-widest hover:underline">Copy</button>
+              </div>
+              <div class="p-4 bg-surface border border-border rounded-2xl font-mono text-sm break-all text-text-primary">
+                {{ getRecordHost(wizardInstructions) }}
+              </div>
+            </div>
+
+            <!-- Value Field -->
+            <div class="space-y-2">
+              <div class="flex items-center justify-between px-1">
+                <label class="text-[11px] font-black text-text-secondary uppercase tracking-widest">Value / Points to</label>
+                <button @click="copy(getRecordValue(wizardInstructions))" class="text-[10px] font-black text-accent uppercase tracking-widest hover:underline">Copy</button>
+              </div>
+              <div class="p-4 bg-surface border border-border rounded-2xl font-mono text-sm break-all text-text-primary">
+                {{ getRecordValue(wizardInstructions) }}
+              </div>
+            </div>
+
+            <div class="p-4 bg-amber-500/5 border border-amber-500/20 rounded-2xl">
+              <p class="text-[11px] text-amber-500 leading-relaxed font-medium">
+                <strong>Note:</strong> DNS changes can take up to 24-48 hours to propagate globally, though they are usually ready in minutes.
+              </p>
+            </div>
+
+            <button
+              @click="setupStep = 3"
+              class="w-full py-4 rounded-2xl bg-accent text-white font-black text-base transition-all hover:scale-[1.02] active:scale-[0.98] shadow-xl shadow-accent/25"
+            >
+              Verify Connection
+            </button>
+          </div>
+        </div>
+
+        <!-- ── Step 3: Verification ─────────────────────────────────────────── -->
+        <div v-else-if="setupStep === 3" class="space-y-6">
+          <div class="text-center space-y-2">
+            <h2 class="text-2xl font-black text-text-primary">Verifying DNS...</h2>
+            <p class="text-sm text-text-secondary">We're checking if your DNS records are correctly configured.</p>
+          </div>
+
+          <div class="bg-card border border-border p-12 rounded-3xl flex flex-col items-center text-center space-y-6 shadow-xl shadow-border/20">
+            <div class="relative">
+              <div class="w-24 h-24 rounded-full border-4 border-accent/10 border-t-accent animate-spin"></div>
+              <div class="absolute inset-0 flex items-center justify-center">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
                 </svg>
               </div>
+            </div>
 
-              <!-- Overflow -->
-              <div
-                v-if="transferSelectedUsers.length > 4"
-                class="flex items-center gap-3 px-3 py-2.5"
-              >
+            <div class="space-y-1">
+              <h3 class="text-lg font-bold text-text-primary">{{ wizardDomain?.domain }}</h3>
+              <p class="text-sm text-text-secondary">This usually takes about 30-60 seconds.</p>
+            </div>
+
+            <div v-if="wizardError" class="p-4 bg-red-500/5 border border-red-500/20 rounded-2xl w-full max-w-xs">
+              <p class="text-xs font-bold text-red-500">{{ wizardError }}</p>
+            </div>
+
+            <div v-if="modalRetryCountdown > 0" class="w-full max-w-xs space-y-2">
+              <div class="flex items-center justify-between px-1">
+                <span class="text-[10px] font-black text-text-secondary uppercase tracking-widest">Rate limiting</span>
+                <span class="text-[10px] font-black text-text-primary tabular-nums">{{ modalRetryCountdown }}s</span>
+              </div>
+              <div class="h-1.5 w-full bg-border rounded-full overflow-hidden">
                 <div
-                  class="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
-                  style="background: var(--bg-surface); border: 1px solid var(--border);"
-                >
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-text-secondary">
-                    <circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>
-                  </svg>
-                </div>
-                <p class="text-xs text-text-secondary">
-                  +{{ transferSelectedUsers.length - 4 }} more user{{ transferSelectedUsers.length - 4 !== 1 ? 's' : '' }}
-                </p>
+                  class="h-full bg-accent transition-all duration-1000"
+                  :style="{ width: `${(modalRetryCountdown / modalRetryTotal) * 100}%` }"
+                ></div>
               </div>
             </div>
-          </div>
 
-          <!-- Impact heading -->
-          <p class="text-[11px] font-bold uppercase tracking-wider text-text-secondary">
-            Once confirmed, this action may impact:
-          </p>
-
-          <!-- Impact items -->
-          <div class="space-y-2">
-            <div
-              v-for="impact in transferImpacts"
-              :key="impact.label"
-              class="flex items-start gap-3 rounded-xl px-3.5 py-3 border transition-all"
-              style="border-color: var(--border); background: var(--bg-surface);"
+            <button
+              @click="runWizardVerification"
+              :disabled="isModalVerifying || modalRetryCountdown > 0"
+              class="px-8 py-3 rounded-xl border-2 border-border font-black text-sm text-text-primary hover:bg-border/40 transition-all disabled:opacity-50"
             >
-              <div
-                class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
-                :style="{ background: impact.bg, border: `1px solid ${impact.border}` }"
-              >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" :stroke="impact.color" stroke-width="2">
-                  <component :is="'path'" v-for="(d, i) in impact.paths" :key="i" :d="d"/>
-                </svg>
+              {{ isModalVerifying ? 'Checking...' : 'Check Again' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- ── Step 4: Super Admin ─────────────────────────────────────────── -->
+        <div v-else-if="setupStep === 4" class="space-y-6">
+          <div class="text-center space-y-2">
+            <h2 class="text-2xl font-black text-text-primary">Create Super Admin</h2>
+            <p class="text-sm text-text-secondary">Every verified domain needs a designated Super Admin account.</p>
+          </div>
+
+          <div class="bg-card border border-border p-8 rounded-3xl space-y-6 shadow-xl shadow-border/20">
+            <div class="grid grid-cols-2 gap-4">
+              <div class="space-y-2">
+                <label class="text-[11px] font-black text-text-secondary uppercase tracking-widest px-1">Full Name</label>
+                <input
+                  v-model="adminName"
+                  type="text"
+                  placeholder="John Doe"
+                  class="w-full px-5 py-4 bg-surface border-2 border-border/40 rounded-2xl outline-none text-base font-bold text-text-primary transition-all focus:border-accent"
+                />
               </div>
-              <div>
-                <p class="text-xs font-semibold text-text-primary">{{ impact.label }}</p>
-                <p class="text-[11px] text-text-secondary mt-0.5 leading-relaxed">{{ impact.description }}</p>
+              <div class="space-y-2">
+                <label class="text-[11px] font-black text-text-secondary uppercase tracking-widest px-1">Job Title</label>
+                <input
+                  v-model="adminJobTitle"
+                  type="text"
+                  placeholder="e.g. CTO"
+                  class="w-full px-5 py-4 bg-surface border-2 border-border/40 rounded-2xl outline-none text-base font-bold text-text-primary transition-all focus:border-accent"
+                />
               </div>
             </div>
-          </div>
 
-          <!-- 48h notice -->
-          <div
-            class="flex items-start gap-3 rounded-xl px-4 py-3 border"
-            style="background: color-mix(in srgb, #3b82f6 6%, transparent); border-color: color-mix(in srgb, #3b82f6 20%, transparent);"
-          >
-            <svg class="shrink-0 mt-0.5" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2">
-              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-            </svg>
-            <p class="text-xs leading-relaxed" style="color: #3b82f6;">
-              Please review carefully. You have up to
-              <strong style="color: #2563eb;">48 hours</strong>
-              to confirm, or you can confirm immediately to apply the changes now.
-            </p>
-          </div>
-        </div>
+            <div class="space-y-2">
+              <label class="text-[11px] font-black text-text-secondary uppercase tracking-widest px-1">Super Admin Email</label>
+              <div class="flex items-center gap-0 border-2 border-border/40 rounded-2xl bg-surface focus-within:border-accent transition-all overflow-hidden">
+                <input
+                  v-model="emailPrefix"
+                  type="text"
+                  placeholder="admin"
+                  class="flex-1 px-5 py-4 bg-transparent outline-none text-base font-bold text-text-primary"
+                />
+                <div class="px-5 py-4 bg-border/20 border-l border-border/40 text-text-secondary font-bold">
+                  @{{ wizardDomain?.domain }}
+                </div>
+              </div>
+            </div>
 
-        <!-- Modal footer -->
-        <div class="px-6 py-4 border-t flex flex-col-reverse sm:flex-row items-center gap-2.5 sm:justify-end" style="border-color: var(--border);">
-          <button
-            @click="showTransferModal = false"
-            :disabled="isTransferring"
-            class="w-full sm:w-auto px-5 py-2.5 text-sm font-medium rounded-lg border transition-all text-text-secondary hover:text-text-primary hover:border-border disabled:opacity-50"
-            style="border-color: var(--border);"
-          >
-            Cancel
-          </button>
+            <div class="space-y-2">
+              <label class="text-[11px] font-black text-text-secondary uppercase tracking-widest px-1">Password</label>
+              <div class="relative">
+                <input
+                  v-model="adminPassword"
+                  :type="showCreatePassword ? 'text' : 'password'"
+                  placeholder="••••••••"
+                  class="w-full px-5 py-4 bg-surface border-2 border-border/40 rounded-2xl outline-none text-base font-bold text-text-primary transition-all focus:border-accent"
+                />
+                <button @click="showCreatePassword = !showCreatePassword" class="absolute right-5 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary">
+                  <svg v-if="showCreatePassword" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                  <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+              </div>
+            </div>
 
-          <button
-            @click="handleConfirmTransfer"
-            :disabled="isTransferring"
-            class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-bold rounded-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed shadow-lg"
-            style="background: #22c55e; color: white; box-shadow: 0 4px 14px color-mix(in srgb, #22c55e 30%, transparent);"
-          >
-            <svg
-              v-if="isTransferring"
-              class="animate-spin" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"
-            ><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-            <svg v-else width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
-              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-              <circle cx="9" cy="7" r="4"/>
-              <polyline points="16 11 18 13 22 9"/>
-            </svg>
-            {{ isTransferring ? 'Confirming…' : 'Confirm Users' }}
-          </button>
-        </div>
-      </div>
-    </Transition>
-  </div>
-</Transition>
-            </template>
+            <p v-if="createUserServerError" class="text-[11px] font-bold text-red-500 px-1">{{ createUserServerError }}</p>
+
+            <button
+              @click="submitWizardAdmin"
+              :disabled="isCreatingUser || !isAdminFormValid"
+              class="w-full py-4 rounded-2xl bg-accent text-white font-black text-base transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 shadow-xl shadow-accent/25"
+            >
+              {{ isCreatingUser ? 'Creating Account...' : 'Continue to Verification' }}
+            </button>
           </div>
         </div>
-      </template>
 
-      <!-- ── Info banner ───────────────────────────────────────────────────── -->
-      <div class="flex items-start gap-3 bg-blue-500/5 border border-blue-500/15 rounded-xl px-4 py-3.5">
-        <svg class="shrink-0 mt-0.5 text-blue-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-          <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
-        </svg>
-        <p class="text-xs text-blue-400 leading-relaxed">
-          Only verified domains can serve your workspace. Make sure all required DNS records are added at your
-          domain registrar (e.g. GoDaddy, Namecheap, Cloudflare) before clicking
-          <span class="font-semibold">Verify domain</span>.
-        </p>
+        <!-- ── Step 5: OTP ─────────────────────────────────────────────────── -->
+        <div v-else-if="setupStep === 5" class="space-y-6">
+          <div class="text-center space-y-2">
+            <h2 class="text-2xl font-black text-text-primary">Verify your account</h2>
+            <p class="text-sm text-text-secondary">We've sent a 5-digit code to <strong>{{ emailPrefix }}@{{ wizardDomain?.domain }}</strong></p>
+          </div>
+
+          <div class="bg-card border border-border p-8 rounded-3xl space-y-8 shadow-xl shadow-border/20 text-center">
+            <div class="flex justify-center gap-3">
+              <input
+                v-for="(idx) in 5"
+                :key="idx"
+                :ref="el => otpInputs[idx] = el"
+                v-model="otpDigits[idx]"
+                type="text"
+                maxlength="1"
+                class="w-14 h-16 bg-surface border-2 border-border/40 rounded-2xl text-center text-2xl font-black text-text-primary focus:border-accent focus:ring-4 focus:ring-accent/10 transition-all outline-none"
+                @input="handleOtpInput($event, idx)"
+                @keydown.delete="handleOtpDelete($event, idx)"
+              />
+            </div>
+
+            <div class="space-y-4">
+              <p v-if="otpError" class="text-sm font-bold text-red-500">{{ otpError }}</p>
+              <button
+                @click="verifyWizardOtp"
+                :disabled="isVerifyingOtp || !isOtpComplete"
+                class="w-full py-4 rounded-2xl bg-accent text-white font-black text-base transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 shadow-xl shadow-accent/25"
+              >
+                {{ isVerifyingOtp ? 'Verifying...' : 'Complete Setup' }}
+              </button>
+              <button
+                @click="sendWizardOtp"
+                :disabled="isSendingOtp"
+                class="text-xs font-black text-accent uppercase tracking-widest hover:underline disabled:opacity-50"
+              >
+                {{ isSendingOtp ? 'Resending...' : 'Resend Code' }}
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </template>
 
     <!-- ════════════════════════════════════════════════════════
-         DOMAIN VERIFICATION MODAL
+         TRANSFER CONFIRMATION MODAL
     ═══════════════════════════════════════════════════════════ -->
     <Transition
-      enter-active-class="transition-all duration-200 ease-out"
+      enter-active-class="transition-all duration-300 ease-out"
       enter-from-class="opacity-0"
       enter-to-class="opacity-100"
-      leave-active-class="transition-all duration-150 ease-in"
+      leave-active-class="transition-all duration-200 ease-in"
       leave-from-class="opacity-100"
       leave-to-class="opacity-0"
     >
       <div
-        v-if="showVerifyModal"
+        v-if="showTransferModal"
         class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4"
-        @click.self="closeVerifyModal"
+        @click.self="showTransferModal = false"
       >
-        <Transition
-          enter-active-class="transition-all duration-200 ease-out"
-          enter-from-class="opacity-0 scale-95 translate-y-2"
-          enter-to-class="opacity-100 scale-100 translate-y-0"
-          leave-active-class="transition-all duration-150 ease-in"
-          leave-from-class="opacity-100 scale-100 translate-y-0"
-          leave-to-class="opacity-0 scale-95 translate-y-2"
+        <div
+          class="w-full max-w-2xl bg-card rounded-3xl shadow-2xl overflow-hidden border border-border animate-in zoom-in-95 duration-300"
         >
-          <div
-            v-if="showVerifyModal"
-            class="w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden"
-            style="background: var(--bg-card); border: 1px solid var(--border);"
-          >
-            <!-- Modal header -->
-            <div class="flex items-center justify-between px-6 py-4 border-b" style="border-color: var(--border);">
-              <div class="flex items-center gap-3">
-                <div
-                  class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-                  style="background: color-mix(in srgb, var(--accent) 14%, transparent); border: 1.5px solid color-mix(in srgb, var(--accent) 25%, transparent);"
-                >
-                  <svg width="14" height="14" viewBox="0 0 20 20" fill="none" style="color: var(--accent);">
-                    <circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.5"/>
-                    <path d="M10 2.5c0 0-3 3.5-3 7.5s3 7.5 3 7.5M10 2.5c0 0 3 3.5 3 7.5s-3 7.5-3 7.5M2.5 10h15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                  </svg>
-                </div>
-                <div>
-                  <h3 class="text-sm font-bold text-text-primary">Verify domain ownership</h3>
-                  <p class="text-xs text-text-secondary">{{ verifyingDomain?.domain }}</p>
+          <!-- Header -->
+          <div class="px-8 py-6 border-b border-border flex items-center justify-between bg-border/5">
+            <div class="flex items-center gap-4">
+              <div class="w-12 h-12 rounded-2xl bg-green-500/10 flex items-center justify-center text-green-500">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/>
+                </svg>
+              </div>
+              <div>
+                <h3 class="text-xl font-black text-text-primary">Enrol Domain Users</h3>
+                <p class="text-sm text-text-secondary">Add {{ transferSelectedUsers.length }} users from <span class="font-bold text-text-primary">{{ transferDomainName }}</span></p>
+              </div>
+            </div>
+            <button @click="showTransferModal = false" class="p-2 rounded-xl hover:bg-border/20 transition-all">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="p-8 max-h-[60vh] overflow-y-auto custom-scroll space-y-8">
+            <!-- User Avatars -->
+            <div class="flex flex-wrap justify-center gap-2">
+              <div
+                v-for="user in transferSelectedUsers"
+                :key="user._id"
+                class="group relative"
+                :title="user.u_full_name"
+              >
+                <div class="w-10 h-10 rounded-full border-2 border-border bg-border/10 flex items-center justify-center text-[10px] font-black uppercase text-text-secondary group-hover:border-accent group-hover:text-accent transition-all">
+                  {{ getInitials(user.u_full_name) }}
                 </div>
               </div>
-              <button
-                @click="closeVerifyModal"
-                class="p-1.5 rounded-lg text-text-secondary hover:bg-border/20 hover:text-text-primary transition-all"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                </svg>
-              </button>
             </div>
 
-            <!-- Modal body -->
-            <div class="px-6 py-5 space-y-4 max-h-[70vh] overflow-y-auto custom-scroll">
-              <!-- Domain pill -->
+            <!-- Impact Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div
-                class="flex items-center gap-2.5 px-4 py-3 rounded-xl border"
-                style="background: var(--bg-surface); border-color: var(--border);"
+                v-for="impact in transferImpacts"
+                :key="impact.label"
+                class="p-4 rounded-2xl border"
+                :style="{ background: impact.bg, borderColor: impact.border }"
               >
-                <svg class="w-4 h-4 shrink-0" viewBox="0 0 20 20" fill="none" style="color: var(--accent);">
-                  <circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.5"/>
-                  <path d="M10 2.5c0 0-3 3.5-3 7.5s3 7.5 3 7.5M10 2.5c0 0 3 3.5 3 7.5s-3 7.5-3 7.5M2.5 10h15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                </svg>
-                <span class="text-sm font-semibold text-text-primary">{{ verifyingDomain?.domain }}</span>
-                <span
-                  class="ml-auto text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
-                  :style="modalDomainStatusStyle"
-                >{{ modalDomainStatusLabel }}</span>
-              </div>
-
-              <!-- Verified banner -->
-              <div
-                v-if="modalCurrentDomain?.status === 'verified'"
-                class="flex items-center gap-3 px-4 py-3 rounded-xl border"
-                style="background: color-mix(in srgb, #1d9e75 8%, transparent); border-color: color-mix(in srgb, #1d9e75 25%, transparent);"
-              >
-                <span
-                  class="flex items-center justify-center w-6 h-6 rounded-full shrink-0"
-                  style="background: #1d9e75;"
-                >
-                  <svg class="w-3.5 h-3.5" viewBox="0 0 10 10" fill="none">
-                    <path d="M2 5l2.5 2.5L8 3" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                <div class="flex items-center gap-3 mb-2">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" :style="{ color: impact.color }">
+                    <path v-for="p in impact.paths" :key="p" :d="p" />
                   </svg>
-                </span>
-                <div>
-                  <p class="text-sm font-semibold" style="color: #1d9e75;">Domain verified successfully!</p>
-                  <p class="text-xs text-text-secondary">Your domain ownership has been confirmed.</p>
+                  <p class="text-xs font-black uppercase tracking-wider" :style="{ color: impact.color }">{{ impact.label }}</p>
                 </div>
+                <p class="text-[11px] leading-relaxed text-text-secondary opacity-80">{{ impact.description }}</p>
               </div>
-
-              <!-- Method switched notice -->
-              <div
-                v-if="modalMethodSwitched"
-                class="flex items-start gap-3 rounded-lg px-4 py-3 border"
-                style="background: color-mix(in srgb, #f59e0b 8%, transparent); border-color: color-mix(in srgb, #f59e0b 30%, transparent);"
-              >
-                <svg class="w-4 h-4 mt-0.5 shrink-0" viewBox="0 0 16 16" fill="none" style="color: #f59e0b;">
-                  <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.4"/>
-                  <path d="M8 5v4M8 11v.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-                </svg>
-                <p class="text-xs leading-relaxed" style="color: #f59e0b;">
-                  Apex domain detected — CNAME is not supported on root domains. We've automatically switched to
-                  <strong>TXT verification</strong>.
-                </p>
-              </div>
-
-              <!-- Verification method tabs -->
-              <div v-if="modalCurrentDomain?.status !== 'verified'" class="space-y-2">
-                <p class="text-[11px] font-semibold uppercase tracking-wider text-text-secondary">Verification method</p>
-                <div
-                  class="grid grid-cols-3 gap-2 p-1 rounded-xl"
-                  style="background: var(--bg-surface); border: 1px solid var(--border);"
-                >
-                  <button
-                    v-for="m in verificationMethods"
-                    :key="m.value"
-                    type="button"
-                    class="py-2 px-3 rounded-lg text-xs font-semibold transition-all duration-200 text-center"
-                    :style="{
-                      background: modalSelectedMethod === m.value ? 'var(--bg-card)' : 'transparent',
-                      color: modalSelectedMethod === m.value ? 'var(--text-primary)' : 'var(--text-secondary)',
-                      boxShadow: modalSelectedMethod === m.value ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-                    }"
-                    @click="switchModalMethod(m.value)"
-                    :disabled="modalIsSwitchingMethod || isModalVerifying"
-                  >{{ m.label }}</button>
-                </div>
-              </div>
-
-              <!-- Instructions panel -->
-              <div v-if="modalInstructions && modalCurrentDomain?.status !== 'verified'" class="space-y-3">
-                <template v-if="modalInstructions.method === 'cname' || modalInstructions.method === 'txt'">
-                  <p class="text-xs leading-relaxed text-text-secondary">
-                    Add the following DNS record at your DNS host (GoDaddy, Cloudflare, Namecheap, etc.)
-                  </p>
-                  <div class="rounded-xl overflow-hidden border" style="border-color: var(--border);">
-                    <div
-                      class="grid grid-cols-2 divide-x"
-                      style="background: var(--bg-surface); border-bottom: 1px solid var(--border); divide-color: var(--border);"
-                    >
-                      <div class="px-4 py-2.5">
-                        <p class="text-[10px] font-bold uppercase tracking-wider mb-0.5 text-text-secondary">Type</p>
-                        <p class="text-sm font-bold text-text-primary">{{ modalInstructions.record_type }}</p>
-                      </div>
-                      <div class="px-4 py-2.5">
-                        <p class="text-[10px] font-bold uppercase tracking-wider mb-0.5 text-text-secondary">TTL</p>
-                        <p class="text-sm font-bold text-text-primary">{{ modalInstructions.ttl_recommended }}s</p>
-                      </div>
-                    </div>
-                    <div class="divide-y" style="divide-color: var(--border);">
-                      <div class="px-4 py-3 flex items-center justify-between gap-3">
-                        <div class="min-w-0 flex-1">
-                          <p class="text-[10px] font-bold uppercase tracking-wider mb-0.5 text-text-secondary">Host / Name</p>
-                          <p class="text-sm font-mono break-all text-text-primary">{{ modalInstructions.record_host }}</p>
-                        </div>
-                        <button type="button" @click="modalCopy(modalInstructions.record_host, 'host')" class="shrink-0 p-1.5 rounded-lg transition-all hover:scale-110 text-text-secondary">
-                          <svg v-if="modalCopiedField !== 'host'" class="w-4 h-4" viewBox="0 0 16 16" fill="none">
-                            <rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.4"/>
-                            <path d="M2 11V3a1 1 0 011-1h8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-                          </svg>
-                          <svg v-else class="w-4 h-4" viewBox="0 0 16 16" fill="none" style="color: #1d9e75;">
-                            <path d="M3 8l3.5 3.5L13 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-                          </svg>
-                        </button>
-                      </div>
-                      <div class="px-4 py-3 flex items-center justify-between gap-3">
-                        <div class="min-w-0 flex-1">
-                          <p class="text-[10px] font-bold uppercase tracking-wider mb-0.5 text-text-secondary">Value / Points to</p>
-                          <p class="text-sm font-mono break-all text-text-primary">{{ modalInstructions.record_value }}</p>
-                        </div>
-                        <button type="button" @click="modalCopy(modalInstructions.record_value, 'value')" class="shrink-0 p-1.5 rounded-lg transition-all hover:scale-110 text-text-secondary">
-                          <svg v-if="modalCopiedField !== 'value'" class="w-4 h-4" viewBox="0 0 16 16" fill="none">
-                            <rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.4"/>
-                            <path d="M2 11V3a1 1 0 011-1h8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-                          </svg>
-                          <svg v-else class="w-4 h-4" viewBox="0 0 16 16" fill="none" style="color: #1d9e75;">
-                            <path d="M3 8l3.5 3.5L13 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                  <p class="text-xs leading-relaxed px-1 text-text-secondary">{{ modalInstructions.note }}</p>
-                </template>
-
-                <template v-else-if="modalInstructions.method === 'http'">
-                  <p class="text-xs leading-relaxed text-text-secondary">
-                    Upload a verification file to your web server so it's reachable at the URL below.
-                  </p>
-                  <div class="rounded-xl overflow-hidden border divide-y" style="border-color: var(--border); divide-color: var(--border);">
-                    <div class="px-4 py-3 flex items-center justify-between gap-3">
-                      <div class="min-w-0 flex-1">
-                        <p class="text-[10px] font-bold uppercase tracking-wider mb-0.5 text-text-secondary">File URL</p>
-                        <p class="text-sm font-mono break-all text-text-primary">{{ modalInstructions.file_url }}</p>
-                      </div>
-                      <button type="button" @click="modalCopy(modalInstructions.file_url, 'file_url')" class="shrink-0 p-1.5 rounded-lg transition-all hover:scale-110 text-text-secondary">
-                        <svg v-if="modalCopiedField !== 'file_url'" class="w-4 h-4" viewBox="0 0 16 16" fill="none">
-                          <rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.4"/>
-                          <path d="M2 11V3a1 1 0 011-1h8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-                        </svg>
-                        <svg v-else class="w-4 h-4" viewBox="0 0 16 16" fill="none" style="color: #1d9e75;">
-                          <path d="M3 8l3.5 3.5L13 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                      </button>
-                    </div>
-                    <div class="px-4 py-3 flex items-center justify-between gap-3">
-                      <div class="min-w-0 flex-1">
-                        <p class="text-[10px] font-bold uppercase tracking-wider mb-0.5 text-text-secondary">File content</p>
-                        <p class="text-sm font-mono break-all text-text-primary">{{ modalInstructions.file_content }}</p>
-                      </div>
-                      <button type="button" @click="modalCopy(modalInstructions.file_content, 'file_content')" class="shrink-0 p-1.5 rounded-lg transition-all hover:scale-110 text-text-secondary">
-                        <svg v-if="modalCopiedField !== 'file_content'" class="w-4 h-4" viewBox="0 0 16 16" fill="none">
-                          <rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.4"/>
-                          <path d="M2 11V3a1 1 0 011-1h8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-                        </svg>
-                        <svg v-else class="w-4 h-4" viewBox="0 0 16 16" fill="none" style="color: #1d9e75;">
-                          <path d="M3 8l3.5 3.5L13 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    :disabled="isDownloadingFile"
-                    class="w-full flex items-center justify-center gap-2 py-2.5 rounded-[9px] text-sm font-semibold border transition-all duration-200 hover:shadow-sm"
-                    style="border-color: var(--border); background: var(--bg-surface); color: var(--text-primary);"
-                    @click="downloadVerificationFile"
-                  >
-                    <span v-if="isDownloadingFile" class="w-4 h-4 rounded-full border-2 border-accent/30 border-t-accent animate-spin" />
-                    <svg v-else class="w-4 h-4" viewBox="0 0 16 16" fill="none" style="color: var(--accent);">
-                      <path d="M8 2v8M5 7l3 3 3-3M2 11v2a1 1 0 001 1h10a1 1 0 001-1v-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                    <span>Download streamed-verify.txt</span>
-                  </button>
-                  <p class="text-xs leading-relaxed px-1 text-text-secondary">{{ modalInstructions.note }}</p>
-                </template>
-              </div>
-
-              <!-- Last check error -->
-              <div
-                v-if="modalCurrentDomain?.last_check_result?.error && modalCurrentDomain?.status !== 'verified'"
-                class="flex items-start gap-3 rounded-lg px-4 py-3 border"
-                style="background: color-mix(in srgb, #e55050 6%, transparent); border-color: color-mix(in srgb, #e55050 25%, transparent);"
-              >
-                <svg class="w-4 h-4 mt-0.5 shrink-0" viewBox="0 0 16 16" fill="none" style="color: #e55050;">
-                  <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.4"/>
-                  <path d="M8 5v4M8 11v.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-                </svg>
-                <div>
-                  <p class="text-xs font-semibold mb-0.5" style="color: #e55050;">Verification check failed</p>
-                  <p class="text-xs text-text-secondary">{{ modalCurrentDomain.last_check_result.error }}</p>
-                  <p v-if="modalCurrentDomain.last_check_result.observed?.length" class="text-xs mt-1 text-text-secondary">
-                    Observed:
-                    <span class="font-mono font-medium text-text-primary">
-                      {{ Array.isArray(modalCurrentDomain.last_check_result.observed)
-                        ? modalCurrentDomain.last_check_result.observed.join(', ')
-                        : modalCurrentDomain.last_check_result.observed }}
-                    </span>
-                  </p>
-                </div>
-              </div>
-
-              <!-- Rate limit countdown -->
-              <div
-                v-if="modalRetryCountdown > 0 && modalCurrentDomain?.status !== 'verified'"
-                class="flex items-center gap-3 px-4 py-3 rounded-xl border"
-                style="background: var(--bg-surface); border-color: var(--border);"
-              >
-                <svg class="w-4 h-4 shrink-0 text-text-secondary" viewBox="0 0 16 16" fill="none">
-                  <circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.3"/>
-                  <path d="M8 4.5v4l2.5 1.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-                </svg>
-                <p class="text-xs text-text-secondary">
-                  Please wait <span class="font-bold tabular-nums text-text-primary">{{ modalRetryCountdown }}s</span> before checking again.
-                </p>
-                <div class="ml-auto flex-1 max-w-20 h-1 rounded-full overflow-hidden" style="background: var(--border);">
-                  <div
-                    class="h-full rounded-full transition-all duration-1000"
-                    style="background: var(--accent);"
-                    :style="{ width: `${(modalRetryCountdown / modalRetryTotal) * 100}%` }"
-                  />
-                </div>
-              </div>
-
-              <p v-if="modalError" class="text-xs text-center" style="color: #e55050;">{{ modalError }}</p>
             </div>
 
-            <!-- Modal footer -->
-            <div class="px-6 py-4 border-t space-y-2.5" style="border-color: var(--border);">
-              <template v-if="modalCurrentDomain?.status !== 'verified'">
-                <button
-                  type="button"
-                  :disabled="isModalVerifying || modalRetryCountdown > 0 || modalIsSwitchingMethod"
-                  class="w-full flex items-center justify-center gap-2 py-3 rounded-[9px] text-sm font-bold tracking-wide transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:brightness-110"
-                  style="background: var(--accent); color: var(--accent-text); box-shadow: 0 2px 0 rgba(0,0,0,0.12);"
-                  @click="modalRecheck"
-                >
-                  <span v-if="isModalVerifying || modalIsSwitchingMethod" class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                  <svg v-else class="w-4 h-4" viewBox="0 0 16 16" fill="none">
-                    <path d="M13.5 8A5.5 5.5 0 112.5 5.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-                    <path d="M2.5 2v3.5H6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                  <span>{{ isModalVerifying ? 'Checking…' : modalIsSwitchingMethod ? 'Switching method…' : "I've added the record — verify now" }}</span>
-                </button>
-                <button
-                  type="button"
-                  class="w-full py-2.5 rounded-[9px] text-sm font-medium border transition-all duration-200 text-text-secondary hover:text-text-primary hover:border-border"
-                  style="border-color: var(--border); background: transparent;"
-                  @click="closeVerifyModal"
-                >Close</button>
-              </template>
-              <template v-else>
-                <button
-                  type="button"
-                  class="w-full py-3 rounded-[9px] text-sm font-bold tracking-wide transition-all duration-200"
-                  style="background: var(--accent); color: var(--accent-text);"
-                  @click="closeVerifyModal"
-                >Done</button>
-              </template>
+            <div class="p-4 rounded-2xl bg-blue-500/5 border border-blue-500/20 flex items-start gap-3">
+              <svg class="shrink-0 mt-0.5 text-blue-500" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+              </svg>
+              <p class="text-[11px] text-blue-500 leading-relaxed">
+                Changes will be effective immediately. You can review and adjust user permissions in the <span class="font-bold">Team</span> tab after enrolment.
+              </p>
             </div>
           </div>
-        </Transition>
+
+          <!-- Footer -->
+          <div class="px-8 py-6 border-t border-border flex flex-col sm:flex-row items-center gap-3 sm:justify-end bg-border/5">
+            <button
+              @click="showTransferModal = false"
+              class="w-full sm:w-auto px-6 py-3 rounded-xl font-bold text-text-secondary hover:text-text-primary transition-all"
+            >Cancel</button>
+            <button
+              @click="handleConfirmTransfer"
+              :disabled="isTransferring"
+              class="w-full sm:w-auto px-8 py-3 rounded-xl bg-green-500 text-white font-black transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3 shadow-xl shadow-green-500/20"
+            >
+              <span v-if="isTransferring" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+              Confirm Enrolment
+            </button>
+          </div>
+        </div>
       </div>
     </Transition>
 
-    <!-- ════════════════════════════════════════════════════════
-         EDIT DOMAIN MODAL
-    ═══════════════════════════════════════════════════════════ -->
+    <!-- Create User Modal (Keep existing) -->
     <Transition
-      enter-active-class="transition-all duration-200 ease-out"
+      enter-active-class="transition-all duration-300 ease-out"
       enter-from-class="opacity-0"
       enter-to-class="opacity-100"
-      leave-active-class="transition-all duration-150 ease-in"
-      leave-from-class="opacity-100"
-      leave-to-class="opacity-0"
-    >
-      <div
-        v-if="showEditModal"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4"
-        @click.self="closeEditModal"
-      >
-        <Transition
-          enter-active-class="transition-all duration-200 ease-out"
-          enter-from-class="opacity-0 scale-95 translate-y-2"
-          enter-to-class="opacity-100 scale-100 translate-y-0"
-          leave-active-class="transition-all duration-150 ease-in"
-          leave-from-class="opacity-100 scale-100 translate-y-0"
-          leave-to-class="opacity-0 scale-95 translate-y-2"
-        >
-          <div
-            v-if="showEditModal"
-            class="w-full max-w-md rounded-2xl shadow-2xl overflow-hidden"
-            style="background: var(--bg-card); border: 1px solid var(--border);"
-          >
-            <!-- Header -->
-            <div class="flex items-center justify-between px-6 py-4 border-b" style="border-color: var(--border);">
-              <div class="flex items-center gap-3">
-                <div
-                  class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-                  style="background: color-mix(in srgb, var(--accent) 14%, transparent); border: 1.5px solid color-mix(in srgb, var(--accent) 25%, transparent);"
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="color: var(--accent);">
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                  </svg>
-                </div>
-                <div>
-                  <h3 class="text-sm font-bold text-text-primary">Edit domain</h3>
-                  <p class="text-xs text-text-secondary">Update the domain name for this connection.</p>
-                </div>
-              </div>
-              <button
-                @click="closeEditModal"
-                class="p-1.5 rounded-lg text-text-secondary hover:bg-border/20 hover:text-text-primary transition-all"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                </svg>
-              </button>
-            </div>
-
-            <!-- Body -->
-            <div class="px-6 py-5 space-y-4">
-              <!-- Current domain pill -->
-              <div
-                class="flex items-center gap-2.5 px-4 py-3 rounded-xl border"
-                style="background: var(--bg-surface); border-color: var(--border);"
-              >
-                <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="color: var(--text-secondary);">
-                  <circle cx="12" cy="12" r="10"/>
-                  <line x1="2" y1="12" x2="22" y2="12"/>
-                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-                </svg>
-                <div class="min-w-0">
-                  <p class="text-[10px] font-semibold uppercase tracking-wider text-text-secondary mb-0.5">Current domain</p>
-                  <p class="text-sm font-mono font-semibold text-text-primary truncate">{{ editingDomain?.domain }}</p>
-                </div>
-                <span
-                  class="ml-auto shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold"
-                  :class="statusBadgeClass(editingDomain?.status ?? 'pending')"
-                >
-                  <span :class="statusDotClass(editingDomain?.status ?? 'pending')"></span>
-                  {{ statusLabel(editingDomain?.status ?? 'pending') }}
-                </span>
-              </div>
-
-              <!-- New domain input -->
-              <div class="space-y-1.5">
-                <label class="text-xs font-semibold text-text-secondary uppercase tracking-wider">
-                  New domain name <span class="text-red-400">*</span>
-                </label>
-                <input
-                  v-model="editDomainValue"
-                  type="text"
-                  placeholder="yournewdomain.com"
-                  :disabled="isEditSaving"
-                  @keyup.enter="saveEditDomain"
-                  class="w-full px-3.5 py-2.5 text-sm text-text-primary bg-border/10 border border-border/40 rounded-lg outline-none focus:border-accent/50 focus:bg-accent/5 transition-all placeholder:text-text-secondary/40 disabled:opacity-50"
-                />
-                <p v-if="editDomainError" class="text-xs text-red-400 flex items-center gap-1.5">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <circle cx="12" cy="12" r="10"/>
-                    <line x1="12" y1="8" x2="12" y2="12"/>
-                    <line x1="12" y1="16" x2="12.01" y2="16"/>
-                  </svg>
-                  {{ editDomainError }}
-                </p>
-              </div>
-
-              <!-- Warning notice -->
-              <div
-                class="flex items-start gap-3 rounded-lg px-3.5 py-3 border"
-                style="background: color-mix(in srgb, #f59e0b 6%, transparent); border-color: color-mix(in srgb, #f59e0b 25%, transparent);"
-              >
-                <svg class="w-4 h-4 mt-0.5 shrink-0" viewBox="0 0 16 16" fill="none" style="color: #d97706;">
-                  <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.4"/>
-                  <path d="M8 5v4M8 11v.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-                </svg>
-                <p class="text-xs leading-relaxed" style="color: #d97706;">
-                  Changing your domain will reset its verification status. You'll need to re-verify DNS ownership after saving.
-                </p>
-              </div>
-            </div>
-
-            <!-- Footer -->
-            <div class="px-6 py-4 border-t flex items-center gap-3" style="border-color: var(--border);">
-              <button
-                type="button"
-                @click="closeEditModal"
-                class="flex-1 py-2.5 rounded-[9px] text-sm font-medium border transition-all text-text-secondary hover:text-text-primary"
-                style="border-color: var(--border);"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                @click="saveEditDomain"
-                :disabled="isEditSaving || !editDomainValue.trim() || editDomainValue.trim() === editingDomain?.domain"
-                class="flex-1 py-2.5 rounded-[9px] text-sm font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                style="background: var(--accent); color: white;"
-              >
-                <svg
-                  v-if="isEditSaving"
-                  class="animate-spin"
-                  width="12" height="12"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2.5"
-                >
-                  <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
-                </svg>
-                {{ isEditSaving ? 'Saving…' : 'Save changes' }}
-              </button>
-            </div>
-          </div>
-        </Transition>
-      </div>
-    </Transition>
-
-    <!-- ════════════════════════════════════════════════════════
-         CREATE USER MODAL (for domain users)
-    ═══════════════════════════════════════════════════════════ -->
-    <Transition
-      enter-active-class="transition-all duration-200 ease-out"
-      enter-from-class="opacity-0"
-      enter-to-class="opacity-100"
-      leave-active-class="transition-all duration-150 ease-in"
+      leave-active-class="transition-all duration-200 ease-in"
       leave-from-class="opacity-100"
       leave-to-class="opacity-0"
     >
@@ -1369,149 +687,39 @@
         class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4"
         @click.self="closeCreateUserModal"
       >
-        <Transition
-          enter-active-class="transition-all duration-200 ease-out"
-          enter-from-class="opacity-0 scale-95 translate-y-2"
-          enter-to-class="opacity-100 scale-100 translate-y-0"
-          leave-active-class="transition-all duration-150 ease-in"
-          leave-from-class="opacity-100 scale-100 translate-y-0"
-          leave-to-class="opacity-0 scale-95 translate-y-2"
-        >
-          <div
-            v-if="showCreateUserModal"
-            class="w-full max-w-md rounded-2xl shadow-2xl overflow-hidden"
-            style="background: var(--bg-card); border: 1px solid var(--border);"
-          >
-            <!-- Header -->
-            <div class="flex items-center justify-between px-6 py-4 border-b" style="border-color: var(--border);">
-              <div class="flex items-center gap-3">
-                <div
-                  class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-                  style="background: color-mix(in srgb, var(--accent) 14%, transparent); border: 1.5px solid color-mix(in srgb, var(--accent) 25%, transparent);"
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="color: var(--accent);">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-                  </svg>
-                </div>
-                <div>
-                  <h3 class="text-sm font-bold text-text-primary">Create domain user</h3>
-                  <p class="text-xs text-text-secondary">This user will be associated with your verified domain.</p>
-                </div>
-              </div>
-              <button
-                @click="closeCreateUserModal"
-                class="p-1.5 rounded-lg text-text-secondary hover:bg-border/20 hover:text-text-primary transition-all"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                </svg>
-              </button>
-            </div>
-
-            <!-- Body -->
-            <div class="px-6 py-5 space-y-4">
-              <div class="space-y-1.5">
-                <label class="text-xs font-semibold text-text-secondary uppercase tracking-wider">
-                  Full name <span class="text-red-400">*</span>
-                </label>
-                <input
-                  v-model="createUserForm.u_full_name"
-                  type="text"
-                  placeholder="John Doe"
-                  class="w-full px-3.5 py-2.5 text-sm bg-border/10 border border-border/40 rounded-lg outline-none focus:border-accent/50 focus:bg-accent/5 transition-all text-text-primary placeholder:text-text-secondary/40"
-                />
-                <p v-if="createUserErrors.u_full_name" class="text-xs text-red-400">{{ createUserErrors.u_full_name }}</p>
-              </div>
-
-              <div class="space-y-1.5">
-                <label class="text-xs font-semibold text-text-secondary uppercase tracking-wider">
-                  Email <span class="text-red-400">*</span>
-                </label>
-                <div class="flex items-center border border-border/40 rounded-lg overflow-hidden focus-within:border-accent/50 focus-within:bg-accent/5 transition-all bg-border/10">
-                  <input
-                    v-model="createUserForm.emailPrefix"
-                    type="text"
-                    placeholder="username"
-                    class="flex-1 px-3.5 py-2.5 text-sm bg-transparent outline-none text-text-primary placeholder:text-text-secondary/40"
-                  />
-                  <span class="px-3 py-2.5 text-sm text-text-secondary bg-border/20 border-l border-border/30 shrink-0">
-                    @{{ domainForCreateUser }}
-                  </span>
-                </div>
-                <p v-if="createUserErrors.emailPrefix" class="text-xs text-red-400">{{ createUserErrors.emailPrefix }}</p>
-              </div>
-
-              <div class="space-y-1.5">
-                <label class="text-xs font-semibold text-text-secondary uppercase tracking-wider">
-                  Password <span class="text-red-400">*</span>
-                </label>
-                <div class="relative">
-                  <input
-                    v-model="createUserForm.u_password"
-                    :type="showCreatePassword ? 'text' : 'password'"
-                    placeholder="Min. 6 characters"
-                    class="w-full pl-3.5 pr-10 py-2.5 text-sm bg-border/10 border border-border/40 rounded-lg outline-none focus:border-accent/50 focus:bg-accent/5 transition-all text-text-primary placeholder:text-text-secondary/40"
-                  />
-                  <button
-                    type="button"
-                    @click="showCreatePassword = !showCreatePassword"
-                    class="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary transition-all"
-                  >
-                    <svg v-if="showCreatePassword" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
-                      <line x1="1" y1="1" x2="23" y2="23"/>
-                    </svg>
-                    <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
-                    </svg>
-                  </button>
-                </div>
-                <p v-if="createUserErrors.u_password" class="text-xs text-red-400">{{ createUserErrors.u_password }}</p>
-              </div>
-
-              <div class="space-y-1.5">
-                <label class="text-xs font-semibold text-text-secondary uppercase tracking-wider">
-                  Job title <span class="text-text-secondary/40 font-normal normal-case">(optional)</span>
-                </label>
-                <input
-                  v-model="createUserForm.u_job_title"
-                  type="text"
-                  placeholder="e.g. Product Manager"
-                  class="w-full px-3.5 py-2.5 text-sm bg-border/10 border border-border/40 rounded-lg outline-none focus:border-accent/50 focus:bg-accent/5 transition-all text-text-primary placeholder:text-text-secondary/40"
-                />
-              </div>
-
-              <p v-if="createUserServerError" class="text-xs text-red-400 flex items-center gap-1.5">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-                </svg>
-                {{ createUserServerError }}
-              </p>
-            </div>
-
-            <!-- Footer -->
-            <div class="px-6 py-4 border-t flex items-center gap-3" style="border-color: var(--border);">
-              <button
-                type="button"
-                @click="closeCreateUserModal"
-                class="flex-1 py-2.5 rounded-[9px] text-sm font-medium border transition-all text-text-secondary hover:text-text-primary"
-                style="border-color: var(--border);"
-              >Cancel</button>
-              <button
-                type="button"
-                @click="submitCreateUser"
-                :disabled="isCreatingUser || !isCreateUserFormValid"
-                class="flex-1 py-2.5 rounded-[9px] text-sm font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                style="background: var(--accent); color: white;"
-              >
-                <svg v-if="isCreatingUser" class="animate-spin" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
-                </svg>
-                {{ isCreatingUser ? 'Creating…' : 'Create user' }}
-              </button>
+        <div class="w-full max-w-md bg-card rounded-3xl shadow-2xl overflow-hidden border border-border animate-in zoom-in-95 duration-300">
+          <div class="px-8 py-6 border-b border-border flex items-center justify-between">
+            <div>
+              <h3 class="text-xl font-black text-text-primary">Create User</h3>
+              <p class="text-sm text-text-secondary">Add a new user to @{{ domainForCreateUser }}</p>
             </div>
           </div>
-        </Transition>
+          <div class="p-8 space-y-6">
+            <div class="space-y-2">
+              <label class="text-[11px] font-black text-text-secondary uppercase tracking-widest px-1">Full Name</label>
+              <input v-model="createUserForm.u_full_name" type="text" placeholder="John Doe" class="w-full px-5 py-4 bg-surface border-2 border-border/40 rounded-2xl outline-none text-base font-bold text-text-primary transition-all focus:border-accent" />
+            </div>
+            <div class="space-y-2">
+              <label class="text-[11px] font-black text-text-secondary uppercase tracking-widest px-1">Email Prefix</label>
+              <div class="flex items-center gap-0 border-2 border-border/40 rounded-2xl bg-surface focus-within:border-accent transition-all overflow-hidden">
+                <input v-model="createUserForm.emailPrefix" type="text" placeholder="username" class="flex-1 px-5 py-4 bg-transparent outline-none text-base font-bold text-text-primary" />
+                <div class="px-5 py-4 bg-border/20 border-l border-border/40 text-text-secondary font-bold">@{{ domainForCreateUser }}</div>
+              </div>
+            </div>
+            <div class="space-y-2">
+              <label class="text-[11px] font-black text-text-secondary uppercase tracking-widest px-1">Password</label>
+              <input v-model="createUserForm.u_password" type="password" placeholder="••••••••" class="w-full px-5 py-4 bg-surface border-2 border-border/40 rounded-2xl outline-none text-base font-bold text-text-primary transition-all focus:border-accent" />
+            </div>
+            <p v-if="createUserServerError" class="text-xs font-bold text-red-500">{{ createUserServerError }}</p>
+            <button
+              @click="submitCreateUser"
+              :disabled="isCreatingUser || !isCreateUserFormValid"
+              class="w-full py-4 rounded-2xl bg-accent text-white font-black transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+            >
+              {{ isCreatingUser ? 'Creating...' : 'Create User' }}
+            </button>
+          </div>
+        </div>
       </div>
     </Transition>
 
@@ -1519,7 +727,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onUnmounted } from 'vue'
+import { ref, computed, onUnmounted, nextTick } from 'vue'
 import { toast } from 'vue-sonner'
 import {
   useListDomains,
@@ -1529,7 +737,11 @@ import {
   type DnsInstructions,
 } from '../../../queries/useCommon'
 import { useWorkspaceStore } from '../../../stores/workspace'
-import { useCreateCompanyUser } from '../../../queries/useCompanyUsers'
+import { 
+  useCreateCompanyUser, 
+  useSendSuperAdminOtp, 
+  useVerifySuperAdminOtp 
+} from '../../../queries/useCompanyUsers'
 
 // ── Props & Permissions ───────────────────────────────────────────────────────
 const props = defineProps<{ profile?: any }>()
@@ -1548,118 +760,266 @@ const canSetPrimaryDomain = computed(() => canManageDomain.value || can('company
 
 // ── Queries ───────────────────────────────────────────────────────────────────
 const workspaceStore = useWorkspaceStore()
-
 const { data: domainsData, isLoading, isError: fetchError, refetch } = useListDomains()
 const { mutateAsync: verifyDomainMutation } = useVerifyDomain()
 const { mutateAsync: setPrimaryMutation, isPending: isSettingPrimary } = useSetPrimaryDomain()
 const { mutateAsync: createUserMutation } = useCreateCompanyUser()
+const { mutateAsync: sendOtpMutation } = useSendSuperAdminOtp()
+const { mutateAsync: verifyOtpMutation } = useVerifySuperAdminOtp()
 
 const domains  = computed<CompanyDomain[]>(() => domainsData.value?.domains ?? [])
-const hasDomain = computed(() => domains.value.length > 0)
 
-// ── Add domain modal ──────────────────────────────────────────────────────────
-const showAddModal = ref(false)
-const newDomain    = ref('')
-const addError     = ref('')
-const isAdding     = ref(false)
+// ── Wizard State (0: Dashboard, 1: Add, 2: DNS, 3: Verify, 4: Admin, 5: OTP) ──
+const setupStep          = ref(0)
+const wizardDomain       = ref<CompanyDomain | null>(null)
+const wizardInstructions = ref<DnsInstructions | null>(null)
+const isModalVerifying    = ref(false)
+const wizardError        = ref<string | null>(null)
 
-function openAddModal() { showAddModal.value = true; addError.value = ''; newDomain.value = '' }
-function closeAddModal() { showAddModal.value = false; addError.value = ''; newDomain.value = '' }
+// Step 1: Add Domain
+const newDomainInput     = ref('')
+const isAddingDomain     = ref(false)
+const addError           = ref('')
 
-async function addDomain() {
-  if (!canAddDomain.value) return
-  const raw = newDomain.value.trim().toLowerCase()
-  if (!raw) return
-  const domainRegex = /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/
-  if (!domainRegex.test(raw)) { addError.value = 'Please enter a valid domain (e.g. yourdomain.com)'; return }
-  if (domains.value.some((d) => d.domain === raw)) { addError.value = 'This domain is already connected.'; return }
-  try {
-    isAdding.value = true
-    addError.value = ''
-    const result = await verifyDomainMutation({ domain: raw, verification_method: 'cname' })
-    closeAddModal()
-    if (result?.domain) openVerifyModalDirect(result.domain, result.instructions ?? null)
-  } catch (err: any) {
-    addError.value = err?.response?.data?.message ?? 'Failed to connect domain. Please try again.'
-  } finally {
-    isAdding.value = false
+// Step 4: Admin Registration
+const adminName          = ref('')
+const adminJobTitle      = ref('')
+const emailPrefix        = ref('')
+const adminPassword      = ref('')
+const isCreatingUser     = ref(false)
+const adminUserId        = ref('')
+const showCreatePassword = ref(false)
+const createUserServerError = ref('')
+
+const isAdminFormValid = computed(() => 
+  adminName.value.trim() && 
+  emailPrefix.value.trim() && 
+  adminPassword.value.length >= 6
+)
+
+// Step 5: OTP
+const otpDigits      = ref(['', '', '', '', ''])
+const otpInputs      = ref<any[]>([])
+const isSendingOtp   = ref(false)
+const isVerifyingOtp = ref(false)
+const otpError       = ref('')
+
+const isOtpComplete = computed(() => otpDigits.value.every(d => d !== ''))
+
+// Timer state for Step 3
+const modalRetryCountdown = ref(0)
+const modalRetryTotal     = ref(60)
+let modalCountdownTimer: ReturnType<typeof setInterval> | null = null
+
+// ── Wizard Logic ─────────────────────────────────────────────────────────────
+async function initWizard(domain: CompanyDomain | null = null) {
+  wizardError.value = null
+  addError.value = ''
+  createUserServerError.value = ''
+  otpError.value = ''
+  
+  if (!domain) {
+    setupStep.value = 1
+    newDomainInput.value = ''
+    return
+  }
+  
+  wizardDomain.value = domain
+  if (domain.status === 'verified') {
+    setupStep.value = 4
+  } else {
+    wizardInstructions.value = domain.instructions || null
+    setupStep.value = 2
   }
 }
 
-// ── Set primary ───────────────────────────────────────────────────────────────
+function cancelWizard() {
+  setupStep.value = 0
+  wizardDomain.value = null
+  wizardInstructions.value = null
+  wizardError.value = null
+  stopModalCountdown()
+}
+
+async function addDomain() {
+  const raw = newDomainInput.value.trim().toLowerCase()
+  if (!raw) return
+  const domainRegex = /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/
+  if (!domainRegex.test(raw)) {
+    addError.value = 'Please enter a valid domain (e.g. company.com)'
+    return
+  }
+
+  try {
+    isAddingDomain.value = true
+    addError.value = ''
+    const result = await verifyDomainMutation({ domain: raw, verification_method: 'cname' })
+    wizardDomain.value = result.domain
+    wizardInstructions.value = result.instructions || null
+    setupStep.value = 2
+    await refetch()
+  } catch (err: any) {
+    addError.value = err?.response?.data?.message ?? 'Failed to add domain.'
+  } finally {
+    isAddingDomain.value = false
+  }
+}
+
+async function runWizardVerification() {
+  if (!wizardDomain.value || isModalVerifying.value || modalRetryCountdown.value > 0) return
+  isModalVerifying.value = true
+  wizardError.value = null
+  try {
+    const { data, retryAfter } = await workspaceStore.recheckDomain(wizardDomain.value._id)
+    if (retryAfter !== null) {
+      startModalCountdown(retryAfter)
+      return
+    }
+    if (data) {
+      wizardDomain.value = data.domain
+      wizardInstructions.value = data.instructions
+      if (data.domain.status === 'verified') {
+        setupStep.value = 4
+      } else {
+        toast.error('DNS records not yet detected. Please wait a few minutes.')
+      }
+    }
+  } catch (err: any) {
+    wizardError.value = err?.response?.data?.message ?? 'Verification failed.'
+  } finally {
+    isModalVerifying.value = false
+  }
+}
+
+async function submitWizardAdmin() {
+  if (isCreatingUser.value) return
+  isCreatingUser.value = true
+  createUserServerError.value = ''
+  try {
+    const companyId = localStorage.getItem('company_id') || ''
+    const payload = {
+      u_full_name: adminName.value.trim(),
+      u_email: `${emailPrefix.value.trim()}@${wizardDomain.value?.domain}`,
+      u_password: adminPassword.value,
+      u_job_title: adminJobTitle.value.trim(),
+      company_id: companyId,
+      role: 'super admin',
+    }
+    const res = await createUserMutation(payload)
+    adminUserId.value = res.user?._id || res._id
+    await sendWizardOtp()
+    setupStep.value = 5
+  } catch (err: any) {
+    createUserServerError.value = err?.response?.data?.message ?? 'Failed to create admin account.'
+  } finally {
+    isCreatingUser.value = false
+  }
+}
+
+async function sendWizardOtp() {
+  if (isSendingOtp.value) return
+  isSendingOtp.value = true
+  try {
+    const companyId = localStorage.getItem('company_id') || ''
+    await sendOtpMutation({ user_id: adminUserId.value, company_id: companyId })
+    toast.success('Verification code sent to your email.')
+  } catch (err: any) {
+    toast.error('Failed to send verification code.')
+  } finally {
+    isSendingOtp.value = false
+  }
+}
+
+async function verifyWizardOtp() {
+  const otp = otpDigits.value.join('')
+  if (otp.length < 5 || isVerifyingOtp.value) return
+  isVerifyingOtp.value = true
+  otpError.value = ''
+  try {
+    const companyId = localStorage.getItem('company_id') || ''
+    await verifyOtpMutation({
+      user_id: adminUserId.value,
+      otp,
+      company_id: companyId,
+    })
+    toast.success('Domain setup completed successfully!')
+    cancelWizard()
+    await refetch()
+  } catch (err: any) {
+    otpError.value = err?.response?.data?.message ?? 'Invalid verification code.'
+  } finally {
+    isVerifyingOtp.value = false
+  }
+}
+
+// ── OTP Helpers ──────────────────────────────────────────────────────────────
+function handleOtpInput(event: Event, index: number) {
+  const input = event.target as HTMLInputElement
+  const value = input.value
+  if (value && index < 4) {
+    nextTick(() => {
+      otpInputs.value[index + 1]?.focus()
+    })
+  }
+}
+
+function handleOtpDelete(event: KeyboardEvent, index: number) {
+  if (event.key === 'Backspace' && !otpDigits.value[index] && index > 0) {
+    nextTick(() => {
+      otpInputs.value[index - 1]?.focus()
+    })
+  }
+}
+
+function startModalCountdown(seconds: number) {
+  stopModalCountdown()
+  modalRetryTotal.value     = seconds
+  modalRetryCountdown.value = seconds
+  modalCountdownTimer = setInterval(() => {
+    modalRetryCountdown.value--
+    if (modalRetryCountdown.value <= 0) stopModalCountdown()
+  }, 1000)
+}
+
+function stopModalCountdown() {
+  if (modalCountdownTimer) { clearInterval(modalCountdownTimer); modalCountdownTimer = null }
+  modalRetryCountdown.value = 0
+}
+
+onUnmounted(() => { stopModalCountdown() })
+
+// ── Dashboard / Existing Logic ───────────────────────────────────────────────
 async function setPrimary(id: string) {
   if (!canSetPrimaryDomain.value) return
   try { await setPrimaryMutation(id) } catch {}
 }
 
-// ── DNS helpers ───────────────────────────────────────────────────────────────
-function getRecordHost(instructions: DnsInstructions): string {
-  return instructions.method === 'http' ? instructions.file_url : instructions.record_host
-}
-function getRecordValue(instructions: DnsInstructions): string {
-  return instructions.method === 'http' ? instructions.file_content : instructions.record_value
-}
 async function copy(text: string) {
-  try { await navigator.clipboard.writeText(text) } catch {}
+  try { 
+    await navigator.clipboard.writeText(text)
+    toast.success('Copied to clipboard')
+  } catch {}
 }
 
-// ── Edit domain modal ─────────────────────────────────────────────────────────
-const showEditModal   = ref(false)
-const editingDomain   = ref<CompanyDomain | null>(null)
-const editDomainValue = ref('')
-const editDomainError = ref('')
-const isEditSaving    = ref(false)
-
-function openEditModal(domain: CompanyDomain) {
-  editingDomain.value   = domain
-  editDomainValue.value = domain.domain
-  editDomainError.value = ''
-  showEditModal.value   = true
+function getRecordHost(ins: DnsInstructions): string {
+  if (ins.method === 'http') return ins.file_url
+  return ins.record_host
 }
 
-function closeEditModal() {
-  showEditModal.value   = false
-  editDomainError.value = ''
-  setTimeout(() => { editingDomain.value = null }, 200)
+function getRecordValue(ins: DnsInstructions): string {
+  if (ins.method === 'http') return ins.file_content
+  return ins.record_value
 }
 
-async function saveEditDomain() {
-  if (!editingDomain.value) return
-  const raw = editDomainValue.value.trim().toLowerCase()
-  if (!raw) return
-  const domainRegex = /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/
-  if (!domainRegex.test(raw)) {
-    editDomainError.value = 'Please enter a valid domain (e.g. yourdomain.com)'
-    return
-  }
-  if (raw === editingDomain.value.domain) {
-    editDomainError.value = 'This is already the current domain.'
-    return
-  }
-  try {
-    isEditSaving.value    = true
-    editDomainError.value = ''
-    // Replace with your actual update mutation/API call (e.g. useUpdateDomain)
-    await verifyDomainMutation({ domain: raw, verification_method: 'cname' })
-    toast.success('Domain updated. Please re-verify DNS ownership.')
-    closeEditModal()
-    await refetch()
-  } catch (err: any) {
-    editDomainError.value = err?.response?.data?.message ?? 'Failed to update domain. Please try again.'
-  } finally {
-    isEditSaving.value = false
-  }
+function getRecordType(ins: DnsInstructions): string {
+  if (ins.method === 'http') return 'HTTP'
+  return ins.record_type
 }
 
-// ── Domain users state ────────────────────────────────────────────────────────
+// Domain Users
 const domainUsersMap     = ref<Record<string, any[]>>({})
 const domainUsersLoaded  = ref<Set<string>>(new Set())
 const loadingDomainUsers = ref<string | null>(null)
-
-function domainUsersForDomain(domainId: string): any[] {
-  return domainUsersMap.value[domainId] ?? []
-}
-
 
 async function loadDomainUsers(domainId: string) {
   loadingDomainUsers.value = domainId
@@ -1675,24 +1035,16 @@ async function loadDomainUsers(domainId: string) {
   }
 }
 
-// ── Create user modal ─────────────────────────────────────────────────────────
+// Create User (Legacy)
 const showCreateUserModal   = ref(false)
 const createUserDomainId    = ref<string | null>(null)
 const domainForCreateUser   = ref('')
-const showCreatePassword    = ref(false)
-const isCreatingUser        = ref(false)
-const createUserServerError = ref('')
-
-const createUserForm   = ref({ u_full_name: '', emailPrefix: '', u_password: '', u_job_title: '' })
-const createUserErrors = ref({ u_full_name: '', emailPrefix: '', u_password: '' })
+const createUserForm        = ref({ u_full_name: '', emailPrefix: '', u_password: '', u_job_title: '' })
 
 const isCreateUserFormValid = computed(() =>
   !!createUserForm.value.u_full_name.trim() &&
   !!createUserForm.value.emailPrefix.trim() &&
-  createUserForm.value.u_password.length >= 6 &&
-  !createUserErrors.value.u_full_name &&
-  !createUserErrors.value.emailPrefix &&
-  !createUserErrors.value.u_password
+  createUserForm.value.u_password.length >= 6
 )
 
 function openCreateUserModal(domainId: string) {
@@ -1700,9 +1052,7 @@ function openCreateUserModal(domainId: string) {
   const domain = domains.value.find((d) => d._id === domainId)
   domainForCreateUser.value = domain?.domain ?? ''
   createUserForm.value   = { u_full_name: '', emailPrefix: '', u_password: '', u_job_title: '' }
-  createUserErrors.value = { u_full_name: '', emailPrefix: '', u_password: '' }
   createUserServerError.value = ''
-  showCreatePassword.value    = false
   showCreateUserModal.value   = true
 }
 
@@ -1712,12 +1062,6 @@ function closeCreateUserModal() {
 }
 
 async function submitCreateUser() {
-  createUserErrors.value = { u_full_name: '', emailPrefix: '', u_password: '' }
-  let valid = true
-  if (!createUserForm.value.u_full_name.trim()) { createUserErrors.value.u_full_name = 'Full name is required'; valid = false }
-  if (!createUserForm.value.emailPrefix.trim()) { createUserErrors.value.emailPrefix  = 'Email prefix is required'; valid = false }
-  if (createUserForm.value.u_password.length < 6) { createUserErrors.value.u_password = 'Password must be at least 6 characters'; valid = false }
-  if (!valid) return
   isCreatingUser.value        = true
   createUserServerError.value = ''
   try {
@@ -1741,167 +1085,81 @@ async function submitCreateUser() {
   }
 }
 
-// ── Verification modal state ──────────────────────────────────────────────────
-const showVerifyModal        = ref(false)
-const verifyingDomain        = ref<CompanyDomain | null>(null)
-const modalCurrentDomain     = ref<CompanyDomain | null>(null)
-const modalInstructions      = ref<DnsInstructions | null>(null)
-const modalSelectedMethod    = ref<'cname' | 'txt' | 'http'>('cname')
-const modalMethodSwitched    = ref(false)
-const isModalVerifying       = ref(false)
-const modalIsSwitchingMethod = ref(false)
-const isDownloadingFile      = ref(false)
-const modalError             = ref<string | null>(null)
-const modalCopiedField       = ref<string | null>(null)
-const modalRetryCountdown    = ref(0)
-const modalRetryTotal        = ref(30)
-let modalCountdownTimer: ReturnType<typeof setInterval> | null = null
+// Transfer Logic
+const domainSelectedIds = ref<Record<string, string[]>>({})
+const showTransferModal   = ref(false)
+const isTransferring      = ref(false)
+const transferDomainId    = ref<string | null>(null)
+const transferDomainName  = ref('')
 
-const verificationMethods: { value: 'cname' | 'txt' | 'http'; label: string }[] = [
-  { value: 'cname', label: 'CNAME' },
-  { value: 'txt',   label: 'TXT'   },
-  { value: 'http',  label: 'HTTP File' },
-]
-
-const modalDomainStatusLabel = computed((): string => {
-  const s = modalCurrentDomain.value?.status ?? verifyingDomain.value?.status
-  const labels: Record<string, string> = { verified: 'Verified', verifying: 'Verifying', pending: 'Pending', failed: 'Failed', disabled: 'Disabled' }
-  return s ? (labels[s] ?? 'Pending') : 'Pending'
+const transferSelectedUsers = computed(() => {
+  if (!transferDomainId.value) return []
+  const ids   = domainSelectedIds.value[transferDomainId.value] ?? []
+  const users = domainUsersMap.value[transferDomainId.value] ?? []
+  return users.filter((u: any) => ids.includes(u._id))
 })
 
-const modalDomainStatusStyle = computed((): Record<string, string> => {
-  const s = modalCurrentDomain.value?.status ?? verifyingDomain.value?.status
-  if (s === 'verified') return { background: 'color-mix(in srgb, #1d9e75 12%, transparent)', color: '#1d9e75' }
-  if (s === 'failed')   return { background: 'color-mix(in srgb, #e55050 12%, transparent)', color: '#e55050' }
-  if (s === 'disabled') return { background: 'color-mix(in srgb, #6b7280 12%, transparent)', color: '#6b7280' }
-  return { background: 'color-mix(in srgb, #f59e0b 12%, transparent)', color: '#f59e0b' }
-})
-
-async function openVerifyModal(domain: CompanyDomain) {
-  if (!canVerifyDomain.value) return
-  verifyingDomain.value     = domain
-  modalCurrentDomain.value  = domain
-  modalInstructions.value   = domain.instructions ?? null
-  modalSelectedMethod.value = domain.verification_method ?? 'cname'
-  modalMethodSwitched.value = false
-  modalError.value          = null
-  showVerifyModal.value     = true
-  if (!modalInstructions.value || domain.status !== 'verified') {
-    await callVerifyApi(domain.domain, modalSelectedMethod.value)
+function toggleDomainUser(domainId: string, userId: string) {
+  const current = domainSelectedIds.value[domainId] ?? []
+  const idx = current.indexOf(userId)
+  domainSelectedIds.value = {
+    ...domainSelectedIds.value,
+    [domainId]: idx === -1 ? [...current, userId] : current.filter((i) => i !== userId),
   }
 }
 
-function openVerifyModalDirect(domain: CompanyDomain, instructions: DnsInstructions | null) {
-  verifyingDomain.value     = domain
-  modalCurrentDomain.value  = domain
-  modalInstructions.value   = instructions
-  modalSelectedMethod.value = domain.verification_method ?? 'cname'
-  modalMethodSwitched.value = false
-  modalError.value          = null
-  showVerifyModal.value     = true
+function toggleDomainSelectAll(domainId: string) {
+  const allIds  = (domainUsersMap.value[domainId] ?? []).map((u: any) => u._id)
+  const current = domainSelectedIds.value[domainId] ?? []
+  const allSel  = allIds.every((id) => current.includes(id))
+  domainSelectedIds.value = {
+    ...domainSelectedIds.value,
+    [domainId]: allSel ? [] : allIds,
+  }
 }
 
-function closeVerifyModal() {
-  showVerifyModal.value = false
-  stopModalCountdown()
-  refetch()
-  setTimeout(() => {
-    verifyingDomain.value     = null
-    modalCurrentDomain.value  = null
-    modalInstructions.value   = null
-    modalError.value          = null
-    modalMethodSwitched.value = false
-    modalCopiedField.value    = null
-  }, 200)
+function clearDomainSelection(domainId: string) {
+  domainSelectedIds.value = { ...domainSelectedIds.value, [domainId]: [] }
 }
 
-async function callVerifyApi(domain: string, method: 'cname' | 'txt' | 'http') {
-  isModalVerifying.value = true
-  modalError.value       = null
+function isDomainAllSelected(domainId: string): boolean {
+  const allIds  = (domainUsersMap.value[domainId] ?? []).map((u: any) => u._id)
+  const current = domainSelectedIds.value[domainId] ?? []
+  return allIds.length > 0 && allIds.every((id) => current.includes(id))
+}
+
+function isDomainPartiallySelected(domainId: string): boolean {
+  const allIds  = (domainUsersMap.value[domainId] ?? []).map((u: any) => u._id)
+  const current = domainSelectedIds.value[domainId] ?? []
+  return current.some((id) => allIds.includes(id)) && !isDomainAllSelected(domainId)
+}
+
+function openTransferModal(domainId: string, domainName: string) {
+  if (!(domainSelectedIds.value[domainId] ?? []).length) return
+  transferDomainId.value   = domainId
+  transferDomainName.value = domainName
+  showTransferModal.value  = true
+}
+
+async function handleConfirmTransfer() {
+  if (!transferDomainId.value) return
+  isTransferring.value = true
   try {
-    const result = await workspaceStore.verifyDomain(domain, method)
-    modalCurrentDomain.value  = result.domain
-    modalInstructions.value   = result.instructions
-    modalSelectedMethod.value = result.domain.verification_method ?? method
-    modalMethodSwitched.value = !!result.methodSwitched || result.domain.verification_method !== method
+    const companyId = localStorage.getItem('company_id') ?? ''
+    const ids = domainSelectedIds.value[transferDomainId.value] ?? []
+    await workspaceStore.enrolDomainUsers(companyId, ids)
+    toast.success(`${ids.length} user${ids.length !== 1 ? 's' : ''} successfully added.`)
+    clearDomainSelection(transferDomainId.value)
+    showTransferModal.value = false
+    await refetch()
   } catch (err: any) {
-    const msg = err?.response?.data?.message ?? err?.message ?? 'Failed to start verification.'
-    modalError.value = err?.response?.status === 409
-      ? 'This domain is already claimed by another workspace.'
-      : msg
+    toast.error(err?.response?.data?.message ?? 'Transfer failed.')
   } finally {
-    isModalVerifying.value = false
+    isTransferring.value = false
   }
 }
 
-async function modalRecheck() {
-  if (!modalCurrentDomain.value || isModalVerifying.value || modalRetryCountdown.value > 0) return
-  isModalVerifying.value = true
-  modalError.value       = null
-  try {
-    const { data, retryAfter } = await workspaceStore.recheckDomain(modalCurrentDomain.value._id)
-    if (retryAfter !== null) { startModalCountdown(retryAfter); return }
-    if (data) { modalCurrentDomain.value = data.domain; modalInstructions.value = data.instructions }
-  } catch (err: any) {
-    const msg = err?.response?.data?.message ?? err?.message ?? 'Verification check failed.'
-    modalError.value = err?.response?.status === 400 && msg.toLowerCase().includes('disabled')
-      ? 'This domain has been disabled. Please contact support.'
-      : msg
-  } finally {
-    isModalVerifying.value = false
-  }
-}
-
-async function switchModalMethod(method: 'cname' | 'txt' | 'http') {
-  if (!verifyingDomain.value || modalIsSwitchingMethod.value || method === modalSelectedMethod.value) return
-  modalSelectedMethod.value    = method
-  modalIsSwitchingMethod.value = true
-  modalError.value             = null
-  try {
-    await callVerifyApi(verifyingDomain.value.domain, method)
-    modalMethodSwitched.value = false
-  } finally {
-    modalIsSwitchingMethod.value = false
-  }
-}
-
-async function downloadVerificationFile() {
-  if (!modalCurrentDomain.value || isDownloadingFile.value) return
-  isDownloadingFile.value = true
-  try {
-    await workspaceStore.downloadVerificationFile(modalCurrentDomain.value._id)
-  } catch (err: any) {
-    modalError.value = err?.response?.data?.message ?? 'Failed to download verification file.'
-  } finally {
-    isDownloadingFile.value = false
-  }
-}
-
-function modalCopy(text: string, field: string) {
-  navigator.clipboard.writeText(text).then(() => {
-    modalCopiedField.value = field
-    setTimeout(() => { modalCopiedField.value = null }, 2000)
-  })
-}
-
-function startModalCountdown(seconds: number) {
-  stopModalCountdown()
-  modalRetryTotal.value     = seconds
-  modalRetryCountdown.value = seconds
-  modalCountdownTimer = setInterval(() => {
-    modalRetryCountdown.value--
-    if (modalRetryCountdown.value <= 0) stopModalCountdown()
-  }, 1000)
-}
-
-function stopModalCountdown() {
-  if (modalCountdownTimer) { clearInterval(modalCountdownTimer); modalCountdownTimer = null }
-  modalRetryCountdown.value = 0
-}
-
-onUnmounted(() => { stopModalCountdown() })
-
-// ── Formatting helpers ────────────────────────────────────────────────────────
+// Formatting helpers
 function getInitials(name: string): string {
   return name.split(' ').map((w) => w[0]).join('').toUpperCase().slice(0, 2)
 }
@@ -1911,12 +1169,6 @@ function formatDate(iso: string | null | undefined): string {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
-function sslStatusLabel(ssl: CompanyDomain['ssl_status']): string {
-  const labels: Record<CompanyDomain['ssl_status'], string> = {
-    none: 'not provisioned', provisioning: 'provisioning…', active: 'certificate active', error: 'error',
-  }
-  return labels[ssl]
-}
 
 function statusLabel(status: CompanyDomain['status']): string {
   return { pending: 'Pending', verifying: 'Verifying', verified: 'Verified', failed: 'Failed', disabled: 'Disabled' }[status] ?? status
@@ -1945,42 +1197,14 @@ function statusDotClass(status: CompanyDomain['status']): string {
 }
 
 function pendingBannerStyle(status: CompanyDomain['status']): Record<string, string> {
-  if (status === 'failed') return {
-    background:   'color-mix(in srgb, #e55050 6%, transparent)',
-    borderColor:  'color-mix(in srgb, #e55050 25%, transparent)',
-  }
-  return {
-    background:  'color-mix(in srgb, #f59e0b 6%, transparent)',
-    borderColor: 'color-mix(in srgb, #f59e0b 25%, transparent)',
-  }
+  const color = status === 'failed' ? '#e55050' : '#f59e0b'
+  return { background: `color-mix(in srgb, ${color} 6%, transparent)`, borderColor: `color-mix(in srgb, ${color} 25%, transparent)` }
 }
 
 function pendingIconStyle(status: CompanyDomain['status']): Record<string, string> {
-  if (status === 'failed') return { color: '#e55050' }
-  return { color: '#f59e0b' }
+  return { color: status === 'failed' ? '#e55050' : '#f59e0b' }
 }
-// domain users
-// ─── ADD THESE to your existing <script setup> ───────────────────────────────
-// Place after the existing domainUsersMap / domainUsersLoaded / loadingDomainUsers refs
 
-// Per-domain checkbox selection: { [domainId]: string[] }
-const domainSelectedIds = ref<Record<string, string[]>>({})
-
-// Transfer modal state
-const showTransferModal   = ref(false)
-const isTransferring      = ref(false)
-const transferDomainId    = ref<string | null>(null)
-const transferDomainName  = ref('')
-
-// Derived list of full user objects for the currently open transfer modal
-const transferSelectedUsers = computed(() => {
-  if (!transferDomainId.value) return []
-  const ids   = domainSelectedIds.value[transferDomainId.value] ?? []
-  const users = domainUsersMap.value[transferDomainId.value] ?? []
-  return users.filter((u: any) => ids.includes(u._id))
-})
-
-// Impact cards data (static)
 const transferImpacts = [
   {
     label:       'Billing & Subscription',
@@ -2018,70 +1242,6 @@ const transferImpacts = [
     ],
   },
 ]
-
-// ── Checkbox helpers ──────────────────────────────────────────────────────────
-function toggleDomainUser(domainId: string, userId: string) {
-  const current = domainSelectedIds.value[domainId] ?? []
-  const idx = current.indexOf(userId)
-  domainSelectedIds.value = {
-    ...domainSelectedIds.value,
-    [domainId]: idx === -1 ? [...current, userId] : current.filter((i) => i !== userId),
-  }
-}
-
-function toggleDomainSelectAll(domainId: string) {
-  const allIds  = (domainUsersMap.value[domainId] ?? []).map((u: any) => u._id)
-  const current = domainSelectedIds.value[domainId] ?? []
-  const allSel  = allIds.every((id) => current.includes(id))
-  domainSelectedIds.value = {
-    ...domainSelectedIds.value,
-    [domainId]: allSel ? [] : allIds,
-  }
-}
-
-function clearDomainSelection(domainId: string) {
-  domainSelectedIds.value = { ...domainSelectedIds.value, [domainId]: [] }
-}
-
-function isDomainAllSelected(domainId: string): boolean {
-  const allIds  = (domainUsersMap.value[domainId] ?? []).map((u: any) => u._id)
-  const current = domainSelectedIds.value[domainId] ?? []
-  return allIds.length > 0 && allIds.every((id) => current.includes(id))
-}
-
-function isDomainPartiallySelected(domainId: string): boolean {
-  const allIds  = (domainUsersMap.value[domainId] ?? []).map((u: any) => u._id)
-  const current = domainSelectedIds.value[domainId] ?? []
-  return current.some((id) => allIds.includes(id)) && !isDomainAllSelected(domainId)
-}
-
-// ── Transfer modal ────────────────────────────────────────────────────────────
-function openTransferModal(domainId: string, domainName: string) {
-  if (!(domainSelectedIds.value[domainId] ?? []).length) return
-  transferDomainId.value   = domainId
-  transferDomainName.value = domainName
-  showTransferModal.value  = true
-}
-
-async function handleConfirmTransfer() {
-  if (!transferDomainId.value) return
-  isTransferring.value = true
-  try {
-    const companyId = localStorage.getItem('company_id') ?? ''
-    const ids = domainSelectedIds.value[transferDomainId.value] ?? []
-    await workspaceStore.enrolDomainUsers(companyId, ids)
-    toast.success(
-      `${ids.length} user${ids.length !== 1 ? 's' : ''} successfully added to your organisation.`
-    )
-    clearDomainSelection(transferDomainId.value)
-    showTransferModal.value = false
-    await refetch()
-  } catch (err: any) {
-    toast.error(err?.response?.data?.message ?? 'Transfer failed. Please try again.')
-  } finally {
-    isTransferring.value = false
-  }
-}
 </script>
 
 <style scoped>

@@ -32,9 +32,11 @@ export function redirectToLogin(
   return false
 }
 
-export function getPersonalDashboardUrl(): string {
+export function getPersonalDashboardUrl(theme?: string): string {
   const primary = getPrimaryDomain()
   const protocol = window.location.protocol
   // ← tell the receiving page this is a personal mode switch
-  return `${protocol}//${primary}/dashboard?personal_mode=true`
+  let url = `${protocol}//${primary}/dashboard?personal_mode=true`
+  if (theme) url += `&theme=${theme}`
+  return url
 }
