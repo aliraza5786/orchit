@@ -82,6 +82,7 @@
             </div>
 
             <button
+              v-if="canCreateOrg"
               @click="isCreatingOrg = true"
               class="group relative px-8 py-4 bg-accent text-white cursor-pointer text-base font-bold rounded-2xl hover:bg-accent/90 active:scale-[0.98] transition-all shadow-xl shadow-accent/25 overflow-hidden"
             >
@@ -571,6 +572,7 @@ import CreateOrganizationInline from './CreateOrganizationInline.vue'
 import { useAuthStore } from '../../../stores/auth'
 import { request } from '../../../libs/api'
 import { useCompanyUsers } from '../../../queries/useCompanyUsers'
+import { useRouter } from 'vue-router'
 // ─── Props ────────────────────────────────────────────────────────────────────
 const props = defineProps<{
   forceCreate?: boolean
@@ -581,7 +583,7 @@ const props = defineProps<{
 const queryClient = useQueryClient()
 const authStore   = useAuthStore()
 const workspaceStore = useWorkspaceStore()
-
+const router = useRouter()
 
 // ─── Company context ──────────────────────────────────────────────────────────
 const isCreatingOrg = ref(false)
@@ -636,6 +638,11 @@ function getInitials(name: string) {
 const canUpdateOrg = computed(() =>
   isOwner.value || can('company.update') || can('company_user.update')
 )
+
+const canCreateOrg = computed(() => {
+  const role = (props.profile?.role || '').toLowerCase()
+  return role === 'owner' || role === 'super admin' || role === 'super_admin' || role === 'admin'
+})
 
 const hasOrg = computed(() => {
   if (props.forceCreate) return false
@@ -946,6 +953,7 @@ function openDeleteModal() {
 function closeDeleteModal() {
   deleteModal.open = false
   stopTimer()
+  router.push('/dashboard')
 }
 
 function handleBackdropClick() {
