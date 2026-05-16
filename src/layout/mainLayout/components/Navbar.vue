@@ -164,8 +164,20 @@
               </div>
               <div class="h-px w-full bg-border/40 shrink-0 mx-auto max-w-[90%]"></div>
 
+              <!-- Create Org — only visible if user has NO organizations -->
+              <div v-if="companyAccounts.length === 0" class="px-1.5 py-1">
+                <button 
+                  @click="router.push('/settings?tab=org-setup'); closeMenu()"
+                  class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-bg-dropdown-menu-hover cursor-pointer transition-all text-left text-text-secondary hover:text-text-primary"
+                >
+                  <div class="w-9 h-9 rounded-xl border border-dashed border-border flex items-center justify-center">
+                    <i class="fa-solid fa-plus text-xs"></i>
+                  </div>
+                  <span class="text-sm font-medium">Create organization</span>
+                </button>
+              </div>
 
-              <!-- Footer — always visible, never scrolls away -->
+              <div class="h-px w-full bg-border/40 shrink-0 mx-auto max-w-[90%]"></div>
               <div class="flex-shrink-0">
                 <div class="h-px w-full bg-bg-dropdown-menu-hover/50"></div>
                 <ul class="p-1">
@@ -377,7 +389,7 @@ interface Company {
 // ── Stores & composables ───────────────────────────────────────
 const workspaceStore = useWorkspaceStore();
 const authStore = useAuthStore();
-const { setTheme, isDark } = useTheme();
+const { setTheme, isDark} = useTheme();
 const router = useRouter();
 const route = useRoute();
 const queryClient = useQueryClient();
@@ -454,7 +466,6 @@ const currentAccount = computed<Account>(() => {
     type: 'company',
   }
 })
-// ── Account switch state ───────────────────────────────────────
 const pendingAccount = ref<Account | null>(null);
 
 // ── Menu state ─────────────────────────────────────────────────

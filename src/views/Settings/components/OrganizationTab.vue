@@ -261,11 +261,10 @@
           </span>
           <span v-else><i class="fa-solid fa-check mr-2"></i> Save changes</span>
         </button>
-        <button @click="openDeleteModal" :disabled="isDomainsLoading" class="px-6 py-2.5 text-sm font-semibold cursor-pointer rounded-lg border border-red-500/30 text-red-600 hover:bg-red-500/10 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-wait">
-          <i v-if="isDomainsLoading" class="fa-solid fa-circle-notch fa-spin mr-2"></i>
-          <i v-else class="fa-solid fa-trash mr-2"></i> 
-          Delete organization
-        </button>
+        <button @click="openDeleteModal" class="px-6 py-2.5 text-sm font-semibold cursor-pointer rounded-lg border border-red-500/30 text-red-600 hover:bg-red-500/10 transition-all active:scale-95">
+  <i class="fa-solid fa-trash mr-2"></i>
+  Delete organization
+</button>
       </div>
 
       <p v-if="saveError" class="text-xs text-red-500 mt-2 flex items-center gap-1.5">
@@ -570,8 +569,8 @@ import { useQueryClient } from '@tanstack/vue-query'
 import { uploadPrivateFile } from '../../../queries/useCommon'
 import CreateOrganizationInline from './CreateOrganizationInline.vue'
 import { useAuthStore } from '../../../stores/auth'
-import { useListDomains } from '../../../queries/useCommon'
-import { useVerifyPasswordForDeletion, useConfirmDomainDeletion, type VerifyPasswordForDeletionPayload, type ConfirmDomainDeletionPayload, useCompanyUsers } from '../../../queries/useCompanyUsers'
+import { request } from '../../../libs/api'
+import { useCompanyUsers } from '../../../queries/useCompanyUsers'
 // ─── Props ────────────────────────────────────────────────────────────────────
 const props = defineProps<{
   forceCreate?: boolean
@@ -596,30 +595,6 @@ watch(() => props.profile?.active_company_id, (id) => {
   if (id && !selectedCompanyId.value) {
     selectedCompanyId.value = id
   }
-}, { immediate: true })
-
-// Reactive domains list for deletion
-const { data: domainsData, isLoading: isDomainsLoading } = useListDomains(selectedCompanyId)
-
-const domains = computed(() => {
-  const raw = domainsData.value ?? domainsData.value
-  if (Array.isArray(raw)) return raw
-  return raw?.domains ?? []
-})
-const deletingDomainId = computed(() => domains.value?.[0]?._id)
-const verifyPassword = ref<((payload: VerifyPasswordForDeletionPayload) => Promise<any>) | null>(null)
-const confirmDeletion = ref<((payload: ConfirmDomainDeletionPayload) => Promise<any>) | null>(null)
-
-watch(deletingDomainId, (id) => {
-  if (!id) {
-    verifyPassword.value = null
-    confirmDeletion.value = null
-    return
-  }
-  const { mutateAsync: vp } = useVerifyPasswordForDeletion(id)
-  const { mutateAsync: cd } = useConfirmDomainDeletion(id)
-  verifyPassword.value = vp
-  confirmDeletion.value = cd
 }, { immediate: true })
 
 const ownerParams = reactive({
@@ -954,25 +929,16 @@ function openDeleteModal() {
     toast.error('Organization ID not found. Please refresh the page.')
     return
   }
+  // Remove the deletingDomainId check entirely — no longer needed
 
-  if (!deletingDomainId.value) {
-    console.warn('[OrganizationTab] Cannot open delete modal: deletingDomainId is missing', {
-      domains: domains.value,
-      companyId: selectedCompanyId.value,
-      domainsData: domainsData.value
-    })
-    toast.error('Organization domains not loaded yet. Please wait a moment or refresh.')
-    return
-  }
-
-  deleteModal.open        = true
-  deleteModal.step        = 0
-  deleteModal.loading     = false
-  deleteModal.password    = ''
+  deleteModal.open         = true
+  deleteModal.step         = 0
+  deleteModal.loading      = false
+  deleteModal.password     = ''
   deleteModal.showPassword = false
-  deleteModal.otpDigits   = ['', '', '', '', '']
-  deleteModal.confirmName = ''
-  deleteModal.errors      = { password: '', otp: '', confirmName: '' }
+  deleteModal.otpDigits    = ['', '', '', '', '']
+  deleteModal.confirmName  = ''
+  deleteModal.errors       = { password: '', otp: '', confirmName: '' }
   deleteModal.timerSeconds = 299
   stopTimer()
 }
@@ -1050,14 +1016,18 @@ async function doPasswordStep() {
     deleteModal.errors.password = 'Please enter your password.'
     return
   }
-  if (!verifyPassword.value) {
-    deleteModal.errors.password = 'Organization verification context missing. Please refresh.'
+  if (!selectedCompanyId.value) {
+    deleteModal.errors.password = 'Organization context missing. Please refresh.'
     return
   }
 
   deleteModal.loading = true
   try {
-    await verifyPassword.value({ password: deleteModal.password })
+    await request({
+      url: `profile/company/${selectedCompanyId.value}/verify-password`,
+      method: 'POST',
+      data: { password: deleteModal.password },
+    })
     deleteModal.errors.password = ''
     deleteModal.loading = false
     goDeleteStep(1)
@@ -1076,14 +1046,18 @@ async function doConfirmStep() {
     deleteModal.errors.confirmName = 'Name does not match. Check capitalization and spacing.'
     return
   }
-  if (!confirmDeletion.value) {
-    deleteModal.errors.confirmName = 'Organization not loaded yet. Please try again.'
+  if (!selectedCompanyId.value) {
+    deleteModal.errors.confirmName = 'Organization context missing. Please refresh.'
     return
   }
 
   deleteModal.loading = true
   try {
-    await confirmDeletion.value({ otp: deleteModal.otpDigits.join('') })
+    await request({
+      url: `profile/company/${selectedCompanyId.value}/confirm-delete`,
+      method: 'POST',
+      data: { otp: deleteModal.otpDigits.join('') },
+    })
     deleteModal.loading = false
     goDeleteStep(3)
     try {

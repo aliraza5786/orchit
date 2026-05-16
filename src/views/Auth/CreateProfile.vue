@@ -1156,7 +1156,7 @@
             <h3 class="text-md font-semibold text-text-primary mb-1">{{ isNameConflictError ? 'Site name already taken' : 'Something went wrong' }}</h3>
             <p class="text-sm text-text-secondary leading-relaxed mb-5">{{ companySlugError }}</p>
             <div class="flex gap-2">
-              <button v-if="isNameConflictError" type="button" class="flex-1 rounded-lg border border-black/10 bg-bg-dropdown px-3 py-2.5 text-sm font-medium text-text-secondary hover:border-black/20 hover:text-text-primary transition cursor-pointer" @click="companySlugError = null">Change name here</button>
+              <button v-if="isNameConflictError" type="button" class="flex-1 rounded-lg border border-black/10 bg-bg-dropdown px-3 py-2.5 text-sm font-medium text-text-secondary hover:border-black/20 hover:text-text-primary transition cursor-pointer" @click="handleConflictRedirect">Change name here</button>
               <button v-else type="button" class="flex-1 rounded-lg border border-black/10 bg-bg-dropdown px-3 py-2.5 text-sm font-medium text-text-secondary hover:border-black/20 hover:text-text-primary transition cursor-pointer" @click="dismissErrorModal">Go to Dashboard</button>
             </div>
           </div>
@@ -1185,16 +1185,29 @@ import { useCreateCompanyUser, useSendSuperAdminOtp, useVerifySuperAdminOtp } fr
 import gsap from 'gsap'
 import { toast } from 'vue-sonner'
 import { useCompanyRolesWithoutPermission } from '../../queries/useCommon'
+import { useTheme } from '../../composables/useTheme';
+
+const { theme } = useTheme();
 defineOptions({ name: 'OnboardingFlow' })
 const { data: rolesData, isLoading: isRolesLoading, refetch: refetchRoles } = useCompanyRolesWithoutPermission()
 const { mutateAsync: sendOtp } = useSendSuperAdminOtp()
 const { mutateAsync: verifyOtp } = useVerifySuperAdminOtp()
+
+// ─── Core State ──────────────────────────────────────────────────────────────
+const companyID = ref()
+const activeStep = ref(1)
+const selected = ref('team')
+const siteCreated = ref(false)
+const dnsInput = ref('')
+const siteName = ref('')
+const siteSlug = ref('')
+const isProvisioning = ref(false)
+const isUpdatingProfile = ref(false)
+
+// ─── Super Admin State ───────────────────────────────────────────────────────
 const superAdminRole = ref("")
 const superAdminName = ref("")
 const superAdminPassword = ref("")
-
-// FIX 5: Separate email prefix from full email
-// User only types the part before @domain; full email is computed
 const superAdminEmailPrefix = ref('')
 const superAdminEmail = computed(() => {
   const prefix = superAdminEmailPrefix.value.trim()
@@ -1304,10 +1317,6 @@ onMounted(async () => {
   }
 })
 
-// ─── Step & Selection ─────────────────────────────────────────────────────────
-const selected = ref('team')
-const activeStep = ref(1)
-const siteCreated = ref(false)
 const teamRef = ref(null)
 const roleRef = ref(null)
 const companySizeRef = ref(null)
@@ -1326,9 +1335,7 @@ const selectedModules = ref([])
 // ─── Step 4 ───────────────────────────────────────────────────────────────────
 const workType = ref('')
 
-// ─── Step 5 — subdomain ───────────────────────────────────────────────────────
-const siteName = ref('')
-const siteSlug = ref('')
+// ─── Step 5 ───────────────────────────────────────────────────────────────────
 const isFocused = ref(false)
 const isCheckingSlug = ref(false)
 const isSlugAvailable = ref(null)
@@ -1336,7 +1343,6 @@ const companySlugError = ref(null)
 
 // ─── Step 5 — custom domain (Scenario 2 only) ────────────────────────────────
 const hasCustomDomain = ref(false)
-const dnsInput = ref('')
 const isCheckingDns = ref(false)
 const isDnsAvailable = ref(null)
 const isDnsNotRegistered = ref(false)
@@ -1421,9 +1427,6 @@ const enrolSuccess = ref(null)
 const referralSources = ref([])
 const joinLink = ref('')
 const domainLink = ref('')
-const companyID = ref()
-const isProvisioning = ref(false)
-const isUpdatingProfile = ref(false)
 
 // FIX 4: Auto-resolve superAdminRole from roles list — never shown to user
 // Match the super admin role that belongs to the CURRENT company (after createProfile)
@@ -2128,6 +2131,7 @@ function routeToFinishProfile() {
   }
   if (token)        query._auth = encode(token)
   if (companyIdRaw) query._cid  = encode(companyIdRaw)
+  query.theme = theme.value
   router.push({ path: '/finish-profile', query })
 }
 
@@ -2147,6 +2151,7 @@ async function finishOnboarding() {
   }
   if (token)        query._auth = encode(token)
   if (companyIdRaw) query._cid  = encode(companyIdRaw)
+  query.theme = theme.value
   router.push({ path: '/finish-profile', query })
 }
 
@@ -2157,11 +2162,18 @@ function dismissErrorModal() {
   }
 }
 
+function handleConflictRedirect() {
+  activeStep.value = 2
+  companySlugError.value = null
+  isNameConflictError.value = false
+  siteName.value = ''
+}
+
 function onProvisioningComplete() {
   isLoaderRunning.value = false
 
   if (selected.value === 'personal') {
-    router.push({ path: '/finish-profile', query: { welcome: '1', type: 'personal' } })
+    router.push({ path: '/finish-profile', query: { welcome: '1', type: 'personal', theme: theme.value } })
     return
   }
 

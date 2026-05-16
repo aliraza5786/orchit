@@ -58,6 +58,9 @@
 import AuthLayout from '../layout/AuthLayout/AuthLayout.vue';
 import Button from '../components/ui/Button.vue';
 import { useRouter, useRoute } from 'vue-router'
+import { useTheme } from '../composables/useTheme';
+
+const { theme } = useTheme();
 const steps = ['Sign up', 'Verify email', 'Account ready']
 const features = [
   { 
@@ -123,7 +126,7 @@ function register() {
       const userId = atob(encodedUserId.replace(/-/g, '+').replace(/_/g, '/').replace(/\./g, '='))
       localStorage.setItem('user_id', userId)
     }
-    router.push({ path: '/dashboard', query: { welcome: '1' } })
+    router.push({ path: '/dashboard', query: { welcome: '1', theme: theme.value } })
     return
   }
 
@@ -177,11 +180,13 @@ function register() {
 
   if (isLocalhost) {
     const port = window.location.port ? `:${window.location.port}` : ''
-    window.location.href = `http://custom.localhost${port}/dashboard?welcome=1&_auth=${encodedToken}`
+    window.location.href = `http://custom.localhost${port}/dashboard?welcome=1&_auth=${encodedToken}&theme=${theme.value}`
   } else if (domainLink) {
-    window.location.href = buildUrl(domainLink)
+    const finalUrl = buildUrl(domainLink)
+    const separator = finalUrl.includes('?') ? '&' : '?'
+    window.location.href = `${finalUrl}${separator}theme=${theme.value}`
   } else {
-    router.push({ path: '/dashboard', query: { welcome: '1' } })
+    router.push({ path: '/dashboard', query: { welcome: '1', theme: theme.value } })
   }
 }
 
@@ -194,7 +199,7 @@ function createWS() {
 
   router.push({
     path: '/create-workspace',
-    query: { _auth: encodedToken, domainLink, _cid: encodedCompanyId, _uid: encodedUserId, type }
+    query: { _auth: encodedToken, domainLink, _cid: encodedCompanyId, _uid: encodedUserId, type, theme: theme.value }
   })
 }
 </script>

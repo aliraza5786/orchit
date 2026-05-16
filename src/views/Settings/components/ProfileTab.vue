@@ -53,7 +53,7 @@
             </p>
             <div class="mt-4 flex flex-wrap justify-center sm:justify-start gap-2">
                <span class="px-3 py-1 bg-accent/10 text-accent text-xs font-bold rounded-full border border-accent/20">
-                 {{ profileData.companies?.role?.title || 'Member' }}
+                 {{ profileData?.role|| 'Member' }}
                </span>
                <span v-if="profileData.companies?.title" class="px-3 py-1 bg-text-secondary/10 text-text-secondary text-xs font-bold rounded-full border border-border">
                 <i class="fa-solid fa-building text-accent"></i> {{ profileData.companies.title }}

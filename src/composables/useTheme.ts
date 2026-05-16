@@ -3,6 +3,13 @@ import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 
 export type ThemeMode = "light" | "dark" | "system";
 export function initThemeImmediately() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const themeParam = urlParams.get("theme") as ThemeMode | null;
+
+  if (themeParam && ["light", "dark", "system"].includes(themeParam)) {
+    localStorage.setItem(STORAGE_KEY, themeParam);
+  }
+
   const saved = localStorage.getItem(STORAGE_KEY) as ThemeMode | null;
 
   const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;

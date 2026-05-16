@@ -93,6 +93,8 @@ const StepTwo = defineAsyncComponent(() => import('./steps/StepTwo.vue'))
 const StepThree = defineAsyncComponent(() => import('./steps/StepThree.vue'))
 const StepFour = defineAsyncComponent(() => import('./steps/StepFour.vue'))
 import { useWorkspaceStore } from '../../stores/workspace';
+import { useTheme } from '../../composables/useTheme';
+const { theme } = useTheme();
 defineOptions({ name: 'CreateWorkspace' })
 const router = useRouter()
 const route = useRoute()
@@ -165,7 +167,7 @@ function handleClose() {
   const encodedUserId = route.query._uid as string
 
   if (type === 'personal') {
-    router.push({ path: '/dashboard', query: { welcome: '1' } })
+    router.push({ path: '/dashboard', query: { welcome: '1', theme: theme.value } })
     return
   }
 
@@ -175,19 +177,19 @@ function handleClose() {
   }
 
   const isLocalhost = window.location.hostname === 'localhost'
-  const buildUrl = (base: string) => `${base}/dashboard?welcome=1&_auth=${encodedToken}&_cid=${encodedCompanyId}&_uid=${encodedUserId}`
 
   if (isLocalhost) {
     const port = window.location.port ? `:${window.location.port}` : ''
-    const subdomainUrl = `http://custom.localhost${port}/dashboard?welcome=1&_auth=${encodedToken}&_cid=${encodedCompanyId}&_uid=${encodedUserId}`
+    const subdomainUrl = `http://custom.localhost${port}/dashboard?welcome=1&_auth=${encodedToken}&_cid=${encodedCompanyId}&_uid=${encodedUserId}&theme=${theme.value}`
     localStorage.setItem('subdomainUrl', subdomainUrl)
     window.location.href = subdomainUrl
   } else if (domainLink) {
-    const subdomainUrl = buildUrl(domainLink)
+    const base = domainLink.endsWith('/') ? domainLink.slice(0, -1) : domainLink
+    const subdomainUrl = `${base}/dashboard?welcome=1&_auth=${encodedToken}&_cid=${encodedCompanyId}&_uid=${encodedUserId}&theme=${theme.value}`
     localStorage.setItem('subdomainUrl', subdomainUrl)
     window.location.href = subdomainUrl
   } else {
-    router.push({ path: '/dashboard', query: { welcome: '1' } })
+    router.push({ path: '/dashboard', query: { welcome: '1', theme: theme.value } })
   }
 }
 import { onMounted } from 'vue'
