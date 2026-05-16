@@ -113,7 +113,7 @@
                 <!-- Sign out action -->
                 <button
                   type="button"
-                  class="w-full flex items-center justify-center gap-2 py-3 rounded-[9px] text-sm font-semibold border transition-all duration-200 hover:opacity-80"
+                  class="w-full flex cursor-pointer items-center justify-center gap-2 py-3 rounded-[9px] text-sm font-semibold border transition-all duration-200 hover:opacity-80"
                   style="border-color: var(--border); background: transparent; color: var(--text-secondary);"
                   @click="authStore.logout(); router.push('/login')"
                 >
@@ -145,39 +145,78 @@
             </p>
           </div>
 
-          <!-- Scenario 3: company email hint banner -->
+          <!-- Scenario 3: company email mandatory banner -->
           <div
-            v-if="isCompanyEmail"
-            class="mb-5 flex items-start gap-3 rounded-xl px-4 py-3.5 border"
-            style="background: color-mix(in srgb, var(--accent) 8%, transparent); border-color: color-mix(in srgb, var(--accent) 25%, transparent);"
+            v-if="isCompanyEmail && !isEducationEmail"
+            class="mb-6 p-5 rounded-2xl border flex items-start gap-4 shadow-sm"
+            style="background: color-mix(in srgb, var(--accent) 10%, transparent); border-color: color-mix(in srgb, var(--accent) 25%, transparent);"
           >
-            <svg class="w-4 h-4 mt-0.5 shrink-0" viewBox="0 0 16 16" fill="none" style="color: var(--accent);">
-              <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.4"/>
-              <path d="M8 5v4M8 11v.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-            </svg>
-            <p class="text-sm leading-relaxed" style="color: var(--accent);">
-              We detected a company email (<strong>{{ userEmailDomain }}</strong>). Team workspace is recommended — your domain will be auto-verified.
-            </p>
+            <div class="w-10 h-10 rounded-xl bg-bg-card flex items-center justify-center shrink-0 border" style="border-color: var(--accent);">
+               <i class="fa-solid fa-building-user text-accent text-lg"></i>
+            </div>
+            <div class="flex-1">
+              <h3 class="text-sm font-bold text-accent">Business Domain Detected</h3>
+              <p class="text-xs text-text-secondary mt-1 leading-relaxed">
+                Your email (<strong>{{ userEmailDomain }}</strong>) is associated with an organization. You must create a <strong>Team</strong> profile.
+              </p>
+              <button 
+                type="button" 
+                @click="authStore.logout(); router.push('/login')"
+                class="mt-3 inline-flex items-center cursor-pointer gap-1.5 text-[11px] font-bold text-accent hover:opacity-70 transition-opacity"
+              >
+                <i class="fa-solid fa-right-from-bracket"></i>
+                Use a different email
+              </button>
+            </div>
+          </div>
+
+          <!-- Scenario 4: education email mandatory banner -->
+          <div
+            v-if="isEducationEmail"
+            class="mb-6 p-5 rounded-2xl border flex items-start gap-4 shadow-sm"
+            style="background: color-mix(in srgb, #6366f1 10%, transparent); border-color: color-mix(in srgb, #6366f1 25%, transparent);"
+          >
+            <div class="w-10 h-10 rounded-xl bg-bg-card flex items-center justify-center shrink-0 border" style="border-color: #6366f1;">
+               <i class="fa-solid fa-graduation-cap text-[#6366f1] text-lg"></i>
+            </div>
+            <div class="flex-1">
+              <h3 class="text-sm font-bold text-[#6366f1]">Academic Domain Detected</h3>
+              <p class="text-xs text-text-secondary mt-1 leading-relaxed">
+                Your email (<strong>{{ userEmailDomain }}</strong>) is recognized as an educational domain. You must create a <strong>School</strong> profile to continue.
+              </p>
+              <button 
+                type="button" 
+                @click="authStore.logout(); router.push('/login')"
+                class="mt-3 inline-flex items-center gap-1.5 text-[11px] font-bold text-[#6366f1] hover:opacity-70 transition-opacity"
+              >
+                <i class="fa-solid fa-right-from-bracket"></i>
+                Use a different email
+              </button>
+            </div>
           </div>
 
           <div class="how_help_steps grid sm:grid-cols-3 gap-4">
             <label
               v-for="option in options"
               :key="option._id"
-              class="group border rounded-xl py-4 px-2.5 cursor-pointer sm:aspect-square transition-all duration-200 ease-out hover:shadow-md hover:-translate-y-1 hover:border-accent/50 hover:bg-accent/5 active:scale-[0.98]"
+              @click.prevent="handleOptionClick(option._id)"
+              class="group border rounded-xl py-4 px-2.5 transition-all duration-200 ease-out sm:aspect-square cursor-pointer hover:shadow-md hover:-translate-y-1 hover:border-accent/50 hover:bg-accent/5 active:scale-[0.98]"
               :class="optionClass(option._id)"
             >
-              <input type="radio" class="hidden" v-model="selected" :value="option._id" />
+              <input type="radio" class="hidden" :checked="selected === option._id" />
               <div class="flex flex-col items-center">
                 <img :src="option.icon" class="w-12 h-12 transition-transform duration-200 group-hover:scale-110" />
                 <h3 class="font-medium text-sm text-text-primary mt-4">{{ option.title }}</h3>
                 <p class="text-[11px] text-text-secondary mt-2 text-center">{{ option.description }}</p>
                 <span
-                  v-if="isCompanyEmail && option._id === 'team'"
+                  v-if="mandatoryOptionId === option._id && !isGenericEmail"
                   class="mt-2 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
-                  style="background: color-mix(in srgb, var(--accent) 15%, transparent); color: var(--accent);"
+                  :style="{
+                    background: isEducationEmail ? 'color-mix(in srgb, #6366f1 15%, transparent)' : 'color-mix(in srgb, var(--accent) 15%, transparent)',
+                    color: isEducationEmail ? '#6366f1' : 'var(--accent)'
+                  }"
                 >
-                  Recommended
+                  Mandatory
                 </span>
               </div>
             </label>
@@ -1169,18 +1208,6 @@ const allRoles = computed(() => {
   return Array.isArray(raw) ? raw : []
 })
 
-// FIX 4: Auto-resolve superAdminRole from roles list — never shown to user
-// Match the super admin role that belongs to the CURRENT company (after createProfile)
-watchEffect(() => {
-  if (!allRoles.value?.length) return
-  const currentCompanyId = companyID.value ?? localStorage.getItem('company_id') ?? ''
-  // Prefer the super admin role matching the current company
-  const matchedRole = allRoles.value.find(r => r.is_super_admin && r.company_id === currentCompanyId)
-    || allRoles.value.find(r => r.is_super_admin && r.company_id)
-  if (matchedRole) {
-    superAdminRole.value = matchedRole._id
-  }
-})
 
 // ─── Stores & Router ──────────────────────────────────────────────────────────
 const workspaceStore = useWorkspaceStore()
@@ -1228,6 +1255,32 @@ const isCompanyEmail = computed(() => {
   if (!domain) return false
   return !GENERIC_EMAIL_PROVIDERS.has(domain)
 })
+
+const isEducationEmail = computed(() => {
+  const domain = userEmailDomain.value
+  if (!domain) return false
+  // Check for .edu anywhere in the domain (e.g. university.edu or university.edu.pk)
+  return domain.endsWith('.edu') || domain.includes('.edu.')
+})
+
+const isGenericEmail = computed(() => {
+  const domain = userEmailDomain.value
+  return domain && GENERIC_EMAIL_PROVIDERS.has(domain)
+})
+
+// Enforce options based on domain
+const mandatoryOptionId = computed(() => {
+  if (isEducationEmail.value) return 'school'
+  if (isCompanyEmail.value) return 'team'
+  return 'personal'
+})
+
+const filteredOptions = computed(() => {
+  if (isEducationEmail.value) return options.filter(o => o._id === 'school')
+  if (isCompanyEmail.value) return options.filter(o => o._id === 'team')
+  return options.filter(o => o._id === 'personal')
+})
+
 
 onMounted(async () => {
   try {
@@ -1371,6 +1424,50 @@ const domainLink = ref('')
 const companyID = ref()
 const isProvisioning = ref(false)
 const isUpdatingProfile = ref(false)
+
+// FIX 4: Auto-resolve superAdminRole from roles list — never shown to user
+// Match the super admin role that belongs to the CURRENT company (after createProfile)
+watchEffect(() => {
+  if (!allRoles.value?.length) return
+  const currentCompanyId = companyID.value ?? localStorage.getItem('company_id') ?? ''
+  // Prefer the super admin role matching the current company
+  const matchedRole = allRoles.value.find(r => r.is_super_admin && r.company_id === currentCompanyId)
+    || allRoles.value.find(r => r.is_super_admin && r.company_id)
+  if (matchedRole) {
+    superAdminRole.value = matchedRole._id
+  }
+})
+
+// Auto-select and ENFORCE based on email domain
+watch([isEducationEmail, isCompanyEmail], ([isEdu, isCompany]) => {
+  if (activeStep.value !== 1) return
+  if (isEdu) {
+    selected.value = 'school'
+  } else if (isCompany) {
+    selected.value = 'team'
+  } else {
+    selected.value = 'personal'
+  }
+}, { immediate: true })
+
+function handleOptionClick(id) {
+  if (mandatoryOptionId.value !== id) {
+    let msg = ''
+    if (isEducationEmail.value) {
+      msg = `Academic accounts are restricted to School profiles.`
+    } else if (isCompanyEmail.value) {
+      msg = `Business accounts must use Team profiles.`
+    } else {
+      msg = `This email address is restricted to Personal profiles.`
+    }
+    toast.error(msg, {
+      description: `Please use the ${mandatoryOptionId.value} option for ${userEmailDomain.value}`,
+      duration: 4000
+    })
+    return
+  }
+  selected.value = id
+}
 
 // ─── Verification methods ─────────────────────────────────────────────────────
 const verificationMethods = [

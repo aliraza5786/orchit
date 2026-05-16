@@ -35,47 +35,67 @@
       <div class="space-y-6" v-if="isCreatingOrg">
         <CreateOrganizationInline @done="onOrgCreated" />
       </div>
-      <div v-if="!hasOrg && !isCreatingOrg" class="flex flex-col items-center justify-center py-12 px-4">
-        <div class="flex flex-col items-center max-w-xl text-center">
-          <div class="w-24 h-24 rounded-2xl bg-gradient-to-br from-accent/20 to-accent/10 border border-accent/30 flex items-center justify-center mb-6">
-            <i class="fa-regular fa-building text-accent text-4xl"></i>
+      <div v-if="!hasOrg && !isCreatingOrg" class="flex flex-col items-center justify-center py-8 px-4">
+        <div class="flex flex-col items-center max-w-2xl w-full text-center bg-bg-card border border-border/60 rounded-[32px] p-8 md:p-12 shadow-sm relative overflow-hidden">
+          <!-- Background decoration -->
+          <div class="absolute -top-24 -left-24 w-64 h-64 bg-accent/5 rounded-full blur-3xl"></div>
+          <div class="absolute -bottom-24 -right-24 w-64 h-64 bg-accent/5 rounded-full blur-3xl"></div>
+
+          <div class="relative z-10 w-full">
+            <div class="w-24 h-24 rounded-[28px] bg-bg-body shadow-xl flex items-center justify-center mx-auto mb-8 border border-accent/10 transition-transform hover:scale-105 duration-500">
+               <i class="fa-solid fa-building-flag text-accent text-4xl"></i>
+            </div>
+            
+            <h2 class="text-3xl md:text-4xl font-black text-text-primary mb-4 tracking-tight">Level Up Your Collaboration</h2>
+            <p class="text-[15px] text-text-secondary mb-10 leading-relaxed max-w-lg mx-auto">
+              Ready to manage a team? Create an organization to invite members, secure your domain, and centralize your operations in a shared workspace.
+            </p>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full mb-10 text-left">
+              <div class="flex flex-col gap-3 p-5 rounded-2xl bg-bg-body/50 border border-border/40 transition-colors hover:border-accent/30">
+                <div class="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
+                  <i class="fa-solid fa-users text-accent text-base"></i>
+                </div>
+                <div>
+                  <p class="text-sm font-bold text-text-primary">Team</p>
+                  <p class="text-[11px] text-text-secondary mt-0.5">Invite members & collaborate</p>
+                </div>
+              </div>
+              <div class="flex flex-col gap-3 p-5 rounded-2xl bg-bg-body/50 border border-border/40 transition-colors hover:border-accent/30">
+                <div class="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
+                  <i class="fa-solid fa-globe text-accent text-base"></i>
+                </div>
+                <div>
+                  <p class="text-sm font-bold text-text-primary">Domain</p>
+                  <p class="text-[11px] text-text-secondary mt-0.5">Custom white-label domains</p>
+                </div>
+              </div>
+              <div class="flex flex-col gap-3 p-5 rounded-2xl bg-bg-body/50 border border-border/40 transition-colors hover:border-accent/30">
+                <div class="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
+                  <i class="fa-solid fa-shield-halved text-accent text-base"></i>
+                </div>
+                <div>
+                  <p class="text-sm font-bold text-text-primary">Roles</p>
+                  <p class="text-[11px] text-text-secondary mt-0.5">Advanced permission control</p>
+                </div>
+              </div>
+            </div>
+
+            <button
+              @click="isCreatingOrg = true"
+              class="group relative px-8 py-4 bg-accent text-white cursor-pointer text-base font-bold rounded-2xl hover:bg-accent/90 active:scale-[0.98] transition-all shadow-xl shadow-accent/25 overflow-hidden"
+            >
+              <span class="relative flex items-center justify-center gap-2">
+                <i class="fa-solid fa-plus-circle text-lg"></i>
+                Create Your Organization
+              </span>
+            </button>
+
+            <p class="text-[11px] text-text-secondary mt-8 flex items-center justify-center gap-2 opacity-70">
+              <i class="fa-solid fa-lightbulb text-amber-500 text-xs"></i>
+              Your personal account will become the primary owner automatically
+            </p>
           </div>
-          <h2 class="text-3xl font-bold text-text-primary mb-3">Ready to collaborate?</h2>
-          <p class="text-sm text-text-secondary mb-8 leading-relaxed max-w-md">
-            Create an organization to invite team members, manage projects together, and scale your business.
-          </p>
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full mb-8 text-left">
-            <div class="flex flex-col gap-2 p-3 rounded-lg bg-bg-card/40 border border-border/40">
-              <div class="w-8 h-8 rounded-lg bg-accent/20 flex items-center justify-center">
-                <i class="fa-solid fa-users text-accent text-sm"></i>
-              </div>
-              <p class="text-xs font-semibold text-text-primary">Invite members</p>
-              <p class="text-[11px] text-text-secondary">Build your team</p>
-            </div>
-            <div class="flex flex-col gap-2 p-3 rounded-lg bg-bg-card/40 border border-border/40">
-              <div class="w-8 h-8 rounded-lg bg-accent/20 flex items-center justify-center">
-                <i class="fa-solid fa-shield-halved text-accent text-sm"></i>
-              </div>
-              <p class="text-xs font-semibold text-text-primary">Manage roles</p>
-              <p class="text-[11px] text-text-secondary">Control permissions</p>
-            </div>
-            <div class="flex flex-col gap-2 p-3 rounded-lg bg-bg-card/40 border border-border/40">
-              <div class="w-8 h-8 rounded-lg bg-accent/20 flex items-center justify-center">
-                <i class="fa-solid fa-chart-line text-accent text-sm"></i>
-              </div>
-              <p class="text-xs font-semibold text-text-primary">Scale easily</p>
-              <p class="text-[11px] text-text-secondary">Grow your team</p>
-            </div>
-          </div>
-          <button
-            @click="isCreatingOrg = true"
-            class="px-6 py-3 bg-accent text-white  cursor-pointer text-sm font-semibold rounded-lg hover:bg-accent/90 active:scale-95 transition-all shadow-lg shadow-accent/20"
-          >
-            <i class="fa-solid fa-sparkles mr-2"></i> Create organization
-          </button>
-          <p class="text-xs text-text-secondary mt-6">
-            💡 Your personal account will be linked as the owner
-          </p>
         </div>
       </div>
     </div>
@@ -231,7 +251,11 @@
 
       <!-- Actions -->
       <div class="flex flex-col sm:flex-row gap-3 justify-start">
-        <button @click="saveOrg" :disabled="isSaving || !isFormValid || !canUpdateOrg" class="px-6 py-2.5 bg-accent text-white cursor-pointer text-sm font-semibold rounded-lg hover:bg-accent/90 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-accent/20">
+        <button 
+          @click="saveOrg" 
+          :disabled="isSaving || !hasChanges" 
+          class="px-6 py-2.5 bg-accent text-white cursor-pointer text-sm font-semibold rounded-lg hover:bg-accent/90 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-accent/20"
+        >
           <span v-if="isSaving" class="flex items-center gap-2">
             <i class="fa-solid fa-spinner fa-spin text-xs"></i> Saving...
           </span>
@@ -676,13 +700,17 @@ const originalValues = ref({
 
 // hasChanges is now a computed property
 
-const isFormValid = computed(() =>
-  orgName.value.trim().length > 0 &&
-  orgSlug.value.trim().length > 0 &&
-  !errors.value.orgName &&
-  !errors.value.orgSlug &&
-  hasChanges.value
-)
+const isFormValid = computed(() => {
+  const nameValid = orgName.value.trim().length > 0
+  const slugValid = orgSlug.value.trim().length > 0
+  
+  // Only check validation errors if they exist. 
+  // If slug hasn't changed, we don't care about its format errors.
+  const nameError = errors.value.orgName !== ''
+  const slugError = orgSlug.value !== originalValues.value.slug && errors.value.orgSlug !== ''
+  
+  return nameValid && slugValid && !nameError && !slugError && hasChanges.value
+})
 
 watch(currentCompany, (company) => {
   if (!company) return
@@ -696,7 +724,7 @@ watch(currentCompany, (company) => {
 
   originalValues.value = {
     title: company.title ?? '',
-    slug: company.slug ?? '',
+    slug: company.custom_domain ?? company.slug ?? '',
     company_size: company.company_size ?? '1–10',
     work_to_do: company.work_to_do ?? '',
     logo: company.logo ?? '',
@@ -705,11 +733,11 @@ watch(currentCompany, (company) => {
 }, { immediate: true })
 
 const hasChanges = computed(() => {
-  const nameChanged = orgName.value.trim() !== originalValues.value.title
-  const slugChanged = orgSlug.value.trim() !== originalValues.value.slug
+  const nameChanged = orgName.value.trim() !== originalValues.value.title.trim()
+  const slugChanged = orgSlug.value.trim() !== originalValues.value.slug.trim()
   const sizeChanged = orgSize.value !== originalValues.value.company_size
   const industryChanged = industry.value !== originalValues.value.work_to_do
-  const descChanged = orgDescription.value.trim() !== originalValues.value.description
+  const descChanged = orgDescription.value.trim() !== (originalValues.value.description || '').trim()
   const logoChanged = orgLogoPreview.value !== null && orgLogoPreview.value !== originalValues.value.logo
 
   return nameChanged || slugChanged || sizeChanged || industryChanged || descChanged || logoChanged
@@ -761,15 +789,26 @@ function validateOrgName() {
 }
 
 function validateOrgSlug() {
-  if (!orgSlug.value.trim())                        errors.value.orgSlug = 'Domain is required'
-  else if (!/^[a-z0-9-]+$/.test(orgSlug.value))    errors.value.orgSlug = 'Lowercase letters, numbers, and hyphens only'
-  else if (orgSlug.value.length < 3)                errors.value.orgSlug = 'Must be at least 3 characters'
-  else if (orgSlug.value.length > 50)               errors.value.orgSlug = 'Must be less than 50 characters'
-  else                                              errors.value.orgSlug = ''
+  if (!orgSlug.value.trim()) {
+    errors.value.orgSlug = 'Domain is required'
+  } else if (orgSlug.value !== originalValues.value.slug) {
+    // Only enforce strict slug rules if the user is trying to change it
+    if (!/^[a-z0-9-]+$/.test(orgSlug.value)) {
+      errors.value.orgSlug = 'Lowercase letters, numbers, and hyphens only'
+    } else if (orgSlug.value.length < 3) {
+      errors.value.orgSlug = 'Must be at least 3 characters'
+    } else if (orgSlug.value.length > 50) {
+      errors.value.orgSlug = 'Must be less than 50 characters'
+    } else {
+      errors.value.orgSlug = ''
+    }
+  } else {
+    errors.value.orgSlug = ''
+  }
 }
 
 // ─── Save org ─────────────────────────────────────────────────────────────────
-const { mutate: updateCompany, isPending: isSaving } = useUpdateCompanyProfile({
+const { mutateAsync: updateCompany, isPending: isSaving } = useUpdateCompanyProfile({
   onSuccess: (data: any) => {
     const payload = data?.data ?? data
     if (!payload || payload?.status === false) {
@@ -798,27 +837,65 @@ const { mutate: updateCompany, isPending: isSaving } = useUpdateCompanyProfile({
 })
 
 async function saveOrg() {
+  console.log('[OrganizationTab] saveOrg triggerred')
+  
+  // Diagnostic alert to confirm the button click is working
+  // window.alert('Saving organization...')
+
+  if (!canUpdateOrg.value) {
+    toast.error('You do not have permission to update this organization.')
+    return
+  }
+
   validateOrgName()
   validateOrgSlug()
-  if (!isFormValid.value) return
+  
+  if (!isFormValid.value) {
+    if (!orgName.value.trim()) toast.error('Organization name is required')
+    else if (!orgSlug.value.trim()) toast.error('Domain is required')
+    else if (!hasChanges.value) toast.error('No changes to save. Please modify a field first.')
+    else if (errors.value.orgName) toast.error(errors.value.orgName)
+    else if (errors.value.orgSlug) toast.error(errors.value.orgSlug)
+    else toast.error('Form validation failed. Please check your entries.')
+    return
+  }
+
+  if (!selectedCompanyId.value) {
+    toast.error('Organization context missing. Please refresh the page.')
+    return
+  }
+
   if (
-  orgSlug.value !== originalValues.value.slug &&
-  isSlugAvailable.value === false
-) {
+    orgSlug.value !== originalValues.value.slug &&
+    isSlugAvailable.value === false
+  ) {
     toast.error('This domain is already taken. Please choose another.')
     return
   }
-  updateCompany({
-    payload: {
-      company_id:   localStorage.getItem('company_id'),
+
+  toast.info('Initiating update request...')
+
+  try {
+    const payload = {
+      company_id:   selectedCompanyId.value,
       title:        orgName.value,
       description:  orgDescription.value,
       slug:         orgSlug.value,
       company_size: orgSize.value,
       work_to_do:   industry.value,
       logo:         orgLogoPreview.value ?? orgData.value.logo ?? null,
-    },
-  })
+    }
+    
+    console.log('[OrganizationTab] Calling updateCompany with payload:', payload)
+    
+    await updateCompany({ payload })
+    
+    toast.success('Update request completed.')
+  } catch (e: any) {
+    console.error('[OrganizationTab] Save failed deeply:', e)
+    const msg = e?.message || 'Failed to update organization'
+    toast.error(msg)
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
