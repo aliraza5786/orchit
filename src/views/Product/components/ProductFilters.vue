@@ -86,6 +86,7 @@
                 <!-- Type Selection Tabs -->
                 <div class="px-2 pt-1">
                   <SwitchTab 
+                    :inSpace="true"
                     v-model="selectedPlanType"
                     :options="planTypeOptions"
                     size="sm"

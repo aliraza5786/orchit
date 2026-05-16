@@ -1463,8 +1463,8 @@ const columns = computed(() => {
           "onUpdate:modelValue": (val: any) => setLane(row, val),
           displayField: "title",
           disabled: !canEditCard.value,
-          placeholder: "Select lane",
-          emptyText: "Lane",
+          placeholder: "Select tab",
+          emptyText: "Tab",
         }),
     },
     {

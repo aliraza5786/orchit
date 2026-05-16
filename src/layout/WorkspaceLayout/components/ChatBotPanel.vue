@@ -106,9 +106,8 @@
                   class="text-xs font-semibold text-text-primary uppercase tracking-wider"
                   >Agent Name</label
                 >
-                <input
+                <BaseTextField
                   v-model="agentConfig.name"
-                  class="w-full border border-border bg-bg-body/80 rounded-lg px-4 py-2.5 text-sm focus:border-primary-color/50 focus:ring-2 focus:ring-primary-color/10 outline-none transition-all placeholder:text-text-tertiary"
                   placeholder="Enter agent name..."
                 />
               </div>
@@ -119,10 +118,8 @@
                   class="text-xs font-semibold text-text-primary uppercase tracking-wider"
                   >Description</label
                 >
-                <textarea
+                <BaseTextAreaField
                   v-model="agentConfig.description"
-                  rows="3"
-                  class="w-full border border-border bg-bg-body/80 rounded-lg px-4 py-2.5 text-sm focus:border-primary-color/50 focus:ring-2 focus:ring-primary-color/10 outline-none transition-all resize-none placeholder:text-text-tertiary"
                   placeholder="Describe what this agent does..."
                 />
               </div>
@@ -156,39 +153,21 @@
               </div>
 
               <!-- Level -->
-              <div class="space-y-1.5 relative" ref="levelRef">
+              <div class="space-y-1.5" ref="levelRef">
                 <label
                   class="text-xs font-semibold text-text-primary uppercase tracking-wider"
                   >Level</label
                 >
-                <button
-                  type="button"
-                  @click="openLevel = !openLevel"
-                  class="w-full flex justify-between items-center border border-border bg-bg-body/80 rounded-lg px-4 py-2.5 text-sm hover:border-primary-color/40 transition-colors"
-                >
-                  <span>{{ selectedLevelLabel }}</span>
-                  <i
-                    class="fa-solid fa-chevron-down text-[10px] text-text-secondary transition-transform duration-200"
-                    :class="{ 'rotate-180': openLevel }"
-                  ></i>
-                </button>
-                <transition name="dropdown">
-                  <div
-                    v-if="openLevel"
-                    class="absolute z-50 mt-1 w-full rounded-xl border border-border bg-bg-dropdown shadow-lg shadow-black/8 overflow-hidden"
-                  >
-                    <ul class="py-1 text-sm">
-                      <li
-                        v-for="level in availableAgentsLevels"
-                        :key="level.value"
-                        @click="selectLevel(level.value)"
-                        class="px-4 py-2.5 cursor-pointer hover:bg-primary-color/8 transition-colors text-text-primary"
-                      >
-                        {{ level.title }}
-                      </li>
-                    </ul>
-                  </div>
-                </transition>
+                <BaseSelectField
+                  v-model="agentConfig.level"
+                  :options="
+                    availableAgentsLevels.map((l) => ({
+                      _id: l.value,
+                      title: l.title,
+                    }))
+                  "
+                  placeholder="Select Level"
+                />
               </div>
 
               <!-- Tag Inputs -->
@@ -211,10 +190,13 @@
                 class="flex gap-2.5 items-start"
                 v-if="transformedData?.length"
               >
-                <input
-                  type="checkbox"
-                  class="h-4 w-4 rounded border-border accent-primary-color mt-0.5"
-                  v-model="isSheet"
+                <Checkbox
+                  :checked="isSheet"
+                  @change="
+                    (e) => (isSheet = (e.target as HTMLInputElement).checked)
+                  "
+                  class="mt-0.5"
+                  :inSpace="true"
                 />
                 <span class="text-sm text-text-primary leading-snug">
                   Enable to create the agent for a selected sheet instead of all
@@ -222,47 +204,14 @@
                 </span>
               </div>
 
-              <div
-                class="space-y-1.5 relative w-full"
-                ref="sheetRef"
-                v-if="isSheet"
-              >
-                <button
-                  type="button"
-                  @click="openSheet = !openSheet"
-                  class="w-full flex justify-between items-center border border-border bg-bg-body/80 rounded-lg px-4 py-2.5 text-sm hover:border-primary-color/40 transition-colors"
-                >
-                  <span>{{ selectedSheetTitle }}</span>
-                  <i
-                    class="fa-solid fa-chevron-down text-[10px] text-text-secondary transition-transform duration-200"
-                    :class="{ 'rotate-180': openSheet }"
-                  ></i>
-                </button>
-                <transition name="dropdown">
-                  <div
-                    v-if="openSheet"
-                    class="absolute z-50 mt-1 w-full rounded-xl border border-border bg-bg-dropdown shadow-lg shadow-black/8 overflow-hidden"
-                  >
-                    <ul class="py-1 text-sm max-h-60 overflow-auto">
-                      <li
-                        v-for="sheet in transformedData"
-                        :key="sheet._id"
-                        @click="selectSheet(sheet._id)"
-                        class="px-4 py-2.5 cursor-pointer hover:bg-primary-color/8 transition-colors"
-                      >
-                        <div class="font-medium text-text-primary">
-                          {{ sheet.title }}
-                        </div>
-                        <div
-                          v-if="sheet.description"
-                          class="text-xs text-text-secondary mt-0.5"
-                        >
-                          {{ sheet.description }}
-                        </div>
-                      </li>
-                    </ul>
-                  </div>
-                </transition>
+              <div class="space-y-1.5 w-full" ref="sheetRef" v-if="isSheet">
+                <Dropdown
+                  v-model="selected_sheet_id"
+                  :options="transformedData"
+                  customTitle="Select Sheet"
+                  class="w-full block"
+                  :inSpace="true"
+                />
               </div>
 
               <!-- Capabilities -->
@@ -275,13 +224,25 @@
                   <label
                     v-for="capability in availableCapabilities"
                     :key="capability.value"
-                    class="flex items-center gap-3 px-3 py-2 rounded-lg border border-border hover:border-primary-color/30 hover:bg-primary-color/4 transition-all cursor-pointer"
+                    class="flex items-center gap-3 px-3 py-2 rounded-md border border-border hover:border-primary-color/30 hover:bg-primary-color/4 transition-all cursor-pointer"
                   >
-                    <input
-                      type="checkbox"
-                      :value="capability.value"
-                      v-model="agentConfig.capabilities"
-                      class="h-4 w-4 rounded border-border accent-primary-color"
+                    <Checkbox
+                      :checked="
+                        agentConfig.capabilities.includes(capability.value)
+                      "
+                      @change="
+                        (e) => {
+                          if ((e.target as HTMLInputElement).checked) {
+                            agentConfig.capabilities.push(capability.value);
+                          } else {
+                            agentConfig.capabilities =
+                              agentConfig.capabilities.filter(
+                                (c) => c !== capability.value,
+                              );
+                          }
+                        }
+                      "
+                      :inSpace="true"
                     />
                     <span class="text-sm text-text-primary">{{
                       capability.label
@@ -291,63 +252,58 @@
               </div>
 
               <!-- Action Buttons -->
-              <button
+              <Button
                 @click="submitPersona"
                 v-if="!agentsData || !agentConfig?.id"
                 :disabled="isLoading || !agentConfig.name || !agentConfig.role"
-                class="w-full mt-2 px-4 py-2.5 cursor-pointer text-sm font-medium bg-primary-color text-white rounded-lg hover:bg-primary-color/90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm shadow-primary-color/20"
+                variant="primary"
+                :inSpace="true"
+                block
+                class="mt-2"
+                :loading="isLoading"
               >
-                <span
-                  v-if="isLoading"
-                  class="flex items-center justify-center gap-2"
-                >
-                  <i class="fa-solid fa-spinner fa-spin text-xs"></i> Saving...
-                </span>
-                <span v-else>Save Agent</span>
-              </button>
+                {{ isLoading ? "Saving..." : "Save Agent" }}
+              </Button>
 
-              <div class="flex gap-3" v-if="agentsData && agentConfig?.id">
-                <button
+              <div
+                class="flex gap-3 w-full"
+                v-if="agentsData && agentConfig?.id"
+              >
+                <Button
                   @click="deleteAgent(agentConfig.id)"
                   :disabled="
                     agentStore.isDeletingAgent ||
                     !agentConfig.name ||
                     !agentConfig.role
                   "
-                  class="flex-1 px-4 py-2.5 cursor-pointer text-sm font-medium bg-red-500/10 text-red-600 border border-red-500/20 rounded-lg hover:bg-red-500/20 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  variant="danger"
+                  appearance="outlined"
+                  :inSpace="true"
+                  class="flex-1"
+                  :loading="agentStore.isDeletingAgent"
                 >
-                  <span
-                    v-if="agentStore.isDeletingAgent"
-                    class="flex items-center justify-center gap-2"
-                  >
-                    <i class="fa-solid fa-spinner fa-spin text-xs"></i>
-                    Deleting...
-                  </span>
-                  <span v-else
-                    ><i class="fa-regular fa-trash mr-1.5"></i>Delete</span
-                  >
-                </button>
-                <button
+                  <i
+                    v-if="!agentStore.isDeletingAgent"
+                    class="fa-regular fa-trash mr-1.5"
+                  ></i>
+                  {{ agentStore.isDeletingAgent ? "Deleting..." : "Delete" }}
+                </Button>
+                <Button
                   @click="updateAgent(agentConfig.id)"
                   :disabled="
                     agentStore.isUpdatingAgent ||
                     !agentConfig.name ||
                     !agentConfig.role
                   "
-                  class="flex-1 px-4 py-2.5 cursor-pointer text-sm font-medium bg-primary-color text-white rounded-lg hover:bg-primary-color/90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm shadow-primary-color/20"
+                  variant="primary"
+                  :inSpace="true"
+                  class="flex-1"
+                  :loading="agentStore.isUpdatingAgent"
                 >
-                  <span
-                    v-if="agentStore.isUpdatingAgent"
-                    class="flex items-center justify-center gap-2"
-                  >
-                    <i class="fa-solid fa-spinner fa-spin text-xs"></i>
-                    Updating...
-                  </span>
-                  <span v-else
-                    ><i class="fa-regular fa-floppy-disk mr-1.5"></i
-                    >Update</span
-                  >
-                </button>
+                  {{
+                    agentStore.isUpdatingAgent ? "Updating..." : "Update Agent"
+                  }}
+                </Button>
               </div>
             </div>
           </div>
@@ -369,7 +325,7 @@
                   <button
                     type="button"
                     @click="toggleSourceDropdown(source.value)"
-                    class="w-full flex justify-between items-center border border-border bg-bg-body/80 rounded-lg px-4 py-2.5 text-sm hover:border-primary-color/40 transition-colors"
+                    class="w-full flex justify-between items-center border border-border bg-bg-input rounded-md px-4 py-2.5 text-sm hover:border-primary-color/30 transition-colors"
                   >
                     <span class="text-text-primary">{{ source.label }}</span>
                     <i
@@ -380,7 +336,7 @@
                   <transition name="dropdown">
                     <div
                       v-if="openDropdowns[source.value]"
-                      class="absolute z-[999] mt-1 w-full rounded-xl border border-border bg-bg-dropdown shadow-lg shadow-black/8 overflow-hidden"
+                      class="absolute z-[999] mt-1 w-full rounded-md border border-border bg-bg-dropdown shadow-lg shadow-black/8 overflow-hidden"
                     >
                       <ul class="py-1 text-sm flex flex-col gap-0.5">
                         <li class="px-4 pt-2 pb-1">
@@ -394,16 +350,24 @@
                           :key="perm.value"
                           class="px-4 py-2 cursor-pointer hover:bg-primary-color/6 flex items-center gap-2.5 transition-colors"
                         >
-                          <input
-                            type="checkbox"
-                            v-model="
+                          <Checkbox
+                            :checked="
                               knowledgePermissions[
                                 source.value as keyof typeof knowledgePermissions
                               ][
                                 perm.value as keyof (typeof knowledgePermissions)['INTERNAL_TICKET']
                               ]
                             "
-                            class="h-4 w-4 rounded border-border accent-primary-color"
+                            @change="
+                              (e) => {
+                                knowledgePermissions[
+                                  source.value as keyof typeof knowledgePermissions
+                                ][
+                                  perm.value as keyof (typeof knowledgePermissions)['INTERNAL_TICKET']
+                                ] = (e.target as HTMLInputElement).checked;
+                              }
+                            "
+                            :inSpace="true"
                           />
                           <span class="text-text-primary">{{
                             getPermissionLabel(
@@ -424,36 +388,39 @@
                 class="text-xs font-semibold text-text-primary uppercase tracking-wider"
                 >Metadata (JSON)</label
               >
-              <textarea
+              <BaseTextAreaField
                 v-model="knowledgeMetadataString"
-                rows="4"
-                class="w-full border border-border bg-bg-body/80 rounded-lg px-4 py-2.5 text-sm font-mono text-[12px] focus:border-primary-color/50 focus:ring-2 focus:ring-primary-color/10 outline-none transition-all resize-none"
+                class="font-mono text-[12px]"
               />
             </div>
 
             <label
-              class="flex items-center gap-3 px-3 py-2 rounded-lg border border-border hover:border-primary-color/30 hover:bg-primary-color/4 transition-all cursor-pointer"
+              class="flex items-center gap-3 px-3 py-2 rounded-md border border-border hover:border-primary-color/30 hover:bg-primary-color/4 transition-all cursor-pointer"
             >
-              <input
-                type="checkbox"
-                v-model="knowledgeConfig.is_active"
-                class="h-4 w-4 rounded border-border accent-primary-color"
+              <Checkbox
+                :checked="knowledgeConfig.is_active"
+                @change="
+                  (e) =>
+                    (knowledgeConfig.is_active = (
+                      e.target as HTMLInputElement
+                    ).checked)
+                "
+                :inSpace="true"
               />
               <span class="text-sm text-text-primary">Active Source</span>
             </label>
 
-            <button
+            <Button
               @click="submitKnowledge"
               :disabled="isKnowledgeLoading || !moduleId || !moduleSelected"
-              class="w-full mt-2 px-4 py-2.5 text-sm font-medium rounded-lg cursor-pointer text-white bg-primary-color hover:bg-primary-color/90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm shadow-primary-color/20"
+              variant="primary"
+              :inSpace="true"
+              block
+              class="mt-2"
+              :loading="isKnowledgeLoading"
             >
-              <i
-                v-if="isKnowledgeLoading"
-                class="fa-solid fa-spinner fa-spin text-xs"
-              ></i>
-              <span v-if="isKnowledgeLoading">Saving...</span>
-              <span v-else>Save Knowledge</span>
-            </button>
+              {{ isKnowledgeLoading ? "Saving..." : "Save Knowledge" }}
+            </Button>
           </div>
 
           <!-- ================= TRAINING CONTENT TAB ================= -->
@@ -463,46 +430,24 @@
                 class="text-xs font-semibold text-text-primary uppercase tracking-wider"
                 >Training Name</label
               >
-              <input
-                v-model="uploadConfig.name"
-                disabled
-                class="w-full border border-border bg-bg-body/50 rounded-lg px-4 py-2.5 text-sm opacity-70 cursor-not-allowed"
-              />
+              <BaseTextField v-model="uploadConfig.name" disabled />
             </div>
 
-            <div class="space-y-1.5 relative" ref="typeRef">
+            <div class="space-y-1.5" ref="typeRef">
               <label
                 class="text-xs font-semibold text-text-primary uppercase tracking-wider"
                 >Type</label
               >
-              <button
-                type="button"
-                @click="openType = !openType"
-                class="w-full flex justify-between items-center border border-border bg-bg-body/80 rounded-lg px-4 py-2.5 text-sm hover:border-primary-color/40 transition-colors"
-              >
-                <span>{{ selectedTypeLabel }}</span>
-                <i
-                  class="fa-solid fa-chevron-down text-[10px] text-text-secondary transition-transform duration-200"
-                  :class="{ 'rotate-180': openType }"
-                ></i>
-              </button>
-              <transition name="dropdown">
-                <div
-                  v-if="openType"
-                  class="absolute z-50 mt-1 w-full rounded-xl border border-border bg-bg-dropdown shadow-lg shadow-black/8 overflow-hidden"
-                >
-                  <ul class="py-1 text-sm">
-                    <li
-                      v-for="type in availableUploadTypes"
-                      :key="type.value"
-                      @click="selectType(type.value)"
-                      class="px-4 py-2.5 cursor-pointer hover:bg-primary-color/8 transition-colors text-text-primary"
-                    >
-                      {{ type.label }}
-                    </li>
-                  </ul>
-                </div>
-              </transition>
+              <BaseSelectField
+                v-model="uploadConfig.type"
+                :options="
+                  availableUploadTypes.map((t) => ({
+                    _id: t.value,
+                    title: t.label,
+                  }))
+                "
+                placeholder="Select Type"
+              />
             </div>
 
             <div class="space-y-1.5">
@@ -510,17 +455,15 @@
                 class="text-xs font-semibold text-text-primary uppercase tracking-wider"
                 >Training Text</label
               >
-              <textarea
+              <BaseTextAreaField
                 v-model="uploadConfig.text"
-                rows="4"
-                class="w-full border border-border bg-bg-body/80 rounded-lg px-4 py-2.5 text-sm focus:border-primary-color/50 focus:ring-2 focus:ring-primary-color/10 outline-none transition-all resize-none placeholder:text-text-tertiary"
                 placeholder="Paste training content here..."
               />
             </div>
 
             <!-- File Upload Zone -->
             <div
-              class="relative border-2 border-dashed border-border bg-bg-body/40 rounded-xl px-4 py-6 text-center hover:border-primary-color/40 hover:bg-primary-color/4 transition-all cursor-pointer"
+              class="relative border border-dashed border-border bg-bg-input rounded-md px-4 py-6 text-center hover:border-primary-color/30 transition-all cursor-pointer"
               @click="triggerFileInput"
             >
               <i
@@ -547,7 +490,7 @@
               <div
                 v-for="(file, i) in uploadConfig.files"
                 :key="i"
-                class="flex justify-between items-center text-sm border border-border rounded-lg px-3 py-2 bg-bg-body/40 group"
+                class="flex justify-between items-center text-sm border border-border rounded-md px-3 py-2 bg-bg-input group"
               >
                 <div class="flex items-center gap-2 min-w-0">
                   <i class="fa-solid fa-file text-primary-color/60 text-xs"></i>
@@ -564,26 +507,22 @@
               </div>
             </div>
 
-            <button
+            <Button
               @click="submitTrainingContent"
               :disabled="
                 !uploadConfig.name ||
                 (uploadConfig.text === '' && uploadConfig.files.length === 0) ||
                 isUploading
               "
-              class="w-full mt-2 px-4 py-2.5 cursor-pointer text-sm font-medium bg-primary-color text-white rounded-lg hover:bg-primary-color/90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm shadow-primary-color/20"
+              variant="primary"
+              :inSpace="true"
+              block
+              class="mt-2"
+              :loading="isUploading"
             >
-              <span
-                v-if="isUploading"
-                class="flex items-center justify-center gap-2"
-              >
-                <i class="fa-solid fa-spinner fa-spin text-xs"></i> Uploading...
-              </span>
-              <span v-else
-                ><i class="fa-solid fa-upload mr-1.5"></i>Upload Training
-                Content</span
-              >
-            </button>
+              <i v-if="!isUploading" class="fa-solid fa-upload mr-1.5"></i>
+              {{ isUploading ? "Uploading..." : "Upload Training Content" }}
+            </Button>
           </div>
 
           <!-- ================= PROMPT FLOWS TAB ================= -->
@@ -596,12 +535,11 @@
               <!-- Header -->
               <div class="flex items-center justify-between gap-3 px-1 py-1">
                 <label class="flex items-center gap-2.5 cursor-pointer">
-                  <input
-                    type="checkbox"
+                  <Checkbox
                     id="select-all"
                     :checked="allSelected"
                     @change="toggleSelectAll"
-                    class="h-4 w-4 rounded border-border cursor-pointer accent-primary-color"
+                    :inSpace="true"
                   />
                   <span
                     class="text-xs font-semibold text-text-primary uppercase tracking-wider"
@@ -617,7 +555,7 @@
                     v-model="searchQuery"
                     type="text"
                     placeholder="Filter prompts..."
-                    class="pl-7 pr-3 py-1.5 text-xs border border-border rounded-lg bg-bg-body/80 focus:border-primary-color/40 focus:ring-1 focus:ring-primary-color/10 outline-none transition-all w-40"
+                    class="pl-7 pr-3 py-1.5 text-xs border border-border rounded-md bg-bg-input focus:border-primary-color/30 focus:ring-1 focus:ring-primary-color/10 outline-none transition-all w-40"
                   />
                 </div>
               </div>
@@ -626,11 +564,11 @@
               <div
                 v-for="module in filteredModules"
                 :key="module.module_title"
-                class="border border-border rounded-xl overflow-hidden bg-bg-body/20"
+                class="border border-border rounded-md overflow-hidden bg-bg-surface"
               >
                 <button
                   @click="toggleModule(module.module_title)"
-                  class="w-full px-4 py-2.5 flex justify-between items-center hover:bg-bg-body/60 transition-colors"
+                  class="w-full px-4 py-2.5 flex justify-between items-center hover:bg-primary-color/4 transition-colors"
                 >
                   <span class="text-sm font-medium text-text-primary">
                     {{ module.module_title }}
@@ -645,18 +583,24 @@
 
                 <div
                   v-show="openModules[module.module_title]"
-                  class="border-t border-border bg-bg-body/30"
+                  class="border-t border-border bg-bg-surface"
                 >
                   <label
                     v-for="action in module.granted_actions"
                     :key="action._id"
                     class="flex items-start gap-2.5 hover:bg-primary-color/4 px-4 py-2.5 cursor-pointer transition-colors"
                   >
-                    <input
-                      type="checkbox"
-                      v-model="action.is_selected"
+                    <Checkbox
+                      :checked="action.is_selected"
+                      @change="
+                        (e) =>
+                          (action.is_selected = (
+                            e.target as HTMLInputElement
+                          ).checked)
+                      "
                       :id="action._id"
-                      class="h-4 w-4 rounded border-border accent-primary-color mt-0.5"
+                      class="mt-0.5"
+                      :inSpace="true"
                     />
                     <span class="text-sm text-text-primary select-none">{{
                       action.title
@@ -667,19 +611,16 @@
             </div>
 
             <div class="pt-4 shrink-0">
-              <button
+              <Button
                 @click="savePromptActions"
                 :disabled="isSavingPrompt"
-                class="w-full px-4 py-2.5 text-sm font-medium bg-primary-color text-white rounded-lg hover:bg-primary-color/90 active:scale-[0.98] transition-all disabled:opacity-50 shadow-sm shadow-primary-color/20"
+                variant="primary"
+                :inSpace="true"
+                block
+                :loading="isSavingPrompt"
               >
-                <span
-                  v-if="isSavingPrompt"
-                  class="flex items-center justify-center gap-2"
-                >
-                  <i class="fa-solid fa-spinner fa-spin text-xs"></i> Saving...
-                </span>
-                <span v-else>Save Prompt</span>
-              </button>
+                {{ isSavingPrompt ? "Saving..." : "Save Prompt" }}
+              </Button>
             </div>
           </div>
 
@@ -696,7 +637,7 @@
               </div>
               <button
                 @click="addSuggestedPrompt"
-                class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-primary-color/30 bg-primary-color/8 text-primary-color text-xs font-medium hover:bg-primary-color/15 transition-all cursor-pointer"
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-primary-color/30 bg-primary-color/8 text-primary-color text-xs font-medium hover:bg-primary-color/15 transition-all cursor-pointer"
               >
                 <i class="fa-solid fa-plus text-[10px]"></i>
                 Add
@@ -748,7 +689,7 @@
               <div
                 v-for="(prompt, index) in suggestedPrompts"
                 :key="index"
-                class="group relative border border-border rounded-xl p-3.5 bg-bg-body/30 hover:border-primary-color/25 hover:shadow-sm transition-all"
+                class="group relative border border-border rounded-md p-3.5 bg-bg-surface hover:border-primary-color/30 hover:shadow-sm transition-all"
               >
                 <!-- Category badge -->
                 <div class="flex items-center gap-2 mb-2.5">
@@ -759,7 +700,7 @@
                     <input
                       v-model="prompt.category"
                       placeholder="Category (e.g. Analysis, Report)"
-                      class="w-full pl-7 pr-3 py-1.5 text-[11px] border border-border rounded-md bg-bg-body/60 focus:border-primary-color/40 outline-none transition-all font-medium"
+                      class="w-full pl-7 pr-3 py-2 text-sm border border-border rounded-md bg-bg-input focus:border-primary-color/30 outline-none transition-all font-medium text-text-primary placeholder:text-text-secondary"
                     />
                   </div>
                   <button
@@ -771,58 +712,53 @@
                 </div>
 
                 <!-- Label -->
-                <input
+                <BaseTextField
                   v-model="prompt.label"
                   placeholder="Button label (e.g. Summarize data)"
-                  class="w-full border border-border bg-bg-body/60 rounded-lg px-3 py-2 text-sm focus:border-primary-color/40 outline-none transition-all mb-2 placeholder:text-text-tertiary"
+                  class="mb-2"
                 />
 
                 <!-- Prompt text -->
-                <textarea
+                <BaseTextAreaField
                   v-model="prompt.text"
-                  rows="2"
                   placeholder="Full prompt text that will be sent..."
-                  class="w-full border border-border bg-bg-body/60 rounded-lg px-3 py-2 text-sm focus:border-primary-color/40 outline-none transition-all resize-none placeholder:text-text-tertiary"
                 />
 
                 <!-- Toggle active -->
-                <div
-                  class="flex items-center justify-between mt-2.5 pt-2.5 border-t border-border"
+                <label
+                  class="flex items-center gap-3 px-3 py-2 rounded-md border border-border hover:border-primary-color/30 hover:bg-primary-color/4 transition-all cursor-pointer mt-2.5"
                 >
-                  <span class="text-[11px] text-text-secondary">Active</span>
-                  <label
-                    class="relative inline-flex items-center cursor-pointer"
-                  >
-                    <input
-                      type="checkbox"
-                      v-model="prompt.is_active"
-                      class="sr-only peer"
-                    />
-                    <div
-                      class="w-8 h-[18px] bg-bg-body rounded-full peer peer-checked:bg-primary-color transition-colors after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-[14px] after:w-[14px] after:transition-all peer-checked:after:translate-x-[14px] after:shadow-sm"
-                    ></div>
-                  </label>
-                </div>
+                  <Checkbox
+                    :checked="prompt.is_active"
+                    @change="
+                      (e) =>
+                        (prompt.is_active = (
+                          e.target as HTMLInputElement
+                        ).checked)
+                    "
+                    :inSpace="true"
+                  />
+                  <span class="text-sm text-text-primary">Active</span>
+                </label>
               </div>
             </div>
 
             <!-- Save button -->
-            <button
+            <Button
               @click="saveSuggestedPrompts"
               :disabled="isSavingSuggested"
-              class="w-full mt-2 px-4 py-2.5 text-sm font-medium bg-primary-color text-white rounded-lg hover:bg-primary-color/90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm shadow-primary-color/20"
+              variant="primary"
+              :inSpace="true"
+              block
+              class="mt-2"
+              :loading="isSavingSuggested"
             >
-              <span
-                v-if="isSavingSuggested"
-                class="flex items-center justify-center gap-2"
-              >
-                <i class="fa-solid fa-spinner fa-spin text-xs"></i> Saving...
-              </span>
-              <span v-else
-                ><i class="fa-regular fa-floppy-disk mr-1.5"></i>Save Suggested
-                Prompts</span
-              >
-            </button>
+              <i
+                v-if="!isSavingSuggested"
+                class="fa-regular fa-floppy-disk mr-1.5"
+              ></i>
+              {{ isSavingSuggested ? "Saving..." : "Save Suggested Prompts" }}
+            </Button>
           </div>
         </div>
       </div>
@@ -842,9 +778,7 @@
         <h5
           class="text-sm font-semibold flex items-center gap-1.5 min-w-0 flex-1"
         >
-          <div
-            class="w-7 h-7 rounded-full flex items-center justify-center"
-          >
+          <div class="w-7 h-7 rounded-full flex items-center justify-center">
             <i class="fa-solid fa-sparkles text-primary-color text-[14px]"></i>
           </div>
           <Dropdown
@@ -2586,10 +2520,9 @@
             <label class="text-[13px] font-medium text-text-primary">
               Title <span class="text-red-500">*</span>
             </label>
-            <input
+            <BaseTextField
               v-model="newPromptForm.title"
               placeholder="Enter prompt title"
-              class="w-full border border-border bg-bg-body/60 rounded-lg px-3.5 py-2.5 text-sm focus:border-primary-color/50 focus:ring-2 focus:ring-primary-color/10 outline-none transition-all placeholder:text-text-tertiary"
             />
           </div>
 
@@ -2598,11 +2531,9 @@
             <label class="text-[13px] font-medium text-text-primary">
               Prompt <span class="text-red-500">*</span>
             </label>
-            <textarea
+            <BaseTextAreaField
               v-model="newPromptForm.text"
-              rows="4"
               placeholder="Write a prompt that you would like to save"
-              class="w-full border border-border bg-bg-body/60 rounded-lg px-3.5 py-2.5 text-sm focus:border-primary-color/50 focus:ring-2 focus:ring-primary-color/10 outline-none transition-all resize-none placeholder:text-text-tertiary"
             />
           </div>
 
@@ -2664,21 +2595,24 @@
         <div
           class="flex items-center justify-end gap-2.5 px-5 py-4 border-t border-border bg-bg-body/40"
         >
-          <button
+          <Button
+            appearance="outlined"
+            variant="gray"
+            :inSpace="true"
             @click="closeNewPromptModal"
-            class="px-4 py-2 rounded-lg border border-border text-sm text-text-primary hover:bg-bg-body transition-colors cursor-pointer"
           >
             Close
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="primary"
+            :inSpace="true"
             @click="createNewPrompt"
             :disabled="
               !newPromptForm.title.trim() || !newPromptForm.text.trim()
             "
-            class="px-5 py-2 rounded-lg bg-primary-color text-white text-sm font-medium hover:bg-primary-color/90 active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-sm shadow-primary-color/20"
           >
             Create
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -2712,6 +2646,10 @@ import { useAuthStore } from "../../../stores/auth";
 import { useSheets, keys } from "../../../queries/useSheets";
 import { useQueryClient } from "@tanstack/vue-query";
 import BaseSelectField from "../../../components/ui/BaseSelectField.vue";
+import BaseTextField from "../../../components/ui/BaseTextField.vue";
+import BaseTextAreaField from "../../../components/ui/BaseTextAreaField.vue";
+import Button from "../../../components/ui/Button.vue";
+import Checkbox from "../../../components/ui/Checkbox.vue";
 import { useWidgetStore } from "../../../stores/widgets";
 
 // Types

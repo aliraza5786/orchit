@@ -4,24 +4,24 @@
     <!-- Header -->
     <div class="text-left w-full mb-6 ">
       <h2 class="text-2xl md:text-4xl font-semibold text-text-primary text-left m-0">
-        Project Summary
+        Workspace Summary
       </h2>
       <p class="text-sm md:text-base text-text-secondary text-left mt-3 sm:mt-5 mb-0 md:mb-4">
-        Review your project details before creation
+        Review your workspace details before creation
       </p>
     </div>
     <!-- Summary Cards -->
     <div class=" flex-wrap flex md:flex-nowrap gap-4 mb-6 ">
       <!-- Project Overview -->
       <div class="bg-bg-surface w-full text-text-primary rounded-xl p-6 flex-auto">
-        <h3 class="text-xl font-semibold mb-5.5">Project Overview</h3>
+        <h3 class="text-xl font-semibold mb-5.5">Workspace Overview</h3>
         <p class="text-text-primary text-base font-semibold">
-          <strong class="text-text-secondary text-sm font-medium">Project Name</strong><br />{{
+          <strong class="text-text-secondary text-sm font-medium">Workspace Name</strong><br />{{
             project?.variables?.title }}
         </p>
         <p class="mt-5 text-text-primary text-base font-semibold capitalize">
-          <strong class="text-text-secondary text-sm font-medium">Project Type</strong><br />{{
-            project?.variables ? project?.variables["workspace-type"] : '' }} Project
+          <strong class="text-text-secondary text-sm font-medium">Workspace Type</strong><br />{{
+            project?.variables ? project?.variables["workspace-type"] : '' }} Workspace
         </p>
         <p v-if="project?.variables?.idea" class="mt-5 ttext-text-primary text-base font-semibold">
           <strong class="text-text-secondary text-sm font-medium">Description</strong><br />

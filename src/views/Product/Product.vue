@@ -1843,12 +1843,12 @@ const columns = computed(() => {
       render: ({ row }: any) =>
         h(TableSearchCell, {
           options: laneOptions.value ?? [],
-          placeholder: "Select lane",
+          placeholder: "Select tab",
           modelValue: row.lane?._id || null,
           disabled: !canEditCard.value,
           "onUpdate:modelValue": (e: any) => setLane(row, e),
           displayField: "title",
-          emptyText: "Lane",
+          emptyText: "Tab",
         }),
     },
     {

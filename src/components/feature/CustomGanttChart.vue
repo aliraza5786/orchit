@@ -380,8 +380,8 @@ const handleTaskClick = (task: any) => {
     class="custom-gantt rounded-[6px] flex m-2 flex-col h-full bg-bg-body overflow-hidden relative"
   >
     <!-- Premium Header (Matching CustomTimelineView) -->
-    <div class="flex items-center justify-between pb-2 bg-bg-surface shrink-0">
-      <div class="flex items-center gap-3">
+    <div class="flex items-center justify-between pb-2 bg-bg-surface shrink-0 overflow-x-auto"> 
+      <div class="flex items-center gap-3 min-w-max">
         <!-- Navigation Capsule -->
         <div
           class="flex items-center bg-bg-surface border border-border rounded-[6px] overflow-hidden h-9"
@@ -396,13 +396,12 @@ const handleTaskClick = (task: any) => {
 
         <!-- Stats Info -->
         <div
-          class="flex items-center gap-1.5 px-3 text-[11px] text-text-secondary font-semibold border-l border-border h-4"
+          class="flex items-center min-w-max text-nowrap gap-1.5 px-3 text-[11px] text-text-secondary font-semibold border-l border-border h-4"
         >
           <i class="fa-regular fa-layer-group text-[10px]"></i>
           <span>{{ allTasks.length }} tasks · {{ allTasks.length }} rows</span>
         </div>
-      </div>
-
+      </div> 
       <!-- Right Side Controls -->
       <div class="flex items-center gap-2">
         <div
@@ -421,8 +420,9 @@ const handleTaskClick = (task: any) => {
         </div>
       </div>
     </div>
-    <div class="flex-1 flex overflow-hidden">
-      <!-- Sidebar -->
+    <div class="flex-1 flex flex-col overflow-x-auto scrollbar-visible min-w-0">
+      <div class="min-w-[600px] flex-1 flex overflow-hidden">
+    <!-- Sidebar -->
       <div
         class="w-80 border-r rounded-tl-[6px] rounded-bl-[6px] border-border bg-bg-body flex flex-col z-30 shadow-sm shrink-0"
       >
@@ -697,6 +697,7 @@ const handleTaskClick = (task: any) => {
           </div>
         </div>
       </div>
+    </div>
     </div>
   </div>
 </template>

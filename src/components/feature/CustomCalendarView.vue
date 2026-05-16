@@ -336,6 +336,8 @@ onMounted(() => {
   <div
     class="custom-calendar m-2 rounded-[6px] flex flex-col h-full overflow-hidden"
   >
+    <div class="flex-1 flex flex-col overflow-x-auto scrollbar-visible min-w-0">
+      <div class="min-w-[600px] flex flex-col h-full">
     <!-- Premium Improved Header -->
     <div
       class="flex items-center justify-between pb-2 shadow-sm rounded-t-[6px]"
@@ -615,6 +617,8 @@ onMounted(() => {
             </div>
           </div>
         </div>
+      </div>
+    </div>
       </div>
     </div>
   </div>

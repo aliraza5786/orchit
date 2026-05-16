@@ -8,7 +8,7 @@
   >
     <!-- Header -->
     <div
-      class="pt-[14.5px] pb-[15px] flex justify-between items-center border-b border-border px-3 sticky top-0 bg-bg-surface z-1"
+      class="pt-[10.5px] pb-[10px] flex justify-between items-center border-b border-border px-3 sticky top-0 bg-bg-surface z-1"
     >
       <h5 class="text-[16px] font-medium">Profile</h5>
       <button

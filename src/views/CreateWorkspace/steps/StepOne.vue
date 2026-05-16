@@ -4,13 +4,13 @@
       v-once
       class="text-2xl md:text-4xl font-semibold text-text-primary text-left m-0"
     >
-      Project Details
+      Workspace Details
     </h2>
     <p
       v-once
       class="text-sm md:text-base text-text-secondary text-left mt-3 sm:mt-5 mb-0"
     >
-      Let's refine your project details
+      Let's refine your workspace details
     </p>
   </div>
 

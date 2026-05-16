@@ -28,7 +28,7 @@
       <div v-else>
         <!-- Header -->
         <div
-          class="sticky top-0 z-10 border-b border-border px-3 sm:px-3 py-[9px] flex items-center justify-between bg-bg-surface"
+          class="sticky top-0 z-10 border-b border-border px-3 sm:px-3 py-[10px] flex items-center justify-between bg-bg-surface"
         >
           <h5 class="text-[18px] font-semibold tracking-tight">Details</h5>
           <div class="flex items-center gap-1">
@@ -1019,7 +1019,7 @@
                 <div
                   v-for="file in attachments"
                   :key="file._id"
-                  class="group relative flex flex-col flex-wrap rounded-xl border border-border bg-orchit-white/5 hover:bg-orchit-white/8 transition-all duration-300 hover:shadow-lg hover:shadow-black/20 hover:-translate-y-0.5"
+                  class="group relative flex flex-col rounded-xl border border-border bg-orchit-white/5 hover:bg-orchit-white/8 transition-all duration-300 hover:shadow-lg hover:shadow-black/20 hover:-translate-y-0.5"
                 >
                   <!-- Preview Area -->
                   <div
@@ -1068,7 +1068,7 @@
                   </div>
 
                   <!-- Info Area -->
-                  <div class="p-3.5 flex flex-col flex-1">
+                  <div class="p-3.5 flex flex-col flex-1 min-w-0">
                     <div
                       class="font-medium text-sm text-text-primary truncate mb-1"
                       :title="file.name"
@@ -2499,6 +2499,10 @@ function handlePaste(event: ClipboardEvent) {
 }
 function postComment() {
   let comment_text = newComment.value.trim();
+  // If no text but attachments exist, use a single space so backend accepts it
+  if (!comment_text && commentAttachments.value.length) {
+    comment_text = "Attachments";
+  }
   if (!comment_text && !commentAttachments.value.length) return;
 
   const cardId = props.details._id;
