@@ -18,12 +18,19 @@ const authStore = useAuthStore()
 // ─────────────────────────────
 const mode = ref<'personal' | 'org'>('personal')
 
-const companiesList = computed(() => props.profile?.companies_list ?? [])
+const companiesList = computed(() => 
+  (props.profile?.companies_list ?? []).filter((c: any) => 
+    c.membership_role === 'owner' || c.membership_role === 'admin'
+  )
+)
 const hasOrgs = computed(() => companiesList.value.length > 0)
 
-// Is the user an owner of at least one org? → hide "create new org" button
 const isOwnerOfAnyOrg = computed(() =>
   companiesList.value.some((c: any) => c.membership_role === 'owner')
+)
+
+const isAdminOrOwnerOfAnyOrg = computed(() =>
+  companiesList.value.some((c: any) => c.membership_role === 'owner' || c.membership_role === 'admin')
 )
 
 // Personal plan
@@ -101,6 +108,11 @@ const isOwnerOfActive = computed(() =>
   activeCompany.value?.membership_role === 'owner'
 )
 
+const isAdminOrOwnerOfActive = computed(() => {
+  const role = activeCompany.value?.membership_role
+  return role === 'owner' || role === 'admin'
+})
+
 const isSwitching = ref(false)
 async function selectCompany(company: any, navigate = true) {
   if (!company?._id || isSwitching.value) return
@@ -147,6 +159,14 @@ const personalItems = [
   { label: 'Billing',  tab: 'billing',           icon: 'fa-regular fa-credit-card' },
 ]
 
+const visiblePersonalItems = computed(() => {
+  // Hide billing from personal if user has an organization (as they use org billing instead)
+  return personalItems.filter(item => {
+    if (item.tab === 'billing' && hasOrgs.value) return false
+    return true
+  })
+})
+
 const orgItems = [
   { label: 'Overview',        tab: 'org-setup',          icon: 'fa-regular fa-sliders',       ownerOnly: false },
   { label: 'Domain',          tab: 'org-domain',         icon: 'fa-regular fa-globe',          ownerOnly: false },
@@ -157,9 +177,10 @@ const orgItems = [
   { label: 'Transfer Owner',  tab: 'ownership-transfer', icon: 'fa-regular fa-user-gear',      ownerOnly: true  },
 ]
 
-const visibleOrgItems = computed(() =>
-  orgItems.filter(item => !item.ownerOnly || isOwnerOfActive.value)
-)
+const visibleOrgItems = computed(() => {
+  if (!isAdminOrOwnerOfActive.value) return []
+  return orgItems.filter(item => !item.ownerOnly || isOwnerOfActive.value)
+})
 
 function orgInitials(title: string) {
   return (title ?? '').split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase() || 'OR'
@@ -183,8 +204,8 @@ function orgInitials(title: string) {
         Back to dashboard
       </button>
 
-      <!-- PERSONAL / ORG TOGGLE — only shown if user has orgs -->
-      <div v-if="hasOrgs" class="flex rounded-lg border border-border bg-bg-card p-[2px] gap-[3px]">
+      <!-- PERSONAL / ORG TOGGLE — only shown if user has orgs AND has administrative rights in at least one -->
+      <div v-if="hasOrgs && isAdminOrOwnerOfAnyOrg" class="flex rounded-lg border border-border bg-bg-card p-[2px] gap-[3px]">
 
   <!-- Personal -->
   <button
@@ -221,8 +242,8 @@ function orgInitials(title: string) {
       ════════════════════ -->
       <template v-if="mode === 'personal'">
 
-        <!-- Identity chip -->
-        <div class="flex items-center gap-3 p-2 mb-4 rounded-lg bg-bg-card border border-border/60">
+        <!-- Identity chip — only show if user has orgs to distinguish profiles -->
+        <div v-if="hasOrgs" class="flex items-center gap-3 p-2 mb-4 rounded-lg bg-bg-card border border-border/60">
           <div class="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-pink-500 flex items-center justify-center text-white text-[12px] font-bold shrink-0 overflow-hidden">
             <img
               v-if="profile?.u_profile_image"
@@ -244,13 +265,13 @@ function orgInitials(title: string) {
           </div>
         </div>
 
-        <!-- Section label -->
-        <p class="text-[10px] uppercase tracking-widest text-text-secondary/50 font-semibold mb-2">Account</p>
+        <!-- Section label — only show if we have orgs to clarify this is the Personal account -->
+        <p v-if="hasOrgs" class="text-[10px] uppercase tracking-widest text-text-secondary/50 font-semibold mb-2">Account</p>
 
         <!-- Nav items -->
         <nav class="space-y-0.5">
           <button
-            v-for="item in personalItems"
+            v-for="item in visiblePersonalItems"
             :key="item.tab"
             @click="selectTab(item.tab)"
             class="w-full flex items-center cursor-pointer gap-3 px-3 py-2 rounded-lg text-[13px] transition-all"
@@ -304,21 +325,46 @@ function orgInitials(title: string) {
       ════════════════════ -->
       <template v-else-if="mode === 'org'">
 
-        <!-- No orgs: empty state -->
-        <div v-if="!hasOrgs" class="flex-1 flex flex-col items-center justify-center text-center gap-4 py-8">
-          <div class="w-12 h-12 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center">
-            <i class="fa-regular fa-building text-accent text-xl"></i>
+        <!-- No orgs: empty state (Premium Redesign) -->
+        <div v-if="!hasOrgs" class="flex-1 flex flex-col px-2 pt-4">
+          <div class="rounded-2xl border border-accent/20 bg-gradient-to-b from-accent/10 to-bg-card p-6 text-center shadow-sm relative overflow-hidden group">
+            <!-- Decorative circle -->
+            <div class="absolute -top-6 -right-6 w-16 h-16 bg-accent/10 rounded-full blur-2xl"></div>
+            
+            <div class="w-14 h-14 rounded-2xl bg-bg-body shadow-md flex items-center justify-center mx-auto mb-5 border border-accent/10 relative z-10 transition-transform group-hover:scale-110">
+              <i class="fa-solid fa-building-circle-arrow-right text-accent text-2xl"></i>
+            </div>
+            
+            <div class="relative z-10">
+              <h3 class="text-[15px] font-bold text-text-primary tracking-tight">Scale Your Vision</h3>
+              <p class="text-[12px] text-text-secondary mt-2 mb-6 leading-relaxed">
+                Create an organization to invite your team, manage domains, and unlock professional collaboration tools.
+              </p>
+              
+              <button
+                @click="selectTab('org-create')"
+                class="w-full py-2.5 rounded-xl bg-accent text-white text-[13px] font-bold hover:bg-accent/90 transition-all shadow-lg shadow-accent/20 active:scale-[0.98] cursor-pointer"
+              >
+                Get Started →
+              </button>
+            </div>
           </div>
-          <div>
-            <p class="text-[13px] font-bold text-text-primary">No organization yet</p>
-            <p class="text-[11px] text-text-secondary mt-1.5 leading-snug">Create one to manage a team &amp; shared workspace.</p>
+          
+          <!-- Value Props -->
+          <div class="mt-8 space-y-4 px-2">
+            <div class="flex items-center gap-3 opacity-60">
+              <div class="w-1 h-1 rounded-full bg-accent"></div>
+              <p class="text-[11px] text-text-secondary font-medium uppercase tracking-wider">Team Management</p>
+            </div>
+            <div class="flex items-center gap-3 opacity-60">
+              <div class="w-1 h-1 rounded-full bg-accent"></div>
+              <p class="text-[11px] text-text-secondary font-medium uppercase tracking-wider">Custom Domains</p>
+            </div>
+            <div class="flex items-center gap-3 opacity-60">
+              <div class="w-1 h-1 rounded-full bg-accent"></div>
+              <p class="text-[11px] text-text-secondary font-medium uppercase tracking-wider">Shared Workspaces</p>
+            </div>
           </div>
-          <button
-            @click="selectTab('org-create')"
-            class="px-5 py-2 rounded-lg bg-accent text-white text-[12px] font-bold hover:bg-accent/90 transition-all"
-          >
-            Get started
-          </button>
         </div>
 
         <!-- Has orgs -->
@@ -358,8 +404,9 @@ function orgInitials(title: string) {
           <div class="h-px bg-border/50 mb-4"></div>
 
           <!-- Org nav -->
-          <p class="text-[10px] uppercase tracking-widest text-text-secondary/50 font-semibold mb-2">Settings</p>
-          <nav class="space-y-0.5">
+          <template v-if="visibleOrgItems.length > 0">
+            <p class="text-[10px] uppercase tracking-widest text-text-secondary/50 font-semibold mb-2">Settings</p>
+            <nav class="space-y-0.5">
             <button
               v-for="item in visibleOrgItems"
               :key="item.tab"
@@ -374,6 +421,7 @@ function orgInitials(title: string) {
               <i v-if="currentTab === item.tab" class="fa-solid fa-chevron-right text-[9px] ml-auto opacity-40"></i>
             </button>
           </nav>
+        </template>
 
           <!-- Push upgrade cards to bottom -->
           <div class="flex-1 min-h-[24px]"></div>

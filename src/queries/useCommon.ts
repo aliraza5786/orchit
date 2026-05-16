@@ -236,13 +236,7 @@ export interface VerifyDomainPayload {
   const cookieCompanyId = getCookie('company_id')
   const localCompanyId = localStorage.getItem('company_id')
 
-  const companyId = cookieCompanyId || localCompanyId
-
-  if (!companyId) {
-    throw new Error('company_id is required but not found in cookies or localStorage')
-  }
-
-  return companyId
+  return cookieCompanyId || localCompanyId || null
 }
 
 export const usePublicDomainLookup = (
@@ -253,13 +247,15 @@ export const usePublicDomainLookup = (
 
   return useQuery<PublicLookupData>({
     queryKey: ['domain-lookup', host, companyId],
-    queryFn: ({ signal }) =>
-      request<PublicLookupData>({
+    queryFn: ({ signal }) => {
+      if (!companyId) return Promise.reject(new Error('No company ID'))
+      return request<PublicLookupData>({
         url: `company-domains/lookup?host=${encodeURIComponent(host)}&company_id=${companyId}`,
         method: 'GET',
         signal,
-      }),
-    enabled: !!host,
+      })
+    },
+    enabled: !!host && !!companyId,
     ...options,
   })
 }
@@ -328,13 +324,15 @@ export const useGetDomain = (
 
   return useQuery<GetDomainData>({
     queryKey: ['company-domains', id, companyId],
-    queryFn: ({ signal }) =>
-      request<GetDomainData>({
+    queryFn: ({ signal }) => {
+      if (!companyId) return Promise.reject(new Error('No company ID'))
+      return request<GetDomainData>({
         url: `company-domains/${id}?company_id=${companyId}`,
         method: 'GET',
         signal,
-      }),
-    enabled: !!id,
+      })
+    },
+    enabled: !!id && !!companyId,
     ...options,
   })
 }
@@ -505,17 +503,20 @@ export const useMyPersonalTokenAllocation = (options: Record<string, unknown> = 
 export const useMyTokenAllocation = (options: Record<string, unknown> = {}) => {
   const companyId = getCompanyId()
 
-  return useQuery<MyAllocationData>({  // ← remove wrapper here too
+  return useQuery<MyAllocationData>({
     queryKey: [TOKEN_ALLOC_KEY, 'me', companyId],
-    queryFn: ({ signal }) =>
-      request<MyAllocationData>({  // ← match
+    queryFn: ({ signal }) => {
+      if (!companyId) return Promise.reject(new Error('No company ID'))
+      return request<MyAllocationData>({
         url: `billing/token-allocation/me?company_id=${companyId}`,
         method: 'GET',
         signal,
-      }),
+      })
+    },
     staleTime: 0,
     refetchOnMount: 'always',
     refetchOnWindowFocus: true,
+    enabled: !!companyId,
     ...options,
   })
 }
@@ -676,14 +677,17 @@ const TRANSFER_KEY = 'ownership-transfer'
 // ─────────────────────────────────────────────────────────────────────────────
 export const usePendingTransfer = (options: Record<string, unknown> = {}) => {
   const companyId = getCompanyId()
-return useQuery<PendingTransferData>({
+  return useQuery<PendingTransferData>({
     queryKey: [TRANSFER_KEY, 'pending', companyId],
-    queryFn: ({ signal }) =>
-      request<PendingTransferData>({
+    queryFn: ({ signal }) => {
+      if (!companyId) return Promise.reject(new Error('No company ID'))
+      return request<PendingTransferData>({
         url: `workspace/company/transfer-ownership/pending?company_id=${companyId}`,
         method: 'GET',
         signal,
-      }),
+      })
+    },
+    enabled: !!companyId,
     staleTime: 0,
     refetchOnMount: 'always',
     refetchOnWindowFocus: true,

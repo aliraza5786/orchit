@@ -16,6 +16,7 @@
 
       <div class="flex items-center gap-2 flex-wrap self-start sm:self-auto">
         <button
+          v-if="hasVerifiedDomain && isSuperAdminActive"
           @click="handleCopyInviteLink"
           class="flex items-center gap-2 px-3.5 py-2.5 border border-border/60 text-text-secondary text-sm font-medium rounded-lg hover:border-accent/40 hover:text-accent transition-all cursor-pointer"
         >
@@ -31,6 +32,22 @@
           <i class="fa-solid fa-user-plus text-xs"></i>
           Add member
         </button>
+      </div>
+    </div>
+
+    <!-- Domain Not Verified Warning -->
+    <div v-if="!hasVerifiedDomain" class="rounded-xl border border-yellow-500/20 bg-yellow-500/5 px-4 py-4">
+      <div class="flex gap-3">
+        <div class="w-10 h-10 rounded-lg bg-yellow-500/10 flex items-center justify-center shrink-0">
+          <i class="fa-solid fa-triangle-exclamation text-yellow-600 text-lg"></i>
+        </div>
+        <div>
+          <h4 class="text-sm font-bold text-yellow-700">Domain Verification Required</h4>
+          <p class="text-xs text-yellow-600/80 mt-1 leading-relaxed">
+            You must verify your organization's domain before you can manage team members, invite new users via link, or activate your super admin account.
+            Please go to <strong>Domain Setup</strong> to complete verification.
+          </p>
+        </div>
       </div>
     </div>
 
@@ -225,11 +242,12 @@
   v-for="member in paginatedMembers"
   :key="member._id"
   class="flex items-center gap-4 px-4 py-3.5 rounded-xl border transition-all group"
-  :class="
+  :class="[
     !member.is_owner && bulkSelectedIds.includes(member._id)
       ? 'border-accent/40 bg-accent/5'
-      : 'border-border/40 bg-bg-body/50 hover:border-border/70 hover:bg-bg-body/80'
-  "
+      : 'border-border/40 bg-bg-body/50 hover:border-border/70 hover:bg-bg-body/80',
+    !hasVerifiedDomain ? 'opacity-50 grayscale pointer-events-none' : ''
+  ]"
 >
   <!-- Checkbox -->
   <button
@@ -301,9 +319,9 @@
       <!-- Status -->
       <span
         class="text-[10px] font-medium px-1.5 py-0.5 rounded-full"
-        :class="getStatusBadgeClass(member.membership_status)"
+        :class="getStatusBadgeClass(member.is_owner && !hasVerifiedDomain ? 'inactive' : member.membership_status)"
       >
-        {{ member.membership_status }}
+        {{ member.is_owner && !hasVerifiedDomain ? 'inactive' : member.membership_status }}
       </span>
     </div>
 
@@ -646,6 +664,12 @@ const { data: domainsData } = useListDomains()
 
 const domains = computed(() => domainsData.value?.domains ?? [])
 const hasVerifiedDomain = computed(() => domains.value.some((d: any) => d.status === 'verified'))
+
+const owner = computed(() => members.value.find((m) => m.is_owner))
+const isSuperAdminActive = computed(() => {
+  if (!hasVerifiedDomain.value) return false
+  return owner.value?.membership_status === 'active'
+})
 // ── Fetch all roles ───────────────────────────────────────────────────────────
 const { data: rolesData } = useCompanyRolesWithoutPermission()
 

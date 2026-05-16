@@ -110,11 +110,16 @@
               variant="primary"
               size="lg"
               @click="handleCreateWorkspace"
+              :disabled="!canCreateWorkspace"
               class="h-10 px-6 rounded-[6px] shadow-md shadow-accent/10 hover:shadow-lg hover:shadow-accent/20 transition-all duration-300 font-bold text-[14px]"
             >
               <i class="fa-solid fa-plus mr-2 text-xs"></i>
               Create Workspace
             </Button>
+            <p v-if="!canCreateWorkspace" class="text-[10px] text-red-400 mt-2 font-medium">
+              <i class="fa-solid fa-circle-exclamation mr-1"></i>
+              {{ restrictionMessage }}
+            </p>
           </div>
         </div>
       </div>
@@ -250,6 +255,8 @@ import { useRouter, useRoute } from "vue-router";
 import BaseSelectField from "../../components/ui/BaseSelectField.vue";
 import { useQueryClient } from "@tanstack/vue-query";
 import { toast } from "vue-sonner";
+import { useListDomains } from "../../queries/useCommon";
+import { useProfile } from "../../services/user";
 
 // Modals
 import InviteUsersWithPermissions from "./Modals/InviteUsersWithPermissions.vue";
@@ -377,6 +384,30 @@ const timeGreeting = computed(() => {
   if (hour < 12) return "Good Morning";
   if (hour < 17) return "Good Afternoon";
   return "Good Evening";
+});
+
+// --- Verification Logic ---
+const { data: domainsData } = useListDomains();
+const { data: profile } = useProfile();
+
+const hasVerifiedDomain = computed(() => {
+  if (!authStore.company_id) return true;
+  return domainsData.value?.domains?.some((d: any) => d.status === 'verified') ?? false;
+});
+
+const isSuperAdminVerified = computed(() => {
+  if (!authStore.company_id) return true;
+  const activeCompany = profile.value?.data?.active_company;
+  if (!activeCompany) return true;
+  return activeCompany.membership_status !== 'pending_super_admin_otp';
+});
+
+const canCreateWorkspace = computed(() => hasVerifiedDomain.value && isSuperAdminVerified.value);
+
+const restrictionMessage = computed(() => {
+  if (!hasVerifiedDomain.value) return "Domain verification required to create workspaces.";
+  if (!isSuperAdminVerified.value) return "Super admin verification required to create workspaces.";
+  return "";
 });
  
 
