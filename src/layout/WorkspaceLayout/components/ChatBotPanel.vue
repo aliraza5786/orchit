@@ -2711,7 +2711,6 @@ const isAiThinkingBubbleVisible = ref(false);
 const autoTextarea = ref<HTMLTextAreaElement | null>(null);
 const messagesContainer = ref<HTMLElement | null>(null);
 const pendingMessages = ref<any[]>([]);
-const openType = ref(false);
 const isSheet = ref(false);
 const selectedAgentId = ref("");
 const selectedRole = ref("");
@@ -2881,17 +2880,17 @@ const transformedData = computed<DropdownOption[]>(() => {
 const openSheet = ref(false);
 const sheetRef = ref<HTMLElement | null>(null);
 
-const selectedSheetTitle = computed(() => {
-  const found = transformedData.value.find(
-    (sheet) => sheet._id === selected_sheet_id.value,
-  );
-  return found ? found.title : "Select sheet";
-});
+// const selectedSheetTitle = computed(() => {
+//   const found = transformedData.value.find(
+//     (sheet) => sheet._id === selected_sheet_id.value,
+//   );
+//   return found ? found.title : "Select sheet";
+// });
 
-function selectSheet(id: string) {
-  selected_sheet_id.value = id;
-  openSheet.value = false;
-}
+// function selectSheet(id: string) {
+//   selected_sheet_id.value = id;
+//   openSheet.value = false;
+// }
 
 function handleClickOutsideSheet(event: MouseEvent) {
   if (sheetRef.value && !sheetRef.value.contains(event.target as Node)) {
@@ -3902,17 +3901,17 @@ const availableAgentsLevels = [
   { _id: "5", title: "Junior", value: "JUNIOR" },
 ];
 
-const selectedLevelLabel = computed(() => {
-  return (
-    availableAgentsLevels.find((l) => l.value === agentConfig.level)?.title ||
-    availableAgentsLevels[0].title
-  );
-});
+// const selectedLevelLabel = computed(() => {
+//   return (
+//     availableAgentsLevels.find((l) => l.value === agentConfig.level)?.title ||
+//     availableAgentsLevels[0].title
+//   );
+// });
 
-const selectLevel = (value: string) => {
-  agentConfig.level = value as any;
-  openLevel.value = false;
-};
+// const selectLevel = (value: string) => {
+//   agentConfig.level = value as any;
+//   openLevel.value = false;
+// };
 
 const originalAgentConfig = ref<Partial<AgentConfig> | null>(null);
 watch(
@@ -4251,15 +4250,15 @@ const availableUploadTypes = [
   { value: "MIXED" as UploadType, label: "Mixed Content" },
 ];
 
-const selectedTypeLabel = computed(() => {
-  const found = availableUploadTypes.find((t) => t.value === uploadConfig.type);
-  return found ? found.label : uploadConfig.type;
-});
+// const selectedTypeLabel = computed(() => {
+//   const found = availableUploadTypes.find((t) => t.value === uploadConfig.type);
+//   return found ? found.label : uploadConfig.type;
+// });
 
-const selectType = (type: UploadType) => {
-  uploadConfig.type = type;
-  openType.value = false;
-};
+// const selectType = (type: UploadType) => {
+//   uploadConfig.type = type;
+//   openType.value = false;
+// };
 
 const trainingData = computed(() => agentStore?.agentSettings?.training);
 

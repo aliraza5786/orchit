@@ -110,16 +110,11 @@
               variant="primary"
               size="lg"
               @click="handleCreateWorkspace"
-              :disabled="!canCreateWorkspace"
               class="h-10 px-6 rounded-[6px] shadow-md shadow-accent/10 hover:shadow-lg hover:shadow-accent/20 transition-all duration-300 font-bold text-[14px]"
             >
               <i class="fa-solid fa-plus mr-2 text-xs"></i>
               Create Workspace
             </Button>
-            <p v-if="!canCreateWorkspace" class="text-[10px] text-red-400 mt-2 font-medium">
-              <i class="fa-solid fa-circle-exclamation mr-1"></i>
-              {{ restrictionMessage }}
-            </p>
           </div>
         </div>
       </div>
@@ -438,6 +433,11 @@ function launchConfetti() {
 }
 
 function handleCreateWorkspace() {
+  if (!canCreateWorkspace.value) {
+    toast.error(restrictionMessage.value);
+    return;
+  }
+  
   const wsFeature = workspaceStore.getFeature("no-of-workspaces");
   if (wsFeature && wsFeature.usage.current >= wsFeature.limits.limit) {
     workspaceStore.setLimitExccedModal(true);

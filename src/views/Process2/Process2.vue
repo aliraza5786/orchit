@@ -6,16 +6,35 @@
        <div class="flex gap-4 ms-1.5">
          <h2 class="text-md font-semibold text-foreground text-nowrap">All Processes</h2>
 
-        <!-- View By trigger -->
-        <button
+        <!-- Group By split-button -->
+        <div
           ref="viewByTriggerEl"
-          @click="showViewDropdown = !showViewDropdown"
-          class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-md border border-border bg-bg-surface hover:bg-bg-body text-text-primary transition-colors whitespace-nowrap"
+          class="inline-flex items-center rounded-md border border-border overflow-hidden text-xs whitespace-nowrap shadow-sm"
         >
-          <i class="fa-solid fa-layer-group text-[11px]"></i>
-          {{ selectedViewLabel }}
-          <i class="fa-solid fa-chevron-down text-[10px] text-text-secondary"></i>
-        </button>
+          <!-- Left: static label -->
+          <button
+            @click="showViewDropdown = !showViewDropdown"
+            class="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-bg-surface hover:bg-bg-body text-text-secondary font-medium transition-colors"
+          >
+            <i class="fa-solid fa-layer-group text-[10px]"></i>
+            Group By
+          </button>
+
+          <!-- Divider -->
+          <div class="w-px self-stretch bg-border"></div>
+
+          <!-- Right: active value -->
+          <button
+            @click="showViewDropdown = !showViewDropdown"
+            class="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-primary/10 hover:bg-primary/15 text-primary font-semibold transition-colors"
+          >
+            {{ selectedViewLabel }}
+            <i
+              class="fa-solid fa-chevron-down text-[9px] transition-transform duration-200"
+              :class="{ 'rotate-180': showViewDropdown }"
+            ></i>
+          </button>
+        </div>
 
         <VariablesDropdown
           v-if="showViewDropdown"
@@ -167,9 +186,9 @@ interface ProcessOption {
 }
 
 const processOptions = ref<ProcessOption[]>([
-  { _id: 'module', title: 'View by module' },
-  { _id: 'status', title: 'View by card status' },
-  { _id: 'type',   title: 'View by card type'   },
+  { _id: 'module', title: 'Module'      },
+  { _id: 'status', title: 'Card Status' },
+  { _id: 'type',   title: 'Card Type'   },
 ]);
 
 const viewByTriggerEl   = ref<HTMLElement | null>(null);
