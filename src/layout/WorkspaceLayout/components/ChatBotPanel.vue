@@ -5,7 +5,7 @@
       'flex h-full bg-bg-surface overflow-y-auto rounded-[6px] border border-border overflow-x-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] shadow-xl',
       isExpanded
         ? 'min-w-full max-w-full'
-        : 'min-w-full max-w-[23%] sm:min-w-[400px]',
+        : 'min-w-full max-w-[380px] sm:min-w-[380px]',
     ]"
     role="complementary"
     aria-label="Details panel"
@@ -13,7 +13,7 @@
     <!-- ==================== LEFT: PREVIEW MODAL ==================== -->
     <div
       v-if="isExpanded && !showConfigPanel && hasPreviewData"
-      class="xl:w-[80%] lg:w-[76%] md:w-[60%] border-r border-border bg-bg-surface h-full min-h-0 flex flex-col overflow-y-hidden pb-4 pt-2"
+      class="flex-1 border-r border-border bg-bg-surface h-full min-h-0 flex flex-col overflow-y-hidden pb-4 pt-2"
     >
       <ChatBotPreviewModal
         @accept="acceptChanges"
@@ -25,8 +25,8 @@
 
     <!-- ==================== LEFT: CONFIG PANEL ==================== -->
     <div
-      v-if="isExpanded && showConfigPanel && !hasPreviewData"
-      class="md:w-[65%] lg:w-[76%] border-r border-border bg-bg-card h-full min-h-0 flex flex-col overflow-y-hidden"
+      v-if="isExpanded && showConfigPanel"
+      class="flex-1 border-r border-border bg-bg-card h-full min-h-0 flex flex-col overflow-y-hidden"
     >
       <!-- HEADER -->
       <div
@@ -767,8 +767,8 @@
     <!-- ==================== RIGHT: CHAT PANEL ==================== -->
     <div
       :class="[
-        'border-r border-border bg-bg-surface h-full min-h-0 flex flex-col overflow-x-hidden',
-        isExpanded ? 'w-full md:w-[30%] lg:w-[30%]' : 'w-full',
+        'relative bg-bg-surface h-full min-h-0 flex flex-col overflow-x-hidden transition-all duration-300',
+        isExpanded ? 'w-full md:w-[380px] sm:min-w-[380px] shrink-0 border-l border-border' : 'w-full',
       ]"
     >
       <!-- Chat Header -->
@@ -966,12 +966,13 @@
               "
             >
               <!-- Empty assistant response -->
-              <div
-                v-if="msg.type === 'assistant' && !msg.content"
-                class="px-3.5 py-2 rounded-2xl text-sm leading-relaxed bg-red-500/10 border border-red-500/20 text-red-400 rounded-tl-md wrap-break-word"
-              >
-                Unable to generate a response. Please try again.
-              </div>
+                <div
+                  v-if="msg.type === 'assistant' && !msg.content"
+                  class="px-3.5 py-2 rounded-2xl text-sm leading-relaxed bg-bg-body border border-border text-text-secondary rounded-tl-md wrap-break-word flex items-center gap-2"
+                >
+                  <i class="fa-regular fa-circle-stop text-text-tertiary text-[13px]"></i>
+                  <span>Generation stopped</span>
+                </div>
 
               <!-- Main bubble -->
               <div
@@ -1036,14 +1037,36 @@
                   </div>
                 </div>
 
+                <!-- Interactive Preview Action Card -->
+                <div
+                  v-if="msg.type === 'assistant' && hasEntitiesForMessage(msg._id)"
+                  class="mt-3 p-3 rounded-xl border border-primary-color/20 bg-primary-color/5 hover:bg-primary-color/10 transition duration-200 flex flex-col gap-2 shadow-sm"
+                >
+                  <div class="flex items-center gap-2">
+                    <div class="w-6 h-6 rounded-lg bg-primary-color/15 flex items-center justify-center shrink-0">
+                      <i class="fa-solid fa-sparkles text-primary-color text-xs"></i>
+                    </div>
+                    <span class="text-xs font-semibold text-text-primary">
+                      {{ getMessageEntityTitle(msg._id) }}
+                    </span>
+                  </div>
+                  <p class="text-[11px] text-text-secondary leading-snug">
+                    {{ getMessageEntityDescription(msg._id) }}
+                  </p>
+                  <button
+                    @click.stop="openPreviewFromMessage(msg._id)"
+                    class="mt-1 w-full py-1.5 px-3 rounded-lg bg-primary-color hover:bg-primary-color-hover text-white text-xs font-medium transition duration-150 flex items-center justify-center gap-1.5 shadow-sm active:scale-[0.98] cursor-pointer"
+                  >
+                    <i class="fa-solid fa-expand text-[10px]"></i>
+                    <span>Open Interactive Preview</span>
+                  </button>
+                </div>
+
                 <!-- Timing pills + timestamp footer -->
                 <div class="mt-1.5 flex flex-col gap-1">
                   <!-- Timing pills — assistant only, when metadata has timing -->
                   <div
-                    v-if="
-                      msg.type === 'assistant' &&
-                      (msg.metadata?.think_ms || msg.metadata?.total_ms)
-                    "
+                    v-if="false"
                     class="flex items-center gap-1.5 flex-wrap"
                   >
                     <span
@@ -1237,13 +1260,13 @@
               >
                 <!-- Thought time — appears once thinking phase ends -->
                 <span
-                  v-if="streamingThinkMs !== null"
+                  v-if="false"
                   class="inline-flex items-center gap-1 text-[10px] text-text-tertiary bg-bg-body border border-border px-2 py-0.5 rounded-full"
                 >
                   <i
                     class="fa-solid fa-brain text-primary-color text-[8px]"
                   ></i>
-                  Thought {{ (streamingThinkMs / 1000).toFixed(1) }}s
+                  Thought {{ ((streamingThinkMs || 0) / 1000).toFixed(1) }}s
                 </span>
 
                 <!-- Live writing indicator -->
@@ -1266,13 +1289,13 @@
 
                 <!-- Total time — appears once timing chunk arrives -->
                 <span
-                  v-if="streamingTotalMs !== null"
+                  v-if="false"
                   class="inline-flex items-center gap-1 text-[10px] text-text-tertiary bg-bg-body border border-border px-2 py-0.5 rounded-full"
                 >
                   <i
                     class="fa-regular fa-clock text-primary-color text-[8px]"
                   ></i>
-                  {{ (streamingTotalMs / 1000).toFixed(1) }}s total
+                  {{ ((streamingTotalMs || 0) / 1000).toFixed(1) }}s total
                 </span>
               </div>
 
@@ -1295,11 +1318,7 @@
 
           <!-- ===== Phase Timeline — shows all streamed phase updates ===== -->
           <div
-            v-if="
-              phaseHistory.length > 0 &&
-              streamingPhase !== 'thinking' &&
-              streamingPhase !== 'completed'
-            "
+            v-if="false"
             class="flex gap-2.5 relative mt-2"
           >
             <div class="w-7 h-7 flex-shrink-0"></div>
@@ -1508,6 +1527,8 @@
             {{ sp.label }}
           </button>
         </div>
+
+
         <!-- Chat Input Area -->
         <div
           class="flex flex-col gap-2.5"
@@ -2037,21 +2058,20 @@
                 </span>
 
                 <button
+                  v-if="agentStore.isAiTyping || isAiThinkingBubbleVisible || agentStore.isSending"
+                  @click="stopGeneration"
+                  class="w-9 h-9 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center active:scale-90 transition-all cursor-pointer shadow-sm shadow-red-500/25"
+                  title="Stop generating"
+                >
+                 <i class="fa-solid fa-stop text-white text-[10px]"></i>
+                </button>
+                <button
+                  v-else
                   @click="sendMessage"
-                  :disabled="
-                    (!userMessage.trim() && !selectedFiles.length) ||
-                    agentStore.isSending
-                  "
+                  :disabled="!userMessage.trim() && !selectedFiles.length"
                   class="w-9 h-9 rounded-full bg-primary-color flex items-center justify-center hover:bg-primary-color active:scale-90 transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-sm shadow-primary-color/25"
                 >
-                  <i
-                    class="fa-solid text-white text-[11px]"
-                    :class="
-                      agentStore.isSending
-                        ? 'fa-spinner fa-spin'
-                        : 'fa-paper-plane'
-                    "
-                  ></i>
+                  <i class="fa-solid fa-paper-plane text-white text-[11px]"></i>
                 </button>
               </div>
             </div>
@@ -2664,7 +2684,6 @@ interface MessageMetadata {
 const workspaceStore = useWorkspaceStore();
 const agentStore = useAgentStore();
 const authStore = useAuthStore();
-
 // Route
 const route = useRoute();
 const { workspaceId, moduleId } = useRouteIds();
@@ -2954,6 +2973,79 @@ const hasPreviewData = computed(() => {
     );
   });
 });
+
+watch(hasPreviewData, (newVal) => {
+  if (newVal) {
+    isManuallyExpanded.value = true;
+    showConfigPanel.value = false;
+  }
+});
+
+const hasEntitiesForMessage = (msgId: string) => {
+  return entities.value?.some((e) => {
+    if (!e) return false;
+    const msgObj = (e as any).agent_chat_message_id;
+    if (typeof msgObj === "object" && msgObj !== null) {
+      if ((msgObj as any)._id === msgId) return true;
+      if (Array.isArray((msgObj as any).messages)) {
+        return (msgObj as any).messages.some((m: any) => m?._id === msgId);
+      }
+    }
+    return msgObj === msgId;
+  });
+};
+
+const getMessageEntityTitle = (msgId: string) => {
+  const entity = entities.value?.find((e) => {
+    if (!e) return false;
+    const msgObj = (e as any).agent_chat_message_id;
+    if (typeof msgObj === "object" && msgObj !== null) {
+      if ((msgObj as any)._id === msgId) return true;
+      if (Array.isArray((msgObj as any).messages)) {
+        return (msgObj as any).messages.some((m: any) => m?._id === msgId);
+      }
+    }
+    return msgObj === msgId;
+  });
+
+  if (!entity) return "AI Suggestion";
+  if ((entity as any).entity_type === "widget" || (entity as any).entity_type === "peak") return "AI Generated Widget";
+  if ((entity as any).entity_type === "sprint") return "AI Suggested Sprint";
+  if ((entity as any).action === "read") return "Fetched Workspace Items";
+  return "AI Suggested Changes";
+};
+
+const getMessageEntityDescription = (msgId: string) => {
+  const entity = entities.value?.find((e) => {
+    if (!e) return false;
+    const msgObj = (e as any).agent_chat_message_id;
+    if (typeof msgObj === "object" && msgObj !== null) {
+      if ((msgObj as any)._id === msgId) return true;
+      if (Array.isArray((msgObj as any).messages)) {
+        return (msgObj as any).messages.some((m: any) => m?._id === msgId);
+      }
+    }
+    return msgObj === msgId;
+  });
+
+  if (!entity) return "Click below to review the interactive details.";
+  if ((entity as any).entity_type === "widget" || (entity as any).entity_type === "peak") {
+    return "AI has generated interactive dashboard widgets. Pin them to your Peak dashboard below.";
+  }
+  if ((entity as any).entity_type === "sprint") {
+    return "AI has designed a new sprint schedule. Review the sprint metrics and child cards.";
+  }
+  if ((entity as any).action === "read") {
+    const itemCount = (entity as any).result?.items?.length || 0;
+    return `AI fetched ${itemCount} card${itemCount !== 1 ? "s" : ""} matching your query. Review and manage them here.`;
+  }
+  return "AI suggested layout or ticket changes. Review before applying to your workspace.";
+};
+
+const openPreviewFromMessage = (msgId: string) => {
+  isManuallyExpanded.value = true;
+  showConfigPanel.value = false;
+};
 const orderedMessages = computed(() => {
   const sessionMessages = Array.isArray(agentStore.chatHistory)
     ? agentStore.chatHistory
@@ -3542,6 +3634,57 @@ async function sendMessage() {
   agentStore.isSending = false;
   scrollToBottom();
 }
+
+const stopGeneration = () => {
+  // Tell the store to abort — this cancels the fetch + resets stream state
+  agentStore.stopStream();
+
+  // Add a stopped message if we had content
+  if (streamingContent.value || displayedContent.value) {
+    const stoppedContent = displayedContent.value
+      ? displayedContent.value + "\n\n*(Generation stopped)*"
+      : "*(Generation stopped)*";
+
+    const stoppedMsg = {
+      _id: `stopped-${Date.now()}`,
+      type: "assistant" as const,
+      content: stoppedContent,
+      timestamp: new Date().toISOString(),
+      metadata: { status: "completed", temp: false },
+    };
+
+    const existingIdx = agentStore.chatHistory.findIndex(
+      (s) => s.session_id === activeSessionId.value,
+    );
+    if (existingIdx !== -1) {
+      agentStore.chatHistory[existingIdx].messages.push(stoppedMsg);
+    } else {
+      pendingMessages.value.push(stoppedMsg);
+    }
+  }
+
+  // Stop animation frame
+  if (animFrameId !== null) {
+    cancelAnimationFrame(animFrameId);
+    animFrameId = null;
+  }
+
+  // Reset local state
+  isAiThinkingBubbleVisible.value = false;
+  pendingMessages.value = pendingMessages.value.filter(
+    (m) => !(m.metadata as MessageMetadata)?.temp,
+  );
+  stopElapsedTimer();
+  streamingContent.value = "";
+  displayedContent.value = "";
+  streamingPhase.value = "";
+  streamingPhaseDetail.value = "";
+  streamingThinkMs.value = null;
+  streamingTotalMs.value = null;
+
+  scrollToBottom();
+};
+
 // Accept / Decline
 async function acceptChanges(payload: any) {
   try {
@@ -3797,7 +3940,6 @@ const expandPanel = () => {
 const compressPanel = () => {
   isManuallyExpanded.value = false;
   showConfigPanel.value = false;
-  agentStore.createdEntities = [];
 };
 
 const availableCapabilities = [

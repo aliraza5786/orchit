@@ -425,11 +425,24 @@ function onClick(p: Project) {
 
   const path = `/workspace/peak/${p._id}/${job ?? ""}`;
 
+  if (window.location.hostname.includes("localhost") || window.location.hostname === "127.0.0.1") {
+    router.push(path);
+    return;
+  }
+
   if (p?.company?.domain_link) {
-    const domain = p.company.domain_link
-      .replace("https://", "")
-      .replace("http://", "");
-    window.location.href = `${window.location.protocol}//${domain}${path}`;
+    const theme = localStorage.getItem("theme") || "light";
+    const token = localStorage.getItem("token") ?? "";
+    const queryParams = new URLSearchParams({ theme });
+    if (token) queryParams.set("_token", token);
+
+    if (p.company._id) {
+      const encode = (s: string) => btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '.');
+      queryParams.set("_cid", encode(p.company._id));
+    }
+
+    const targetUrl = `${p.company.domain_link.replace(/\/$/, "")}${path}?${queryParams.toString()}`;
+    window.location.href = targetUrl;
   } else {
     router.push(path);
   }

@@ -219,6 +219,9 @@ router.beforeEach(async (to, _from, next) => {
   if (hostname.endsWith('.streamed.space') && hostname !== 'streamed.space') {
     subdomain = hostname.replace('.streamed.space', '')
     if (subdomain === 'www' || subdomain === 'stagging') subdomain = null
+  } else if (hostname.endsWith('.orchit.ai') && hostname !== 'orchit.ai') {
+    subdomain = hostname.replace('.orchit.ai', '')
+    if (subdomain === 'www') subdomain = null
   } else if (hostname.endsWith('.localhost') && hostname !== 'localhost') {
     subdomain = hostname.replace('.localhost', '')
     if (subdomain === 'www') subdomain = null
