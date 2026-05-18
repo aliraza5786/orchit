@@ -3,7 +3,7 @@ import { computed, nextTick, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 import { useCompanyJoinRegister, useCompanyJoinSendOtp, useCompanyJoinVerifyOtp } from '../../queries/useCommon'
-
+import { useInvitedSpace } from '../../queries/useWorkspace'
 /* -------------------------------------------------------------------------- */
 /*  Setup                                                                     */
 /* -------------------------------------------------------------------------- */
@@ -12,9 +12,9 @@ const router    = useRouter()
 const authStore = useAuthStore()
 
 const token = route.params.token as string
-
+const { data, error: queryError } = useInvitedSpace(token)
 type Step = 'loading' | 'form' | 'otp' | 'joining' | 'error'
-const step = ref<Step>('form')
+const step = ref<Step>('loading')
 
 const error       = ref<string | null>(null)
 const errorDetail = ref<string | null>(null)
@@ -25,6 +25,62 @@ const errorDetail = ref<string | null>(null)
 const companyName = ref<string>('your workspace')
 const domain      = ref<string>('')
 const lockedLocal = ref<string | null>(null)
+
+watch(
+  [() => data.value, () => queryError?.value],
+  ([newVal, err]) => {
+    if (err) {
+      step.value = 'error'
+      error.value = 'Invalid invitation link'
+      errorDetail.value = (err as any)?.message || 'We could not fetch details for this invitation token.'
+      return
+    }
+
+    if (newVal) {
+      const inviteData = newVal.data || newVal
+
+      // Check if invite is expired
+      if (inviteData?.is_expired || inviteData?.is_expire) {
+        step.value = 'error'
+        error.value = 'Invitation link expired'
+        errorDetail.value = 'This invitation has already expired. Please request a new invite link from your company administrator.'
+        return
+      }
+
+      // Check if invite is accepted
+      if (inviteData?.status === 'accepted') {
+        step.value = 'error'
+        error.value = 'Invitation already accepted'
+        errorDetail.value = 'You have already accepted this invitation. Please log in to your account to access the workspace.'
+        return
+      }
+
+      // Set companyName
+      if (inviteData?.company?.title) {
+        companyName.value = inviteData.company.title
+      } else if (inviteData?.workspace?.name) {
+        companyName.value = inviteData.workspace.name
+      }
+
+      // Set domain to the invitee's email domain because they must sign up with that domain
+      if (inviteData?.email) {
+        const emailVal = inviteData.email.trim()
+        const parts = emailVal.split('@')
+        domain.value = parts[1] || ''
+        emailLocal.value = parts[0] || ''
+        lockedLocal.value = parts[0] || '' // Locks the prefix so they can only submit the exact email invited
+      }
+
+      // Pre-fill full name if available in invite data
+      if (inviteData?.name && !name.value) {
+        name.value = inviteData.name
+      }
+
+      step.value = 'form'
+    }
+  },
+  { immediate: true }
+)
 
 /* -------------------------------------------------------------------------- */
 /*  Form state                                                                */
@@ -84,7 +140,7 @@ watch([name, emailLocal, password, confirmPassword], () => {
 /* -------------------------------------------------------------------------- */
 /*  OTP state                                                                 */
 /* -------------------------------------------------------------------------- */
-const OTP_LENGTH = 6
+const OTP_LENGTH = 5
 const otp        = ref<string[]>(Array(OTP_LENGTH).fill(''))
 const otpRefs    = ref<HTMLInputElement[]>([])
 const otpError   = ref<string | null>(null)
@@ -484,7 +540,7 @@ function backToForm() {
             Enter verification code
           </h1>
           <p class="text-sm" style="color: var(--text-secondary);">
-            We've sent a 6-digit code to
+            We've sent a 5-digit code to
             <span class="font-medium" style="color: var(--text-primary);">{{ fullEmail }}</span>
           </p>
         </div>
