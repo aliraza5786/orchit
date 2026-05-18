@@ -167,7 +167,7 @@
               <!-- Create Org — only visible if user has NO organizations -->
               <div v-if="companyAccounts.length === 0" class="px-1.5 py-1">
                 <button 
-                  @click="router.push('/settings?tab=org-setup'); closeMenu()"
+                  @click="router.push('/settings?tab=org-create'); closeMenu()"
                   class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-bg-dropdown-menu-hover cursor-pointer transition-all text-left text-text-secondary hover:text-text-primary"
                 >
                   <div class="w-9 h-9 rounded-xl border border-dashed border-border flex items-center justify-center">
