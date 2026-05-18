@@ -148,15 +148,15 @@
                 </div>
                 <p class="truncate text-base font-bold text-text-primary leading-tight">{{ profileData?.u_full_name }}</p>
                 <p class="truncate text-xs text-text-secondary mt-0.5">{{ profileData?.u_email }}</p>
-                <div v-if="authStore.company_id && authStore.company_id !== 'personal' && associatedCompany" class="mt-2.5">
+                <div v-if="authStore.company_id && authStore.company_id !== 'personal' && isApprovedCompanyMember" class="mt-2.5">
                   <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent/10 border border-accent/25 text-[10px] font-bold text-accent uppercase tracking-wider">
-                    <i class="fa-solid fa-shield-halved text-[9px]"></i> Managed by {{ associatedCompany.title }}
+                    <i class="fa-solid fa-shield-halved text-[9px]"></i> Managed by {{ associatedCompany?.title }}
                   </span>
                 </div>
               </div>
 
               <!-- Switcher Tabs Wrapper -->
-              <div v-if="associatedCompany" class="px-4 pb-2 shrink-0">
+              <div v-if="isApprovedCompanyMember" class="px-4 pb-2 shrink-0">
                 <div class="relative flex rounded-xl bg-bg-surface border border-border/50 p-[3px]">
                   <!-- Sliding indicator -->
                   <div
@@ -187,9 +187,9 @@
               </div>
 
               <!-- ── PROFESSIONAL: associated company card ── -->
-              <div v-if="accountMode === 'professional' && associatedCompany" class="px-3 py-3 shrink-0">
+              <div v-if="accountMode === 'professional' && isApprovedCompanyMember" class="px-3 py-3 shrink-0">
                 <!-- No associated company fallback -->
-                <div v-if="!associatedCompany" class="text-center py-6 text-text-secondary">
+                <div v-if="!isApprovedCompanyMember" class="text-center py-6 text-text-secondary">
                   <i class="fa-regular fa-building text-2xl mb-2 block opacity-40"></i>
                   <p class="text-xs">No organization associated<br>with your account</p>
                   <button
@@ -555,14 +555,16 @@ function switchToPersonal() {
 }
 
 // Toggle between personal and professional view in the menu
-const accountMode = ref<'personal' | 'professional'>(
-  authStore.company_id && authStore.company_id !== 'personal' ? 'professional' : 'personal'
-)
+const isApprovedCompanyMember = computed(() => {
+  return !!(associatedCompany.value && profileData.value?.company_role_id)
+})
+
+const accountMode = ref<'personal' | 'professional'>('personal')
 
 watch(
-  [() => authStore.company_id, () => associatedCompany.value],
-  ([id, company]) => {
-    accountMode.value = id && id !== 'personal' && company ? 'professional' : 'personal';
+  [() => authStore.company_id, () => isApprovedCompanyMember.value],
+  ([id, approved]) => {
+    accountMode.value = id && id !== 'personal' && approved ? 'professional' : 'personal';
   },
   { immediate: true }
 )
@@ -576,6 +578,8 @@ function handlePersonalTabClick() {
 }
 
 function handleProfessionalTabClick() {
+  if (!isApprovedCompanyMember.value) return
+
   if (!authStore.company_id || authStore.company_id === 'personal') {
     if (associatedCompany.value) {
       switchToCompany(associatedCompany.value)
@@ -615,7 +619,7 @@ function toggleMenu() {
   if (!menuOpen.value) {
     themeOpen.value = false;
   } else {
-    accountMode.value = (authStore.company_id && authStore.company_id !== 'personal') ? 'professional' : 'personal';
+    accountMode.value = (authStore.company_id && authStore.company_id !== 'personal' && isApprovedCompanyMember.value) ? 'professional' : 'personal';
   }
 }
 
