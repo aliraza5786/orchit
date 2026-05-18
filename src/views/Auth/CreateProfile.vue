@@ -1204,37 +1204,6 @@ const filteredOptions = computed(() => {
 
 
 onMounted(async () => {
-  // Load saved onboarding step and state if available
-  const savedStep = localStorage.getItem('onboarding_active_step')
-  if (savedStep) {
-    const parsedStep = Number(savedStep)
-    if (parsedStep >= 5) {
-      activeStep.value = parsedStep
-      
-      dnsInput.value = localStorage.getItem('onboarding_dns_input') || ''
-      hasCustomDomain.value = localStorage.getItem('onboarding_has_custom_domain') === 'true'
-      companyID.value = localStorage.getItem('onboarding_company_id') || ''
-      siteName.value = localStorage.getItem('onboarding_site_name') || ''
-      siteSlug.value = localStorage.getItem('onboarding_site_slug') || ''
-      superAdminOtpSent.value = localStorage.getItem('onboarding_super_admin_otp_sent') === 'true'
-      superAdminUserId.value = localStorage.getItem('onboarding_super_admin_user_id') || ''
-      superAdminEmailPrefix.value = localStorage.getItem('onboarding_super_admin_email_prefix') || ''
-      superAdminName.value = localStorage.getItem('onboarding_super_admin_name') || ''
-      domainPhase.value = localStorage.getItem('onboarding_domain_phase') || 'idle'
-      
-      const savedDomain = localStorage.getItem('onboarding_current_domain')
-      if (savedDomain) {
-        try { currentDomain.value = JSON.parse(savedDomain) } catch (e) { console.error(e) }
-      }
-      
-      const savedInstructions = localStorage.getItem('onboarding_current_instructions')
-      if (savedInstructions) {
-        try { currentInstructions.value = JSON.parse(savedInstructions) } catch (e) { console.error(e) }
-      }
-      
-      selectedVerificationMethod.value = localStorage.getItem('onboarding_selected_verification_method') || 'cname'
-    }
-  }
 
   try {
     const res = await getProfile()
@@ -1626,7 +1595,6 @@ watch(selectedVerificationMethod, (v) => localStorage.setItem('onboarding_select
 // dnsInput is NEVER auto-filled from company name — it's either typed (custom domain)
 // or set from the user's email domain (company email scenario, handled separately)
 watch(activeStep, (step) => {
-  localStorage.setItem('onboarding_active_step', String(step))
   // ── Sync with URL for back-button support ──
   if (Number(route.query.step) !== step) {
     router.push({ query: { ...route.query, step } })
