@@ -5,7 +5,10 @@
     :showSteps="activeStep !== 6 && !associatedCompany"
   >
     <template #form>
-      <div class="max-w-125 mx-auto w-full min-h-full py-5 flex flex-col justify-center">
+      <div 
+        class="mx-auto w-full min-h-full py-5 flex flex-col justify-center transition-all duration-300"
+        :class="activeStep === 1 ? 'max-w-2xl' : 'max-w-125'"
+      >
 
         <!-- ═══════════════════════════════════════════════════════
              LOCKED STATE — Email associated with an existing company
@@ -140,32 +143,175 @@
              STEP 1 — How will you use Orchit AI?
         ════════════════════════════════════════════════════════════ -->
         <div v-show="activeStep === 1">
-          <div class="mb-6 md:mb-12 space-y-2">
-            <h2 class="text-[24px] lg:text-[32px] leading-8 lg:leading-11 font-medium text-text-primary">
+          <div class="mb-8 text-center space-y-3">
+            <h2 class="text-3xl font-bold tracking-tight text-text-primary">
               How will you use Orchit AI?
             </h2>
-            <p class="text-[14px] md:text-base sm:text-nowrap font-medium text-text-secondary">
-              This will help us personalize your experience in Orchit AI.
+            <p class="text-sm font-medium text-text-secondary max-w-md mx-auto">
+              Choose the setup that best fits your goals. You can always create or join other organizations later.
             </p>
           </div>
 
-
-
-          <div class="how_help_steps grid sm:grid-cols-2 gap-4">
-            <label
-              v-for="option in options"
-              :key="option._id"
-              @click.prevent="handleOptionClick(option._id)"
-              class="group border rounded-xl py-4 px-2.5 transition-all duration-200 ease-out sm:aspect-square cursor-pointer hover:shadow-md hover:-translate-y-1 hover:border-accent/50 hover:bg-accent/5 active:scale-[0.98]"
-              :class="optionClass(option._id)"
+          <div class="how_help_steps grid sm:grid-cols-2 gap-6 max-w-2xl mx-auto">
+            <!-- For My Team Card -->
+            <div
+              @click="handleOptionClick('team')"
+              class="relative group border rounded-2xl p-6 transition-all duration-300 ease-out cursor-pointer flex flex-col justify-between select-none hover:-translate-y-1 active:scale-[0.99] min-h-[340px]"
+              :class="[
+                selected === 'team'
+                  ? 'border-accent bg-gradient-to-b from-accent/[0.04] to-accent/[0.01] shadow-lg shadow-accent/5 ring-1 ring-accent'
+                  : 'border-border bg-bg-card hover:border-accent/40 hover:bg-accent/[0.01] hover:shadow-sm'
+              ]"
             >
-              <input type="radio" class="hidden" :checked="selected === option._id" />
-              <div class="flex flex-col items-center">
-                <img :src="option.icon" class="w-12 h-12 transition-transform duration-200 group-hover:scale-110" />
-                <h3 class="font-medium text-sm text-text-primary mt-4">{{ option.title }}</h3>
-                <p class="text-[11px] text-text-secondary mt-2 text-center">{{ option.description }}</p>
+              <div>
+                <!-- Top Header Row -->
+                <div class="flex items-start justify-between w-full">
+                  <div 
+                    class="w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-300"
+                    :class="[
+                      selected === 'team' 
+                        ? 'bg-accent/15 scale-105' 
+                        : 'bg-surface group-hover:bg-accent/10 group-hover:scale-105'
+                    ]"
+                  >
+                    <!-- Display Team Icon -->
+                    <img :src="options.find(o => o._id === 'team')?.icon" class="w-8 h-8 object-contain transition-transform duration-300 group-hover:scale-110" />
+                  </div>
+
+                  <!-- Custom Checkmark -->
+                  <div 
+                    class="w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300"
+                    :class="[
+                      selected === 'team' 
+                        ? 'border-accent bg-accent shadow-sm' 
+                        : 'border-text-tertiary group-hover:border-accent/60'
+                    ]"
+                  >
+                    <div 
+                      class="w-2 h-2 rounded-full bg-white transition-all duration-300"
+                      :class="[selected === 'team' ? 'scale-100' : 'scale-0']"
+                    ></div>
+                  </div>
+                </div>
+
+                <!-- Text Details -->
+                <div class="mt-6 text-left">
+                  <div class="flex items-center gap-2">
+                    <h3 class="font-bold text-lg text-text-primary transition-colors group-hover:text-accent">
+                      For my team
+                    </h3>
+                    <span class="text-[10px] font-bold tracking-wider uppercase px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
+                      Teams
+                    </span>
+                  </div>
+                  <p class="text-[13px] text-text-secondary leading-relaxed mt-2.5">
+                    Collaborate on docs, projects, and custom organizational workspaces.
+                  </p>
+                </div>
+
+                <!-- Feature bullet list -->
+                <div class="mt-6 space-y-3 pt-5 border-t border-border text-left">
+                  <div class="flex items-start gap-2.5 text-xs text-text-secondary">
+                    <span class="w-4 h-4 rounded-full bg-green-500/10 text-green-600 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+                    </span>
+                    <span>Real-time co-authoring & projects</span>
+                  </div>
+                  <div class="flex items-start gap-2.5 text-xs text-text-secondary">
+                    <span class="w-4 h-4 rounded-full bg-green-500/10 text-green-600 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+                    </span>
+                    <span>Unified custom subdomain configuration</span>
+                  </div>
+                  <div class="flex items-start gap-2.5 text-xs text-text-secondary">
+                    <span class="w-4 h-4 rounded-full bg-green-500/10 text-green-600 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+                    </span>
+                    <span>Granular team role permissions</span>
+                  </div>
+                </div>
               </div>
-            </label>
+            </div>
+
+            <!-- For Personal Use Card -->
+            <div
+              @click="handleOptionClick('personal')"
+              class="relative group border rounded-2xl p-6 transition-all duration-300 ease-out cursor-pointer flex flex-col justify-between select-none hover:-translate-y-1 active:scale-[0.99] min-h-[340px]"
+              :class="[
+                selected === 'personal'
+                  ? 'border-accent bg-gradient-to-b from-accent/[0.04] to-accent/[0.01] shadow-lg shadow-accent/5 ring-1 ring-accent'
+                  : 'border-border bg-bg-card hover:border-accent/40 hover:bg-accent/[0.01] hover:shadow-sm'
+              ]"
+            >
+              <div>
+                <!-- Top Header Row -->
+                <div class="flex items-start justify-between w-full">
+                  <div 
+                    class="w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-300"
+                    :class="[
+                      selected === 'personal' 
+                        ? 'bg-accent/15 scale-105' 
+                        : 'bg-surface group-hover:bg-accent/10 group-hover:scale-105'
+                    ]"
+                  >
+                    <!-- Display Personal Icon -->
+                    <img :src="options.find(o => o._id === 'personal')?.icon" class="w-8 h-8 object-contain transition-transform duration-300 group-hover:scale-110" />
+                  </div>
+
+                  <!-- Custom Checkmark -->
+                  <div 
+                    class="w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300"
+                    :class="[
+                      selected === 'personal' 
+                        ? 'border-accent bg-accent shadow-sm' 
+                        : 'border-text-tertiary group-hover:border-accent/60'
+                    ]"
+                  >
+                    <div 
+                      class="w-2 h-2 rounded-full bg-white transition-all duration-300"
+                      :class="[selected === 'personal' ? 'scale-100' : 'scale-0']"
+                    ></div>
+                  </div>
+                </div>
+
+                <!-- Text Details -->
+                <div class="mt-6 text-left">
+                  <div class="flex items-center gap-2.5">
+                    <h3 class="font-bold text-lg text-text-primary transition-colors group-hover:text-accent">
+                      For personal use
+                    </h3>
+                    <span class="text-[10px] font-bold tracking-wider uppercase px-2.5 py-0.5 rounded-full bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400">
+                      Individuals
+                    </span>
+                  </div>
+                  <p class="text-[13px] text-text-secondary leading-relaxed mt-2.5">
+                    Write better, think more clearly, and keep your tasks organized.
+                  </p>
+                </div>
+
+                <!-- Feature bullet list -->
+                <div class="mt-6 space-y-3 pt-5 border-t border-border text-left">
+                  <div class="flex items-start gap-2.5 text-xs text-text-secondary">
+                    <span class="w-4 h-4 rounded-full bg-green-500/10 text-green-600 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+                    </span>
+                    <span>Fast and private solo note-taking</span>
+                  </div>
+                  <div class="flex items-start gap-2.5 text-xs text-text-secondary">
+                    <span class="w-4 h-4 rounded-full bg-green-500/10 text-green-600 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+                    </span>
+                    <span>Lightweight personal lanes & dashboards</span>
+                  </div>
+                  <div class="flex items-start gap-2.5 text-xs text-text-secondary">
+                    <span class="w-4 h-4 rounded-full bg-green-500/10 text-green-600 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+                    </span>
+                    <span>Personalized AI assistant tailored for you</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -2491,6 +2637,7 @@ async function continueHandler() {
           like_to_manage: selectedModules.value,
           heard_about_us: referralSources.value,
         })
+        await authStore.bootstrap()
         activeStep.value      = 6
       } catch {
         // stay on step 4 if the API call fails

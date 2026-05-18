@@ -99,7 +99,8 @@ const { mutate: createStep2, isPending } = useCreateLanes({
 const { mutate: createWorkspace, isPending: createWorkspacePending } =
   useCreateWorkspace({
     onError: (error: any) => console.error("Error creating workspace:", error),
-    onSuccess: (data: any) => {
+    onSuccess: async (data: any) => {
+      await authStore.bootstrap()
       if (props.ai)
         createStep2({
           workspace_id: data._id,
