@@ -124,163 +124,195 @@
             <div
               v-if="menuOpen"
               id="user-menu"
-              class="absolute right-0 mt-2 origin-top-right rounded-[6px] bg-bg-dropdown z-[110] p-1.5 text-sm border border-border ring-1 ring-black/5 w-[min(300px,calc(100vw-24px))] max-md:fixed max-md:left-1/2 max-md:-translate-x-1/2 max-md:right-auto max-md:top-[60px] max-md:w-[calc(100vw-32px)] flex flex-col max-h-[calc(100vh-80px)]"
+              class="absolute right-0 mt-2 origin-top-right rounded-2xl bg-bg-dropdown z-[110] text-sm border border-border/60 shadow-xl shadow-black/10 w-[min(300px,calc(100vw-24px))] max-md:fixed max-md:left-1/2 max-md:-translate-x-1/2 max-md:right-auto max-md:top-[60px] max-md:w-[calc(100vw-32px)] flex flex-col max-h-[calc(100vh-80px)] overflow-hidden"
               role="menu"
               @keydown.esc.stop.prevent="menuOpen = false"
             >
-              <!-- Header — Centered & Prominent (Google-like) -->
-              <div class="flex flex-col items-center pt-6 pb-4 px-5 shrink-0 text-center">
-                <div class="relative mb-3 group">
-                  <img
-                    v-if="profileData?.u_profile_image"
-                    class="object-cover w-20 h-20 rounded-full ring-4 ring-border/20 transition-transform group-hover:scale-105"
-                    :src="profileData?.u_profile_image"
-                    alt="profile_img"
-                  />
-                  <div v-else
-                    class="grid h-20 w-20 shrink-0 place-items-center rounded-full bg-gradient-to-br from-orange-500 to-orange-600 text-2xl font-bold text-white shadow-lg"
-                  >
-                    {{ initials }} 
+              <!-- Header: adapts based on mode -->
+              <div class="flex flex-col items-center pt-6 pb-5 px-5 shrink-0 text-center">
+                <!-- Personal mode: user avatar -->
+                <template v-if="accountMode === 'personal'">
+                  <div class="relative mb-3">
+                    <img
+                      v-if="profileData?.u_profile_image"
+                      class="object-cover w-[72px] h-[72px] rounded-2xl ring-4 ring-border/20"
+                      :src="profileData?.u_profile_image"
+                      alt="profile_img"
+                    />
+                    <div v-else
+                      class="grid h-[72px] w-[72px] shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-orange-400 to-orange-600 text-2xl font-bold text-white shadow-lg"
+                    >{{ initials }}</div>
+                  </div>
+                  <p class="truncate text-base font-bold text-text-primary leading-tight">{{ profileData?.u_full_name }}</p>
+                  <p class="truncate text-xs text-text-secondary mt-0.5">{{ profileData?.u_email }}</p>
+                </template>
+
+                <!-- Professional mode: associated company logo -->
+                <template v-else>
+                  <div class="relative mb-3">
+                    <img
+                      v-if="associatedCompany?.logo"
+                      class="object-cover w-[72px] h-[72px] rounded-2xl border border-border"
+                      :src="associatedCompany.logo"
+                      alt="company logo"
+                    />
+                    <div v-else
+                      class="grid h-[72px] w-[72px] shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-accent/80 to-accent text-2xl font-bold text-white shadow-lg border border-accent/30"
+                    >{{ associatedCompany?.title?.charAt(0)?.toUpperCase() ?? '?' }}</div>
+                  </div>
+                  <p class="truncate text-base font-bold text-text-primary leading-tight">{{ associatedCompany?.title ?? 'No Organization' }}</p>
+                  <p class="truncate text-xs text-text-secondary mt-0.5">{{ associatedCompany?.domain_link?.replace('https://', '') ?? '' }}</p>
+                </template>
+
+                <!-- Toggle always visible -->
+                <div class="mt-4 w-full">
+                  <div class="relative flex rounded-xl bg-bg-surface border border-border/50 p-[3px]">
+                    <!-- Sliding indicator -->
+                    <div
+                      class="absolute inset-[3px] rounded-lg bg-bg-dropdown shadow border border-border/60 transition-all duration-200 ease-[cubic-bezier(.4,0,.2,1)]"
+                      :style="accountMode === 'personal'
+                        ? 'left:3px; right:calc(50% + 1.5px); top:3px; bottom:3px'
+                        : 'left:calc(50% + 1.5px); right:3px; top:3px; bottom:3px'"
+                    ></div>
+                    <button
+                      type="button"
+                      @click="accountMode = 'personal'"
+                      class="relative z-10 flex-1 flex items-center justify-center gap-1.5 py-[7px] rounded-lg text-[11px] font-semibold transition-colors duration-150 cursor-pointer"
+                      :class="accountMode === 'personal' ? 'text-text-primary' : 'text-text-secondary hover:text-text-primary'"
+                    ><i class="fa-regular fa-user text-[10px]"></i> Personal</button>
+                    <button
+                      type="button"
+                      @click="accountMode = 'professional'"
+                      class="relative z-10 flex-1 flex items-center justify-center gap-1.5 py-[7px] rounded-lg text-[11px] font-semibold transition-colors duration-150 cursor-pointer"
+                      :class="accountMode === 'professional' ? 'text-text-primary' : 'text-text-secondary hover:text-text-primary'"
+                    ><i class="fa-regular fa-building text-[10px]"></i> Professional</button>
                   </div>
                 </div>
-                
-                <div class="min-w-0 w-full">
-                  <p class="truncate text-lg font-bold text-text-primary leading-tight">
-                    {{ currentAccount.name }}
-                  </p>
-                  <p class="truncate text-sm text-text-secondary mt-1">
-                    {{ currentAccount.email }}
-                  </p>
-                  
-                  <div class="mt-4 flex justify-center">
-                    <button 
-                      @click="openAccountSettings"
-                      class="px-5 py-1.5 rounded-full cursor-pointer border border-border hover:bg-bg-dropdown-menu-hover text-sm font-medium transition-all active:scale-95"
+              </div>
+
+              <div class="h-px bg-border/40 shrink-0 mx-4"></div>
+
+              <!-- ── PROFESSIONAL: associated company only ── -->
+              <div v-if="accountMode === 'professional'" class="px-3 py-3 shrink-0">
+                <!-- No associated company fallback -->
+                <div v-if="!associatedCompany" class="text-center py-6 text-text-secondary">
+                  <i class="fa-regular fa-building text-2xl mb-2 block opacity-40"></i>
+                  <p class="text-xs">No organization associated<br>with your account</p>
+                  <button
+                    type="button"
+                    @click="router.push('/settings?tab=org-create'); closeMenu()"
+                    class="mt-3 text-xs font-semibold text-accent hover:opacity-80 transition-opacity"
+                  >Create one →</button>
+                </div>
+
+                <!-- Associated company card -->
+                <div
+                  v-else
+                  class="rounded-2xl border border-border/60 bg-bg-surface overflow-hidden"
+                >
+                  <!-- Card header -->
+                  <div class="px-4 pt-4 pb-3 flex items-center gap-3">
+                    <img v-if="associatedCompany.logo" :src="associatedCompany.logo" class="w-11 h-11 rounded-xl object-cover border border-border shrink-0" />
+                    <div v-else class="w-11 h-11 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center text-accent text-base font-bold shrink-0">
+                      {{ associatedCompany.title.charAt(0).toUpperCase() }}
+                    </div>
+                    <div class="min-w-0 flex-1">
+                      <p class="text-[13px] font-bold text-text-primary truncate">{{ associatedCompany.title }}</p>
+                      <p class="text-[11px] text-text-secondary truncate">{{ associatedCompany.domain_link.replace('https://', '') }}</p>
+                    </div>
+                    <span
+                      v-if="associatedCompany.user_role?.title"
+                      class="shrink-0 text-[9px] font-bold uppercase tracking-wide px-2 py-1 rounded-full bg-accent/10 text-accent border border-accent/20"
+                    >{{ associatedCompany.user_role.title }}</span>
+                  </div>
+
+                  <!-- Card actions -->
+                  <div class="border-t border-border/50 divide-y divide-border/40">
+                    <button
+                      type="button"
+                      @click="switchToCompany(associatedCompany)"
+                      class="w-full flex items-center gap-2.5 px-4 py-2.5 hover:bg-bg-dropdown-menu-hover transition-colors text-left cursor-pointer"
                     >
-                      {{ currentAccount.type === 'company' ? 'Manage Organization' : 'Account Settings' }}
+                      <i class="fa-solid fa-arrow-up-right-from-square text-[10px] text-accent w-4 text-center"></i>
+                      <span class="text-[12px] font-semibold text-text-primary">Open workspace</span>
+                    </button>
+                    <button
+                      type="button"
+                      @click="router.push('/settings?tab=org-setup'); closeMenu()"
+                      class="w-full flex items-center gap-2.5 px-4 py-2.5 hover:bg-bg-dropdown-menu-hover transition-colors text-left cursor-pointer"
+                    >
+                      <i class="fa-regular fa-gear text-[10px] text-text-secondary w-4 text-center"></i>
+                      <span class="text-[12px] font-medium text-text-secondary">Organization settings</span>
                     </button>
                   </div>
                 </div>
               </div>
-              <div class="h-px w-full bg-border/40 shrink-0 mx-auto max-w-[90%]"></div>
 
-              <!-- Create Org — only visible if user has NO organizations -->
-              <div v-if="companyAccounts.length === 0" class="px-1.5 py-1">
-                <button 
-                  @click="router.push('/settings?tab=org-create'); closeMenu()"
-                  class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-bg-dropdown-menu-hover cursor-pointer transition-all text-left text-text-secondary hover:text-text-primary"
+              <!-- ── PERSONAL: quick links ── -->
+              <div v-else class="px-2 py-2 shrink-0">
+                <button
+                  @click="openAccountSettings(); closeMenu()"
+                  class="w-full flex items-center gap-3 px-2.5 py-2 rounded-xl hover:bg-bg-dropdown-menu-hover border border-transparent cursor-pointer transition-all text-left text-text-secondary hover:text-text-primary group"
                 >
-                  <div class="w-9 h-9 rounded-xl border border-dashed border-border flex items-center justify-center">
-                    <i class="fa-solid fa-plus text-xs"></i>
+                  <div class="w-8 h-8 rounded-lg bg-bg-surface border border-border flex items-center justify-center shrink-0 group-hover:border-accent/30 transition-colors">
+                    <i class="fa-regular fa-user text-xs group-hover:text-accent transition-colors"></i>
                   </div>
-                  <span class="text-sm font-medium">Create organization</span>
+                  <div>
+                    <p class="text-[13px] font-semibold text-text-primary">Account Settings</p>
+                    <p class="text-[11px] text-text-secondary">Profile & preferences</p>
+                  </div>
                 </button>
               </div>
 
-              <div class="h-px w-full bg-border/40 shrink-0 mx-auto max-w-[90%]"></div>
-              <div class="flex-shrink-0">
-                <div class="h-px w-full bg-bg-dropdown-menu-hover/50"></div>
-                <ul class="p-1">
+              <div class="h-px bg-border/40 shrink-0 mx-4"></div>
 
-                  <!-- Theme submenu -->
-                  <li
-                    class="relative cursor-pointer"
-                    @mouseenter="openTheme()"
-                    @mouseleave="closeTheme()"
+              <!-- Bottom: theme + logout (always visible) -->
+              <div class="shrink-0 px-2 py-2">
+                <div class="relative" @mouseenter="openTheme()" @mouseleave="closeTheme()">
+                  <button
+                    ref="themeTriggerRef"
+                    class="flex w-full items-center justify-between rounded-xl px-2.5 py-2 hover:bg-bg-dropdown-menu-hover text-text-secondary hover:text-text-primary transition-colors"
+                    role="menuitem" aria-haspopup="menu"
+                    :aria-expanded="themeOpen ? 'true' : 'false'"
+                    @keydown.right.prevent="openTheme()" @keydown.left.prevent="closeTheme()"
+                    type="button"
                   >
-                    <button
-                      ref="themeTriggerRef"
-                      class="flex w-full items-center justify-between rounded-lg px-3 py-2 hover:bg-bg-dropdown-menu-hover"
-                      role="menuitem"
-                      aria-haspopup="menu"
-                      :aria-expanded="themeOpen ? 'true' : 'false'"
-                      @keydown.right.prevent="openTheme()"
-                      @keydown.left.prevent="closeTheme()"
-                      type="button"
+                    <span class="flex items-center gap-3">
+                      <i class="fa-regular fa-circle-half-stroke w-4 text-center text-xs"></i>
+                      <span class="text-[13px] font-medium">Appearance</span>
+                    </span>
+                    <div class="flex items-center gap-1.5">
+                      <span class="text-[11px]">{{ isDark ? 'Dark' : 'Light' }}</span>
+                      <i class="fa-solid fa-chevron-right text-[9px]"></i>
+                    </div>
+                  </button>
+                  <Transition
+                    enter-active-class="transition duration-150 ease-out"
+                    enter-from-class="opacity-0 translate-x-1 scale-95"
+                    enter-to-class="opacity-100 translate-x-0 scale-100"
+                    leave-active-class="transition duration-120 ease-in"
+                    leave-from-class="opacity-100 translate-x-0 scale-100"
+                    leave-to-class="opacity-0 translate-x-1 scale-95"
+                  >
+                    <div
+                      v-if="themeOpen" ref="themeMenuRef"
+                      class="absolute z-10 w-44 origin-top-left rounded-xl bg-bg-dropdown p-1.5 shadow-lg border border-border/60"
+                      role="menu"
+                      :class="[themeFlipLeft ? 'right-0 sm:right-full sm:mr-2' : 'left-full ml-2', 'bottom-0 sm:bottom-auto sm:top-0']"
                     >
-                      <span class="flex items-center gap-3">
-                        <i class="fa-regular fa-circle"></i>
-                        Theme
-                      </span>
-                      <i class="fa-solid fa-chevron-right"></i>
-                    </button>
-
-                    <Transition
-                      enter-active-class="transition duration-150 ease-out"
-                      enter-from-class="opacity-0 translate-x-1 scale-95"
-                      enter-to-class="opacity-100 translate-x-0 scale-100"
-                      leave-active-class="transition duration-120 ease-in"
-                      leave-from-class="opacity-100 translate-x-0 scale-100"
-                      leave-to-class="opacity-0 translate-x-1 scale-95"
-                    >
-                      <div
-                        v-if="themeOpen"
-                        ref="themeMenuRef"
-                        class="absolute z-10 w-48 origin-top-left rounded-xl bg-bg-dropdown p-1 shadow-lg ring-1 ring-black/5"
-                        role="menu"
-                        :class="[
-                          themeFlipLeft
-                            ? 'right-[-17px] sm:right-full sm:mr-2'
-                            : 'left-full ml-2',
-                          'bottom-0 sm:bottom-auto sm:top-0',
-                        ]"
-                      >
-                        <button
-                          class="block w-full cursor-pointer rounded-lg px-3 py-2 text-left hover:bg-bg-dropdown-menu-hover"
-                          @click="
-                            setTheme('system');
-                            closeMenu();
-                          "
-                          type="button"
-                        >
-                          <i class="fa-solid fa-desktop"></i> System
-                        </button>
-                        <button
-                          class="block w-full cursor-pointer rounded-lg px-3 py-2 text-left hover:bg-bg-dropdown-menu-hover"
-                          @click="
-                            setTheme('light');
-                            closeMenu();
-                          "
-                          type="button"
-                        >
-                          <i class="fa-regular fa-sun-cloud"></i> Light
-                        </button>
-                        <button
-                          class="block w-full cursor-pointer rounded-lg px-3 py-2 text-left hover:bg-bg-dropdown-menu-hover"
-                          @click="
-                            setTheme('dark');
-                            closeMenu();
-                          "
-                          type="button"
-                        >
-                          <i class="fa-regular fa-clouds-moon"></i> Dark
-                        </button>
-                      </div>
-                    </Transition>
-                  </li>
-
-                  <li>
-                    <button
-                      class="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 hover:bg-bg-dropdown-menu-hover text-red-500"
-                      role="menuitem"
-                      type="button"
-                      @click="handleLogout"
-                    >
-                      <i
-                        class="fa-solid fa-arrow-right-from-bracket rotate-180"
-                      ></i>
-                      <span>Log out</span>
-                    </button>
-                  </li>
-                </ul>
-
-                <!-- Managed Profile Footer (Google style) -->
-                <div v-if="currentAccount.type === 'company'" class="px-4 py-3 bg-bg-dropdown-menu-hover/20 mt-1 border-t border-border/40 text-center">
-                   <p class="text-[10px] text-text-secondary flex items-center justify-center gap-1.5">
-                    <i class="fa-solid fa-shield-halved text-[9px]"></i>
-                    Managed by {{ currentAccount.name }}
-                  </p>
+                      <button class="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-left hover:bg-bg-dropdown-menu-hover text-text-secondary hover:text-text-primary text-[13px]" @click="setTheme('system'); closeMenu()" type="button"><i class="fa-solid fa-desktop w-4 text-center text-xs"></i> System</button>
+                      <button class="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-left hover:bg-bg-dropdown-menu-hover text-text-secondary hover:text-text-primary text-[13px]" @click="setTheme('light'); closeMenu()" type="button"><i class="fa-regular fa-sun w-4 text-center text-xs"></i> Light</button>
+                      <button class="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-left hover:bg-bg-dropdown-menu-hover text-text-secondary hover:text-text-primary text-[13px]" @click="setTheme('dark'); closeMenu()" type="button"><i class="fa-regular fa-moon w-4 text-center text-xs"></i> Dark</button>
+                    </div>
+                  </Transition>
                 </div>
+                <button
+                  class="flex w-full cursor-pointer items-center gap-3 rounded-xl px-2.5 py-2 hover:bg-red-500/[0.08] text-red-500 transition-colors"
+                  role="menuitem" type="button" @click="handleLogout"
+                >
+                  <i class="fa-solid fa-arrow-right-from-bracket w-4 text-center text-xs"></i>
+                  <span class="text-[13px] font-medium">Log out</span>
+                </button>
               </div>
             </div>
           </Transition>
@@ -288,6 +320,7 @@
       </div>
     </div>
   </nav>
+
 
   <LimitExceededModal @upgrade="handleUgrade" />
 
@@ -369,6 +402,7 @@ import LimitExceededModal from "../modals/LimitExceededModal.vue";
 import { useAuthStore } from "../../../stores/auth";
 import { useCurrentPackage } from "../../../queries/usePackages";
 import { redirectToLogin } from '../../../utilities/authRedirect'
+import { setAuthCookie } from '../../../utilities/auth'
 
 // ── Types ──────────────────────────────────────────────────────
 interface Account {
@@ -452,6 +486,44 @@ const companyAccounts = computed<Account[]>(() =>
     type: "company",
   })),
 );
+
+
+// The single company associated with the user's email domain
+const associatedCompany = computed(() =>
+  profileData.value?.associated_company as ({
+    _id: string;
+    title: string;
+    slug: string;
+    logo?: string | null;
+    domain_link: string;
+    custom_domain?: string | null;
+    membership_role?: string;
+    user_role?: { title?: string };
+  } | null) ?? null
+)
+
+function switchToCompany(company: { _id: string; domain_link: string }) {
+  closeMenu()
+  const token = localStorage.getItem('token')
+  const themeVal = isDark.value ? 'dark' : 'light'
+
+  // Set auth cookie on the shared root domain so the target subdomain reads it
+  if (token) setAuthCookie(token)
+
+  // Encode helper (URL-safe base64)
+  const encode = (s: string) => btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '.')
+
+  // Build destination URL with auth params so the target can bootstrap the session
+  const params = new URLSearchParams()
+  if (token)       params.set('_auth', encode(token))
+  params.set('_cid',  encode(company._id))
+  params.set('theme', themeVal)
+
+  window.location.href = `${company.domain_link}/dashboard?${params.toString()}`
+}
+
+// Toggle between personal and professional view in the menu
+const accountMode = ref<'personal' | 'professional'>('personal')
 
 const currentAccount = computed<Account>(() => {
   const activeId = authStore.company_id

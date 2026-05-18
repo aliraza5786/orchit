@@ -111,17 +111,21 @@
                 </div>
 
                 <!-- Sign out action -->
-                <button
+                 <div class="flex gap-3 w-full">
+                   <button
                   type="button"
-                  class="w-full flex cursor-pointer items-center justify-center gap-2 py-3 rounded-[9px] text-sm font-semibold border transition-all duration-200 hover:opacity-80"
+                  class="flex-1 flex cursor-pointer items-center justify-center gap-2 py-3 rounded-[9px] text-sm font-semibold border transition-all duration-200 hover:opacity-80"
                   style="border-color: var(--border); background: transparent; color: var(--text-secondary);"
                   @click="authStore.logout(); router.push('/login')"
                 >
-                  <svg class="w-4 h-4" viewBox="0 0 16 16" fill="none">
-                    <path d="M6 3H3a1 1 0 00-1 1v8a1 1 0 001 1h3M10 5l3 3-3 3M13 8H6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
+                 
                   Sign out and use a different account
                 </button>
+                <button class="flex-1 bg-accent text-white rounded-[9px] cursor-pointer px-4 py-3 text-sm font-semibold hover:opacity-90 transition-opacity" @click="router.push('/dashboard')">
+                  Go to Dashboard
+                </button>
+                 </div>
+                
 
               </div>
             </div>
@@ -2179,8 +2183,12 @@ async function verifySuperAdminOtp() {
 
     toast.success('Super admin verified successfully')
 
-    // proceed to next step
-    activeStep.value++
+    // Step 51 is the super-admin OTP sub-step; after verification jump to
+    // step 6 (provisioning/loading) to create the company workspace.
+    isProvisioning.value  = true
+    isLoaderRunning.value = true
+    activeStep.value      = 6
+    createProfile({ payload: buildProfilePayload(true) })
 
   } catch (err) {
     const msg =
