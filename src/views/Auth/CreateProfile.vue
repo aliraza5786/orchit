@@ -145,30 +145,7 @@
             </p>
           </div>
 
-          <!-- Scenario 3: company email mandatory banner -->
-          <div
-            v-if="isCompanyEmail && !isEducationEmail"
-            class="mb-6 p-5 rounded-2xl border flex items-start gap-4 shadow-sm"
-            style="background: color-mix(in srgb, var(--accent) 10%, transparent); border-color: color-mix(in srgb, var(--accent) 25%, transparent);"
-          >
-            <div class="w-10 h-10 rounded-xl bg-bg-card flex items-center justify-center shrink-0 border" style="border-color: var(--accent);">
-               <i class="fa-solid fa-building-user text-accent text-lg"></i>
-            </div>
-            <div class="flex-1">
-              <h3 class="text-sm font-bold text-accent">Business Domain Detected</h3>
-              <p class="text-xs text-text-secondary mt-1 leading-relaxed">
-                Your email (<strong>{{ userEmailDomain }}</strong>) is associated with an organization. You must create a <strong>Team</strong> profile.
-              </p>
-              <button 
-                type="button" 
-                @click="authStore.logout(); router.push('/login')"
-                class="mt-3 inline-flex items-center cursor-pointer gap-1.5 text-[11px] font-bold text-accent hover:opacity-70 transition-opacity"
-              >
-                <i class="fa-solid fa-right-from-bracket"></i>
-                Use a different email
-              </button>
-            </div>
-          </div>
+
 
           <!-- Scenario 4: education email mandatory banner -->
           <div
@@ -1284,8 +1261,7 @@ const isGenericEmail = computed(() => {
 // Enforce options based on domain
 const mandatoryOptionId = computed(() => {
   if (isEducationEmail.value) return 'school'
-  if (isCompanyEmail.value) return 'team'
-  return 'personal'
+  return null
 })
 
 const filteredOptions = computed(() => {
@@ -1454,14 +1430,10 @@ watch([isEducationEmail, isCompanyEmail], ([isEdu, isCompany]) => {
 }, { immediate: true })
 
 function handleOptionClick(id) {
-  if (mandatoryOptionId.value !== id) {
+  if (mandatoryOptionId.value && mandatoryOptionId.value !== id) {
     let msg = ''
     if (isEducationEmail.value) {
       msg = `Academic accounts are restricted to School profiles.`
-    } else if (isCompanyEmail.value) {
-      msg = `Business accounts must use Team profiles.`
-    } else {
-      msg = `This email address is restricted to Personal profiles.`
     }
     toast.error(msg, {
       description: `Please use the ${mandatoryOptionId.value} option for ${userEmailDomain.value}`,
