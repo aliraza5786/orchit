@@ -11,6 +11,7 @@ const props = defineProps<{
   modelValue?: IconValue,
   relevantIcons?: string[],
   inSpace?: boolean
+  noSearch?: boolean
 }>();
 const emit = defineEmits<{ (e: 'update:modelValue', value: any): void }>();
 
@@ -94,10 +95,10 @@ function openIconLibrary() {
     </div>
 
     <!-- Icon picker -->
-    <div v-else-if="showIconPicker" class="mt-6">
+    <div v-else-if="showIconPicker">
       <div class="grid gap-3 w-full">
-        <!-- Search -->
-        <input v-model="query" placeholder="Search icons…" class="px-3 py-2 rounded-lg border col-span-full border-border bg-bg-card text-sm placeholder-text-secondary
+        <!-- Search --> 
+        <input  v-if="!props.noSearch" v-model="query" placeholder="Search icons…" class="px-3 py-2 rounded-[6px] border col-span-full border-border bg-bg-input text-sm placeholder-text-secondary
                  focus:outline-none focus:ring-2 focus:ring-accent focus:border-border" type="text" />
 
         <!-- Grid -->
@@ -134,9 +135,9 @@ function openIconLibrary() {
 </template>
 
 <style scoped>
-.grid {
+/* .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
   gap: 1rem;
-}
+} */
 </style>

@@ -1298,13 +1298,15 @@ const tableGroups = computed(() => {
 // ─── Lane & Dropdown Helpers ──────────────────────────────────────────────────
 const { data: lanes } = useLanes(workspaceId);
 
-const laneOptions = computed<any[]>(() =>
-  (lanes?.value ?? []).map((el: any) => ({
+const laneOptions = computed<any[]>(() => {
+  const mainOption = { _id: "Main", title: "Main" };
+  const dynamicOptions = (lanes?.value ?? []).map((el: any) => ({
     ...el,
     _id: el._id,
     title: el?.variables?.["lane-title"] ?? String(el._id),
-  })),
-);
+  }));
+  return [mainOption, ...dynamicOptions];
+});
 
 const getOptions = (options: any) =>
   options.map((el: any) => ({ _id: el.value ?? el, title: el.value ?? el }));
@@ -1357,6 +1359,7 @@ const { mutate: addTicket } = useAddTicket({
 // Removed manual updateOptimisticCard as it's replaced by performOptimisticUpdate
 
 function setLane(id: any, v: any) {
+  if (v === "Main") return;
   const newLane = laneOptions.value.find((l: any) => l._id === v);
   const snapshots = performOptimisticUpdate({
     queryClient,
@@ -1583,7 +1586,7 @@ const columns = computed(() => {
         h(TableSearchCell, {
           options: laneOptions.value ?? [],
           placeholder: "Select tab",
-          modelValue: row.lane?._id || null,
+          modelValue: row.lane?._id || row.workspace_lane_id || "Main",
           disabled: !canEditCard.value,
           "onUpdate:modelValue": (e: any) => setLane(row?._id, e),
           displayField: "title",

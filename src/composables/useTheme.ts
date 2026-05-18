@@ -155,7 +155,7 @@ export function useTheme() {
       }
 
       // 2) Apply theme
-      // applyTheme();
+      applyTheme();
 
       // 3) Setup system preference listeners
       mql = window.matchMedia("(prefers-color-scheme: dark)");
@@ -168,15 +168,6 @@ export function useTheme() {
       applyTheme();
     }
   });
-onMounted(() => {
-  mountedCount++;
-  if (mountedCount === 1) {
-    mql = window.matchMedia("(prefers-color-scheme: dark)");
-    systemPrefersDark.value = mql.matches;
-    mql.addEventListener("change", onSystemChange);
-    window.addEventListener("storage", onStorage);
-  }
-});
 
   onBeforeUnmount(() => {
     mountedCount--;

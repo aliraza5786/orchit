@@ -12,9 +12,9 @@
 
     <!--  Dropdown -->
     <div v-if="isOpen"
-      class="absolute -right-14 mt-3 w-70 sm:w-96 bg-bg-lavender border-b border-border-input rounded-xl shadow-2xl overflow-hidden z-50">
+      class="absolute -right-14 mt-3 w-70 sm:w-96 bg-bg-surface border border-border rounded-[6px] shadow-2xl overflow-hidden z-50">
       <!-- Header -->
-      <div class="px-4 py-3 border-b border-border-input  flex items-center justify-between">
+      <div class="px-4 bg-bg-body py-3 border-b border-border-input  flex items-center justify-between">
         <h3 class="text-[16px] font-bold font-manrope text-primary">Notifications</h3>
         <button v-if="notifications.length"
           class="text-[12px] cursor-pointer font-bold font-manrope text-accent underline" @click="markAllRead">Mark all
@@ -69,8 +69,45 @@
         </template>
       </div>
 
-      <!-- Empty -->
-      <div v-else class="p-5 text-sm text-primary text-center font-manrope">No notifications</div>
+      <!-- Empty --> 
+      <div
+        v-else
+        class="flex flex-col items-center justify-center px-6 py-14 text-center"
+      >
+        <!-- Icon -->
+        <div
+          class="relative mb-5 flex h-10 w-10 items-center justify-center rounded-[6px] border border-border bg-bg-body shadow-sm"
+        >
+          <div
+            class="absolute inset-0 rounded-[6px] bg-primary-color/5 blur-xl"
+          ></div>
+
+          <i
+            class="fa-regular fa-bell text-xl text-accent relative z-10"
+          ></i>
+        </div>
+
+        <!-- Content -->
+        <h4
+          class="text-[15px] font-bold text-text-primary font-manrope"
+        >
+          You're all caught up
+        </h4>
+
+        <p
+          class="mt-1 max-w-[260px] text-[13px] leading-relaxed text-text-secondary font-manrope"
+        >
+         New notifications, mentions, task updates, and activity alerts
+         will appear here.
+        </p>
+
+        <!-- Decorative dots -->
+        <div class="mt-5 flex items-center gap-1.5 opacity-50">
+          <span class="h-1.5 w-1.5 rounded-full bg-primary-color"></span>
+          <span class="h-1.5 w-1.5 rounded-full bg-primary-color"></span>
+          <span class="h-1.5 w-1.5 rounded-full bg-primary-color"></span>
+        </div>
+      </div>
     </div>
 
     <!-- Notification Detail Modal -->

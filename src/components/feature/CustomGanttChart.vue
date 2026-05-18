@@ -427,7 +427,7 @@ const handleTaskClick = (task: any) => {
         class="w-80 border-r rounded-tl-[6px] rounded-bl-[6px] border-border bg-bg-body flex flex-col z-30 shadow-sm shrink-0"
       >
         <div
-          class="h-[76px] border-b border-border flex items-center px-4 bg-bg-body font-bold text-[11px] text-text-secondary uppercase tracking-wider"
+          class="h-[76px] shrink-0 border-b border-border flex items-center px-4 bg-bg-body font-bold text-[11px] text-text-secondary uppercase tracking-wider"
         >
           Work
         </div>
@@ -523,7 +523,7 @@ const handleTaskClick = (task: any) => {
 
           <!-- Header -->
           <div
-            class="sticky top-0 z-40 bg-bg-body border-b border-border shadow-sm h-[76px] w-full"
+            class="sticky top-0 z-40 bg-bg-body border-b border-border shadow-sm h-[76px] shrink-0 w-full"
           >
             <div class="flex h-[38px] border-b border-border bg-bg-body">
               <div

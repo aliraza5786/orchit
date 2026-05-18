@@ -103,14 +103,14 @@
     </div>
 
     <div v-else class="bg-bg-surface mt-2 cursor-pointer rounded-xl p-6">
-      <h1 class="text-lg text-text-primary font-semibold">Add New Team</h1>
+      <h2 class="text-lg text-text-primary font-semibold">Add New Team</h2>
       <br>
       <BaseTextField label="Team Name" v-model="form.name" placeholder="Enter Team Name" size="lg" />
       <BaseTextAreaField label="Description" class="mt-4" v-model="form.description" placeholder="Enter Description"
         size="lg" />
       <div class="mt-4">
         <label class="block text-sm font-medium text-text-primary mb-2">Select Icon</label>
-        <IconPicker v-model="form.icon" :relevantIcons="relevantIcons" />
+        <IconPicker :noSearch="true" v-model="form.icon" :relevantIcons="relevantIcons" />
       </div>
       <div class="flex gap-2 mt-6 justify-end">
         <Button :disabled="isAddTeamDisabled" size="md" variant="primary" @click="addNewRole">

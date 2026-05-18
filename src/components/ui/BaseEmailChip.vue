@@ -1,25 +1,39 @@
 <template>
   <div :class="isDarkTheme ? 'text-white' : 'text-text-primary'">
     <!-- Label + Tooltip -->
-    <label v-if="label" :class="[
-      'text-base font-medium mb-1 flex items-center',
-      isDarkTheme ? 'text-white' : 'text-text-primary'
-    ]">
+    <label
+      v-if="label"
+      :class="[
+        'text-base font-medium mb-1 flex items-center',
+        isDarkTheme ? 'text-white' : 'text-text-primary',
+      ]"
+    >
       {{ label }}
-      <span v-if="tooltip" class="inline-block text-text-secondary -400 ml-1 cursor-help" v-tooltip="tooltip">
+      <span
+        v-if="tooltip"
+        class="inline-block text-text-secondary -400 ml-1 cursor-help"
+        v-tooltip="tooltip"
+      >
         <img src="../../assets/icons/info.svg" alt="info" />
       </span>
     </label>
 
     <!-- Input wrapper (same shell as BaseTextField) -->
     <div class="relative">
-      <div :class="[
-        'flex items-center gap-2 border rounded-[6px] px-3 py-2 w-full text-sm focus-within:ring-2',
-        size === 'md' ? 'min-h-10' : 'min-h-12',
-        error ? 'border-red-500 focus-within:ring-red-500' : 'focus-within:ring-border',
-        isDarkTheme ? 'bg-[#131318] border-border ' : ' border-border bg-bg-input',
-        disabled ? 'opacity-60 cursor-not-allowed' : ''
-      ]" @click="focusInput">
+      <div
+        :class="[
+          'flex items-center gap-2 border rounded-[6px] px-3 py-2 w-full text-sm focus-within:ring-2',
+          size === 'md' ? 'min-h-10' : 'min-h-12',
+          error
+            ? 'border-red-500 focus-within:ring-red-500'
+            : 'focus-within:ring-border',
+          isDarkTheme
+            ? 'bg-bg-input border-border '
+            : ' border-border bg-bg-input',
+          disabled ? 'opacity-60 cursor-not-allowed' : '',
+        ]"
+        @click="focusInput"
+      >
         <!-- Prefix slot -->
         <span v-if="$slots.prefix" class="mr-1 text-text-secondary -500">
           <slot name="prefix" />
@@ -30,30 +44,36 @@
           <span
             v-for="(e, i) in internal"
             :key="e + i"
-            class="inline-flex items-center w-max-content gap-2 rounded-full px-2 py-1 text-xs
-                   bg-bg-body text-text-secondary"
+            class="inline-flex items-center max-w-full min-w-0 gap-1.5 rounded-full px-2.5 py-1 text-xs bg-bg-body text-text-secondary border border-border/40"
+            :title="e"
           >
-            <span v-if="showName" class="font-medium">{{ extractNameFromEmail(e) }}</span>
-            <span v-if="showName" class="opacity-70 overflow-ellipsis overflow-hidden">&lt;{{ e }}&gt;</span>
-            <span v-else class="  overflow-ellipsis overflow-hidden">{{ e }}</span>
+            <span v-if="showName" class="font-medium truncate">{{
+              extractNameFromEmail(e)
+            }}</span>
+            <span v-if="showName" class="opacity-70 truncate"
+              >&lt;{{ e }}&gt;</span
+            >
+            <span v-else class="truncate">{{ e }}</span>
 
             <button
               type="button"
-              class="ml-1 rounded hover:bg-bg-surface  px-1"
+              class="ml-1 rounded hover:bg-bg-surface px-1 shrink-0"
               title="Remove"
               @click.stop="removeAt(i)"
               :disabled="disabled"
-            >✕</button>
+            >
+              ✕
+            </button>
           </span>
 
           <!-- Input -->
           <input
             ref="inputRef"
             v-model="inputValue"
-            :placeholder="atLimit ? '' : (internal.length === 0 ? placeholder : '')"
-            class="flex-1 min-w-[160px] bg-transparent outline-none text-sm
-                   placeholder:text-text-secondary 
-                   text-text-primary"
+            :placeholder="
+              atLimit ? '' : internal.length === 0 ? placeholder : ''
+            "
+            class="flex-1 min-w-[160px] bg-transparent outline-none text-sm placeholder:text-text-secondary text-text-primary"
             :disabled="disabled || atLimit"
             @keydown="onKeydown"
             @blur="commit"
@@ -69,172 +89,201 @@
     </div>
 
     <!-- Help/Error Text -->
-    <p v-if="message" class="mt-2 text-xs flex items-center gap-1"
-       :class="error ? 'text-red-500' : isDarkTheme ? 'text-text-secondary ' : 'text-text-secondary '">
+    <p
+      v-if="message"
+      class="mt-2 text-xs flex items-center gap-1"
+      :class="
+        error
+          ? 'text-red-500'
+          : isDarkTheme
+            ? 'text-text-secondary '
+            : 'text-text-secondary '
+      "
+    >
       <slot v-if="$slots.msgIcon" name="msgIcon" /> {{ message }}
     </p>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
-import { useTheme } from '../../composables/useTheme';
+import { ref, watch, computed } from "vue";
+import { useTheme } from "../../composables/useTheme";
 
 const { isDark } = useTheme();
 
-const props = withDefaults(defineProps<{
-  modelValue: string[]
-  label?: string
-  tooltip?: string
-  message?: string
-  error?: boolean
-  placeholder?: string
-  size?: 'sm' | 'md' | 'lg'
-  theme?: string
-  disabled?: boolean
-  allowDuplicates?: boolean
-  showName?: boolean
-  /** Optional custom validator; return true if valid */
-  validator?: (email: string) => boolean
-  /** NEW: maximum number of emails allowed (unset/0/negative = unlimited) */
-  maxEmails?: number
-}>(), {
-  modelValue: () => [],
-  size: 'md',
-  theme: 'system',
-  placeholder: 'Add people by email… (Enter, comma, space)',
-  error: false,
-  disabled: false,
-  allowDuplicates: false,
-  showName: false,
-  maxEmails: undefined
-})
+const props = withDefaults(
+  defineProps<{
+    modelValue: string[];
+    label?: string;
+    tooltip?: string;
+    message?: string;
+    error?: boolean;
+    placeholder?: string;
+    size?: "sm" | "md" | "lg";
+    theme?: string;
+    disabled?: boolean;
+    allowDuplicates?: boolean;
+    showName?: boolean;
+    /** Optional custom validator; return true if valid */
+    validator?: (email: string) => boolean;
+    /** NEW: maximum number of emails allowed (unset/0/negative = unlimited) */
+    maxEmails?: number;
+  }>(),
+  {
+    modelValue: () => [],
+    size: "md",
+    theme: "system",
+    placeholder: "Add people by email… (Enter, comma, space)",
+    error: false,
+    disabled: false,
+    allowDuplicates: false,
+    showName: false,
+    maxEmails: undefined,
+  },
+);
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', v: string[]): void
-  (e: 'invalid', invalids: string[]): void
-  (e: 'add', added: string[]): void
-  (e: 'remove', removed: string): void
+  (e: "update:modelValue", v: string[]): void;
+  (e: "invalid", invalids: string[]): void;
+  (e: "add", added: string[]): void;
+  (e: "remove", removed: string): void;
   /** Optional: fired when user hits the max */
-  (e: 'limit', max: number): void
-}>()
+  (e: "limit", max: number): void;
+}>();
 
-const inputRef = ref<HTMLInputElement | null>(null)
-const inputValue = ref('')
+const inputRef = ref<HTMLInputElement | null>(null);
+const inputValue = ref("");
 
 /** internal mirror so we can mutate comfortably, synced with v-model */
-const internal = ref<string[]>([...props.modelValue])
+const internal = ref<string[]>([...props.modelValue]);
 
-watch(() => props.modelValue, (v) => {
-  // sync if parent overwrote
-  if (JSON.stringify(v) !== JSON.stringify(internal.value)) {
-    internal.value = [...v]
-  }
-  }
-)
+watch(
+  () => props.modelValue,
+  (v) => {
+    // sync if parent overwrote
+    if (JSON.stringify(v) !== JSON.stringify(internal.value)) {
+      internal.value = [...v];
+    }
+  },
+);
 
 const isDarkTheme = computed(() => {
-  return props.theme === 'dark' || (props.theme === 'system' && isDark.value);
+  return props.theme === "dark" || (props.theme === "system" && isDark.value);
 });
 
 /** Max / limit helpers */
-const cap = computed(() => (props.maxEmails && props.maxEmails > 0) ? props.maxEmails : Infinity)
-const remaining = computed(() => Math.max(0, cap.value - internal.value.length))
-const atLimit = computed(() => remaining.value === 0)
+const cap = computed(() =>
+  props.maxEmails && props.maxEmails > 0 ? props.maxEmails : Infinity,
+);
+const remaining = computed(() =>
+  Math.max(0, cap.value - internal.value.length),
+);
+const atLimit = computed(() => remaining.value === 0);
 
 function focusInput() {
-  if (!props.disabled && !atLimit.value) inputRef.value?.focus()
+  if (!props.disabled && !atLimit.value) inputRef.value?.focus();
 }
 
-const defaultEmailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i
+const defaultEmailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
 function isValid(email: string) {
-  return (props.validator ?? ((e: string) => defaultEmailRegex.test(e)))(email)
+  return (props.validator ?? ((e: string) => defaultEmailRegex.test(e)))(email);
 }
 
 function normalizeEmails(text: string) {
   return text
-    .split(/[\s,;]+/)     // split by space/comma/semicolon/newlines
-    .map(e => e.trim().toLowerCase())
-    .filter(Boolean)
+    .split(/[\s,;]+/) // split by space/comma/semicolon/newlines
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
 }
 
 function addEmails(list: string[]) {
   if (remaining.value === 0) {
-    emit('limit', isFinite(cap.value) ? Number(cap.value) : Infinity)
-    return
+    emit("limit", isFinite(cap.value) ? Number(cap.value) : Infinity);
+    return;
   }
 
-  const added: string[] = []
-  const invalids: string[] = []
-  const set = props.allowDuplicates ? null : new Set(internal.value)
+  const added: string[] = [];
+  const invalids: string[] = [];
+  const set = props.allowDuplicates ? null : new Set(internal.value);
 
   for (const raw of list) {
-    if (remaining.value - added.length <= 0) break
+    if (remaining.value - added.length <= 0) break;
 
-    if (!isValid(raw)) { invalids.push(raw); continue }
-    if (set && set.has(raw)) continue
+    if (!isValid(raw)) {
+      invalids.push(raw);
+      continue;
+    }
+    if (set && set.has(raw)) continue;
 
-    if (set) set.add(raw)
-    internal.value.push(raw)
-    added.push(raw)
+    if (set) set.add(raw);
+    internal.value.push(raw);
+    added.push(raw);
   }
 
-  if (added.length) emit('add', added)
-  if (invalids.length) emit('invalid', invalids)
+  if (added.length) emit("add", added);
+  if (invalids.length) emit("invalid", invalids);
 
   // clear error if user entered at least one valid email and no new invalids
-  if (added.length && invalids.length === 0) emit('invalid', [])
+  if (added.length && invalids.length === 0) emit("invalid", []);
 
-  if (added.length || invalids.length) emit('update:modelValue', [...internal.value])
+  if (added.length || invalids.length)
+    emit("update:modelValue", [...internal.value]);
 
   // Notify if user attempted to add more than allowed
-  if (remaining.value === 0) emit('limit', isFinite(cap.value) ? Number(cap.value) : Infinity)
+  if (remaining.value === 0)
+    emit("limit", isFinite(cap.value) ? Number(cap.value) : Infinity);
 }
 
 function commit() {
-  if (!inputValue.value || atLimit.value) return
-  addEmails(normalizeEmails(inputValue.value))
-  inputValue.value = ''
+  if (!inputValue.value || atLimit.value) return;
+  addEmails(normalizeEmails(inputValue.value));
+  inputValue.value = "";
 }
 
 function onPaste(e: ClipboardEvent) {
-  if (atLimit.value) { e.preventDefault(); emit('limit', Number(cap.value)); return }
-  const text = e.clipboardData?.getData('text') || ''
-  if (!text) return
-  e.preventDefault()
-  addEmails(normalizeEmails(text))
+  if (atLimit.value) {
+    e.preventDefault();
+    emit("limit", Number(cap.value));
+    return;
+  }
+  const text = e.clipboardData?.getData("text") || "";
+  if (!text) return;
+  e.preventDefault();
+  addEmails(normalizeEmails(text));
 }
 
 function onKeydown(e: KeyboardEvent) {
-  if (props.disabled) return
+  if (props.disabled) return;
 
   // commit on separators
-  if (e.key === 'Enter' || e.key === 'Tab' || e.key === ',' || e.key === ' ') {
-    e.preventDefault()
-    commit()
-    return
+  if (e.key === "Enter" || e.key === "Tab" || e.key === "," || e.key === " ") {
+    e.preventDefault();
+    commit();
+    return;
   }
 
   // backspace to remove last when empty
-  if (e.key === 'Backspace' && !inputValue.value && internal.value.length) {
-    const removed = internal.value.pop()!
-    emit('remove', removed)
-    emit('update:modelValue', [...internal.value])
+  if (e.key === "Backspace" && !inputValue.value && internal.value.length) {
+    const removed = internal.value.pop()!;
+    emit("remove", removed);
+    emit("update:modelValue", [...internal.value]);
   }
 }
 
 function removeAt(i: number) {
-  if (props.disabled) return
-  const [removed] = internal.value.splice(i, 1)
-  emit('remove', removed)
-  emit('update:modelValue', [...internal.value])
+  if (props.disabled) return;
+  const [removed] = internal.value.splice(i, 1);
+  emit("remove", removed);
+  emit("update:modelValue", [...internal.value]);
 }
 
 /** Optional: Name extraction for chip display */
 function extractNameFromEmail(email: string) {
-  const local = (email.split('@')[0] || '').split('+')[0]
-  const parts = local.split(/[^a-zA-Z]+/).filter(Boolean)
-  if (!parts.length) return email
-  return parts.map(p => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase()).join(' ')
+  const local = (email.split("@")[0] || "").split("+")[0];
+  const parts = local.split(/[^a-zA-Z]+/).filter(Boolean);
+  if (!parts.length) return email;
+  return parts
+    .map((p) => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase())
+    .join(" ");
 }
 </script>

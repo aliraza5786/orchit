@@ -331,6 +331,8 @@ export function applyThemeVariables(
           "--secondary-color",
           colorValue["secondary-color"],
         );
+      } else {
+        root.style.removeProperty("--secondary-color");
       }
       return;
     }

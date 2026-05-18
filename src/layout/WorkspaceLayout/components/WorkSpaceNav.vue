@@ -81,18 +81,7 @@
                    :src="localWorkspace.logo ?? dp"
                    alt="Workspace menu"
                    class="rounded-full"
-                  :class="expanded ? 'w-[25px] h-[25px]' : 'w-[30px] h-[30px]'"
-                  :style="{
-                  borderColor: localWorkspace.variables?.['workspace-color']
-                  ? 'var(--primary-color)'
-                  : 'transparent',
-
-                  borderWidth: localWorkspace.variables?.['workspace-color']
-                  ? '2px'
-                  : '0px',
-
-                  borderStyle: 'solid',
-                   }"
+                  :class="expanded ? 'w-[25px] h-[25px]' : 'w-[30px] h-[30px]'" 
                   />
                 <Transition name="title-fade">
                   <h3
@@ -181,14 +170,30 @@
                     role="menuitem"
                     @click="switchTo(ws)"
                   >
+                    <div
+                     v-if="!ws.logo"
+                     class="w-6 h-6 rounded-full flex items-center justify-center text-white text-[11px] font-bold shrink-0"
+                     :style="{
+                       backgroundColor: 'var(--primary-color)',
+                     }"
+                    >
+                     {{
+                        ws?.variables?.title
+                          ?.substring(0, 2)
+                         .toUpperCase() || "WS"
+                     }}
+                    </div>
+
                     <img
+                     v-else
                       :src="ws.logo ?? dp"
                       alt=""
-                      class="w-6 h-6 rounded-full object-cover bg-white"
+                      class="w-6 h-6 rounded-full object-cover"
                     />
                     <span class="flex-1 line-clamp-1">{{
                       ws?.variables?.title ?? "Untitled workspace"
-                    }}</span>
+                    }}
+                    </span>
                     <span
                       v-if="ws._id === workspaceId"
                       class="text-xs px-2 py-0.5 rounded-full border border-border bg-primary-color/30 text-primary-color"

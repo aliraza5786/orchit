@@ -28,7 +28,8 @@ const emit = defineEmits(["select:ticket", "update:ticket", "create:ticket"]);
 
 // --- State ---
 const zoomLevel = ref("week");
-const gridRef = ref<HTMLElement | null>(null);       // horizontal scroll container (timeline canvas)
+const containerRef = ref<HTMLElement | null>(null);  // horizontal scroll container (timeline canvas)
+const gridRef = ref<HTMLElement | null>(null);       // vertical scroll container (grid body)
 const sidebarRef = ref<HTMLElement | null>(null);    // vertical scroll container (sidebar rows)
 const hoveredTaskId = ref<string | null>(null);
 const scrollLeft = ref(0);
@@ -51,12 +52,13 @@ const handleSidebarScroll = (e: Event) => {
     gridRef.value.scrollTop = (e.target as HTMLElement).scrollTop;
 };
 
-const handleGridScroll = (e: Event) => {
+const handleScroll = (e: Event) => {
   const el = e.target as HTMLElement;
-  // Sync horizontal scroll state
   scrollLeft.value = el.scrollLeft;
   containerWidth.value = el.clientWidth;
+};
 
+const handleGridScroll = (e: Event) => {
   // Sync vertical scroll to sidebar
   if (isSyncingGrid) {
     isSyncingGrid = false;
@@ -64,7 +66,7 @@ const handleGridScroll = (e: Event) => {
   }
   isSyncingSidebar = true;
   if (sidebarRef.value)
-    sidebarRef.value.scrollTop = el.scrollTop;
+    sidebarRef.value.scrollTop = (e.target as HTMLElement).scrollTop;
 };
 
 // --- Date Utils ---
@@ -269,9 +271,9 @@ const getTaskNavigation = (task: any) => {
 };
 
 const scrollToTask = (task: any) => {
-  if (gridRef.value) {
+  if (containerRef.value) {
     const pos = getTaskPosition(task);
-    gridRef.value.scrollTo({
+    containerRef.value.scrollTo({
       left: pos._leftVal - containerWidth.value / 2 + pos._widthVal / 2,
       behavior: "smooth",
     });
@@ -281,13 +283,14 @@ const scrollToTask = (task: any) => {
 // --- Lifecycle ---
 let resizeObserver: ResizeObserver | null = null;
 onMounted(() => {
-  if (gridRef.value) {
-    scrollLeft.value = gridRef.value.scrollLeft;
-    containerWidth.value = gridRef.value.clientWidth;
+  if (containerRef.value) {
+    scrollLeft.value = containerRef.value.scrollLeft;
+    containerWidth.value = containerRef.value.clientWidth;
+    containerRef.value.addEventListener("scroll", handleScroll);
     resizeObserver = new ResizeObserver((entries) => {
       for (let e of entries) containerWidth.value = e.contentRect.width;
     });
-    resizeObserver.observe(gridRef.value);
+    resizeObserver.observe(containerRef.value);
   }
   setTimeout(goToToday, 100);
 });
@@ -297,6 +300,8 @@ watch([timelineRange, zoomLevel], () => {
 });
 
 onUnmounted(() => {
+  if (containerRef.value)
+    containerRef.value.removeEventListener("scroll", handleScroll);
   if (resizeObserver) resizeObserver.disconnect();
 });
 
@@ -349,11 +354,11 @@ const handleInteractionEnd = () => {
 };
 
 const goToToday = () => {
-  if (gridRef.value) {
+  if (containerRef.value) {
     const offset =
       diffDays(new Date(), timelineRange.value.start) * columnWidth.value;
-    gridRef.value.scrollTo({
-      left: offset - gridRef.value.clientWidth / 2,
+    containerRef.value.scrollTo({
+      left: offset - containerRef.value.clientWidth / 2,
       behavior: "smooth",
     });
   }
@@ -482,69 +487,69 @@ const handleTaskClick = (task: any) => {
               <div
                 v-for="task in allTasks"
                 :key="task._id"
-                class="group border-b border-border hover:bg-bg-surface transition-all duration-150 cursor-pointer relative"
+                class="h-10 group border-b border-border hover:bg-bg-surface transition-all duration-150 cursor-pointer relative flex items-center px-4 gap-2.5"
                 :class="{
-                  'bg-bg-surface !border-l-[3px] !border-l-primary-color':
+                  'bg-bg-surface !border-l-[3px] !border-l-primary-color z-10':
                     selectedTaskId === (task._id || task.id),
-                  'bg-bg-surface/50': hoveredTaskId === task._id,
+                  'bg-bg-surface/50 z-20': hoveredTaskId === task._id,
                 }"
                 @click="handleTaskClick(task)"
                 @mouseenter="hoveredTaskId = task._id"
                 @mouseleave="hoveredTaskId = null"
               >
-                <div class="flex items-center h-10 px-4 gap-2.5">
-                  <div
-                    class="w-1 h-1 rounded-full shrink-0"
-                    :style="{ backgroundColor: task._color }"
-                  ></div>
-                  <div class="flex items-center gap-2 flex-1 min-w-0">
-                    <i class="fa-solid fa-bolt text-primary-color text-[10px] shrink-0"></i>
-                    <span class="text-[11px] font-medium text-text-secondary whitespace-nowrap opacity-70 shrink-0">
-                      {{ task._code }}
-                    </span>
-                    <span class="text-[11px] font-semibold text-text-primary truncate flex-1">
-                      {{ task._title }}
-                    </span>
-                  </div>
-                  <Collaborators
-                    v-if="task._assignees?.length"
-                    :avatars="task._assignees"
-                    size="5"
-                    class="opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
-                  />
-                </div>
-
-                <!-- Hover details -->
                 <div
-                  v-if="hoveredTaskId === task._id || task._id === selectedTask?._id"
-                  class="px-4 pb-2 flex items-center gap-2 text-[10px] text-text-secondary border-t border-border/30 pt-1.5 bg-bg-body/50"
-                >
-                  <div class="flex items-center gap-1.5">
-                    <i class="fa-regular fa-calendar text-[9px]"></i>
-                    <span class="font-medium">{{ formatDate(task._start) }}</span>
-                  </div>
-                  <i class="fa-solid fa-arrow-right text-[8px] opacity-40"></i>
-                  <div class="flex items-center gap-1.5">
-                    <i class="fa-regular fa-calendar-check text-[9px]"></i>
-                    <span class="font-medium">{{ formatDate(task._end) }}</span>
-                  </div>
-                  <div class="ml-auto flex items-center gap-2">
-                    <span class="font-bold text-primary-color">
-                      {{ diffDays(task._end, task._start) }}d
-                    </span>
-                    <div
-                      v-if="task._progress > 0"
-                      class="px-1.5 py-0.5 rounded text-[9px] font-bold"
-                      :class="
-                        task._progress === 100
-                          ? 'text-green-500 bg-green-500/10 border border-green-500/30'
-                          : 'text-text-secondary bg-bg-surface border border-border'
-                      "
-                    >
-                      {{ task._progress }}%
+                  class="w-1 h-1 rounded-full shrink-0"
+                  :style="{ backgroundColor: task._color }"
+                ></div>
+                <div class="flex items-center gap-2 flex-1 min-w-0">
+                  <i class="fa-solid fa-bolt text-primary-color text-[10px] shrink-0"></i>
+                  <span class="text-[11px] font-medium text-text-secondary whitespace-nowrap opacity-70 shrink-0">
+                    {{ task._code }}
+                  </span>
+                  <span class="text-[11px] font-semibold text-text-primary truncate flex-1">
+                    {{ task._title }}
+                  </span>
+                </div>
+                <Collaborators
+                  v-if="task._assignees?.length"
+                  :avatars="task._assignees"
+                  size="5"
+                  class="opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                />
+
+                <!-- Hover details as an absolute tooltip so it doesn't break row height -->
+                <Transition name="fade-scale">
+                  <div
+                    v-if="hoveredTaskId === task._id || task._id === selectedTask?._id"
+                    class="absolute top-full left-0 w-full z-50 px-4 py-2 flex items-center gap-2 text-[10px] text-text-secondary bg-bg-surface border border-border shadow-xl rounded-b-md"
+                  >
+                    <div class="flex items-center gap-1.5">
+                      <i class="fa-regular fa-calendar text-[9px]"></i>
+                      <span class="font-medium">{{ formatDate(task._start) }}</span>
+                    </div>
+                    <i class="fa-solid fa-arrow-right text-[8px] opacity-40"></i>
+                    <div class="flex items-center gap-1.5">
+                      <i class="fa-regular fa-calendar-check text-[9px]"></i>
+                      <span class="font-medium">{{ formatDate(task._end) }}</span>
+                    </div>
+                    <div class="ml-auto flex items-center gap-2">
+                      <span class="font-bold text-primary-color">
+                        {{ diffDays(task._end, task._start) }}d
+                      </span>
+                      <div
+                        v-if="task._progress > 0"
+                        class="px-1.5 py-0.5 rounded text-[9px] font-bold"
+                        :class="
+                          task._progress === 100
+                            ? 'text-green-500 bg-green-500/10 border border-green-500/30'
+                            : 'text-text-secondary bg-bg-surface border border-border'
+                        "
+                      >
+                        {{ task._progress }}%
+                      </div>
                     </div>
                   </div>
-                </div>
+                </Transition>
               </div>
 
               <!-- Create Epic row -->
@@ -591,14 +596,13 @@ const handleTaskClick = (task: any) => {
           </aside>
 
           <!-- ═══ TIMELINE CANVAS ═══ -->
-          <!-- gridRef: horizontal scroll (timeline) + vertical scroll (synced to sidebar) -->
+          <!-- containerRef: horizontal scroll (timeline) -->
           <div
-            class="flex-1 overflow-x-auto overflow-y-auto scrollbar-visible relative bg-bg-body"
-            ref="gridRef"
-            @scroll="handleGridScroll"
+            class="flex-1 rounded-tr-[6px] rounded-br-[6px] overflow-x-auto overflow-y-hidden relative bg-bg-body scrollbar-visible"
+            ref="containerRef"
           >
             <div
-              class="relative flex flex-col"
+              class="h-full relative flex flex-col"
               :style="{ width: totalWidth + 'px' }"
             >
               <!-- Today vertical line -->
@@ -612,7 +616,7 @@ const handleTaskClick = (task: any) => {
               </div>
 
               <!-- ─── HEADER (sticky top) ─── -->
-              <div class="sticky top-0 z-40 bg-bg-body border-b border-border shadow-sm">
+              <div class="sticky top-0 z-40 bg-bg-body border-b border-border shadow-sm h-[81px] w-full shrink-0">
                 <!-- Month / Week groups row -->
                 <div class="flex h-10 border-b border-border">
                   <div
@@ -651,7 +655,11 @@ const handleTaskClick = (task: any) => {
               </div>
 
               <!-- ─── GRID BODY ─── -->
-              <div class="relative min-h-[400px]">
+              <div 
+                class="relative overflow-y-auto scrollbar-hide flex-1 bg-bg-surface"
+                ref="gridRef"
+                @scroll="handleGridScroll"
+              >
                 <!-- Background column stripes -->
                 <div class="absolute inset-0 pointer-events-none z-0">
                   <div
@@ -674,7 +682,7 @@ const handleTaskClick = (task: any) => {
                   <div
                     v-for="(task, taskIdx) in allTasks"
                     :key="'track-' + task._id"
-                    class="border-b border-border relative h-[41px] transition-colors hover:bg-bg-body bg-bg-surface group/row"
+                    class="h-10 border-b border-border relative transition-colors hover:bg-bg-body bg-bg-surface group/row"
                   >
                     <!-- Task bar wrapper -->
                     <div

@@ -156,11 +156,13 @@
                 v-for="(person, index) in group.cards || group.agents || []"
                 :key="person._id || index"
                 class="border-b border-border transition-colors relative group/row hover:bg-bg-surface/40 cursor-pointer"
+                :class="{ 'z-[100]': activeMenuId === (person._id || index) }"
                 @click="emit('select:ticket', person)"
               >
                 <td
                   @click.stop
-                  class="w-8 group text-center align-middle border-r border-border/40 sticky left-0 z-20 bg-bg-surface"
+                  class="w-8 group text-center align-middle border-r border-border/40 sticky left-0 bg-bg-surface"
+                  :class="activeMenuId === (person._id || index) ? 'z-[100]' : 'z-20'"
                 >
                   <div
                     class="flex justify-center items-center h-full w-full relative"

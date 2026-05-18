@@ -866,12 +866,15 @@ async function openPanelFromRoute() {
 }
 
 const { data: lanes } = useLanes(workspaceId);
-const laneOptions = computed<any[]>(() =>
-  (lanes?.value ?? []).map((el: any) => ({
+const laneOptions = computed<any[]>(() => {
+  const mainOption = { _id: "Main", title: "Main" };
+  const dynamicOptions = (lanes?.value ?? []).map((el: any) => ({
+    ...el,
     _id: el._id,
     title: el?.variables?.["lane-title"] ?? String(el._id),
-  })),
-);
+  }));
+  return [mainOption, ...dynamicOptions];
+});
 
 // Add List Logic
 const { mutate: addList, isPending: addingList } = useAddList({
@@ -1459,7 +1462,7 @@ const columns = computed(() => {
             row.workspace_lane_id ||
             value?._id ||
             value ||
-            null,
+            "Main",
           "onUpdate:modelValue": (val: any) => setLane(row, val),
           displayField: "title",
           disabled: !canEditCard.value,
@@ -1547,6 +1550,7 @@ function handleTableRowsUpdate(newRows: any[]) {
 
 function setLane(row: any, laneId: string) {
   if (row._id) {
+    if (laneId === "Main") return;
     moveCard.mutate({ card_id: row._id, workspace_lane_id: laneId });
     // Update local state optimistically
     const newLane = laneOptions.value.find((l: any) => l._id === laneId);
