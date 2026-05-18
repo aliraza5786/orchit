@@ -1895,11 +1895,13 @@ if (isCompanyEmail.value) {
   await authStore.bootstrap()
 
   if (workspaceStore.pricing) {
+    clearOnboardingState()
     router.push('/dashboard?stripePayment=true')
     return
   }
 
   if (workspaceStore.workspace) {
+    clearOnboardingState()
     router.push('/create-workspace')
     return
   }
@@ -1911,10 +1913,12 @@ if (isCompanyEmail.value) {
     // Scenario 2b: generic email + subdomain → go straight to finish
     await authStore.bootstrap()
     if (workspaceStore.pricing) {
+      clearOnboardingState()
       router.push('/dashboard?stripePayment=true')
       return
     }
     if (workspaceStore.workspace) {
+      clearOnboardingState()
       router.push('/create-workspace')
       return
     }
@@ -2095,6 +2099,7 @@ function onProvisioningComplete() {
   isLoaderRunning.value = false
 
   if (selected.value === 'personal') {
+    clearOnboardingState()
     router.push({ path: '/finish-profile', query: { welcome: '1', type: 'personal', theme: theme.value } })
     return
   }

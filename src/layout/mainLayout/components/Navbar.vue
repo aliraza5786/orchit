@@ -124,75 +124,69 @@
             <div
               v-if="menuOpen"
               id="user-menu"
-              class="absolute right-0 mt-2 origin-top-right rounded-2xl bg-bg-dropdown z-[110] text-sm border border-border/60 shadow-xl shadow-black/10 w-[min(300px,calc(100vw-24px))] max-md:fixed max-md:left-1/2 max-md:-translate-x-1/2 max-md:right-auto max-md:top-[60px] max-md:w-[calc(100vw-32px)] flex flex-col max-h-[calc(100vh-80px)] overflow-hidden"
+              class="absolute right-0 mt-2 origin-top-right rounded-2xl bg-bg-dropdown z-[110] text-sm border border-border/60 shadow-xl shadow-black/10 w-[min(300px,calc(100vw-24px))] max-md:fixed max-md:left-1/2 max-md:-translate-x-1/2 max-md:right-auto max-md:top-[60px] max-md:w-[calc(100vw-32px)] flex flex-col max-h-[calc(100vh-80px)]"
               role="menu"
               @keydown.esc.stop.prevent="menuOpen = false"
             >
-              <!-- Header: adapts based on mode -->
-              <div class="flex flex-col items-center pt-6 pb-5 px-5 shrink-0 text-center">
-                <!-- Personal mode: user avatar -->
-                <template v-if="accountMode === 'personal'">
-                  <div class="relative mb-3">
-                    <img
-                      v-if="profileData?.u_profile_image"
-                      class="object-cover w-[72px] h-[72px] rounded-2xl ring-4 ring-border/20"
-                      :src="profileData?.u_profile_image"
-                      alt="profile_img"
-                    />
-                    <div v-else
-                      class="grid h-[72px] w-[72px] shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-orange-400 to-orange-600 text-2xl font-bold text-white shadow-lg"
-                    >{{ initials }}</div>
-                  </div>
-                  <p class="truncate text-base font-bold text-text-primary leading-tight">{{ profileData?.u_full_name }}</p>
-                  <p class="truncate text-xs text-text-secondary mt-0.5">{{ profileData?.u_email }}</p>
-                </template>
-
-                <!-- Professional mode: associated company logo -->
-                <template v-else>
-                  <div class="relative mb-3">
-                    <img
-                      v-if="associatedCompany?.logo"
-                      class="object-cover w-[72px] h-[72px] rounded-2xl border border-border"
-                      :src="associatedCompany.logo"
-                      alt="company logo"
-                    />
-                    <div v-else
-                      class="grid h-[72px] w-[72px] shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-accent/80 to-accent text-2xl font-bold text-white shadow-lg border border-accent/30"
-                    >{{ associatedCompany?.title?.charAt(0)?.toUpperCase() ?? '?' }}</div>
-                  </div>
-                  <p class="truncate text-base font-bold text-text-primary leading-tight">{{ associatedCompany?.title ?? 'No Organization' }}</p>
-                  <p class="truncate text-xs text-text-secondary mt-0.5">{{ associatedCompany?.domain_link?.replace('https://', '') ?? '' }}</p>
-                </template>
-
-                <!-- Toggle always visible -->
-                <div class="mt-4 w-full">
-                  <div class="relative flex rounded-xl bg-bg-surface border border-border/50 p-[3px]">
-                    <!-- Sliding indicator -->
-                    <div
-                      class="absolute inset-[3px] rounded-lg bg-bg-dropdown shadow border border-border/60 transition-all duration-200 ease-[cubic-bezier(.4,0,.2,1)]"
-                      :style="accountMode === 'personal'
-                        ? 'left:3px; right:calc(50% + 1.5px); top:3px; bottom:3px'
-                        : 'left:calc(50% + 1.5px); right:3px; top:3px; bottom:3px'"
-                    ></div>
-                    <button
-                      type="button"
-                      @click="accountMode = 'personal'"
-                      class="relative z-10 flex-1 flex items-center justify-center gap-1.5 py-[7px] rounded-lg text-[11px] font-semibold transition-colors duration-150 cursor-pointer"
-                      :class="accountMode === 'personal' ? 'text-text-primary' : 'text-text-secondary hover:text-text-primary'"
-                    ><i class="fa-regular fa-user text-[10px]"></i> Personal</button>
-                    <button
-                      type="button"
-                      @click="accountMode = 'professional'"
-                      class="relative z-10 flex-1 flex items-center justify-center gap-1.5 py-[7px] rounded-lg text-[11px] font-semibold transition-colors duration-150 cursor-pointer"
-                      :class="accountMode === 'professional' ? 'text-text-primary' : 'text-text-secondary hover:text-text-primary'"
-                    ><i class="fa-regular fa-building text-[10px]"></i> Professional</button>
-                  </div>
+              <!-- Header: always user profile -->
+              <div class="flex flex-col items-center pt-6 pb-4 px-5 shrink-0 text-center">
+                <div class="relative mb-2.5">
+                  <img
+                    v-if="profileData?.u_profile_image"
+                    class="object-cover w-[44px] h-[44px] rounded-full ring-2 ring-border/20"
+                    :src="profileData?.u_profile_image"
+                    alt="profile_img"
+                  />
+                  <div v-else
+                    class="grid h-[44px] w-[44px] shrink-0 place-items-center rounded-full bg-gradient-to-br from-orange-400 to-orange-600 text-sm font-bold text-white shadow"
+                  >{{ initials }}</div>
+                  
+                  <!-- Glowing active dot indicating session status -->
+                  <span class="absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full bg-green-500 ring-2 ring-bg-dropdown" aria-hidden="true">
+                    <span class="absolute inset-0 rounded-full bg-green-500 animate-ping opacity-75"></span>
+                  </span>
+                </div>
+                <p class="truncate text-base font-bold text-text-primary leading-tight">{{ profileData?.u_full_name }}</p>
+                <p class="truncate text-xs text-text-secondary mt-0.5">{{ profileData?.u_email }}</p>
+                <div v-if="authStore.company_id && authStore.company_id !== 'personal' && associatedCompany" class="mt-2.5">
+                  <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent/10 border border-accent/25 text-[10px] font-bold text-accent uppercase tracking-wider">
+                    <i class="fa-solid fa-shield-halved text-[9px]"></i> Managed by {{ associatedCompany.title }}
+                  </span>
                 </div>
               </div>
 
-              <div class="h-px bg-border/40 shrink-0 mx-4"></div>
+              <!-- Switcher Tabs Wrapper -->
+              <div class="px-4 pb-2 shrink-0">
+                <div class="relative flex rounded-xl bg-bg-surface border border-border/50 p-[3px]">
+                  <!-- Sliding indicator -->
+                  <div
+                    class="absolute inset-[3px] rounded-lg bg-bg-dropdown shadow border border-border/60 transition-all duration-200 ease-[cubic-bezier(.4,0,.2,1)]"
+                    :style="accountMode === 'personal'
+                      ? 'left:3px; right:calc(50% + 1.5px); top:3px; bottom:3px'
+                      : 'left:calc(50% + 1.5px); right:3px; top:3px; bottom:3px'"
+                  ></div>
+                  <button
+                    type="button"
+                    @click="handlePersonalTabClick()"
+                    class="relative z-10 flex-1 flex items-center justify-center gap-1.5 py-[7px] rounded-lg text-[11px] font-semibold transition-colors duration-150 cursor-pointer"
+                    :class="accountMode === 'personal' ? 'text-text-primary' : 'text-text-secondary hover:text-text-primary'"
+                  >
+                    <i class="fa-regular fa-user text-[10px]"></i> Personal
+                    <i v-if="!authStore.company_id || authStore.company_id === 'personal'" class="fa-solid fa-check text-[10px] text-green-500 ml-1"></i>
+                  </button>
+                  <button
+                    type="button"
+                    @click="handleProfessionalTabClick()"
+                    class="relative z-10 flex-1 flex items-center justify-center gap-1.5 py-[7px] rounded-lg text-[11px] font-semibold transition-colors duration-150 cursor-pointer"
+                    :class="accountMode === 'professional' ? 'text-text-primary' : 'text-text-secondary hover:text-text-primary'"
+                  >
+                    <i class="fa-regular fa-building text-[10px]"></i> Professional
+                    <i v-if="authStore.company_id && authStore.company_id !== 'personal'" class="fa-solid fa-check text-[10px] text-green-500 ml-1"></i>
+                  </button>
+                </div>
+              </div>
 
-              <!-- ── PROFESSIONAL: associated company only ── -->
+              <!-- ── PROFESSIONAL: associated company card ── -->
               <div v-if="accountMode === 'professional'" class="px-3 py-3 shrink-0">
                 <!-- No associated company fallback -->
                 <div v-if="!associatedCompany" class="text-center py-6 text-text-secondary">
@@ -217,51 +211,59 @@
                       {{ associatedCompany.title.charAt(0).toUpperCase() }}
                     </div>
                     <div class="min-w-0 flex-1">
-                      <p class="text-[13px] font-bold text-text-primary truncate">{{ associatedCompany.title }}</p>
-                      <p class="text-[11px] text-text-secondary truncate">{{ associatedCompany.domain_link.replace('https://', '') }}</p>
+                      <p class="text-[13px] font-bold text-text-primary truncate flex items-center gap-1.5">
+                        {{ associatedCompany.title }}
+                        <i v-if="associatedCompany._id === authStore.company_id" class="fa-solid fa-circle-check text-green-500 text-xs"></i>
+                      </p>
+                      <p class="text-[11px] text-text-secondary truncate">Managed by {{ associatedCompany.title }}</p>
                     </div>
-                    <span
-                      v-if="associatedCompany.user_role?.title"
-                      class="shrink-0 text-[9px] font-bold uppercase tracking-wide px-2 py-1 rounded-full bg-accent/10 text-accent border border-accent/20"
-                    >{{ associatedCompany.user_role.title }}</span>
                   </div>
 
                   <!-- Card actions -->
                   <div class="border-t border-border/50 divide-y divide-border/40">
                     <button
-                      type="button"
-                      @click="switchToCompany(associatedCompany)"
-                      class="w-full flex items-center gap-2.5 px-4 py-2.5 hover:bg-bg-dropdown-menu-hover transition-colors text-left cursor-pointer"
-                    >
-                      <i class="fa-solid fa-arrow-up-right-from-square text-[10px] text-accent w-4 text-center"></i>
-                      <span class="text-[12px] font-semibold text-text-primary">Open workspace</span>
-                    </button>
-                    <button
+                      v-if="associatedCompany._id === authStore.company_id"
                       type="button"
                       @click="router.push('/settings?tab=org-setup'); closeMenu()"
                       class="w-full flex items-center gap-2.5 px-4 py-2.5 hover:bg-bg-dropdown-menu-hover transition-colors text-left cursor-pointer"
                     >
                       <i class="fa-regular fa-gear text-[10px] text-text-secondary w-4 text-center"></i>
-                      <span class="text-[12px] font-medium text-text-secondary">Organization settings</span>
+                      <span class="text-[12px] font-medium text-text-secondary">Manage Workspace</span>
                     </button>
                   </div>
                 </div>
               </div>
 
-              <!-- ── PERSONAL: quick links ── -->
-              <div v-else class="px-2 py-2 shrink-0">
-                <button
-                  @click="openAccountSettings(); closeMenu()"
-                  class="w-full flex items-center gap-3 px-2.5 py-2 rounded-xl hover:bg-bg-dropdown-menu-hover border border-transparent cursor-pointer transition-all text-left text-text-secondary hover:text-text-primary group"
-                >
-                  <div class="w-8 h-8 rounded-lg bg-bg-surface border border-border flex items-center justify-center shrink-0 group-hover:border-accent/30 transition-colors">
-                    <i class="fa-regular fa-user text-xs group-hover:text-accent transition-colors"></i>
+              <!-- ── PERSONAL: personal workspace card ── -->
+              <div v-else class="px-3 py-3 shrink-0">
+                <div class="rounded-2xl border border-border/60 bg-bg-surface overflow-hidden">
+                  <!-- Card header -->
+                  <div class="px-4 pt-4 pb-3 flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-orange-500 text-base font-bold shrink-0">
+                      {{ initials.charAt(0) }}
+                    </div>
+                    <div class="min-w-0 flex-1">
+                      <p class="text-[13px] font-bold text-text-primary truncate flex items-center gap-1.5">
+                        Personal Workspace
+                        <i v-if="!authStore.company_id || authStore.company_id === 'personal'" class="fa-solid fa-circle-check text-green-500 text-xs"></i>
+                      </p>
+                      <p class="text-[11px] text-text-secondary truncate">Managed by you</p>
+                    </div>
                   </div>
-                  <div>
-                    <p class="text-[13px] font-semibold text-text-primary">Account Settings</p>
-                    <p class="text-[11px] text-text-secondary">Profile & preferences</p>
+
+                  <!-- Card actions -->
+                  <div class="border-t border-border/50 divide-y divide-border/40">
+                    <button
+                      v-if="!authStore.company_id || authStore.company_id === 'personal'"
+                      type="button"
+                      @click="openAccountSettings(); closeMenu()"
+                      class="w-full flex items-center gap-2.5 px-4 py-2.5 hover:bg-bg-dropdown-menu-hover transition-colors text-left cursor-pointer"
+                    >
+                      <i class="fa-regular fa-gear text-[10px] text-text-secondary w-4 text-center"></i>
+                      <span class="text-[12px] font-medium text-text-secondary">Manage Account</span>
+                    </button>
                   </div>
-                </button>
+                </div>
               </div>
 
               <div class="h-px bg-border/40 shrink-0 mx-4"></div>
@@ -522,8 +524,56 @@ function switchToCompany(company: { _id: string; domain_link: string }) {
   window.location.href = `${company.domain_link}/dashboard?${params.toString()}`
 }
 
+function switchToPersonal() {
+  closeMenu()
+  const token = localStorage.getItem('token')
+  const themeVal = isDark.value ? 'dark' : 'light'
+
+  // Set auth cookie on the shared root domain so the target subdomain reads it
+  if (token) setAuthCookie(token)
+
+  // Encode helper (URL-safe base64)
+  const encode = (s: string) => btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '.')
+
+  // Build destination URL with auth params so the target can bootstrap the session
+  const params = new URLSearchParams()
+  if (token)       params.set('_auth', encode(token))
+  params.set('_cid',  encode('personal'))
+  params.set('theme', themeVal)
+
+  let base = import.meta.env.VITE_PRIMARY_DOMAIN || window.location.origin
+  if (!base.startsWith('http')) {
+    base = window.location.protocol + '//' + base
+  }
+  base = base.replace(/\/$/, '')
+
+  window.location.href = `${base}/dashboard?${params.toString()}`
+}
+
 // Toggle between personal and professional view in the menu
-const accountMode = ref<'personal' | 'professional'>('personal')
+const accountMode = ref<'personal' | 'professional'>(
+  authStore.company_id && authStore.company_id !== 'personal' ? 'professional' : 'personal'
+)
+
+function handlePersonalTabClick() {
+  if (authStore.company_id && authStore.company_id !== 'personal') {
+    switchToPersonal()
+  } else {
+    accountMode.value = 'personal'
+  }
+}
+
+function handleProfessionalTabClick() {
+  if (!authStore.company_id || authStore.company_id === 'personal') {
+    if (associatedCompany.value) {
+      switchToCompany(associatedCompany.value)
+    } else {
+      accountMode.value = 'professional'
+    }
+  } else {
+    accountMode.value = 'professional'
+  }
+}
 
 const currentAccount = computed<Account>(() => {
   const activeId = authStore.company_id
@@ -550,7 +600,11 @@ const isSidebarOpen = ref(false);
 
 function toggleMenu() {
   menuOpen.value = !menuOpen.value;
-  if (!menuOpen.value) themeOpen.value = false;
+  if (!menuOpen.value) {
+    themeOpen.value = false;
+  } else {
+    accountMode.value = (authStore.company_id && authStore.company_id !== 'personal') ? 'professional' : 'personal';
+  }
 }
 
 function closeMenu() {
