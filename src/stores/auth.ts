@@ -42,15 +42,50 @@ function writeCookie(data: {
 }
 
 function clearCookies() {
-  const pairs = [
-    `${COOKIE_KEY}=; domain=.streamed.space; path=/; max-age=0`,
-    `${COOKIE_KEY}=; path=/; max-age=0`,
-    `auth_token=; domain=.streamed.space; path=/; max-age=0`,
-    `auth_token=; path=/; max-age=0`,
-    `space_auth=; domain=.streamed.space; path=/; max-age=0`,
-    `space_auth=; path=/; max-age=0`,
-  ]
-  pairs.forEach(p => (document.cookie = p))
+  const keys = [COOKIE_KEY, 'auth_token', 'space_auth', 'auth_session', 'token', '_cid', '_uid', 'user_id', 'company_id'];
+  
+  try {
+    document.cookie.split(';').forEach(cookie => {
+      const name = cookie.split('=')[0].trim();
+      if (name && !keys.includes(name)) {
+        keys.push(name);
+      }
+    });
+  } catch (e) {
+    console.error('Failed to parse cookies for clearing:', e);
+  }
+
+  const hostname = window.location.hostname;
+  const parts = hostname.split('.');
+  const domains: string[] = ['', hostname, `.${hostname}`];
+
+  if (parts.length >= 2) {
+    for (let i = 0; i < parts.length - 1; i++) {
+      const parentDomain = '.' + parts.slice(i).join('.');
+      if (!domains.includes(parentDomain)) {
+        domains.push(parentDomain);
+      }
+    }
+  }
+
+  const extraDomains = ['.streamed.space', '.orchit.ai', '.localhost'];
+  extraDomains.forEach(d => {
+    if (!domains.includes(d)) {
+      domains.push(d);
+    }
+  });
+
+  keys.forEach(key => {
+    domains.forEach(domain => {
+      const domainString = domain ? `; domain=${domain}` : '';
+      
+      document.cookie = `${key}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT${domainString}`;
+      document.cookie = `${key}=; path=/; max-age=0${domainString}`;
+      
+      document.cookie = `${key}=; expires=Thu, 01 Jan 1970 00:00:00 GMT${domainString}`;
+      document.cookie = `${key}=; max-age=0${domainString}`;
+    });
+  });
 }
 export function getToken(): string | null {
   const session = parseCookie()
