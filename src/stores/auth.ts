@@ -172,6 +172,21 @@ export const useAuthStore = defineStore('auth', {
     writeCookie({ company_id: urlCompanyId, company_switched: true })
   }
 
+  // ── 3.5. Handle _cid from URL (Base64 encoded company_id) ────
+  const encodedCompanyId = urlParams.get('_cid')
+  if (encodedCompanyId) {
+    try {
+      const companyId = atob(encodedCompanyId.replace(/-/g, '+').replace(/_/g, '/').replace(/\./g, '='))
+      if (companyId === 'personal') {
+        this.clearCompany()
+      } else if (companyId) {
+        this.setCompany(companyId)
+      }
+    } catch (e) {
+      console.error('❌ Failed to decode _cid from URL:', e)
+    }
+  }
+
   // ── 4. Clean ALL auth params from URL in one shot ───────────
   //    Previously only ran inside if(encodedToken) — so _token
   //    and company_id were NEVER removed from the URL.
@@ -179,12 +194,14 @@ export const useAuthStore = defineStore('auth', {
     urlParams.has('_auth') ||
     urlParams.has('_token') ||
     urlParams.has('company_id') ||
+    urlParams.has('_cid') ||
     urlParams.has('welcome')
 
   if (hadAuthParams) {
     urlParams.delete('_auth')
     urlParams.delete('_token')
     urlParams.delete('company_id')
+    urlParams.delete('_cid')
     urlParams.delete('welcome')
     const newUrl =
       window.location.pathname +

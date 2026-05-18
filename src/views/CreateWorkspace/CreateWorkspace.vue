@@ -93,6 +93,7 @@ const StepTwo = defineAsyncComponent(() => import('./steps/StepTwo.vue'))
 const StepThree = defineAsyncComponent(() => import('./steps/StepThree.vue'))
 const StepFour = defineAsyncComponent(() => import('./steps/StepFour.vue'))
 import { useWorkspaceStore } from '../../stores/workspace';
+import { getToken } from '../../stores/auth';
 import { useTheme } from '../../composables/useTheme';
 const { theme } = useTheme();
 defineOptions({ name: 'CreateWorkspace' })
@@ -172,7 +173,11 @@ function handleClose() {
   }
 
   if (!encodedToken && !domainLink) {
-    router.push('/')
+    if (getToken()) {
+      router.push('/dashboard')
+    } else {
+      router.push('/')
+    }
     return
   }
 

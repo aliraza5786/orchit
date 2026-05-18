@@ -79,12 +79,6 @@ function resolveOnboardingRedirect(auth: ReturnType<typeof useAuthStore>): strin
     return '/dashboard'
   }
 
-  // If there is an incomplete onboarding step saved in localStorage, force routing to create-profile
-  const onboardingStep = localStorage.getItem('onboarding_active_step')
-  if (onboardingStep && ['5', '51', '8', '9'].includes(onboardingStep)) {
-    return '/create-profile'
-  }
- 
   // Onboarding incomplete: no company, no workspaces → must finish create-profile
   return '/create-profile'
 }
@@ -260,11 +254,8 @@ router.beforeEach(async (to, _from, next) => {
       ]
       keys.forEach(k => localStorage.removeItem(k))
     } else {
-      const onboardingStep = localStorage.getItem('onboarding_active_step')
-      if (onboardingStep && ['5', '51', '8', '9'].includes(onboardingStep)) {
-        if (to.path !== '/create-profile') {
-          return next({ path: '/create-profile', replace: true })
-        }
+      if (to.path !== '/create-profile') {
+        return next({ path: '/create-profile', replace: true })
       }
     }
   }
