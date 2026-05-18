@@ -79,8 +79,8 @@ function resolveOnboardingRedirect(auth: ReturnType<typeof useAuthStore>): strin
     return '/dashboard'
   }
 
-  // Onboarding incomplete: no company, no workspaces → must finish create-profile
-  return '/create-profile'
+  // Onboarding incomplete: no company, no workspaces → return null (no forced redirection)
+  return null
 }
 const routes: RouteRecordRaw[] = [
   {
@@ -237,7 +237,7 @@ router.beforeEach(async (to, _from, next) => {
 
   const hasToken = !!getToken()
 
-  // 1.5 Force incomplete onboarding redirect for all authenticated / app routes
+  // 1.5 Clean onboarding keys if onboarding is completed
   if (hasToken && auth.user) {
     const userData = auth.user?.data ?? auth.user
     const hasActiveCompany = !!userData?.active_company_id
@@ -253,10 +253,6 @@ router.beforeEach(async (to, _from, next) => {
         'onboarding_selected_verification_method'
       ]
       keys.forEach(k => localStorage.removeItem(k))
-    } else {
-      if (to.path !== '/create-profile') {
-        return next({ path: '/create-profile', replace: true })
-      }
     }
   }
 
@@ -275,14 +271,6 @@ router.beforeEach(async (to, _from, next) => {
     const redirected = redirectToLogin(undefined, to.fullPath)
     if (redirected) return
     return next({ name: 'Login' })
-  }
-
-  // 3.5 ── FORCE ONBOARDING FOR AUTHENTICATED PAGES ────────────────────────
-  if (requiresAuth && hasToken) {
-    const correctDestination = resolveOnboardingRedirect(auth)
-    if (correctDestination === '/create-profile' && to.path !== '/create-profile') {
-      return next({ path: '/create-profile', replace: true })
-    }
   }
 
   // 4. ── ALREADY LOGGED IN → don't show login page ────────────────────────

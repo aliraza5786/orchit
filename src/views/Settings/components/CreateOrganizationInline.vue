@@ -1,6 +1,6 @@
 <template>
 
-      <div class="w-full space-y-6">
+      <div class="w-full space-y-6 mx-auto max-w-125">
 
         <!-- ═══════════════════════════════════════════════════════
              LOCKED STATE — Email associated with an existing company
@@ -126,58 +126,6 @@
 
         <!-- Normal onboarding steps (hidden when locked) -->
         <template v-if="!associatedCompany">
-
-        <!-- ═══════════════════════════════════════════════════════
-             STEP 1 — How will you use Orchit AI?
-        ════════════════════════════════════════════════════════════ -->
-        <div v-show="activeStep === 1">
-          <div class="mb-6 md:mb-12 space-y-2">
-            <h2 class="text-[24px] lg:text-[32px] leading-8 lg:leading-11 font-medium text-text-primary">
-              How will you use Orchit AI?
-            </h2>
-            <p class="text-[14px] md:text-base sm:text-nowrap font-medium text-text-secondary">
-              This will help us personalize your experience in Orchit AI.
-            </p>
-          </div>
-
-          <!-- Scenario 3: company email hint banner -->
-          <div
-            v-if="isCompanyEmail"
-            class="mb-5 flex items-start gap-3 rounded-xl px-4 py-3.5 border"
-            style="background: color-mix(in srgb, var(--accent) 8%, transparent); border-color: color-mix(in srgb, var(--accent) 25%, transparent);"
-          >
-            <svg class="w-4 h-4 mt-0.5 shrink-0" viewBox="0 0 16 16" fill="none" style="color: var(--accent);">
-              <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.4"/>
-              <path d="M8 5v4M8 11v.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-            </svg>
-            <p class="text-sm leading-relaxed" style="color: var(--accent);">
-              We detected a company email (<strong>{{ userEmailDomain }}</strong>). Team workspace is recommended — your domain will be auto-verified.
-            </p>
-          </div>
-
-          <div class="how_help_steps grid sm:grid-cols-3 gap-4">
-            <label
-              v-for="option in options"
-              :key="option._id"
-              class="group border rounded-xl py-4 px-2.5 cursor-pointer sm:aspect-square transition-all duration-200 ease-out hover:shadow-md hover:-translate-y-1 hover:border-accent/50 hover:bg-accent/5 active:scale-[0.98]"
-              :class="optionClass(option._id)"
-            >
-              <input type="radio" class="hidden" v-model="selected" :value="option._id" />
-              <div class="flex flex-col items-center">
-                <img :src="option.icon" class="w-12 h-12 transition-transform duration-200 group-hover:scale-110" />
-                <h3 class="font-medium text-sm text-text-primary mt-4">{{ option.title }}</h3>
-                <p class="text-[11px] text-text-secondary mt-2 text-center">{{ option.description }}</p>
-                <span
-                  v-if="isCompanyEmail && option._id === 'team'"
-                  class="mt-2 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
-                  style="background: color-mix(in srgb, var(--accent) 15%, transparent); color: var(--accent);"
-                >
-                  Recommended
-                </span>
-              </div>
-            </label>
-          </div>
-        </div>
 
         <!-- ═══════════════════════════════════════════════════════
              STEP 2 — About Company / You / School
@@ -1084,12 +1032,12 @@
              BOTTOM NAV (steps 1–4 only)
         ════════════════════════════════════════════════════════════ -->
         <div class="flex justify-between items-center mt-10 md:mt-5" v-if="showBottomNav">
-          <Button v-if="activeStep !== 1 && !siteCreated" variant="secondary" size="md" type="button" :disabled="isAnyMutating" @click="goBack">
+          <Button v-if="activeStep > 2 && !siteCreated" variant="secondary" size="md" type="button" :disabled="isAnyMutating" @click="goBack">
             <div class="flex items-center gap-1"><FontAwesomeIcon :icon="['fas', 'arrow-left']" /> Back</div>
           </Button>
-          <div v-else-if="activeStep !== 1" />
+          <div v-else />
           <div class="flex gap-4 items-center ml-auto">
-            <Button :disabled="isAnyMutating || (activeStep === 1 && !selected)" size="md" type="submit" @click="continueHandler">
+            <Button :disabled="isAnyMutating" size="md" type="submit" @click="continueHandler">
               <div class="flex items-center gap-2">
                 <span v-if="isAnyMutating" class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
                 <span>Continue</span>
@@ -1423,7 +1371,6 @@ const referralOptions = [
 const options = Object.freeze([
   { _id: 'team',     title: 'For my team',      description: 'Collaborate on your docs and projects.',             icon: teamIcon },
   { _id: 'personal', title: 'For personal use', description: 'Write better. Think more clearly. Stay organised.', icon: personalIcon },
-  { _id: 'school',   title: 'For school',       description: 'Keep notes, research and tasks in one place.',       icon: schoolIcon },
 ])
 
 // ─── Computed: claim domain for Step 9 ────────────────────────────────────────
@@ -1900,6 +1847,10 @@ function optionClass(id) {
   return id === selected.value
     ? 'border-accent bg-accent/10 shadow-sm'
     : 'border-border'
+}
+
+function handleOptionClick(val) {
+  selected.value = val
 }
 
 function toggleModule(id) {
@@ -2426,22 +2377,14 @@ function validateSchoolStep() {
 // ─── Navigation ───────────────────────────────────────────────────────────────
 function goBack() {
   if (siteCreated.value) return
-  activeStep.value = Math.max(1, activeStep.value - 1)
+  activeStep.value = Math.max(2, activeStep.value - 1)
 }
 
 async function continueHandler() {
 
-  // ── Step 1: select use case ──────────────────────────────────────────────
-  if (activeStep.value === 1) {
-    activeStep.value++
-    return
-  }
-
   // ── Step 2: validate about info ──────────────────────────────────────────
   if (activeStep.value === 2) {
-    if (selected.value === 'team'     && !validateCompanyStep())  return
-    if (selected.value === 'personal' && !validatePersonalStep()) return
-    if (selected.value === 'school'   && !validateSchoolStep())   return
+    if (!validateCompanyStep()) return
     activeStep.value++
     return
   }
@@ -2462,29 +2405,8 @@ async function continueHandler() {
       errors.value.workType = 'Please select what kind of work you do.'
       return
     }
-    if (selected.value === 'personal') {
-      isUpdatingProfile.value = true
-      isLoaderRunning.value = true
-      try {
-        await updateUserProfile({
-          u_work_to_do:   personalRole.value,
-          work_to_do:     workType.value,
-          like_to_manage: selectedModules.value,
-          heard_about_us: referralSources.value,
-        })
-        activeStep.value      = 6
-        isLoaderRunning.value = false
-        isUpdatingProfile.value = false
-      } catch {
-        // stay on step 4 if the API call fails
-      } finally {
-        isUpdatingProfile.value = false
-        isLoaderRunning.value = false
-      }
-      return
-    }
 
-    // ── TEAM / SCHOOL: go to site creation ───────────────────────────────
+    // ── TEAM: go to site creation ───────────────────────────────
     activeStep.value = 5
     return
   }
