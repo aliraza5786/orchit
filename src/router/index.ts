@@ -59,6 +59,12 @@ function resolveOnboardingRedirect(auth: ReturnType<typeof useAuthStore>): strin
   if (!hasToken) return '/login'
   if (!auth.user) return null // bootstrap still in progress — don't redirect yet
  
+  // If there is an incomplete onboarding step saved in localStorage, force routing to create-profile
+  const onboardingStep = localStorage.getItem('onboarding_active_step')
+  if (onboardingStep && ['5', '51', '8', '9'].includes(onboardingStep)) {
+    return '/create-profile'
+  }
+
   // API wraps data under .data in some responses
   const userData = auth.user?.data ?? auth.user
  
@@ -191,6 +197,11 @@ api.interceptors.response.use(
 router.beforeEach(async (to, _from, next) => {
   const auth = useAuthStore()
 
+  // Handle cross-subdomain logout synchronization
+  if (to.name === 'Login' && to.query.logout === 'true') {
+    auth.logout()
+  }
+
   // 1. Bootstrap auth state once per session
   if (!auth.initialized) {
     await auth.bootstrap()
@@ -220,6 +231,17 @@ router.beforeEach(async (to, _from, next) => {
   // ── End subdomain logic ──────────────────────────────────────────────────
 
   const hasToken = !!getToken()
+
+  // 1.5 Force incomplete onboarding redirect for all authenticated / app routes
+  if (hasToken) {
+    const onboardingStep = localStorage.getItem('onboarding_active_step')
+    if (onboardingStep && ['5', '51', '8', '9'].includes(onboardingStep)) {
+      if (to.path !== '/create-profile') {
+        return next({ path: '/create-profile', replace: true })
+      }
+    }
+  }
+
   const requiresAuth = to.matched.some(r => r.meta.requiresAuth === true)
   const isOnboardingRoute = ONBOARDING_ROUTE_NAMES.has(to.name as string)
   if (isOnboardingRoute && hasToken) {
@@ -235,6 +257,14 @@ router.beforeEach(async (to, _from, next) => {
     const redirected = redirectToLogin(undefined, to.fullPath)
     if (redirected) return
     return next({ name: 'Login' })
+  }
+
+  // 3.5 ── FORCE ONBOARDING FOR AUTHENTICATED PAGES ────────────────────────
+  if (requiresAuth && hasToken) {
+    const correctDestination = resolveOnboardingRedirect(auth)
+    if (correctDestination === '/create-profile' && to.path !== '/create-profile') {
+      return next({ path: '/create-profile', replace: true })
+    }
   }
 
   // 4. ── ALREADY LOGGED IN → don't show login page ────────────────────────

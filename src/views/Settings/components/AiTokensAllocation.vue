@@ -187,7 +187,7 @@
           :key="user.id"
           class="flex items-center gap-3 bg-bg-card border border-border/40 rounded-xl px-4 py-3 transition-all duration-200 group/member relative"
           :class="[
-            (user.isVerified && hasVerifiedDomain)
+            isUserVerified
               ? 'hover:border-border/70 hover:shadow-md hover:shadow-black/10 hover:-translate-y-0.5' 
               : 'opacity-60 grayscale-[0.5] cursor-not-allowed bg-bg-card/50'
           ]"
@@ -204,11 +204,8 @@
           <div class="min-w-0 flex-1">
             <div class="flex items-center gap-2">
               <p class="text-sm font-semibold text-text-primary truncate">{{ user.name }}</p>
-              <span v-if="!user.isVerified" class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-md bg-red-500/10 text-red-400 border border-red-500/20 shrink-0">
-                Unverified
-              </span>
-              <span v-if="!hasVerifiedDomain" class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-500 border border-amber-500/20 shrink-0">
-                Domain Not Verified
+              <span v-if="!isUserVerified" class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-md bg-red-500/10 text-red-400 border border-red-500/20 shrink-0">
+                Verify user first
               </span>
             </div>
             <p class="text-xs text-text-secondary mt-0.5">{{ user.role }}</p>
@@ -230,13 +227,13 @@
               <div class="flex items-center justify-end gap-1">
                 <button
                   @click="user.percentage = Math.max(1, user.percentage - 1)"
-                  :disabled="!user.isVerified || !hasVerifiedDomain"
+                  :disabled="!isUserVerified"
                   class="w-5 h-5 rounded flex items-center justify-center border border-border/50 text-text-secondary hover:border-red-400/50 hover:text-red-400 hover:bg-red-400/5 text-base leading-none transition-all duration-150 active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:border-border/50 disabled:hover:text-text-secondary"
                 >−</button>
-                <span class="text-sm font-bold w-9 text-center transition-all duration-150" :style="{ color: (user.isVerified && hasVerifiedDomain) ? user.color : 'var(--text-secondary)' }">{{ user.percentage }}%</span>
+                <span class="text-sm font-bold w-9 text-center transition-all duration-150" :style="{ color: isUserVerified ? user.color : 'var(--text-secondary)' }">{{ user.percentage }}%</span>
                 <button
                   @click="user.percentage = Math.min(100, user.percentage + 1)"
-                  :disabled="!user.isVerified || !hasVerifiedDomain"
+                  :disabled="!isUserVerified"
                   class="w-5 h-5 rounded flex items-center justify-center border border-border/50 text-text-secondary hover:border-emerald-400/50 hover:text-emerald-400 hover:bg-emerald-400/5 text-base leading-none transition-all duration-150 active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:border-border/50 disabled:hover:text-text-secondary"
                 >+</button>
               </div>
@@ -248,7 +245,7 @@
                 type="number"
                 min="0"
                 :max="totalBudget"
-                :disabled="!user.isVerified || !hasVerifiedDomain"
+                :disabled="!isUserVerified"
                 class="w-full text-right text-xs font-semibold text-text-primary bg-border/10 border border-border/40 rounded-md px-2 py-1 outline-none focus:border-accent/50 hover:border-border/70 transition-colors duration-150 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
               />
               <p class="text-[10px] text-text-secondary mt-1">{{ ((user.tokens / totalBudget) * 100).toFixed(1) }}% of budget</p>
@@ -384,11 +381,11 @@
             Discard
           </button>
           <button
-            @click="saveAllocations"
-            :disabled="isSaving || isOverBudget"
+            @click="showSaveConfirm = true"
+            :disabled="isSaving || isOverBudget || !isUserVerified"
             :class="[
               'inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg border transition-all duration-150',
-              isOverBudget
+              (isOverBudget || !isUserVerified)
                 ? 'bg-border/20 border-border/30 text-text-secondary cursor-not-allowed opacity-60'
                 : 'bg-accent text-white border-accent/80 hover:bg-accent/90 hover:scale-105 active:scale-95 shadow-lg shadow-accent/20 hover:shadow-accent/30'
             ]"
@@ -409,25 +406,95 @@
       </div>
     </Transition>
 
+  <!-- ─── SAVE CONFIRMATION MODAL ─── -->
+  <Teleport to="body">
+    <Transition enter-active-class="transition duration-150 ease-out" enter-from-class="opacity-0" enter-to-class="opacity-100">
+      <div
+        v-if="showSaveConfirm"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+        @click.self="showSaveConfirm = false"
+      >
+        <div class="w-full max-w-sm bg-bg-body rounded-2xl border border-border shadow-2xl p-6">
+          <div class="w-12 h-12 rounded-full bg-accent/15 flex items-center justify-center mx-auto mb-4 border border-accent/30">
+            <svg class="text-accent animate-pulse" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+              <polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+            </svg>
+          </div>
+          <h3 class="text-base font-bold text-text-primary text-center mb-1">Save allocations?</h3>
+          <p class="text-xs text-text-secondary text-center mb-5 leading-relaxed">
+            This will update the monthly AI token budgets for the team members according to the new configurations.
+          </p>
+          <div class="flex gap-3">
+            <button
+              @click="showSaveConfirm = false"
+              class="flex-1 px-4 py-2.5 text-sm font-medium rounded-lg border border-border hover:bg-bg-card transition-all"
+            >
+              Cancel
+            </button>
+            <button
+              @click="confirmSave"
+              :disabled="isSaving"
+              class="flex-1 px-4 py-2.5 bg-accent text-white text-sm font-semibold rounded-lg hover:bg-accent/90 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              <i v-if="isSaving" class="fa-solid fa-spinner animate-spin text-xs"></i>
+              <span>{{ isSaving ? 'Saving…' : 'Save' }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
+
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { useCompanyTokenAllocation, useSetUserAllocation, useSetAllocationMode, useListDomains } from '../../../queries/useCommon'
+import { toast } from 'vue-sonner'
+import { useCompanyTokenAllocation, useSetUserAllocation, useSetAllocationMode } from '../../../queries/useCommon'
+
+const props = defineProps<{ profile?: any }>()
 
 const allocationMode = ref<'percentage' | 'custom'>('percentage')
 const range = ref('30d')
 const saveSuccess = ref(false)
 const saveError = ref<string | null>(null)
+const showSaveConfirm = ref(false)
+
+async function confirmSave() {
+  await saveAllocations()
+  if (!saveError.value) {
+    showSaveConfirm.value = false
+  }
+}
 
 const { data: allocationData } = useCompanyTokenAllocation()
 const { mutateAsync: setUserAllocation, isPending: isSaving } = useSetUserAllocation()
 const { mutateAsync: setAllocationMode } = useSetAllocationMode()
 
-const { data: domainsData } = useListDomains()
-const domains = computed(() => domainsData.value?.domains ?? [])
-const hasVerifiedDomain = computed(() => domains.value.some((d: any) => d.status === 'verified'))
+const isUserVerified = computed(() => {
+  const profileVal = props.profile
+  const activeCompany = profileVal?.active_company
+  
+  // Find owner from per_user list in allocationData
+  const perUser = allocationData.value?.allocation?.per_user ?? []
+  const ownerUser = perUser.find((u: any) => u.membership_role === 'owner')
+  const isSuperAdminActiveVal = ownerUser?.membership_status === 'active'
+  const isCurrentUserActive = activeCompany?.membership_status === 'active'
+  const isPendingOtp = activeCompany?.membership_status === 'pending_super_admin_otp'
+
+  if ((isSuperAdminActiveVal || isCurrentUserActive) && !isPendingOtp) {
+    return true
+  }
+
+  if (profileVal?.isUserVerified === true || profileVal?.isUserVerified === 'true') return true
+  if (profileVal?.is_verified === true || profileVal?.is_verified === 'true') return true
+  if (profileVal?.u_verified === true || profileVal?.u_verified === 'true') return true
+  if (activeCompany?.isUserVerified === true || activeCompany?.isUserVerified === 'true') return true
+
+  return false
+})
 
 interface UserAllocation {
   id: string
@@ -572,9 +639,12 @@ async function saveAllocations() {
     )
     savedSnapshot.value = users.value.map(u => ({ percentage: u.percentage, tokens: u.tokens }))
     saveSuccess.value = true
+    toast.success('AI Token allocations updated successfully')
     setTimeout(() => (saveSuccess.value = false), 2500)
   } catch (err: any) {
-    saveError.value = err?.message ?? 'Failed to save allocations. Please try again.'
+    const errMsg = err?.message ?? 'Failed to save allocations. Please try again.'
+    saveError.value = errMsg
+    toast.error(errMsg)
   }
 }
 

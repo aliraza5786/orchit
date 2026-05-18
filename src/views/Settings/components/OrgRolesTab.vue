@@ -12,8 +12,8 @@
       <button
       v-if="canCreateRole"
         @click="openCreateModal"
-        :disabled="!hasVerifiedDomain"
-        :title="!hasVerifiedDomain ? 'Please verify your domain first' : ''"
+        :disabled="!isUserVerified"
+        :title="!isUserVerified ? 'Verify user first' : ''"
         class="px-4 py-2.5 bg-accent text-white text-sm font-semibold rounded-lg hover:bg-accent/90 active:scale-95 transition-all shadow-lg shadow-accent/20 whitespace-nowrap self-start sm:self-auto disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <i class="fa-solid fa-plus mr-2"></i> Create role
@@ -135,7 +135,7 @@
           </p>
           <button
             @click="openCreateModal"
-            :disabled="!hasVerifiedDomain"
+            :disabled="!isUserVerified"
             class="px-4 py-2 bg-accent text-white text-sm font-semibold rounded-lg hover:bg-accent/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <i class="fa-solid fa-plus mr-2"></i> Create first custom role
@@ -247,7 +247,8 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { toast } from 'vue-sonner'
-import { useCompanyRolesWithoutPermission, useListDomains } from '../../../queries/useCommon'
+import { useCompanyRolesWithoutPermission } from '../../../queries/useCommon'
+import { useCompanyUsers } from '../../../queries/useCompanyUsers'
 import EditCompanyRole from './EditCompanyRole.vue'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -310,9 +311,35 @@ const canViewRole = computed(() =>
   isOwner.value || can('role.read')
 )
 
-const { data: domainsData } = useListDomains()
-const domains = computed(() => domainsData.value?.domains ?? [])
-const hasVerifiedDomain = computed(() => domains.value.some((d: any) => d.status === 'verified'))
+const companyId = computed<string>(() => localStorage.getItem('company_id') || '')
+const { data: usersData } = useCompanyUsers(
+  computed(() => ({ company_id: companyId.value })).value
+)
+const members = computed(() => {
+  const raw = usersData.value?.data?.users ?? usersData.value?.users ?? []
+  return Array.isArray(raw) ? raw : []
+})
+const owner = computed(() => members.value.find((m: any) => m.is_owner))
+
+const isUserVerified = computed(() => {
+  const profileVal = props.profile
+  const activeCompany = profileVal?.active_company
+  
+  const isSuperAdminActiveVal = owner.value?.membership_status === 'active'
+  const isCurrentUserActive = activeCompany?.membership_status === 'active'
+  const isPendingOtp = activeCompany?.membership_status === 'pending_super_admin_otp'
+
+  if ((isSuperAdminActiveVal || isCurrentUserActive) && !isPendingOtp) {
+    return true
+  }
+
+  if (profileVal?.isUserVerified === true || profileVal?.isUserVerified === 'true') return true
+  if (profileVal?.is_verified === true || profileVal?.is_verified === 'true') return true
+  if (profileVal?.u_verified === true || profileVal?.u_verified === 'true') return true
+  if (activeCompany?.isUserVerified === true || activeCompany?.isUserVerified === 'true') return true
+
+  return false
+})
 // ── Fetch all roles ───────────────────────────────────────────────────────────
 const { data: rolesData, isLoading: isRolesLoading, refetch: refetchRoles } = useCompanyRolesWithoutPermission()
 
@@ -343,8 +370,8 @@ const showModal     = ref(false)
 const modalMode  = ref<'view' | 'edit' | 'create'>('create')
 const modalRole  = ref<CompanyRole | null>(null)
 function openCreateModal() {
-  if (!hasVerifiedDomain.value) {
-    toast.error('Please verify your domain first before creating new roles.')
+  if (!isUserVerified.value) {
+    toast.error('Verify user first before creating new roles.')
     return
   }
   modalMode.value = 'create'

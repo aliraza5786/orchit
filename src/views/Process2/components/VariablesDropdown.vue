@@ -14,49 +14,7 @@
         :style="dropdownStyles"
         @click.stop
       >
-        <!-- Search bar -->
-        <div class="p-3 border-b border-border">
-          <div class="relative">
-            <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-xs"></i>
-            <input 
-              v-model="searchQuery"
-              type="text" 
-              placeholder="Search variables"
-              class="w-full bg-bg-input border border-border rounded-md pl-9 pr-4 py-1.5 text-xs focus:ring-1 focus:ring-primary-color outline-none transition-all placeholder:text-text-secondary/50"
-              ref="searchInput"
-            />
-          </div>
-        </div>
-
         <div class="max-h-[400px] overflow-y-auto py-1 scrollbar-custom">
-          <!-- Recent used Section -->
-          <template v-if="!searchQuery && recentOption">
-            <div class="px-3 py-1.5">
-              <span class="text-[10px] font-bold text-text-secondary uppercase tracking-wider">Recent used</span>
-            </div>
-            <div 
-              :ref="(el) => { if (el && recentOption) itemRefs['recent-' + recentOption._id] = el as HTMLElement; }"
-              @click="handleOptionClick(recentOption, 'recent-')"
-              @mouseenter="handleMouseEnter(recentOption, 'recent-')"
-              @mouseleave="handleItemLeave"
-              class="px-3 py-2 flex items-center justify-between cursor-pointer transition-colors group relative"
-              :class="props.modelValue === recentOption?._id ? 'bg-primary-color/10 text-primary-color font-semibold' : 'hover:bg-bg-body text-text-primary'"
-            >
-              <div class="flex items-center gap-2 min-w-0">
-                <i v-if="recentOption.icon" :class="[recentOption.icon.prefix, recentOption.icon.iconName]" class="text-primary-color text-[14px]"></i>
-                <span class="text-xs truncate">{{ recentOption.title }}</span>
-              </div>
-              <div class="flex items-center gap-1">
-                <i v-if="recentOption.nested?.length" class="fa-regular fa-ellipsis text-[12px] text-text-secondary"></i>
-              </div>
-            </div>
-          </template>
-
-          <!-- All Fields Section -->
-          <div v-if="filteredOptions.length > 0" class="px-3 py-1.5 mt-1 border-t border-border/40">
-            <span class="text-[10px] font-bold text-text-secondary uppercase tracking-wider">All fields</span>
-          </div>
-
           <div 
             v-for="option in filteredOptions" 
             :key="option._id"
@@ -145,8 +103,6 @@ const props = defineProps<{
 const emit = defineEmits(['update:modelValue', 'close', 'nested-select', 'add-new']);
 
 const dropdownRef    = ref<HTMLElement | null>(null);
-const searchQuery    = ref('');
-const searchInput    = ref<HTMLInputElement | null>(null);
 const itemRefs       = ref<Record<string, HTMLElement>>({});
 const nestedMenuRef  = ref<HTMLElement | null>(null);
 
@@ -171,18 +127,9 @@ const allOptions = computed<Option[]>(() => {
   return [...filteredStatic, ...props.options];
 });
 
-const recentOption = computed<Option | null>(() => {
-  if (!recentId.value) return null;
-  return allOptions.value.find(o => o._id === recentId.value) ?? null;
-});
 
 const filteredOptions = computed<Option[]>(() => {
-  const q = searchQuery.value.toLowerCase();
-  return allOptions.value.filter(o => {
-    const matchesSearch = o.title.toLowerCase().includes(q);
-    const isHidden      = o.is_checkbox_table === true;
-    return matchesSearch && !isHidden && o._id !== recentId.value;
-  });
+  return allOptions.value.filter(o => o.is_checkbox_table !== true);
 });
 
 function selectOption(option: Option) {
@@ -292,7 +239,6 @@ onMounted(() => {
       updatePosition();
       cleanupFloating = autoUpdate(props.triggerRef, dropdownRef.value, updatePosition);
     }
-    searchInput.value?.focus();
   });
 });
 

@@ -250,8 +250,8 @@ import { useRouter, useRoute } from "vue-router";
 import BaseSelectField from "../../components/ui/BaseSelectField.vue";
 import { useQueryClient } from "@tanstack/vue-query";
 import { toast } from "vue-sonner";
-import { useListDomains } from "../../queries/useCommon";
 import { useProfile } from "../../services/user";
+import { useCompanyUsers } from "../../queries/useCompanyUsers";
 
 // Modals
 import InviteUsersWithPermissions from "./Modals/InviteUsersWithPermissions.vue";
@@ -382,26 +382,41 @@ const timeGreeting = computed(() => {
 });
 
 // --- Verification Logic ---
-const { data: domainsData } = useListDomains();
 const { data: profile } = useProfile();
+const { data: usersData } = useCompanyUsers(
+  computed(() => ({ company_id: authStore.company_id || '' })).value
+);
+const members = computed(() => {
+  const raw = usersData.value?.data?.users ?? usersData.value?.users ?? [];
+  return Array.isArray(raw) ? raw : [];
+});
+const owner = computed(() => members.value.find((m: any) => m.is_owner));
 
-const hasVerifiedDomain = computed(() => {
+const isUserVerified = computed(() => {
   if (!authStore.company_id) return true;
-  return domainsData.value?.domains?.some((d: any) => d.status === 'verified') ?? false;
+  const profileVal = profile.value?.data;
+  const activeCompany = profileVal?.active_company;
+  
+  const isSuperAdminActiveVal = owner.value?.membership_status === 'active';
+  const isCurrentUserActive = activeCompany?.membership_status === 'active';
+  const isPendingOtp = activeCompany?.membership_status === 'pending_super_admin_otp';
+
+  if ((isSuperAdminActiveVal || isCurrentUserActive) && !isPendingOtp) {
+    return true;
+  }
+
+  if (profileVal?.isUserVerified === true || profileVal?.isUserVerified === 'true') return true;
+  if (profileVal?.is_verified === true || profileVal?.is_verified === 'true') return true;
+  if (profileVal?.u_verified === true || profileVal?.u_verified === 'true') return true;
+  if (activeCompany?.isUserVerified === true || activeCompany?.isUserVerified === 'true') return true;
+
+  return false;
 });
 
-const isSuperAdminVerified = computed(() => {
-  if (!authStore.company_id) return true;
-  const activeCompany = profile.value?.data?.active_company;
-  if (!activeCompany) return true;
-  return activeCompany.membership_status !== 'pending_super_admin_otp';
-});
-
-const canCreateWorkspace = computed(() => hasVerifiedDomain.value && isSuperAdminVerified.value);
+const canCreateWorkspace = computed(() => isUserVerified.value);
 
 const restrictionMessage = computed(() => {
-  if (!hasVerifiedDomain.value) return "Domain verification required to create workspaces.";
-  if (!isSuperAdminVerified.value) return "Super admin verification required to create workspaces.";
+  if (!isUserVerified.value) return "Verify user first";
   return "";
 });
  

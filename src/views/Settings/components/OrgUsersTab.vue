@@ -16,7 +16,7 @@
 
       <div class="flex items-center gap-2 flex-wrap self-start sm:self-auto">
         <button
-          v-if="hasVerifiedDomain && isSuperAdminActive"
+          v-if="isSuperAdminActive"
           @click="handleCopyInviteLink"
           class="flex items-center gap-2 px-3.5 py-2.5 border border-border/60 text-text-secondary text-sm font-medium rounded-lg hover:border-accent/40 hover:text-accent transition-all cursor-pointer"
         >
@@ -27,27 +27,12 @@
         <button
           v-if="canCreateUsers"
           @click="handleAddMember"
+          :title="!isUserVerified ? 'Verify user first' : ''"
           class="flex items-center gap-2 px-4 cursor-pointer py-2.5 bg-accent text-white text-sm font-semibold rounded-lg hover:bg-accent/90 active:scale-95 transition-all shadow-lg shadow-accent/20 whitespace-nowrap"
         >
           <i class="fa-solid fa-user-plus text-xs"></i>
           Add member
         </button>
-      </div>
-    </div>
-
-    <!-- Domain Not Verified Warning -->
-    <div v-if="!hasVerifiedDomain" class="rounded-xl border border-yellow-500/20 bg-yellow-500/5 px-4 py-4">
-      <div class="flex gap-3">
-        <div class="w-10 h-10 rounded-lg bg-yellow-500/10 flex items-center justify-center shrink-0">
-          <i class="fa-solid fa-triangle-exclamation text-yellow-600 text-lg"></i>
-        </div>
-        <div>
-          <h4 class="text-sm font-bold text-yellow-700">Domain Verification Required</h4>
-          <p class="text-xs text-yellow-600/80 mt-1 leading-relaxed">
-            You must verify your organization's domain before you can manage team members, invite new users via link, or activate your super admin account.
-            Please go to <strong>Domain Setup</strong> to complete verification.
-          </p>
-        </div>
       </div>
     </div>
 
@@ -245,13 +230,12 @@
   :class="[
     !member.is_owner && bulkSelectedIds.includes(member._id)
       ? 'border-accent/40 bg-accent/5'
-      : 'border-border/40 bg-bg-body/50 hover:border-border/70 hover:bg-bg-body/80',
-    !hasVerifiedDomain ? 'opacity-50 grayscale pointer-events-none' : ''
+      : 'border-border/40 bg-bg-body/50 hover:border-border/70 hover:bg-bg-body/80'
   ]"
 >
   <!-- Checkbox -->
   <button
-  v-if="!member.is_owner"
+  v-if="!isSuperAdminMember(member)"
     @click="toggleBulkMember(member._id)"
     class="w-4 h-4 rounded border border-border flex items-center justify-center transition-all shrink-0 mt-0.5"
     :class="
@@ -319,9 +303,9 @@
       <!-- Status -->
       <span
         class="text-[10px] font-medium px-1.5 py-0.5 rounded-full"
-        :class="getStatusBadgeClass(member.is_owner && !hasVerifiedDomain ? 'inactive' : member.membership_status)"
+        :class="getStatusBadgeClass(member.membership_status)"
       >
-        {{ member.is_owner && !hasVerifiedDomain ? 'inactive' : member.membership_status }}
+        {{ member.membership_status }}
       </span>
     </div>
 
@@ -337,7 +321,7 @@
   >
     <!-- Inline role select -->
     <div
-      v-if="canUpdateUsers && !member.is_owner"
+      v-if="canUpdateUsers && !isSuperAdminMember(member)"
       class="relative"
       @click.stop
     >
@@ -349,7 +333,8 @@
             ($event.target as HTMLSelectElement).value
           )
         "
-        :disabled="roleUpdatingUserId === member._id"
+        :disabled="roleUpdatingUserId === member._id || !isUserVerified"
+        :title="!isUserVerified ? 'Verify user first' : ''"
         class="appearance-none cursor-pointer min-w-[110px]
                text-[10px] font-bold uppercase tracking-wide
                pl-3 pr-7 py-2 rounded-lg
@@ -383,10 +368,10 @@
 
     <!-- Activate / Deactivate -->
     <button
-      v-if="canUpdateUsers && !member.is_owner"
+      v-if="canUpdateUsers && !isSuperAdminMember(member)"
       @click.stop="handleToggleActive(member)"
       :disabled="togglingUserId === member._id"
-      :title="member.is_active ? 'Deactivate' : 'Activate'"
+      :title="!isUserVerified ? 'Verify user first' : (member.is_active ? 'Deactivate' : 'Activate')"
       class="w-8 h-8 rounded-lg flex items-center justify-center border border-border/50 text-text-secondary hover:text-text-primary hover:border-border transition-all disabled:opacity-40"
     >
       <i
@@ -403,6 +388,28 @@
             : 'fa-solid fa-circle-check'
         "
       ></i>
+    </button>
+  
+    <!-- Edit -->
+    <button
+      v-if="canUpdateUsers && !isSuperAdminMember(member)"
+      @click.stop="openEditModal(member)"
+      :disabled="!isUserVerified"
+      :title="!isUserVerified ? 'Verify user first' : 'Edit member'"
+      class="w-8 h-8 rounded-lg flex items-center justify-center border border-border/50 text-text-secondary hover:text-text-primary hover:border-border transition-all disabled:opacity-40"
+    >
+      <i class="fa-regular fa-pen-to-square text-xs"></i>
+    </button>
+
+    <!-- Deactivate / Remove -->
+    <button
+      v-if="canDeleteUsers && !isSuperAdminMember(member)"
+      @click.stop="confirmDeactivate(member)"
+      :disabled="!isUserVerified"
+      :title="!isUserVerified ? 'Verify user first' : 'Deactivate member'"
+      class="w-8 h-8 rounded-lg flex items-center justify-center border border-red-500/20 text-red-400 hover:bg-red-500/10 hover:border-red-500/40 transition-all disabled:opacity-40"
+    >
+      <i class="fa-regular fa-trash-can text-xs"></i>
     </button>
 
   </div>
@@ -616,9 +623,340 @@
     </Transition>
   </div>
 </Transition>
-  <!-- ─── all your existing Teleport modals unchanged below ─── -->
-  <!-- (invite link, domain required, enrol, enrol confirm, create, edit, deactivate) -->
-  <!-- ... keep them exactly as they were ... -->
+  <!-- ─── CREATE MEMBER MODAL ─── -->
+  <Teleport to="body">
+    <Transition
+      enter-active-class="transition duration-200 ease-out"
+      enter-from-class="opacity-0"
+      enter-to-class="opacity-100"
+      leave-active-class="transition duration-150 ease-in"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
+    >
+      <div
+        v-if="showCreateModal"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+        @click.self="closeCreateModal"
+      >
+        <Transition
+          enter-active-class="transition duration-200 ease-out"
+          enter-from-class="opacity-0 scale-95 translate-y-2"
+          enter-to-class="opacity-100 scale-100 translate-y-0"
+        >
+          <div
+            v-if="showCreateModal"
+            class="w-full max-w-md bg-bg-body rounded-2xl border border-border shadow-2xl overflow-hidden"
+          >
+            <!-- Modal header -->
+            <div class="px-6 py-5 border-b border-border/50 flex items-center justify-between">
+              <div>
+                <h2 class="text-base font-bold text-text-primary">Add team member</h2>
+                <p class="text-xs text-text-secondary mt-0.5">
+                  Create a workspace account on your domain
+                </p>
+              </div>
+              <button
+                @click="closeCreateModal"
+                class="w-8 h-8 rounded-lg flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-bg-card transition-all"
+              >
+                <i class="fa-solid fa-xmark text-sm"></i>
+              </button>
+            </div>
+
+            <!-- Modal body -->
+            <div class="px-6 py-5 space-y-4">
+
+              <!-- Full name -->
+              <div>
+                <label class="text-[11px] font-semibold text-text-primary uppercase tracking-wider block mb-1.5">
+                  Full name <span class="text-red-500">*</span>
+                </label>
+                <input
+                  v-model="createForm.u_full_name"
+                  placeholder="Jane Doe"
+                  class="w-full border border-border/60 bg-bg-body/80 rounded-lg px-3.5 py-2.5 text-sm focus:border-accent/60 focus:ring-2 focus:ring-accent/10 outline-none transition-all placeholder:text-text-tertiary"
+                  :class="{ 'border-red-500/60': createErrors.u_full_name }"
+                  @input="onNameInput"
+                  @blur="validateCreateForm"
+                />
+                <p v-if="createErrors.u_full_name" class="text-[11px] text-red-500 mt-1">
+                  {{ createErrors.u_full_name }}
+                </p>
+              </div>
+
+              <!-- Email — built from name + org domain -->
+              <div>
+                <label class="text-[11px] font-semibold text-text-primary uppercase tracking-wider block mb-1.5">
+                  Workspace email <span class="text-red-500">*</span>
+                </label>
+                <div
+                  class="flex items-center border rounded-lg overflow-hidden transition-all"
+                  :class="createErrors.emailPrefix
+                    ? 'border-red-500/60 focus-within:ring-2 focus-within:ring-red-500/10'
+                    : 'border-border/60 focus-within:border-accent/60 focus-within:ring-2 focus-within:ring-accent/10'"
+                >
+                  <input
+                    v-model="createForm.emailPrefix"
+                    placeholder="jane.doe"
+                    class="flex-1 px-3.5 py-2.5 text-sm bg-transparent outline-none placeholder:text-text-tertiary"
+                    @blur="validateCreateForm"
+                  />
+                  <span class="px-3 py-2.5 text-sm text-text-secondary bg-bg-card/60 border-l border-border/40 shrink-0 font-mono whitespace-nowrap">
+                    @{{ orgDomainSuffix }}
+                  </span>
+                </div>
+                <p v-if="createErrors.emailPrefix" class="text-[11px] text-red-500 mt-1">
+                  {{ createErrors.emailPrefix }}
+                </p>
+                <p v-else class="text-[11px] text-text-secondary mt-1">
+                  Full email: <span class="font-mono text-accent">{{ fullEmail }}</span>
+                </p>
+              </div>
+
+              <!-- Password -->
+              <div>
+                <label class="text-[11px] font-semibold text-text-primary uppercase tracking-wider block mb-1.5">
+                  Temporary password <span class="text-red-500">*</span>
+                </label>
+                <div class="relative">
+                  <input
+                    v-model="createForm.u_password"
+                    :type="showPassword ? 'text' : 'password'"
+                    placeholder="Min 6 characters"
+                    class="w-full border border-border/60 bg-bg-body/80 rounded-lg px-3.5 py-2.5 pr-10 text-sm focus:border-accent/60 focus:ring-2 focus:ring-accent/10 outline-none transition-all placeholder:text-text-tertiary"
+                    :class="{ 'border-red-500/60': createErrors.u_password }"
+                    @blur="validateCreateForm"
+                  />
+                  <button
+                    type="button"
+                    @click="showPassword = !showPassword"
+                    class="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary transition-colors"
+                  >
+                    <i :class="showPassword ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'" class="text-xs"></i>
+                  </button>
+                </div>
+                <p v-if="createErrors.u_password" class="text-[11px] text-red-500 mt-1">
+                  {{ createErrors.u_password }}
+                </p>
+                <!-- Password strength -->
+                <div v-if="createForm.u_password" class="flex items-center gap-2 mt-1.5">
+                  <div class="flex gap-1 flex-1">
+                    <div
+                      v-for="i in 4"
+                      :key="i"
+                      class="h-1 flex-1 rounded-full transition-all"
+                      :class="passwordStrength >= i ? passwordStrengthColor : 'bg-border/40'"
+                    ></div>
+                  </div>
+                  <span class="text-[10px] font-medium" :class="passwordStrengthTextColor">
+                    {{ passwordStrengthLabel }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Job title (optional) -->
+              <div>
+                <label class="text-[11px] font-semibold text-text-primary uppercase tracking-wider block mb-1.5">
+                  Job title <span class="text-text-secondary font-normal normal-case">(optional)</span>
+                </label>
+                <input
+                  v-model="createForm.u_job_title"
+                  placeholder="e.g. Software Engineer"
+                  class="w-full border border-border/60 bg-bg-body/80 rounded-lg px-3.5 py-2.5 text-sm focus:border-accent/60 focus:ring-2 focus:ring-accent/10 outline-none transition-all placeholder:text-text-tertiary"
+                />
+              </div>
+
+              <!-- Error banner -->
+              <div
+                v-if="createServerError"
+                class="flex items-start gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20"
+              >
+                <i class="fa-solid fa-circle-exclamation text-red-500 text-xs mt-0.5 shrink-0"></i>
+                <p class="text-xs text-red-500">{{ createServerError }}</p>
+              </div>
+            </div>
+
+            <!-- Modal footer -->
+            <div class="px-6 py-4 border-t border-border/50 flex gap-3">
+              <button
+                @click="closeCreateModal"
+                class="flex-1 px-4 py-2.5 text-sm font-medium rounded-lg border border-border hover:bg-bg-card transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                @click="handleCreate"
+                :disabled="isCreating || !isCreateFormValid"
+                class="flex-1 px-4 py-2.5 bg-accent text-white text-sm font-semibold rounded-lg hover:bg-accent/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                <i v-if="isCreating" class="fa-solid fa-spinner animate-spin text-xs"></i>
+                <span>{{ isCreating ? 'Creating…' : 'Create account' }}</span>
+              </button>
+            </div>
+          </div>
+        </Transition>
+      </div>
+    </Transition>
+  </Teleport>
+
+  <!-- ─── EDIT MEMBER MODAL ─── -->
+  <Teleport to="body">
+    <Transition
+      enter-active-class="transition duration-200 ease-out"
+      enter-from-class="opacity-0"
+      enter-to-class="opacity-100"
+    >
+      <div
+        v-if="showEditModal && editingMember"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+        @click.self="closeEditModal"
+      >
+        <div class="w-full max-w-md bg-bg-body rounded-2xl border border-border shadow-2xl overflow-hidden">
+          <!-- Header -->
+          <div class="px-6 py-5 border-b border-border/50 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-full bg-gradient-to-br from-accent/40 to-accent/10 flex items-center justify-center text-xs font-bold text-accent overflow-hidden flex-shrink-0">
+                <img
+                  v-if="editingMember.u_profile_image"
+                  :src="editingMember.u_profile_image"
+                  class="w-full h-full object-cover"
+                />
+                <span v-else>{{ getInitials(editingMember.u_full_name) }}</span>
+              </div>
+              <div>
+                <h2 class="text-sm font-bold text-text-primary">Edit member</h2>
+                <p class="text-[11px] text-text-secondary">{{ editingMember.u_email }}</p>
+              </div>
+            </div>
+            <button
+              @click="closeEditModal"
+              class="w-8 h-8 rounded-lg flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-bg-card transition-all"
+            >
+              <i class="fa-solid fa-xmark text-sm"></i>
+            </button>
+          </div>
+
+          <!-- Body -->
+          <div class="px-6 py-5 space-y-4">
+            <div>
+              <label class="text-[11px] font-semibold text-text-primary uppercase tracking-wider block mb-1.5">Full name</label>
+              <input
+                v-model="editForm.u_full_name"
+                class="w-full border border-border/60 bg-bg-body/80 rounded-lg px-3.5 py-2.5 text-sm focus:border-accent/60 focus:ring-2 focus:ring-accent/10 outline-none transition-all"
+              />
+            </div>
+
+            <div>
+              <label class="text-[11px] font-semibold text-text-primary uppercase tracking-wider block mb-1.5">Job title</label>
+              <input
+                v-model="editForm.u_job_title"
+                placeholder="e.g. Designer"
+                class="w-full border border-border/60 bg-bg-body/80 rounded-lg px-3.5 py-2.5 text-sm focus:border-accent/60 focus:ring-2 focus:ring-accent/10 outline-none transition-all placeholder:text-text-tertiary"
+              />
+            </div>
+
+            <div>
+              <label class="text-[11px] font-semibold text-text-primary uppercase tracking-wider block mb-1.5">Department</label>
+              <input
+                v-model="editForm.u_department"
+                placeholder="e.g. Engineering"
+                class="w-full border border-border/60 bg-bg-body/80 rounded-lg px-3.5 py-2.5 text-sm focus:border-accent/60 focus:ring-2 focus:ring-accent/10 outline-none transition-all placeholder:text-text-tertiary"
+              />
+            </div>
+
+            <!-- Reset password section -->
+            <div class="pt-1">
+              <button
+                type="button"
+                @click="showResetPassword = !showResetPassword"
+                class="text-xs text-accent hover:underline flex items-center gap-1.5"
+              >
+                <i class="fa-solid fa-key text-[10px]"></i>
+                {{ showResetPassword ? 'Cancel password reset' : 'Reset password' }}
+              </button>
+
+              <div v-if="showResetPassword" class="mt-2.5">
+                <div class="relative">
+                  <input
+                    v-model="editForm.u_password"
+                    :type="showEditPassword ? 'text' : 'password'"
+                    placeholder="New password (min 6 chars)"
+                    class="w-full border border-border/60 bg-bg-body/80 rounded-lg px-3.5 py-2.5 pr-10 text-sm focus:border-accent/60 focus:ring-2 focus:ring-accent/10 outline-none transition-all placeholder:text-text-tertiary"
+                    :class="{ 'border-red-500/60': editErrors.u_password }"
+                  />
+                  <button
+                    type="button"
+                    @click="showEditPassword = !showEditPassword"
+                    class="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary text-xs"
+                  >
+                    <i :class="showEditPassword ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"></i>
+                  </button>
+                </div>
+                <p v-if="editErrors.u_password" class="text-[11px] text-red-500 mt-1">{{ editErrors.u_password }}</p>
+              </div>
+            </div>
+
+            <div v-if="editServerError" class="flex items-start gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+              <i class="fa-solid fa-circle-exclamation text-red-500 text-xs mt-0.5 shrink-0"></i>
+              <p class="text-xs text-red-500">{{ editServerError }}</p>
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div class="px-6 py-4 border-t border-border/50 flex gap-3">
+            <button @click="closeEditModal" class="flex-1 px-4 py-2.5 text-sm font-medium rounded-lg border border-border hover:bg-bg-card transition-all">
+              Cancel
+            </button>
+            <button
+              @click="handleEdit"
+              :disabled="isEditing"
+              class="flex-1 px-4 py-2.5 bg-accent text-white text-sm font-semibold rounded-lg hover:bg-accent/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              <i v-if="isEditing" class="fa-solid fa-spinner animate-spin text-xs"></i>
+              <span>{{ isEditing ? 'Saving…' : 'Save changes' }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
+
+  <!-- ─── DEACTIVATE CONFIRM MODAL ─── -->
+  <Teleport to="body">
+    <Transition enter-active-class="transition duration-150 ease-out" enter-from-class="opacity-0" enter-to-class="opacity-100">
+      <div
+        v-if="showDeactivateConfirm && deactivatingMember"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+        @click.self="showDeactivateConfirm = false"
+      >
+        <div class="w-full max-w-sm bg-bg-body rounded-2xl border border-border shadow-2xl p-6">
+          <div class="w-12 h-12 rounded-full bg-red-500/15 flex items-center justify-center mx-auto mb-4">
+            <i class="fa-solid fa-triangle-exclamation text-red-500"></i>
+          </div>
+          <h3 class="text-base font-bold text-text-primary text-center mb-1">Deactivate member?</h3>
+          <p class="text-xs text-text-secondary text-center mb-5">
+            <strong>{{ deactivatingMember.u_full_name }}</strong> will lose access to the organization. This can be reversed.
+          </p>
+          <div class="flex gap-3">
+            <button
+              @click="showDeactivateConfirm = false"
+              class="flex-1 px-4 py-2.5 text-sm font-medium rounded-lg border border-border hover:bg-bg-card transition-all"
+            >
+              Cancel
+            </button>
+            <button
+              @click="handleDeactivate"
+              :disabled="isDeactivating"
+              class="flex-1 px-4 py-2.5 bg-red-600 text-white text-sm font-semibold rounded-lg hover:bg-red-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              <i v-if="isDeactivating" class="fa-solid fa-spinner animate-spin text-xs"></i>
+              <span>{{ isDeactivating ? 'Deactivating…' : 'Deactivate' }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
@@ -626,13 +964,13 @@ import { ref, computed, watch } from 'vue'
 import { toast } from 'vue-sonner'
 import {
   useCompanyUsers,
+  useCreateCompanyUser,
+  useUpdateCompanyUser,
   useDeactivateCompanyUser,
   useToggleCompanyUserActive,
   type CompanyUser,
 } from '../../../queries/useCompanyUsers'
-import { useListDomains } from '../../../queries/useCommon'
 import { useCompanyRolesWithoutPermission } from '../../../queries/useCommon'
-import { useUpdateCompanyUser } from "../../../queries/useCompanyUsers"
 interface Permission {
   _id: string
   slug: string
@@ -660,15 +998,28 @@ interface CompanyRole {
 // ─── Props ────────────────────────────────────────────────────────────────────
 const props = defineProps<{ profile?: any }>()
 
-const { data: domainsData } = useListDomains()
-
-const domains = computed(() => domainsData.value?.domains ?? [])
-const hasVerifiedDomain = computed(() => domains.value.some((d: any) => d.status === 'verified'))
-
 const owner = computed(() => members.value.find((m) => m.is_owner))
 const isSuperAdminActive = computed(() => {
-  if (!hasVerifiedDomain.value) return false
   return owner.value?.membership_status === 'active'
+})
+
+const isUserVerified = computed(() => {
+  const profileVal = props.profile
+  const activeCompany = profileVal?.active_company
+  
+  const isSuperAdminActiveVal = owner.value?.membership_status === 'active'
+  const isPendingOtp = activeCompany?.membership_status === 'pending_super_admin_otp'
+
+  if (isSuperAdminActiveVal && !isPendingOtp) {
+    return true
+  }
+
+  if (profileVal?.isUserVerified === true || profileVal?.isUserVerified === 'true') return true
+  if (profileVal?.is_verified === true || profileVal?.is_verified === 'true') return true
+  if (profileVal?.u_verified === true || profileVal?.u_verified === 'true') return true
+  if (activeCompany?.isUserVerified === true || activeCompany?.isUserVerified === 'true') return true
+
+  return false
 })
 // ── Fetch all roles ───────────────────────────────────────────────────────────
 const { data: rolesData } = useCompanyRolesWithoutPermission()
@@ -677,6 +1028,15 @@ const allRoles = computed<CompanyRole[]>(() => {
   const raw = rolesData.value?.data ?? rolesData.value ?? []
   return Array.isArray(raw) ? raw : []
 })
+
+function isSuperAdminMember(member: any) {
+  if (member.is_owner) return true
+  const role = allRoles.value.find((r: any) => r._id === member.company_role_id)
+  if (!role) return false
+  const slug = role.slug?.toLowerCase() || ''
+  const title = role.title?.toLowerCase() || ''
+  return slug === 'super-admin' || slug === 'super_admin' || title === 'super admin'
+}
 // ─── Company context ──────────────────────────────────────────────────────────
 const companyId = computed<string>(() => localStorage.getItem('company_id') || '')
 const activeCompany = computed(() => props.profile?.active_company)
@@ -697,6 +1057,7 @@ const isOwner = computed(() => membershipRole.value === 'owner')
 function can(p: string) { return permissions.value.includes(p) }
 const canCreateUsers = computed(() => isOwner.value || can('company_user.create'))
 const canUpdateUsers = computed(() => isOwner.value || can('company_user.update'))
+const canDeleteUsers = computed(() => isOwner.value || can('company_user.delete'))
 
 // ─── Members data ─────────────────────────────────────────────────────────────
 const { data: usersData, isLoading } = useCompanyUsers(
@@ -715,6 +1076,10 @@ const roleFilter   = ref('')
 
 const filteredMembers = computed(() =>
   members.value.filter((m) => {
+    const email = m.u_email?.toLowerCase() || ''
+    const isGeneric = ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'aol.com', 'icloud.com'].some(d => email.endsWith('@' + d))
+    if (isGeneric) return false
+
     const q = searchQuery.value.toLowerCase()
     const matchSearch = !q || m.u_full_name.toLowerCase().includes(q) || m.u_email.toLowerCase().includes(q)
     const matchStatus = !statusFilter.value || m.membership_status === statusFilter.value
@@ -790,6 +1155,10 @@ function clearBulkSelection() {
   bulkSelectedIds.value = []
 }
 async function handleBulkActivate() {
+  if (!isUserVerified.value) {
+    toast.error('Verify user first')
+    return
+  }
   if (!bulkSelectedIds.value.length) return
 
   selectedBulkAction.value = 'activate'
@@ -821,6 +1190,10 @@ async function handleBulkActivate() {
 }
 
 async function handleBulkDeactivate() {
+  if (!isUserVerified.value) {
+    toast.error('Verify user first')
+    return
+  }
   if (!bulkSelectedIds.value.length) return
 
   selectedBulkAction.value = 'deactivate'
@@ -874,6 +1247,10 @@ function handleInlineRoleUpdate(
   member: CompanyUser,
   roleSlug: string
 ) {
+  if (!isUserVerified.value) {
+    toast.error('Verify user first')
+    return
+  }
   if (!roleSlug) return
 
   if (member.membership_role === roleSlug) return
@@ -930,56 +1307,242 @@ async function copyInviteLink() {
 }
 
 
-// ─── Domain required modal ────────────────────────────────────────────────────
-const showDomainRequiredModal = ref(false)
-
 function handleAddMember() {
-  if (!hasVerifiedDomain.value) {
-    showDomainRequiredModal.value = true
+  if (!isUserVerified.value) {
+    toast.error('Verify user first')
     return
   }
   openCreateModal()
+}
+
+// ─── Email helpers ────────────────────────────────────────────────────────────
+function nameToEmailPrefix(name: string): string {
+  return name
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '.')
+    .replace(/[^a-z0-9.]/g, '')
 }
 
 // ─── CREATE MODAL ─────────────────────────────────────────────────────────────
 const showCreateModal   = ref(false)
 const showPassword      = ref(false)
 const createServerError = ref('')
+const isCreating       = ref(false)
 
 const createForm = ref({
   u_full_name:  '',
   emailPrefix:  '',
   u_password:   '',
   u_job_title:  '',
-  role:         '',
 })
 
 const createErrors = ref({
-  u_full_name: '',
-  emailPrefix: '',
-  u_password:  '',
-  role:        '',
+  u_full_name:  '',
+  emailPrefix:  '',
+  u_password:   '',
 })
 
+const fullEmail = computed(() =>
+  createForm.value.emailPrefix
+    ? `${createForm.value.emailPrefix}@${orgDomainSuffix.value}`
+    : ''
+)
+
+// Auto-fill email prefix when user types name
+function onNameInput() {
+  if (!createForm.value.emailPrefix || createForm.value.emailPrefix === nameToEmailPrefix(createForm.value.u_full_name.slice(0, -1))) {
+    createForm.value.emailPrefix = nameToEmailPrefix(createForm.value.u_full_name)
+  }
+  createErrors.value.u_full_name = ''
+}
+
+// Password strength
+const passwordStrength = computed(() => {
+  const p = createForm.value.u_password
+  if (!p) return 0
+  let score = 0
+  if (p.length >= 6) score++
+  if (p.length >= 10) score++
+  if (/[A-Z]/.test(p) && /[0-9]/.test(p)) score++
+  if (/[^A-Za-z0-9]/.test(p)) score++
+  return score
+})
+
+const passwordStrengthColor = computed(() => {
+  const colors = ['bg-red-500', 'bg-orange-500', 'bg-yellow-500', 'bg-green-500']
+  return colors[passwordStrength.value - 1] ?? 'bg-red-500'
+})
+
+const passwordStrengthTextColor = computed(() => {
+  const colors = ['text-red-500', 'text-orange-500', 'text-yellow-500', 'text-green-500']
+  return colors[passwordStrength.value - 1] ?? 'text-red-500'
+})
+
+const passwordStrengthLabel = computed(() => {
+  return ['Weak', 'Fair', 'Good', 'Strong'][passwordStrength.value - 1] ?? 'Weak'
+})
+
+function validateCreateForm() {
+  let valid = true
+  createErrors.value = { u_full_name: '', emailPrefix: '', u_password: '' }
+
+  if (!createForm.value.u_full_name.trim()) {
+    createErrors.value.u_full_name = 'Full name is required'
+    valid = false
+  }
+
+  if (!createForm.value.emailPrefix.trim()) {
+    createErrors.value.emailPrefix = 'Email prefix is required'
+    valid = false
+  } else if (!/^[a-z0-9._-]+$/.test(createForm.value.emailPrefix)) {
+    createErrors.value.emailPrefix = 'Only lowercase letters, numbers, dots, and hyphens'
+    valid = false
+  }
+
+  if (!createForm.value.u_password) {
+    createErrors.value.u_password = 'Password is required'
+    valid = false
+  } else if (createForm.value.u_password.length < 6) {
+    createErrors.value.u_password = 'Minimum 6 characters'
+    valid = false
+  }
+
+  return valid
+}
 
 const isCreateFormValid = computed(() =>
   !!createForm.value.u_full_name.trim() &&
   !!createForm.value.emailPrefix.trim() &&
   createForm.value.u_password.length >= 6 &&
-  !!createForm.value.role &&
   !createErrors.value.u_full_name &&
   !createErrors.value.emailPrefix &&
-  !createErrors.value.u_password &&
-  !createErrors.value.role
+  !createErrors.value.u_password
 )
-console.log(isCreateFormValid);
 
 function openCreateModal() {
-  createForm.value = { u_full_name: '', emailPrefix: '', u_password: '', u_job_title: '', role: 'Viewer' }
-  createErrors.value = { u_full_name: '', emailPrefix: '', u_password: '', role: '' }
+  createForm.value = { u_full_name: '', emailPrefix: '', u_password: '', u_job_title: '' }
+  createErrors.value = { u_full_name: '', emailPrefix: '', u_password: '' }
   createServerError.value = ''
   showPassword.value = false
   showCreateModal.value = true
+}
+
+function closeCreateModal() {
+  showCreateModal.value = false
+}
+
+const { mutate: createUser } = useCreateCompanyUser({
+  onSuccess: (data: any) => {
+    const payload = data?.data ?? data
+    if (!payload || payload?.status === false) {
+      createServerError.value = payload?.message || 'Something went wrong.'
+      isCreating.value = false
+      return
+    }
+    toast.success(payload?.message || 'Member account created successfully')
+    closeCreateModal()
+    isCreating.value = false
+  },
+  onError: (error: any) => {
+    createServerError.value =
+      error?.response?.data?.message || error?.message || 'Failed to create member'
+    isCreating.value = false
+  },
+})
+
+function handleCreate() {
+  if (!validateCreateForm()) return
+  createServerError.value = ''
+  isCreating.value = true
+
+  createUser({
+    company_id:  companyId.value,
+    u_full_name: createForm.value.u_full_name.trim(),
+    u_email:     fullEmail.value,
+    u_password:  createForm.value.u_password,
+    ...(createForm.value.u_job_title ? { u_job_title: createForm.value.u_job_title } : {}),
+  })
+}
+
+// ─── EDIT MODAL ───────────────────────────────────────────────────────────────
+const showEditModal    = ref(false)
+const showResetPassword = ref(false)
+const showEditPassword = ref(false)
+const editingMember    = ref<CompanyUser | null>(null)
+const editServerError  = ref('')
+const isEditing        = ref(false)
+
+const editForm = ref({
+  u_full_name:  '',
+  u_job_title:  '',
+  u_department: '',
+  u_password:   '',
+})
+
+const editErrors = ref({ u_password: '' })
+
+function openEditModal(member: CompanyUser) {
+  editingMember.value = member
+  editForm.value = {
+    u_full_name:  member.u_full_name,
+    u_job_title:  member.u_job_title ?? '',
+    u_department: member.u_department ?? '',
+    u_password:   '',
+  }
+  editErrors.value = { u_password: '' }
+  editServerError.value = ''
+  showResetPassword.value = false
+  showEditPassword.value = false
+  showEditModal.value = true
+}
+
+function closeEditModal() {
+  showEditModal.value = false
+  editingMember.value = null
+}
+
+const { mutate: updateMember } = useUpdateCompanyUser(companyId.value, {
+  onSuccess: (data: any) => {
+    const payload = data?.data ?? data
+    if (!payload || payload?.status === false) {
+      editServerError.value = payload?.message || 'Something went wrong.'
+      isEditing.value = false
+      return
+    }
+    toast.success('Member updated successfully')
+    closeEditModal()
+    isEditing.value = false
+  },
+  onError: (error: any) => {
+    editServerError.value =
+      error?.response?.data?.message || error?.message || 'Failed to update member'
+    isEditing.value = false
+  },
+})
+
+function handleEdit() {
+  if (!editingMember.value) return
+
+  if (showResetPassword.value && editForm.value.u_password.length > 0 && editForm.value.u_password.length < 6) {
+    editErrors.value.u_password = 'Minimum 6 characters'
+    return
+  }
+
+  editServerError.value = ''
+  isEditing.value = true
+
+  const payload: any = {
+    u_full_name:  editForm.value.u_full_name,
+    u_job_title:  editForm.value.u_job_title  || undefined,
+    u_department: editForm.value.u_department || undefined,
+  }
+
+  if (showResetPassword.value && editForm.value.u_password) {
+    payload.u_password = editForm.value.u_password
+  }
+
+  updateMember({ userId: editingMember.value._id, payload })
 }
 
 // ─── TOGGLE ACTIVE ────────────────────────────────────────────────────────────
@@ -991,6 +1554,10 @@ const { mutate: toggleActive } = useToggleCompanyUserActive(companyId.value, {
 })
 
 function handleToggleActive(member: CompanyUser) {
+  if (!isUserVerified.value) {
+    toast.error('Verify user first')
+    return
+  }
   togglingUserId.value = member._id
   toggleActive(member._id)
 }
@@ -1010,5 +1577,18 @@ const { mutate: deactivateUser } = useDeactivateCompanyUser(companyId.value, {
   onError: (error: any) => { toast.error(error?.response?.data?.message || 'Failed to deactivate member'); isDeactivating.value = false },
 })
 
+function confirmDeactivate(member: CompanyUser) {
+  if (!isUserVerified.value) {
+    toast.error('Verify user first')
+    return
+  }
+  deactivatingMember.value = member
+  showDeactivateConfirm.value = true
+}
 
+function handleDeactivate() {
+  if (!deactivatingMember.value) return
+  isDeactivating.value = true
+  deactivateUser(deactivatingMember.value._id)
+}
 </script>

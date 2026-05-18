@@ -60,6 +60,34 @@ const isAdminOrOwnerOfActive = computed(() => {
   return role === 'owner' || role === 'admin'
 })
 
+const isCompanyEmail = computed(() => {
+  const email = props.profile?.u_email || ''
+  if (!email) return false
+  const domain = email.split('@')[1]?.toLowerCase()
+  if (!domain) return false
+  const genericDomains = ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'aol.com', 'icloud.com']
+  return !genericDomains.includes(domain)
+})
+
+const canCreateOrg = computed(() => {
+  if (!isCompanyEmail.value) return true
+
+  const activeCompany = props.profile?.active_company
+  const list = props.profile?.companies_list ?? []
+  
+  const activeCompInList = list.find((c: any) => c._id === activeCompanyId.value) || activeCompany
+  if (!activeCompInList) return true
+
+  const role = (activeCompInList.membership_role || '').toLowerCase()
+  const isOwner = role === 'owner'
+  const isAdmin = role === 'admin'
+  
+  const roleTitle = (activeCompInList.company_role?.title || '').toLowerCase()
+  const isSuperAdmin = roleTitle.includes('super') || roleTitle.includes('super admin') || activeCompInList.company_role?.is_super_admin === true
+
+  return isOwner || isAdmin || isSuperAdmin
+})
+
 const isSwitching = ref(false)
 
 // ─────────────────────────────
@@ -293,11 +321,15 @@ function orgInitials(title: string) {
               Create an organization to invite your team and unlock professional collaboration tools.
             </p>
             <button
+              v-if="canCreateOrg"
               @click="selectTab('org-create')"
               class="w-full py-2 rounded-lg bg-accent text-white text-[12px] font-bold hover:bg-accent/90 transition-all cursor-pointer"
             >
               Get Started
             </button>
+            <div v-else class="text-[11px] text-text-secondary font-medium">
+              Organization creation is restricted to administrators only.
+            </div>
           </div>
         </div>
       </template>
@@ -352,7 +384,7 @@ function orgInitials(title: string) {
         </button>
       </div>
 
-      <div v-if="!hasOrgs">
+      <div v-if="!hasOrgs && canCreateOrg">
         <button
           @click="switchMode('org'); selectTab('org-create')"
           class="w-full py-2 rounded-lg border border-dashed border-accent text-accent text-[12px] cursor-pointer font-bold hover:bg-accent/10 active:scale-[0.97] transition-all"
