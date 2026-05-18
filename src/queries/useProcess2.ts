@@ -1,25 +1,29 @@
 import { useQuery } from "@tanstack/vue-query";
 import { request } from "../libs/api";
 import { useApiMutation } from "../libs/vq";
-import { unref } from "vue";
+import { unref, computed } from "vue";
 
 /* -------------------------------------------------------------------------- */
 /*                                Process Groups                              */
 /* -------------------------------------------------------------------------- */
 
-export const useProcessGroupsWithTransitions = (workspace_id: any, options = {}) => {
+export const useProcessGroupsWithTransitions = (workspace_id: any, params?: any, options = {}) => {
   return useQuery({
-    queryKey: ["process-groups-with-transitions", workspace_id],
+    queryKey: computed(() => ["process-groups-with-transitions", unref(workspace_id), { ...unref(params) }]),
     queryFn: ({ signal }) => {
       const wsId = unref(workspace_id);
       if (!wsId) return Promise.resolve(null);
       return request<any>({
-        url: `workspace/${wsId}/process-groups/with-transitions?sort=sort_order`,
+        url: `workspace/${wsId}/process-groups/with-transitions`,
         method: "GET",
+        params: {
+          sort: "sort_order",
+          ...unref(params),
+        },
         signal,
       });
     },
-    enabled: !!unref(workspace_id),
+    enabled: computed(() => !!unref(workspace_id)),
     ...options,
   });
 };

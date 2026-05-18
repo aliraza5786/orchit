@@ -19,6 +19,7 @@ export const keys = {
   workspaceModules: ["workspaces", "modules"] as const,
   workspaceRoles: (id: string | number) => ["workspaces", "roles", id] as const,
   workspaceVariables: ["workspaces", "variables"] as const,
+  workspaceProcessFlow: (id: string | number) => ["workspaces", "processFlow", id] as const,
 
   invitedWorkspace: (id: string | number) =>
     ["invited", "workspace", id] as const,
@@ -597,3 +598,21 @@ export const useWorkspaceModulesAndUsers = (workspaceId: Ref<string>) => {
     enabled: computed(() => !!unref(workspaceId)),
   })
 }
+
+export function useWorkspaceProcessFlow(workspaceId: Ref<string | undefined> | string | undefined) {
+  return useQuery({
+    queryKey: computed(() => keys.workspaceProcessFlow(unref(workspaceId) || "")),
+    queryFn: async () => {
+      const id = unref(workspaceId)
+      if (!id) return null
+
+      return request({
+        url: `/workspace/${id}/process-flow`,
+        method: "GET",
+      })
+    },
+    staleTime: 1000 * 60 * 5,
+    refetchOnMount: true,
+    enabled: computed(() => !!unref(workspaceId)),
+  })
+}

@@ -174,7 +174,13 @@ import { usePermissions } from '../../composables/usePermissions';
 import { toast } from 'vue-sonner';
 
 const { workspaceId } = useRouteIds();
-const { data: processGroups, isPending } = useProcessGroupsWithTransitions(workspaceId.value);
+const selectedViewBy    = ref('module');
+
+const queryParams = computed(() => ({
+  group_by: selectedViewBy.value,
+}));
+
+const { data: processGroups, isPending } = useProcessGroupsWithTransitions(workspaceId, queryParams);
 const { canCreateVariable } = usePermissions();
 
 /* -------------------------------------------------------------------------- */
@@ -186,14 +192,13 @@ interface ProcessOption {
 }
 
 const processOptions = ref<ProcessOption[]>([
-  { _id: 'module', title: 'Module'      },
-  { _id: 'status', title: 'Card Status' },
-  { _id: 'type',   title: 'Card Type'   },
+  { _id: 'module',      title: 'Module'      },
+  { _id: 'card_status', title: 'Card Status' },
+  { _id: 'card_type',   title: 'Card Type'   },
 ]);
 
 const viewByTriggerEl   = ref<HTMLElement | null>(null);
 const showViewDropdown  = ref(false);
-const selectedViewBy    = ref('module');
 
 const selectedViewLabel = computed(
   () => processOptions.value.find(o => o._id === selectedViewBy.value)?.title ?? 'View by'
@@ -205,12 +210,32 @@ const selectedViewLabel = computed(
 const localList = ref<any[]>([]);
 
 watch(processGroups, (newVal) => {
+  console.log("processGroups Response:", newVal);
   const groups = newVal?.data?.groups || newVal?.groups || [];
   if (groups) {
-    localList.value = groups.map((group: any) => ({
-      ...group,
-      cards: group.transitions || [],
-    }));
+    localList.value = groups.map((group: any) => {
+      let title = group.title;
+      
+      if (!title) {
+        if (group.module) {
+          title = typeof group.module === 'object' ? (group.module.title || group.module.name) : group.module;
+        } else if (group.card_status) {
+          title = typeof group.card_status === 'object' ? (group.card_status.title || group.card_status.name || group.card_status.value) : group.card_status;
+        } else if (group.card_type) {
+          title = typeof group.card_type === 'object' ? (group.card_type.title || group.card_type.name || group.card_type.value) : group.card_type;
+        } else if (group.name) {
+          title = group.name;
+        } else if (group.value) {
+          title = group.value;
+        }
+      }
+      
+      return {
+        ...group,
+        title: title || 'Untitled Group',
+        cards: group.transitions || [],
+      };
+    });
   }
 }, { immediate: true });
 
