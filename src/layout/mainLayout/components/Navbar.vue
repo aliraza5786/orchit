@@ -228,7 +228,7 @@
                       class="w-full flex items-center gap-2.5 px-4 py-2.5 hover:bg-bg-dropdown-menu-hover transition-colors text-left cursor-pointer"
                     >
                       <i class="fa-regular fa-gear text-[10px] text-text-secondary w-4 text-center"></i>
-                      <span class="text-[12px] font-medium text-text-secondary">Manage Workspace</span>
+                      <span class="text-[12px] font-medium text-text-secondary">Manage Organization</span>
                     </button>
                   </div>
                 </div>
@@ -553,6 +553,14 @@ function switchToPersonal() {
 // Toggle between personal and professional view in the menu
 const accountMode = ref<'personal' | 'professional'>(
   authStore.company_id && authStore.company_id !== 'personal' ? 'professional' : 'personal'
+)
+
+watch(
+  () => authStore.company_id,
+  (id) => {
+    accountMode.value = id && id !== 'personal' ? 'professional' : 'personal';
+  },
+  { immediate: true }
 )
 
 function handlePersonalTabClick() {
