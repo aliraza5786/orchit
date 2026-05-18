@@ -452,7 +452,7 @@ const editor = new Editor({
   },
   onBlur: () => emit("focusOut", filePreviews.value),
   editorProps: {
-    handlePaste(view, event) {
+    handlePaste(_view, event) {
       const files = Array.from(event.clipboardData?.files || []);
       if (files.length > 0) {
         event.preventDefault();
