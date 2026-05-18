@@ -59,20 +59,31 @@ function resolveOnboardingRedirect(auth: ReturnType<typeof useAuthStore>): strin
   if (!hasToken) return '/login'
   if (!auth.user) return null // bootstrap still in progress — don't redirect yet
  
-  // If there is an incomplete onboarding step saved in localStorage, force routing to create-profile
-  const onboardingStep = localStorage.getItem('onboarding_active_step')
-  if (onboardingStep && ['5', '51', '8', '9'].includes(onboardingStep)) {
-    return '/create-profile'
-  }
-
   // API wraps data under .data in some responses
   const userData = auth.user?.data ?? auth.user
  
   const hasActiveCompany = !!userData?.active_company_id
   const hasWorkspaces    = Array.isArray(userData?.workspaces) && userData.workspaces.length > 0
  
-  // Onboarding complete: has a company or has workspaces → send to dashboard
-  if (hasActiveCompany || hasWorkspaces) return '/dashboard'
+  // Onboarding complete: has a company or has workspaces → send to dashboard & clear keys
+  if (hasActiveCompany || hasWorkspaces) {
+    const keys = [
+      'onboarding_active_step', 'onboarding_dns_input', 'onboarding_has_custom_domain',
+      'onboarding_company_id', 'onboarding_site_name', 'onboarding_site_slug',
+      'onboarding_super_admin_otp_sent', 'onboarding_super_admin_user_id',
+      'onboarding_super_admin_email_prefix', 'onboarding_super_admin_name',
+      'onboarding_domain_phase', 'onboarding_current_domain', 'onboarding_current_instructions',
+      'onboarding_selected_verification_method'
+    ]
+    keys.forEach(k => localStorage.removeItem(k))
+    return '/dashboard'
+  }
+
+  // If there is an incomplete onboarding step saved in localStorage, force routing to create-profile
+  const onboardingStep = localStorage.getItem('onboarding_active_step')
+  if (onboardingStep && ['5', '51', '8', '9'].includes(onboardingStep)) {
+    return '/create-profile'
+  }
  
   // Onboarding incomplete: no company, no workspaces → must finish create-profile
   return '/create-profile'
@@ -233,11 +244,27 @@ router.beforeEach(async (to, _from, next) => {
   const hasToken = !!getToken()
 
   // 1.5 Force incomplete onboarding redirect for all authenticated / app routes
-  if (hasToken) {
-    const onboardingStep = localStorage.getItem('onboarding_active_step')
-    if (onboardingStep && ['5', '51', '8', '9'].includes(onboardingStep)) {
-      if (to.path !== '/create-profile') {
-        return next({ path: '/create-profile', replace: true })
+  if (hasToken && auth.user) {
+    const userData = auth.user?.data ?? auth.user
+    const hasActiveCompany = !!userData?.active_company_id
+    const hasWorkspaces    = Array.isArray(userData?.workspaces) && userData.workspaces.length > 0
+
+    if (hasActiveCompany || hasWorkspaces) {
+      const keys = [
+        'onboarding_active_step', 'onboarding_dns_input', 'onboarding_has_custom_domain',
+        'onboarding_company_id', 'onboarding_site_name', 'onboarding_site_slug',
+        'onboarding_super_admin_otp_sent', 'onboarding_super_admin_user_id',
+        'onboarding_super_admin_email_prefix', 'onboarding_super_admin_name',
+        'onboarding_domain_phase', 'onboarding_current_domain', 'onboarding_current_instructions',
+        'onboarding_selected_verification_method'
+      ]
+      keys.forEach(k => localStorage.removeItem(k))
+    } else {
+      const onboardingStep = localStorage.getItem('onboarding_active_step')
+      if (onboardingStep && ['5', '51', '8', '9'].includes(onboardingStep)) {
+        if (to.path !== '/create-profile') {
+          return next({ path: '/create-profile', replace: true })
+        }
       }
     }
   }
