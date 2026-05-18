@@ -82,7 +82,6 @@
             </div>
 
             <button
-              v-if="canCreateOrg"
               @click="isCreatingOrg = true"
               class="group relative px-8 py-4 bg-accent text-white cursor-pointer text-base font-bold rounded-2xl hover:bg-accent/90 active:scale-[0.98] transition-all shadow-xl shadow-accent/25 overflow-hidden"
             >
@@ -639,10 +638,6 @@ const canUpdateOrg = computed(() =>
   isOwner.value || can('company.update') || can('company_user.update')
 )
 
-const canCreateOrg = computed(() => {
-  const role = (props.profile?.role || '').toLowerCase()
-  return role === 'owner' || role === 'super admin' || role === 'super_admin' || role === 'admin'
-})
 
 const hasOrg = computed(() => {
   if (props.forceCreate) return false

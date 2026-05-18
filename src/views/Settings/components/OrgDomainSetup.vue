@@ -151,31 +151,14 @@
                 </div>
               </div>
 
-              <!-- Pending Banner -->
-              <div
-                v-if="domain.status !== 'verified'"
-                class="mt-5 p-4 rounded-xl border flex items-start gap-3"
-                :style="pendingBannerStyle(domain.status)"
-              >
-                <svg class="shrink-0 mt-0.5" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" :style="pendingIconStyle(domain.status)">
-                  <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
-                </svg>
-                <div class="flex-1">
-                  <p class="text-xs font-bold mb-0.5" :style="pendingIconStyle(domain.status)">
-                    {{ domain.status === 'failed' ? 'Verification Failed' : 'Pending Verification' }}
-                  </p>
-                  <p class="text-xs text-text-secondary leading-relaxed">
-                    This domain is not yet active. Please complete the DNS verification steps to start using it.
-                  </p>
-                </div>
-              </div>
             </div>
 
             <!-- Domain Users Expansion -->
             <div class="border-t border-border/40">
               <button
+                :disabled="domain.status !== 'verified'"
                 @click="loadDomainUsers(domain._id)"
-                class="w-full flex items-center justify-between px-6 py-3 text-xs font-bold text-text-secondary hover:text-text-primary transition-all bg-border/5"
+                class="w-full flex items-center justify-between px-6 py-3 text-xs font-bold text-text-secondary hover:text-text-primary transition-all bg-border/5 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-text-secondary"
               >
                 <div class="flex items-center gap-2">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -873,6 +856,7 @@ async function runWizardVerification() {
     const { data, retryAfter } = await workspaceStore.recheckDomain(wizardDomain.value._id)
     if (retryAfter !== null) {
       startModalCountdown(retryAfter)
+      isModalVerifying.value = false
       return
     }
     if (data) {
@@ -882,6 +866,7 @@ async function runWizardVerification() {
         setupStep.value = 4
       } else {
         toast.error('DNS records not yet detected. Please wait a few minutes.')
+        wizardError.value = 'DNS records not yet detected. Please verify your settings and wait a few minutes for propagation.'
       }
     }
   } catch (err: any) {
@@ -1029,7 +1014,14 @@ async function loadDomainUsers(domainId: string) {
     domainUsersMap.value = { ...domainUsersMap.value, [domainId]: users }
     domainUsersLoaded.value = new Set([...domainUsersLoaded.value, domainId])
   } catch (err: any) {
-    toast.error(err?.response?.data?.message ?? 'Failed to load domain users.')
+    const status = err?.response?.status || err?.status
+    const msg = (err?.response?.data?.message || err?.message || '').toLowerCase()
+    if (status === 404 || msg.includes('no users') || msg.includes('not found')) {
+      domainUsersMap.value = { ...domainUsersMap.value, [domainId]: [] }
+      domainUsersLoaded.value = new Set([...domainUsersLoaded.value, domainId])
+    } else {
+      toast.error(err?.response?.data?.message ?? 'Failed to load domain users.')
+    }
   } finally {
     loadingDomainUsers.value = null
   }
@@ -1194,15 +1186,6 @@ function statusDotClass(status: CompanyDomain['status']): string {
     failed:    `${base} bg-red-400`,
     disabled:  `${base} bg-text-secondary/40`,
   }[status] ?? `${base} bg-text-secondary/40`
-}
-
-function pendingBannerStyle(status: CompanyDomain['status']): Record<string, string> {
-  const color = status === 'failed' ? '#e55050' : '#f59e0b'
-  return { background: `color-mix(in srgb, ${color} 6%, transparent)`, borderColor: `color-mix(in srgb, ${color} 25%, transparent)` }
-}
-
-function pendingIconStyle(status: CompanyDomain['status']): Record<string, string> {
-  return { color: status === 'failed' ? '#e55050' : '#f59e0b' }
 }
 
 const transferImpacts = [

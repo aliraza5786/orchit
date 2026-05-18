@@ -147,32 +147,7 @@
 
 
 
-          <!-- Scenario 4: education email mandatory banner -->
-          <div
-            v-if="isEducationEmail"
-            class="mb-6 p-5 rounded-2xl border flex items-start gap-4 shadow-sm"
-            style="background: color-mix(in srgb, #6366f1 10%, transparent); border-color: color-mix(in srgb, #6366f1 25%, transparent);"
-          >
-            <div class="w-10 h-10 rounded-xl bg-bg-card flex items-center justify-center shrink-0 border" style="border-color: #6366f1;">
-               <i class="fa-solid fa-graduation-cap text-[#6366f1] text-lg"></i>
-            </div>
-            <div class="flex-1">
-              <h3 class="text-sm font-bold text-[#6366f1]">Academic Domain Detected</h3>
-              <p class="text-xs text-text-secondary mt-1 leading-relaxed">
-                Your email (<strong>{{ userEmailDomain }}</strong>) is recognized as an educational domain. You must create a <strong>School</strong> profile to continue.
-              </p>
-              <button 
-                type="button" 
-                @click="authStore.logout(); router.push('/login')"
-                class="mt-3 inline-flex items-center gap-1.5 text-[11px] font-bold text-[#6366f1] hover:opacity-70 transition-opacity"
-              >
-                <i class="fa-solid fa-right-from-bracket"></i>
-                Use a different email
-              </button>
-            </div>
-          </div>
-
-          <div class="how_help_steps grid sm:grid-cols-3 gap-4">
+          <div class="how_help_steps grid sm:grid-cols-2 gap-4">
             <label
               v-for="option in options"
               :key="option._id"
@@ -185,16 +160,6 @@
                 <img :src="option.icon" class="w-12 h-12 transition-transform duration-200 group-hover:scale-110" />
                 <h3 class="font-medium text-sm text-text-primary mt-4">{{ option.title }}</h3>
                 <p class="text-[11px] text-text-secondary mt-2 text-center">{{ option.description }}</p>
-                <span
-                  v-if="mandatoryOptionId === option._id && !isGenericEmail"
-                  class="mt-2 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
-                  :style="{
-                    background: isEducationEmail ? 'color-mix(in srgb, #6366f1 15%, transparent)' : 'color-mix(in srgb, var(--accent) 15%, transparent)',
-                    color: isEducationEmail ? '#6366f1' : 'var(--accent)'
-                  }"
-                >
-                  Mandatory
-                </span>
               </div>
             </label>
           </div>
@@ -210,9 +175,6 @@
           <h2 class="text-[24px] lg:text-[32px] leading-8 lg:leading-11 font-medium text-text-primary" v-if="selected === 'personal'">
             Tell us about yourself
           </h2>
-          <h2 class="text-[24px] lg:text-[32px] leading-8 lg:leading-11 font-medium text-text-primary" v-if="selected === 'school'">
-            Tell us about your School
-          </h2>
           <p class="text-[14px] md:text-base sm:text-nowrap font-medium text-text-secondary">
             This will help us personalize your experience in Orchit AI.
           </p>
@@ -226,12 +188,6 @@
 
         <div class="space-y-6" v-show="activeStep === 2 && selected === 'personal'">
           <BaseTextField v-model="personalRole" label="What do you do?" placeholder="e.g. Frontend Developer, Student, Designer" size="lg" :error="!!errors.personalRole" :message="errors.personalRole" />
-        </div>
-
-        <div class="space-y-6" v-show="activeStep === 2 && selected === 'school'">
-          <BaseTextField v-model="schoolName" label="School / University Name" placeholder="e.g. University of Punjab" size="lg" :error="!!errors.schoolName" :message="errors.schoolName" />
-          <BaseSelectField v-model="educationLevel" label="Education Level" :options="educationOptions" placeholder="Select level" size="lg" :error="!!errors.educationLevel" :message="errors.educationLevel" />
-          <BaseSelectField v-model="role" label="What is your role in school?" :options="staticRolesList" placeholder="Select Role" size="lg" :error="!!errors.role" :message="errors.role" />
         </div>
 
         <!-- ═══════════════════════════════════════════════════════
@@ -515,40 +471,23 @@
                 </div>
               </div>
 
-              <!-- Scenario 3 (company email): show subdomain input using company name as slug -->
+              <!-- Scenario 3 (company email): suggest the custom domain in place of dns and slug both -->
               <div v-else-if="isCompanyEmail" class="space-y-5">
-                <div class="space-y-1.5">
-                  <label class="text-[11px] font-semibold uppercase tracking-wider" style="color: var(--text-secondary);">Site name</label>
-                  <div
-                    class="flex items-stretch rounded-[10px] overflow-hidden border-[1.5px]"
-                    :style="{
-                      borderColor: isFocused ? 'var(--accent)' : 'var(--border-input)',
-                      background: 'var(--bg-input)',
-                    }"
-                  >
-                    <input
-                      v-model="siteName"
-                      type="text"
-                      placeholder="e.g. acme, my-team"
-                      class="flex-1 min-w-0 px-3.5 py-2.5 text-[15px] outline-none bg-transparent"
-                      @focus="isFocused = true"
-                      @blur="isFocused = false"
-                      style="color: var(--text-primary);"
-                    />
-                    <div class="flex items-center px-3.5 border-l" style="background: var(--bg-surface); border-color: var(--border);">
-                      <span class="text-[13px] font-semibold" style="color: var(--text-secondary);">.streamed.space</span>
+                <div class="rounded-xl border border-accent bg-accent/5 p-5 space-y-3">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center text-accent">
+                      <i class="fa-solid fa-globe text-lg"></i>
+                    </div>
+                    <div class="text-left">
+                      <h4 class="text-sm font-semibold text-text-primary">Corporate Domain Suggestion</h4>
+                      <p class="text-xs text-text-secondary">Based on your email <strong>{{ userEmail }}</strong></p>
                     </div>
                   </div>
-                  <p v-if="isCheckingSlug" class="text-xs" style="color: var(--text-secondary);">Checking availability…</p>
-                  <p v-else-if="isSlugAvailable === true" class="text-xs" style="color: #1d9e75;">{{ siteSlug }}.streamed.space is available</p>
-                  <p v-else-if="isSlugAvailable === false" class="text-xs" style="color: #e55050;">This site name is already taken.</p>
-                </div>
-                <div
-                  v-if="siteSlug && isSlugAvailable === true"
-                  class="flex items-center gap-2 rounded-lg px-3.5 py-2.5 border"
-                  style="background: var(--bg-lavender); border-color: rgba(125,104,200,0.18);"
-                >
-                  <span class="text-[13px] font-semibold" style="color: var(--accent);">https://{{ siteSlug }}.streamed.space</span>
+                  <div class="h-px bg-border" />
+                  <div class="space-y-1 text-left">
+                    <label class="text-[11px] font-semibold uppercase tracking-wider text-text-secondary">Your Workspace Domain</label>
+                    <div class="text-lg font-semibold text-accent">{{ userEmailDomain }}</div>
+                  </div>
                 </div>
               </div>
 
@@ -560,7 +499,7 @@
                 @click="continueSiteHandler"
               >
                 <span v-if="creatingProfile" class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                <span>{{ hasCustomDomain ? `Continue with ${dnsInput}` : 'Create site' }}</span>
+                <span>{{ isCompanyEmail ? `Continue with ${userEmailDomain}` : hasCustomDomain ? `Continue with ${dnsInput}` : 'Create site' }}</span>
               </button>
             </div>
           </div>
@@ -697,12 +636,12 @@
                   <p class="text-sm font-semibold" style="color: var(--text-primary);">
                     Code sent to <span style="color: var(--accent);">{{ superAdminEmail }}</span>
                   </p>
-                  <p class="text-xs" style="color: var(--text-secondary);">Enter the 5-digit code below</p>
+                  <p class="text-xs" style="color: var(--text-secondary);">Enter the 6-digit code below</p>
                 </div>
 
                 <div class="flex items-center justify-center gap-3">
                   <input
-                    v-for="(_, idx) in 5"
+                    v-for="(_, idx) in 6"
                     :key="idx"
                     :ref="el => { if (el) otpInputRefs[idx] = el }"
                     v-model="otpDigits[idx]"
@@ -725,7 +664,7 @@
 
                 <button
                   type="button"
-                  :disabled="isVerifyingOtp || otpDigits.join('').length !== 5"
+                  :disabled="isVerifyingOtp || otpDigits.join('').length !== 6"
                   class="w-full flex items-center justify-center gap-2 cursor-pointer py-3 rounded-[9px] font-bold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   style="background: var(--accent); color: var(--accent-text);"
                   @click="verifySuperAdminOtp"
@@ -1148,7 +1087,6 @@ import { ref, watch, computed, onMounted, onUnmounted, nextTick, watchEffect} fr
 import AuthLayout from '../../layout/AuthLayout/AuthLayout.vue'
 import teamIcon from '../../assets/platform/team.svg'
 import personalIcon from '../../assets/platform/personal-use.svg'
-import schoolIcon from '../../assets/platform/school.svg'
 import Button from '../../components/ui/Button.vue'
 import BaseSelectField from '../../components/ui/BaseSelectField.vue'
 import BaseTextField from '../../components/ui/BaseTextField.vue'
@@ -1246,12 +1184,6 @@ const isCompanyEmail = computed(() => {
   return !GENERIC_EMAIL_PROVIDERS.has(domain)
 })
 
-const isEducationEmail = computed(() => {
-  const domain = userEmailDomain.value
-  if (!domain) return false
-  // Check for .edu anywhere in the domain (e.g. university.edu or university.edu.pk)
-  return domain.endsWith('.edu') || domain.includes('.edu.')
-})
 
 const isGenericEmail = computed(() => {
   const domain = userEmailDomain.value
@@ -1259,19 +1191,47 @@ const isGenericEmail = computed(() => {
 })
 
 // Enforce options based on domain
-const mandatoryOptionId = computed(() => {
-  if (isEducationEmail.value) return 'school'
-  return null
-})
+const mandatoryOptionId = computed(() => null)
 
 const filteredOptions = computed(() => {
-  if (isEducationEmail.value) return options.filter(o => o._id === 'school')
   if (isCompanyEmail.value) return options.filter(o => o._id === 'team')
   return options.filter(o => o._id === 'personal')
 })
 
 
 onMounted(async () => {
+  // Load saved onboarding step and state if available
+  const savedStep = localStorage.getItem('onboarding_active_step')
+  if (savedStep) {
+    const parsedStep = Number(savedStep)
+    if (parsedStep >= 5) {
+      activeStep.value = parsedStep
+      
+      dnsInput.value = localStorage.getItem('onboarding_dns_input') || ''
+      hasCustomDomain.value = localStorage.getItem('onboarding_has_custom_domain') === 'true'
+      companyID.value = localStorage.getItem('onboarding_company_id') || ''
+      siteName.value = localStorage.getItem('onboarding_site_name') || ''
+      siteSlug.value = localStorage.getItem('onboarding_site_slug') || ''
+      superAdminOtpSent.value = localStorage.getItem('onboarding_super_admin_otp_sent') === 'true'
+      superAdminUserId.value = localStorage.getItem('onboarding_super_admin_user_id') || ''
+      superAdminEmailPrefix.value = localStorage.getItem('onboarding_super_admin_email_prefix') || ''
+      superAdminName.value = localStorage.getItem('onboarding_super_admin_name') || ''
+      domainPhase.value = localStorage.getItem('onboarding_domain_phase') || 'idle'
+      
+      const savedDomain = localStorage.getItem('onboarding_current_domain')
+      if (savedDomain) {
+        try { currentDomain.value = JSON.parse(savedDomain) } catch (e) { console.error(e) }
+      }
+      
+      const savedInstructions = localStorage.getItem('onboarding_current_instructions')
+      if (savedInstructions) {
+        try { currentInstructions.value = JSON.parse(savedInstructions) } catch (e) { console.error(e) }
+      }
+      
+      selectedVerificationMethod.value = localStorage.getItem('onboarding_selected_verification_method') || 'cname'
+    }
+  }
+
   try {
     const res = await getProfile()
 
@@ -1285,8 +1245,6 @@ onMounted(async () => {
         // Page is locked — nothing else to do
         return
       }
-
-      // (Legacy dead code referencing hasCustomDomainEmail/customEmailDomain removed)
     }
   } catch (error) {
     console.error('Failed to fetch profile', error)
@@ -1345,9 +1303,10 @@ const superAdminPasswordFocused = ref(false)
 const superAdminOtpSent = ref(false)
 const isSendingOtp = ref(false)
 const isVerifyingOtp = ref(false)
-const otpDigits = ref(['', '', '', '', ''])
+const otpDigits = ref(['', '', '', '', '', ''])
 const otpInputRefs = ref([])
 const otpError = ref('')
+const superAdminUserId = ref(null)
 const otpResendCountdown = ref(0)
 let otpResendTimer = null
 
@@ -1417,12 +1376,10 @@ watchEffect(() => {
   }
 })
 
-// Auto-select and ENFORCE based on email domain
-watch([isEducationEmail, isCompanyEmail], ([isEdu, isCompany]) => {
+// Auto-select based on email domain
+watch(isCompanyEmail, (isCompany) => {
   if (activeStep.value !== 1) return
-  if (isEdu) {
-    selected.value = 'school'
-  } else if (isCompany) {
+  if (isCompany) {
     selected.value = 'team'
   } else {
     selected.value = 'personal'
@@ -1430,17 +1387,6 @@ watch([isEducationEmail, isCompanyEmail], ([isEdu, isCompany]) => {
 }, { immediate: true })
 
 function handleOptionClick(id) {
-  if (mandatoryOptionId.value && mandatoryOptionId.value !== id) {
-    let msg = ''
-    if (isEducationEmail.value) {
-      msg = `Academic accounts are restricted to School profiles.`
-    }
-    toast.error(msg, {
-      description: `Please use the ${mandatoryOptionId.value} option for ${userEmailDomain.value}`,
-      duration: 4000
-    })
-    return
-  }
   selected.value = id
 }
 
@@ -1479,13 +1425,6 @@ const companySizeOptions = Object.freeze([
   { title: '10,001+',        _id: '10001+' },
 ])
 
-const educationOptions = Object.freeze([
-  { title: 'School',       _id: 'school' },
-  { title: 'College',      _id: 'college' },
-  { title: 'University',   _id: 'university' },
-  { title: 'Postgraduate', _id: 'postgraduate' },
-])
-
 const referralOptions = [
   { id: 'google',      label: 'Google Search' },
   { id: 'social',      label: 'Social Media' },
@@ -1501,7 +1440,6 @@ const referralOptions = [
 const options = Object.freeze([
   { _id: 'team',     title: 'For my team',      description: 'Collaborate on your docs and projects.',             icon: teamIcon },
   { _id: 'personal', title: 'For personal use', description: 'Write better. Think more clearly. Stay organised.', icon: personalIcon },
-  { _id: 'school',   title: 'For school',       description: 'Keep notes, research and tasks in one place.',       icon: schoolIcon },
 ])
 
 // ─── Computed: claim domain for Step 9 ────────────────────────────────────────
@@ -1542,11 +1480,8 @@ const domainStatusStyle = computed(() => {
 const isCreateSiteDisabled = computed(() => {
   if (creatingProfile.value) return true
 
-  // Scenario 3 (company email): subdomain only — slug check only, no DNS checks
+  // Scenario 3 (company email): suggest domain only - no dns/slug inputs to validate
   if (isCompanyEmail.value) {
-    if (!siteName.value) return true
-    if (isCheckingSlug.value) return true
-    if (isSlugAvailable.value !== true) return true
     return false
   }
 
@@ -1593,21 +1528,6 @@ const moduleOptionsMap = {
     { id: 'planning',   label: 'Daily Planning' },
     { id: 'journaling', label: 'Journaling' },
   ],
-  school: [
-    { id: 'notes',             label: 'Notes' },
-    { id: 'assignments',       label: 'Assignments' },
-    { id: 'group_projects',    label: 'Group Projects' },
-    { id: 'research',          label: 'Research' },
-    { id: 'exam_prep',         label: 'Exam Prep' },
-    { id: 'class_management',  label: 'Class Management' },
-    { id: 'lecture_planning',  label: 'Lecture Planning' },
-    { id: 'homework_tracking', label: 'Homework Tracking' },
-    { id: 'project_tracking',  label: 'Project Tracking' },
-    { id: 'study_planning',    label: 'Study Planning' },
-    { id: 'revision_schedule', label: 'Revision Schedule' },
-    { id: 'collaboration',     label: 'Student Collaboration' },
-    { id: 'task_management',   label: 'Task Management' },
-  ],
 }
 const activeModules = computed(() => moduleOptionsMap[selected.value] || [])
 
@@ -1623,16 +1543,6 @@ const workTypeOptionsMap = {
     { id: 'hr',                   label: 'Human Resources',      icon: 'users' },
     { id: 'support',              label: 'Customer Support',     icon: 'headset' },
   ],
-  school: [
-    { id: 'study',            label: 'Study & Learning',  icon: 'book' },
-    { id: 'assignments',      label: 'Assignments',        icon: 'file-lines' },
-    { id: 'group_projects',   label: 'Group Projects',     icon: 'users' },
-    { id: 'research',         label: 'Research',           icon: 'magnifying-glass' },
-    { id: 'exam_prep',        label: 'Exam Prep',          icon: 'pen' },
-    { id: 'class_management', label: 'Class Management',   icon: 'chalkboard' },
-    { id: 'teaching',         label: 'Teaching',           icon: 'person-chalkboard' },
-    { id: 'notes',            label: 'Notes',              icon: 'clipboard' },
-  ],
   personal: [
     { id: 'task_management', label: 'Task Management', icon: 'check-square' },
     { id: 'learning',        label: 'Learning',         icon: 'book' },
@@ -1646,9 +1556,6 @@ const workTypeOptions = computed(() => workTypeOptionsMap[selected.value] || [])
 const stepLabels = computed(() => {
   if (selected.value === 'personal') {
     return ['Purpose', 'About You', 'Modules', 'Work Type', 'Done']
-  }
-  if (selected.value === 'school') {
-    return ['Purpose', 'About School', 'Modules', 'Work Type', 'Create Site', 'Done']
   }
   return ['Purpose', 'About Company', 'Modules', 'Work Type', 'Create Site', 'Done']
 })
@@ -1682,12 +1589,40 @@ watch(role,        (v) => { if (v && errors.value.role)                errors.va
 watch(companySize, (v) => { if (v && errors.value.companySize)         errors.value.companySize = undefined })
 watch(workType,    (v) => { if (v && errors.value.workType)            errors.value.workType    = undefined })
 
+// Auto-persist step & custom domain onboarding state
+watch(dnsInput, (v) => localStorage.setItem('onboarding_dns_input', v))
+watch(hasCustomDomain, (v) => localStorage.setItem('onboarding_has_custom_domain', String(v)))
+watch(companyID, (v) => {
+  if (v) localStorage.setItem('onboarding_company_id', v)
+  else localStorage.removeItem('onboarding_company_id')
+})
+watch(siteName, (v) => localStorage.setItem('onboarding_site_name', v))
+watch(siteSlug, (v) => localStorage.setItem('onboarding_site_slug', v))
+watch(superAdminOtpSent, (v) => localStorage.setItem('onboarding_super_admin_otp_sent', String(v)))
+watch(superAdminUserId, (v) => {
+  if (v) localStorage.setItem('onboarding_super_admin_user_id', v)
+  else localStorage.removeItem('onboarding_super_admin_user_id')
+})
+watch(superAdminEmailPrefix, (v) => localStorage.setItem('onboarding_super_admin_email_prefix', v))
+watch(superAdminName, (v) => localStorage.setItem('onboarding_super_admin_name', v))
+watch(domainPhase, (v) => localStorage.setItem('onboarding_domain_phase', v))
+watch(currentDomain, (v) => {
+  if (v) localStorage.setItem('onboarding_current_domain', JSON.stringify(v))
+  else localStorage.removeItem('onboarding_current_domain')
+})
+watch(currentInstructions, (v) => {
+  if (v) localStorage.setItem('onboarding_current_instructions', JSON.stringify(v))
+  else localStorage.removeItem('onboarding_current_instructions')
+})
+watch(selectedVerificationMethod, (v) => localStorage.setItem('onboarding_selected_verification_method', v))
+
 // ─── FIX 2: Pre-fill site name / dnsInput with company name when entering step 5 ──
 // For non-company emails: siteName uses company/school name (slug format)
 // For company emails: siteName uses company/school name too (slug format)
 // dnsInput is NEVER auto-filled from company name — it's either typed (custom domain)
 // or set from the user's email domain (company email scenario, handled separately)
 watch(activeStep, (step) => {
+  localStorage.setItem('onboarding_active_step', String(step))
   // ── Sync with URL for back-button support ──
   if (Number(route.query.step) !== step) {
     router.push({ query: { ...route.query, step } })
@@ -2085,13 +2020,23 @@ function buildProfilePayload(includeSite = false) {
   if (selected.value === 'personal') {
     return { ...base, type: 'personal', u_work_to_do: personalRole.value }
   }
-  if (selected.value === 'school') {
-    return { ...base, type: 'school', title: schoolName.value, company_size: educationLevel.value, role_id: role.value }
-  }
   return base
 }
 
+function clearOnboardingState() {
+  const keys = [
+    'onboarding_active_step', 'onboarding_dns_input', 'onboarding_has_custom_domain',
+    'onboarding_company_id', 'onboarding_site_name', 'onboarding_site_slug',
+    'onboarding_super_admin_otp_sent', 'onboarding_super_admin_user_id',
+    'onboarding_super_admin_email_prefix', 'onboarding_super_admin_name',
+    'onboarding_domain_phase', 'onboarding_current_domain', 'onboarding_current_instructions',
+    'onboarding_selected_verification_method'
+  ]
+  keys.forEach(k => localStorage.removeItem(k))
+}
+
 function routeToFinishProfile() {
+  clearOnboardingState()
   const companyIdRaw = companyID.value ?? localStorage.getItem('company_id') ?? ''
   const token        = localStorage.getItem('token')
   if (token) setAuthCookie(token)
@@ -2108,6 +2053,7 @@ function routeToFinishProfile() {
 }
 
 async function finishOnboarding() {
+  clearOnboardingState()
   const companyIdRaw = companyID.value ?? localStorage.getItem('company_id') ?? ''
   const token        = localStorage.getItem('token')
   if (token) setAuthCookie(token)
@@ -2179,7 +2125,6 @@ function validateSuperAdminEmail() {
   return true
 }
 
-const superAdminUserId = ref(null)
 const { mutateAsync: createCompanyUser } = useCreateCompanyUser()
 
 async function sendSuperAdminOtp() {
@@ -2201,7 +2146,7 @@ async function sendSuperAdminOtp() {
     // Store the created user id for OTP verification
     superAdminUserId.value = result?.data?._id ?? result?._id ?? null
     superAdminOtpSent.value = true
-    otpDigits.value = ['', '', '', '', '']
+    otpDigits.value = ['', '', '', '', '', '']
     otpError.value  = ''
     await nextTick()
     otpInputRefs.value[0]?.focus()
@@ -2217,7 +2162,7 @@ async function sendSuperAdminOtp() {
 async function verifySuperAdminOtp() {
   const otp = otpDigits.value.join('').trim()
 
-  if (otp.length !== 5) return
+  if (otp.length !== 6) return
 
   isVerifyingOtp.value = true
   otpError.value = ''
@@ -2262,7 +2207,7 @@ async function resendSuperAdminOtp() {
       company_id: companyIdRaw,
     })
 
-    otpDigits.value = ['', '', '', '', '']
+    otpDigits.value = ['', '', '', '', '', '']
     startOtpResendCountdown(60)
 
     await nextTick()
@@ -2288,10 +2233,10 @@ function onOtpInput(idx, event) {
   const digit = val.replace(/\D/g, '').slice(-1)
   otpDigits.value[idx] = digit
   otpError.value = ''
-  if (digit && idx < 4) {
+  if (digit && idx < 5) {
     nextTick(() => otpInputRefs.value[idx + 1]?.focus())
   }
-  if (otpDigits.value.join('').length === 5) {
+  if (otpDigits.value.join('').length === 6) {
     nextTick(() => verifySuperAdminOtp())
   }
 }
@@ -2307,7 +2252,7 @@ function onOtpKeydown(idx, event) {
     otpError.value = ''
   } else if (event.key === 'ArrowLeft' && idx > 0) {
     otpInputRefs.value[idx - 1]?.focus()
-  } else if (event.key === 'ArrowRight' && idx < 4) {
+  } else if (event.key === 'ArrowRight' && idx < 5) {
     otpInputRefs.value[idx + 1]?.focus()
   }
 }
@@ -2315,13 +2260,13 @@ function onOtpKeydown(idx, event) {
 function onOtpPaste(event) {
   event.preventDefault()
   const pasted = (event.clipboardData || window.clipboardData).getData('text')
-  const digits = pasted.replace(/\D/g, '').slice(0, 5).split('')
-  digits.forEach((d, i) => { if (i < 5) otpDigits.value[i] = d })
+  const digits = pasted.replace(/\D/g, '').slice(0, 6).split('')
+  digits.forEach((d, i) => { if (i < 6) otpDigits.value[i] = d })
   otpError.value = ''
-  const lastIdx = Math.min(digits.length - 1, 4)
+  const lastIdx = Math.min(digits.length - 1, 5)
   nextTick(() => {
     otpInputRefs.value[lastIdx]?.focus()
-    if (otpDigits.value.join('').length === 5) verifySuperAdminOtp()
+    if (otpDigits.value.join('').length === 6) verifySuperAdminOtp()
   })
 }
 
@@ -2517,14 +2462,6 @@ function validatePersonalStep() {
   return Object.keys(next).length === 0
 }
 
-function validateSchoolStep() {
-  const next = {}
-  if (!schoolName.value.trim()) next.schoolName     = 'Please enter your school or university name.'
-  if (!educationLevel.value)    next.educationLevel = 'Please select your education level.'
-  errors.value = { ...errors.value, ...next }
-  return Object.keys(next).length === 0
-}
-
 // ─── Navigation ───────────────────────────────────────────────────────────────
 function goBack() {
   if (siteCreated.value) return
@@ -2543,7 +2480,6 @@ async function continueHandler() {
   if (activeStep.value === 2) {
     if (selected.value === 'team'     && !validateCompanyStep())  return
     if (selected.value === 'personal' && !validatePersonalStep()) return
-    if (selected.value === 'school'   && !validateSchoolStep())   return
     activeStep.value++
     return
   }

@@ -175,7 +175,12 @@ import { toast } from 'vue-sonner';
 
 const { workspaceId } = useRouteIds();
 const selectedViewBy    = ref('module');
-
+interface ProcessGroupsResponse {
+  data?: {
+    groups?: any[];
+  };
+  groups?: any[];
+}
 const queryParams = computed(() => ({
   group_by: selectedViewBy.value,
 }));
@@ -211,7 +216,8 @@ const localList = ref<any[]>([]);
 
 watch(processGroups, (newVal) => {
   console.log("processGroups Response:", newVal);
-  const groups = newVal?.data?.groups || newVal?.groups || [];
+  const response = newVal as ProcessGroupsResponse | null;
+const groups = response?.data?.groups || response?.groups || [];
   if (groups) {
     localList.value = groups.map((group: any) => {
       let title = group.title;

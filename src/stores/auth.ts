@@ -246,7 +246,13 @@ export const useAuthStore = defineStore('auth', {
         'jobId', 'mannualWorkspace', 'selectedAgentModule', 'selectedModuleId',
         'sprintType', 'activeMilestoneId', 'activeSprintId', 'showActiveSprint',
         'activeSprintKey', 'selectedSprintTitle', 'selected_sheet_title',
-        'activeSessionId', 'activeSessionTitle', 'selected_sheet_id','sidebar_mode', 'company_name'
+        'activeSessionId', 'activeSessionTitle', 'selected_sheet_id','sidebar_mode', 'company_name',
+        'onboarding_active_step', 'onboarding_dns_input', 'onboarding_has_custom_domain',
+        'onboarding_company_id', 'onboarding_site_name', 'onboarding_site_slug',
+        'onboarding_super_admin_otp_sent', 'onboarding_super_admin_user_id',
+        'onboarding_super_admin_email_prefix', 'onboarding_super_admin_name',
+        'onboarding_domain_phase', 'onboarding_current_domain', 'onboarding_current_instructions',
+        'onboarding_selected_verification_method'
       ]
       keys.forEach(k => localStorage.removeItem(k))
       clearCookies()

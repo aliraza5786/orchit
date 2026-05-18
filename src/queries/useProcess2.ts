@@ -7,9 +7,26 @@ import { unref, computed } from "vue";
 /*                                Process Groups                              */
 /* -------------------------------------------------------------------------- */
 
-export const useProcessGroupsWithTransitions = (workspace_id: any, params?: any, options = {}) => {
+export const useProcessGroupsWithTransitions = (workspace_id: any, params?: any, options: any = {}) => {
+  const unwrappedParams = computed(() => {
+    const p = unref(params);
+    if (!p) return {};
+    if ('enabled' in p || 'staleTime' in p || 'select' in p) {
+      return {};
+    }
+    return p;
+  });
+
+  const unwrappedOptions = computed(() => {
+    const p = unref(params);
+    if (p && ('enabled' in p || 'staleTime' in p || 'select' in p)) {
+      return p;
+    }
+    return unref(options) || {};
+  });
+
   return useQuery({
-    queryKey: computed(() => ["process-groups-with-transitions", unref(workspace_id), { ...unref(params) }]),
+    queryKey: computed(() => ["process-groups-with-transitions", unref(workspace_id), { ...unwrappedParams.value }]),
     queryFn: ({ signal }) => {
       const wsId = unref(workspace_id);
       if (!wsId) return Promise.resolve(null);
@@ -18,13 +35,17 @@ export const useProcessGroupsWithTransitions = (workspace_id: any, params?: any,
         method: "GET",
         params: {
           sort: "sort_order",
-          ...unref(params),
+          ...unwrappedParams.value,
         },
         signal,
       });
     },
-    enabled: computed(() => !!unref(workspace_id)),
-    ...options,
+    enabled: computed(() => {
+      const wsEnabled = !!unref(workspace_id);
+      const optEnabled = unref(unwrappedOptions.value.enabled);
+      return optEnabled !== undefined ? (wsEnabled && optEnabled) : wsEnabled;
+    }),
+    ...unwrappedOptions.value,
   });
 };
 
@@ -281,3 +302,66 @@ export const useFilteredCardTypes = (workspace_id: any, options = {}) => {
     ...options,
   });
 };
+
+/* -------------------------------------------------------------------------- */
+/*                               Version Management                           */
+/* -------------------------------------------------------------------------- */
+
+export const useTransitionVersions = (workspace_id: any, transition_id: any, options = {}) => {
+  return useQuery({
+    queryKey: computed(() => ["transition-versions", unref(workspace_id), unref(transition_id)]),
+    queryFn: ({ signal }) => {
+      const wsId = unref(workspace_id);
+      const trId = unref(transition_id);
+      if (!wsId || !trId) return Promise.resolve(null);
+      return request<any>({
+        url: `workspace/${wsId}/process-transitions/${trId}/versions`,
+        method: "GET",
+        signal,
+      });
+    },
+    enabled: computed(() => !!unref(workspace_id) && !!unref(transition_id)),
+    ...options,
+  });
+};
+
+export const useTransitionVersion = (workspace_id: any, transition_id: any, version_number: any, options = {}) => {
+  return useQuery({
+    queryKey: computed(() => ["transition-version", unref(workspace_id), unref(transition_id), unref(version_number)]),
+    queryFn: ({ signal }) => {
+      const wsId = unref(workspace_id);
+      const trId = unref(transition_id);
+      const vNum = unref(version_number);
+      if (!wsId || !trId || !vNum) return Promise.resolve(null);
+      return request<any>({
+        url: `workspace/${wsId}/process-transitions/${trId}/versions/${vNum}`,
+        method: "GET",
+        signal,
+      });
+    },
+    enabled: computed(() => !!unref(workspace_id) && !!unref(transition_id) && !!unref(version_number)),
+    ...options,
+  });
+};
+
+type RestoreTransitionVersionPayload = {
+  workspace_id: string;
+  transition_id: string;
+  version_number: number;
+};
+
+export const useRestoreTransitionVersion = (options = {}) =>
+  useApiMutation<any, RestoreTransitionVersionPayload>(
+    {
+      key: ["restore-transition-version"],
+    } as any,
+    {
+      mutationFn: (vars: RestoreTransitionVersionPayload) =>
+        request({
+          url: `workspace/${vars.workspace_id}/process-transitions/${vars.transition_id}/versions/${vars.version_number}/restore`,
+          method: "POST",
+        }),
+      ...(options as any),
+    } as any
+  );
+
