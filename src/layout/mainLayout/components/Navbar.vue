@@ -156,7 +156,7 @@
               </div>
 
               <!-- Switcher Tabs Wrapper -->
-              <div class="px-4 pb-2 shrink-0">
+              <div v-if="associatedCompany" class="px-4 pb-2 shrink-0">
                 <div class="relative flex rounded-xl bg-bg-surface border border-border/50 p-[3px]">
                   <!-- Sliding indicator -->
                   <div
@@ -187,7 +187,7 @@
               </div>
 
               <!-- ── PROFESSIONAL: associated company card ── -->
-              <div v-if="accountMode === 'professional'" class="px-3 py-3 shrink-0">
+              <div v-if="accountMode === 'professional' && associatedCompany" class="px-3 py-3 shrink-0">
                 <!-- No associated company fallback -->
                 <div v-if="!associatedCompany" class="text-center py-6 text-text-secondary">
                   <i class="fa-regular fa-building text-2xl mb-2 block opacity-40"></i>
@@ -206,23 +206,23 @@
                 >
                   <!-- Card header -->
                   <div class="px-4 pt-4 pb-3 flex items-center gap-3">
-                    <img v-if="associatedCompany.logo" :src="associatedCompany.logo" class="w-11 h-11 rounded-xl object-cover border border-border shrink-0" />
+                    <img v-if="associatedCompany?.logo" :src="associatedCompany?.logo" class="w-11 h-11 rounded-xl object-cover border border-border shrink-0" />
                     <div v-else class="w-11 h-11 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center text-accent text-base font-bold shrink-0">
-                      {{ associatedCompany.title.charAt(0).toUpperCase() }}
+                      {{ associatedCompany?.title?.charAt(0)?.toUpperCase() || '' }}
                     </div>
                     <div class="min-w-0 flex-1">
                       <p class="text-[13px] font-bold text-text-primary truncate flex items-center gap-1.5">
-                        {{ associatedCompany.title }}
-                        <i v-if="associatedCompany._id === authStore.company_id" class="fa-solid fa-circle-check text-green-500 text-xs"></i>
+                        {{ associatedCompany?.title || '' }}
+                        <i v-if="associatedCompany?._id === authStore.company_id" class="fa-solid fa-circle-check text-green-500 text-xs"></i>
                       </p>
-                      <p class="text-[11px] text-text-secondary truncate">Managed by {{ associatedCompany.title }}</p>
+                      <p class="text-[11px] text-text-secondary truncate">Managed by {{ associatedCompany?.title || '' }}</p>
                     </div>
                   </div>
 
                   <!-- Card actions -->
                   <div class="border-t border-border/50 divide-y divide-border/40">
                     <button
-                      v-if="associatedCompany._id === authStore.company_id"
+                      v-if="associatedCompany?._id === authStore.company_id"
                       type="button"
                       @click="router.push('/settings?tab=org-setup'); closeMenu()"
                       class="w-full flex items-center gap-2.5 px-4 py-2.5 hover:bg-bg-dropdown-menu-hover transition-colors text-left cursor-pointer"
@@ -491,8 +491,8 @@ const companyAccounts = computed<Account[]>(() =>
 
 
 // The single company associated with the user's email domain
-const associatedCompany = computed(() =>
-  profileData.value?.associated_company as ({
+const associatedCompany = computed(() => {
+  const company = profileData.value?.associated_company as ({
     _id: string;
     title: string;
     slug: string;
@@ -501,8 +501,12 @@ const associatedCompany = computed(() =>
     custom_domain?: string | null;
     membership_role?: string;
     user_role?: { title?: string };
-  } | null) ?? null
-)
+  } | null)
+  if (company && typeof company === 'object' && Object.keys(company).length > 0 && (company._id || company.title)) {
+    return company
+  }
+  return null
+})
 
 function switchToCompany(company: { _id: string; domain_link: string }) {
   closeMenu()
@@ -556,9 +560,9 @@ const accountMode = ref<'personal' | 'professional'>(
 )
 
 watch(
-  () => authStore.company_id,
-  (id) => {
-    accountMode.value = id && id !== 'personal' ? 'professional' : 'personal';
+  [() => authStore.company_id, () => associatedCompany.value],
+  ([id, company]) => {
+    accountMode.value = id && id !== 'personal' && company ? 'professional' : 'personal';
   },
   { immediate: true }
 )
