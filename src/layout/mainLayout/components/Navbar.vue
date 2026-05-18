@@ -199,36 +199,41 @@
                   >Create one →</button>
                 </div>
 
-                <!-- Associated company card -->
+                <!-- Associated company card or list -->
                 <div
                   v-else
-                  class="rounded-2xl border border-border/60 bg-bg-surface overflow-hidden"
+                  class="space-y-2 max-h-[220px] overflow-y-auto pr-1"
                 >
-                  <!-- Card header -->
-                  <div class="px-4 pt-4 pb-3 flex items-center gap-3">
-                    <img v-if="associatedCompany?.logo" :src="associatedCompany?.logo" class="w-11 h-11 rounded-xl object-cover border border-border shrink-0" />
-                    <div v-else class="w-11 h-11 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center text-accent text-base font-bold shrink-0">
-                      {{ associatedCompany?.title?.charAt(0)?.toUpperCase() || '' }}
+                  <div
+                    v-for="comp in (profileData?.companies_list ?? [])"
+                    :key="comp._id"
+                    class="rounded-xl border border-border/60 bg-bg-surface p-3 flex items-center justify-between gap-3 hover:border-accent/40 cursor-pointer transition-all"
+                    @click="switchToCompany(comp)"
+                  >
+                    <div class="flex items-center gap-2.5 min-w-0 flex-1">
+                      <img v-if="comp.logo" :src="comp.logo" class="w-8 h-8 rounded-lg object-cover border border-border shrink-0" />
+                      <div v-else class="w-8 h-8 rounded-lg bg-accent/10 border border-accent/20 flex items-center justify-center text-accent text-xs font-bold shrink-0">
+                        {{ comp.title?.charAt(0)?.toUpperCase() || '' }}
+                      </div>
+                      <div class="min-w-0 flex-1">
+                        <p class="text-[12px] font-bold text-text-primary truncate flex items-center gap-1">
+                          {{ comp.title || '' }}
+                          <i v-if="comp._id === authStore.company_id" class="fa-solid fa-circle-check text-green-500 text-xs shrink-0"></i>
+                        </p>
+                        <p class="text-[10px] text-text-secondary truncate uppercase font-semibold tracking-wider">
+                          {{ comp.membership_role || 'member' }}
+                        </p>
+                      </div>
                     </div>
-                    <div class="min-w-0 flex-1">
-                      <p class="text-[13px] font-bold text-text-primary truncate flex items-center gap-1.5">
-                        {{ associatedCompany?.title || '' }}
-                        <i v-if="associatedCompany?._id === authStore.company_id" class="fa-solid fa-circle-check text-green-500 text-xs"></i>
-                      </p>
-                      <p class="text-[11px] text-text-secondary truncate">Managed by {{ associatedCompany?.title || '' }}</p>
-                    </div>
-                  </div>
-
-                  <!-- Card actions -->
-                  <div class="border-t border-border/50 divide-y divide-border/40">
+                    
                     <button
-                      v-if="associatedCompany?._id === authStore.company_id"
+                      v-if="comp._id === authStore.company_id"
                       type="button"
-                      @click="router.push('/settings?tab=org-setup'); closeMenu()"
-                      class="w-full flex items-center gap-2.5 px-4 py-2.5 hover:bg-bg-dropdown-menu-hover transition-colors text-left cursor-pointer"
+                      @click.stop="router.push('/settings?tab=org-setup'); closeMenu()"
+                      class="text-[10px] text-text-secondary hover:text-accent font-semibold p-1.5 rounded-lg hover:bg-bg-dropdown-menu-hover shrink-0 transition-colors"
+                      title="Manage Organization"
                     >
-                      <i class="fa-regular fa-gear text-[10px] text-text-secondary w-4 text-center"></i>
-                      <span class="text-[12px] font-medium text-text-secondary">Manage Organization</span>
+                      <i class="fa-regular fa-gear text-sm"></i>
                     </button>
                   </div>
                 </div>
@@ -556,7 +561,10 @@ function switchToPersonal() {
 
 // Toggle between personal and professional view in the menu
 const isApprovedCompanyMember = computed(() => {
-  return !!(associatedCompany.value && profileData.value?.company_role_id)
+  const list = profileData.value?.companies_list ?? []
+  const assoc = associatedCompany.value
+  const activeComp = profileData.value?.active_company || profileData.value?.companies
+  return !!(list.length > 0 || assoc || activeComp)
 })
 
 const accountMode = ref<'personal' | 'professional'>('personal')
