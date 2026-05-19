@@ -101,9 +101,10 @@ export const useWorkspaces = (
   const companyId = computed(() => {
     const hostname = window.location.hostname
 
-    // ✅ Detect if we're on a subdomain (both orchit.ai and localhost)
+    // ✅ Detect if we're on a subdomain (both orchit.ai, streamed.space and localhost)
     const isSubdomain =
       (hostname.endsWith('.orchit.ai') && hostname !== 'orchit.ai') ||
+      (hostname.endsWith('.streamed.space') && hostname !== 'streamed.space') ||
       (hostname.endsWith('.localhost') && hostname !== 'localhost')
 
     // ✅ Parse auth_session cookie directly (same source of truth as auth store)
@@ -490,6 +491,7 @@ function getCompanyId(): string | null {
 
   const isSubdomain =
     (hostname.endsWith('.orchit.ai') && hostname !== 'orchit.ai') ||
+    (hostname.endsWith('.streamed.space') && hostname !== 'streamed.space') ||
     (hostname.endsWith('.localhost') && hostname !== 'localhost')
 
   // ✅ Read from auth_session cookie — single source of truth

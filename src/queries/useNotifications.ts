@@ -29,6 +29,7 @@ function getCompanyId(): string | null {
 
   const isSubdomain =
     (hostname.endsWith('.orchit.ai') && hostname !== 'orchit.ai') ||
+    (hostname.endsWith('.streamed.space') && hostname !== 'streamed.space') ||
     (hostname.endsWith('.localhost') && hostname !== 'localhost')
 
   // ✅ Read from auth_session cookie — single source of truth

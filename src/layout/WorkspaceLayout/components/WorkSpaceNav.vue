@@ -432,6 +432,14 @@ const goHome = () => {
 const switchTo = (ws: any) => {
   const base = ws?.company?.domain_link;
   const path = `/workspace/peak/${ws._id}/${ws?.LatestTask?.job_id ?? ""}`;
+
+  if (window.location.hostname.includes("localhost") || window.location.hostname === "127.0.0.1") {
+    router.push(path);
+    closeLogoMenu();
+    clearWorkspaceStorage();
+    return;
+  }
+
   if (base) {
     window.location.href = `${base}${path}`;
     return;

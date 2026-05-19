@@ -31,8 +31,8 @@ const handleClick = async (rowEvt: any) => {
   const company = r?.company;
   const domainLink: string | undefined = company?.domain_link;
 
-  // ── Personal workspace ─────────────────────────────────────────────────────
-  if (!domainLink) {
+  // ── Personal workspace or Localhost ────────────────────────────────────────
+  if (!domainLink || window.location.hostname.includes("localhost") || window.location.hostname === "127.0.0.1") {
     if (jobId) {
       localStorage.setItem("jobId", jobId);
     } else {
@@ -47,6 +47,12 @@ const handleClick = async (rowEvt: any) => {
 
   // ✅ Pass token so tenant subdomain can save it to localStorage on load
   if (token) queryParams.set("_token", token);
+
+  // ✅ Pass company_id as _cid so tenant subdomain can bootstrap it in storage
+  if (company?._id) {
+    const encode = (s: string) => btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '.');
+    queryParams.set("_cid", encode(company._id));
+  }
 
   const targetUrl = `${domainLink.replace(/\/$/, "")}${peakPath}?${queryParams.toString()}`;
 
@@ -159,6 +165,12 @@ const renderOrganization = ({ row }: any) => {
 
     const theme = localStorage.getItem("theme") || "light";
     const queryParams = new URLSearchParams({ theme, company_id: company._id });
+
+    if (window.location.hostname.includes("localhost") || window.location.hostname === "127.0.0.1") {
+      router.push(`/dashboard?${queryParams.toString()}`);
+      return;
+    }
+
     const target = `${company.domain_link.replace(/\/$/, "")}/dashboard?${queryParams.toString()}`;
 
     window.location.href = target;

@@ -26,6 +26,7 @@ interface AgentChatPayload {
   stream?: boolean;
   attachments?: Attachment[];
   route_path?: string;
+  signal?: AbortSignal;
 }
 
 interface AgentChatResponse {
@@ -106,16 +107,16 @@ interface UploadConfig {
   name: string;
   text: string;
   type:
-    | "UPLOAD"
-    | "URL"
-    | "CMS_PAGE"
-    | "TEXT"
-    | "MIXED"
-    | "INTERNAL_MODULE"
-    | "INTERNAL_SHEET"
-    | "INTERNAL_TICKET"
-    | "WEB_SEARCH"
-    | "PROMPT";
+  | "UPLOAD"
+  | "URL"
+  | "CMS_PAGE"
+  | "TEXT"
+  | "MIXED"
+  | "INTERNAL_MODULE"
+  | "INTERNAL_SHEET"
+  | "INTERNAL_TICKET"
+  | "WEB_SEARCH"
+  | "PROMPT";
   files: File[];
   module_id: string;
   module_name: string;
@@ -182,7 +183,8 @@ export const useAgentStore = defineStore("agent", {
     streamGeneratingStartTs: null as number | null,
     currentPhaseDetail: "" as string,
     currentPhaseTimestamp: null as number | null,
-    streamPhases: [] as Array<{ phase: string; detail: string; timestamp: number }>
+    streamPhases: [] as Array<{ phase: string; detail: string; timestamp: number }>,
+    abortController: null as AbortController | null,
   }),
 
   getters: {
@@ -203,269 +205,282 @@ export const useAgentStore = defineStore("agent", {
 
   actions: {
     async sendMessage(
-  payload: AgentChatPayload,
-): Promise<AgentChatResponse | null> {
-  if (!payload.workspace_id) {
-    throw new Error("Missing workspace_id");
-  }
+      payload: AgentChatPayload,
+    ): Promise<AgentChatResponse | null> {
+      if (!payload.workspace_id) {
+        throw new Error("Missing workspace_id");
+      }
 
-  this.isSending = true;
-  this.resetStream();
+      this.isSending = true;
+      this.resetStream();
 
-  try {
-    const { route_path, ...basePayload } = payload;
-
-    let finalPayload: Omit<AgentChatPayload, "route_path"> = {
-      ...basePayload,
-    };
-
-    if (route_path?.includes("peak")) {
-      finalPayload = {
-        workspace_id: payload.workspace_id,
-        agent_id: payload.agent_id,
-        message: payload.message,
-        session_id: payload.session_id,
-        stream: payload.stream,
-        module_id: payload.module_id,
-        module_name: payload.module_name,
-        attachments: payload.attachments,
-      };
-    } else if (route_path?.includes("plan")) {
-      finalPayload = {
-        workspace_id: payload.workspace_id,
-        agent_id: payload.agent_id,
-        message: payload.message,
-        session_id: payload.session_id,
-        stream: payload.stream,
-        module_id: payload.module_id,
-        module_name: payload.module_name,
-        sheet_id: payload.sheet_id,
-        attachments: payload.attachments,
-      };
-    }
-
-    const axiosAuthHeader =
-      api.defaults?.headers?.common?.["Authorization"] as string | undefined;
-
-    const getTokenFromCookie = (): string => {
       try {
-        const match = document.cookie
-          .split("; ")
-          .find((row) => row.startsWith("auth_session="));
-        if (!match) return "";
-        const raw = decodeURIComponent(match.split("=").slice(1).join("="));
-        const parsed = JSON.parse(raw);
-        return parsed?.token ?? "";
-      } catch {
-        return "";
-      }
-    };
+        const { route_path, ...basePayload } = payload;
 
-    const token =
-      axiosAuthHeader?.replace(/^Bearer\s+/i, "") ||
-      localStorage.getItem("token") ||
-      localStorage.getItem("access_token") ||
-      getTokenFromCookie() ||
-      "";
+        let finalPayload: Omit<AgentChatPayload, "route_path"> = {
+          ...basePayload,
+        };
 
-    if (!token) {
-      throw new Error("No auth token found");
-    }
-
-    const url = `${baseUrl}agent-chat/message/assistant`;
-
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(finalPayload),
-    });
-if (!response.ok || !response.body) {
-  let errorMessage = `Request failed (${response.status})`;
-
-  try {
-    // 🔥 try to read backend error message
-    const errorText = await response.text();
-
-    // try JSON first
-    const parsed = JSON.parse(errorText);
-    errorMessage =
-      parsed?.message ||
-      parsed?.error ||
-      parsed?.detail ||
-      errorText ||
-      errorMessage;
-  } catch {
-    // fallback if not JSON
-    try {
-      const text = await response.text();
-      if (text) errorMessage = text;
-    } catch {
-      // ignore
-    }
-  }
-
-  throw new Error(errorMessage);
-}
-
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder("utf-8");
-
-    let buffer = "";
-    let receivedAnyChunk = false; // ✅ detect real success
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      receivedAnyChunk = true;
-
-      buffer += decoder.decode(value, { stream: true });
-
-      const lines = buffer.split("\n");
-      buffer = lines.pop() ?? "";
-
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (!trimmed || !trimmed.startsWith("data:")) continue;
-        this.handleIncomingChunk(trimmed);
-      }
-    }
-
-    if (buffer.trim().startsWith("data:")) {
-      this.handleIncomingChunk(buffer.trim());
-    }
-
-    // 🚨 If nothing streamed → treat as failure
-    if (!receivedAnyChunk) {
-      throw new Error("No stream data received");
-    }
-
-    return { success: true } as any;
-
-  } catch (err: any) {
-  console.error("❌ Failed to send message:", err);
-
-  // Extract meaningful message
-  const message =
-    err?.message ||
-    "Something went wrong while sending message";
-
-  throw new Error(message);
-} finally {
-    this.isSending = false;
-  }
-},
-    handleIncomingChunk(raw: string) {
-  try {
-    const cleaned = raw.replace(/^data:\s*/, '')
-    const parsed = JSON.parse(cleaned)
-
-    this.assistantStreamedChunks.push(parsed)
-
-    if (parsed.type === 'chunk') {
-      this.currentStreamText += parsed.content
-    }
-
-    if (parsed.type === 'phase') {
-      this.currentPhase = parsed.phase
-      this.currentPhaseDetail = parsed.detail ?? ''
-      this.currentPhaseTimestamp = parsed.timestamp ?? Date.now()
-      
-      // Track phase history
-      this.streamPhases.push({
-        phase: parsed.phase,
-        detail: parsed.detail ?? '',
-        timestamp: parsed.timestamp ?? Date.now()
-      })
-      
-      if (parsed.phase === 'thinking') {
-        this.streamThinkStartTs = parsed.timestamp ?? Date.now()
-      }
-      if (parsed.phase === 'generating') {
-        this.streamGeneratingStartTs = parsed.timestamp ?? Date.now()
-      }
-    }
-
-    if (parsed.type === 'timing') {
-      this.streamThinkMs = parsed.think_time_ms ?? null
-      this.streamTotalMs = parsed.total_time_ms ?? null
-    }
-
-    if (parsed.type === 'done') {
-      this.isAiTyping = false
-    }
-  } catch (err) {
-    console.error('Chunk parse failed:', raw)
-  }
-},
-mergeChatHistory(newChats: ChatSession[]) {
-  for (const newSession of newChats) {
-    const existingIdx = this.chatHistory.findIndex(
-      (s) => s.session_id === newSession.session_id
-    )
-
-    if (existingIdx !== -1) {
-      const existingMsgs = this.chatHistory[existingIdx].messages
-
-      for (const newMsg of newSession.messages) {
-        const alreadyExists = existingMsgs.some(
-          (m) =>
-            m._id === newMsg._id ||
-            // ← catches locally-appended temp messages with fake _id
-            (m.type === newMsg.type &&
-              m.content === newMsg.content &&
-              m.type === 'assistant')
-        )
-        if (!alreadyExists) {
-          existingMsgs.push(newMsg)
+        if (route_path?.includes("peak")) {
+          finalPayload = {
+            workspace_id: payload.workspace_id,
+            agent_id: payload.agent_id,
+            message: payload.message,
+            session_id: payload.session_id,
+            stream: payload.stream,
+            module_id: payload.module_id,
+            module_name: payload.module_name,
+            attachments: payload.attachments,
+          };
+        } else if (route_path?.includes("plan")) {
+          finalPayload = {
+            workspace_id: payload.workspace_id,
+            agent_id: payload.agent_id,
+            message: payload.message,
+            session_id: payload.session_id,
+            stream: payload.stream,
+            module_id: payload.module_id,
+            module_name: payload.module_name,
+            sheet_id: payload.sheet_id,
+            attachments: payload.attachments,
+          };
         }
-      }
 
-      // Replace any temp-_id assistant message with the real server message
-      const serverAssistant = newSession.messages.find(
-        (m) => m.type === 'assistant'
-      )
-      if (serverAssistant) {
-        const tempIdx = existingMsgs.findIndex(
-          (m) =>
-            m.type === 'assistant' &&
-            m._id.startsWith('assistant-')
-        )
-        if (tempIdx !== -1) {
-          // Swap temp with real — preserves metadata like think_ms/total_ms
-          existingMsgs[tempIdx] = {
-            ...serverAssistant,
-            metadata: {
-              ...serverAssistant.metadata,
-              think_ms: existingMsgs[tempIdx].metadata?.think_ms,
-              total_ms: existingMsgs[tempIdx].metadata?.total_ms,
-            },
+        const axiosAuthHeader =
+          api.defaults?.headers?.common?.["Authorization"] as string | undefined;
+
+        const getTokenFromCookie = (): string => {
+          try {
+            const match = document.cookie
+              .split("; ")
+              .find((row) => row.startsWith("auth_session="));
+            if (!match) return "";
+            const raw = decodeURIComponent(match.split("=").slice(1).join("="));
+            const parsed = JSON.parse(raw);
+            return parsed?.token ?? "";
+          } catch {
+            return "";
+          }
+        };
+
+        const token =
+          axiosAuthHeader?.replace(/^Bearer\s+/i, "") ||
+          localStorage.getItem("token") ||
+          localStorage.getItem("access_token") ||
+          getTokenFromCookie() ||
+          "";
+
+        if (!token) {
+          throw new Error("No auth token found");
+        }
+
+        const url = `${baseUrl}agent-chat/message/assistant`;
+
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(finalPayload),
+          signal: this.abortController?.signal,
+        });
+        if (!response.ok || !response.body) {
+          let errorMessage = `Request failed (${response.status})`;
+
+          try {
+            // 🔥 try to read backend error message
+            const errorText = await response.text();
+
+            // try JSON first
+            const parsed = JSON.parse(errorText);
+            errorMessage =
+              parsed?.message ||
+              parsed?.error ||
+              parsed?.detail ||
+              errorText ||
+              errorMessage;
+          } catch {
+            // fallback if not JSON
+            try {
+              const text = await response.text();
+              if (text) errorMessage = text;
+            } catch {
+              // ignore
+            }
+          }
+
+          throw new Error(errorMessage);
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder("utf-8");
+
+        let buffer = "";
+        let receivedAnyChunk = false; // ✅ detect real success
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          receivedAnyChunk = true;
+
+          buffer += decoder.decode(value, { stream: true });
+
+          const lines = buffer.split("\n");
+          buffer = lines.pop() ?? "";
+
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed || !trimmed.startsWith("data:")) continue;
+            this.handleIncomingChunk(trimmed);
           }
         }
+
+        if (buffer.trim().startsWith("data:")) {
+          this.handleIncomingChunk(buffer.trim());
+        }
+
+        // 🚨 If nothing streamed → treat as failure
+        if (!receivedAnyChunk) {
+          throw new Error("No stream data received");
+        }
+
+        return { success: true } as any;
+
+      } catch (err: any) {
+        // AbortError is expected when user stops generation — don't throw
+        if (err?.name === 'AbortError') {
+          return { success: false } as any;
+        }
+        console.error("❌ Failed to send message:", err);
+        const message = err?.message || "Something went wrong while sending message";
+        throw new Error(message);
+      } finally {
+        this.isSending = false;
       }
+    },
+    handleIncomingChunk(raw: string) {
+      try {
+        const cleaned = raw.replace(/^data:\s*/, '')
+        const parsed = JSON.parse(cleaned)
 
-    } else {
-      this.chatHistory.push(newSession)
-    }
-  }
-},
-resetStream() {
-  this.assistantStreamedChunks = []
-  this.currentStreamText = ''
-  this.currentPhase = ''
-  this.currentPhaseDetail = ''
-  this.currentPhaseTimestamp = null
-  this.streamPhases = []
-  this.streamThinkMs = null
-  this.streamTotalMs = null
-  this.streamThinkStartTs = null
-  this.streamGeneratingStartTs = null
-  this.isAiTyping = true
-},
+        this.assistantStreamedChunks.push(parsed)
 
+        if (parsed.type === 'chunk') {
+          this.currentStreamText += parsed.content
+        }
+
+        if (parsed.type === 'phase') {
+          this.currentPhase = parsed.phase
+          this.currentPhaseDetail = parsed.detail ?? ''
+          this.currentPhaseTimestamp = parsed.timestamp ?? Date.now()
+
+          // Track phase history
+          this.streamPhases.push({
+            phase: parsed.phase,
+            detail: parsed.detail ?? '',
+            timestamp: parsed.timestamp ?? Date.now()
+          })
+
+          if (parsed.phase === 'thinking') {
+            this.streamThinkStartTs = parsed.timestamp ?? Date.now()
+          }
+          if (parsed.phase === 'generating') {
+            this.streamGeneratingStartTs = parsed.timestamp ?? Date.now()
+          }
+        }
+
+        if (parsed.type === 'timing') {
+          this.streamThinkMs = parsed.think_time_ms ?? null
+          this.streamTotalMs = parsed.total_time_ms ?? null
+        }
+
+        if (parsed.type === 'done') {
+          this.isAiTyping = false
+        }
+      } catch (err) {
+        console.error('Chunk parse failed:', raw)
+      }
+    },
+    mergeChatHistory(newChats: ChatSession[]) {
+      for (const newSession of newChats) {
+        const existingIdx = this.chatHistory.findIndex(
+          (s) => s.session_id === newSession.session_id
+        )
+
+        if (existingIdx !== -1) {
+          const existingMsgs = this.chatHistory[existingIdx].messages
+
+          for (const newMsg of newSession.messages) {
+            const alreadyExists = existingMsgs.some(
+              (m) =>
+                m._id === newMsg._id ||
+                // ← catches locally-appended temp messages with fake _id
+                (m.type === newMsg.type &&
+                  m.content === newMsg.content &&
+                  m.type === 'assistant')
+            )
+            if (!alreadyExists) {
+              existingMsgs.push(newMsg)
+            }
+          }
+
+          // Replace any temp-_id assistant message with the real server message
+          const serverAssistant = newSession.messages.find(
+            (m) => m.type === 'assistant'
+          )
+          if (serverAssistant) {
+            const tempIdx = existingMsgs.findIndex(
+              (m) =>
+                m.type === 'assistant' &&
+                m._id.startsWith('assistant-')
+            )
+            if (tempIdx !== -1) {
+              // Swap temp with real — preserves metadata like think_ms/total_ms
+              existingMsgs[tempIdx] = {
+                ...serverAssistant,
+                metadata: {
+                  ...serverAssistant.metadata,
+                  think_ms: existingMsgs[tempIdx].metadata?.think_ms,
+                  total_ms: existingMsgs[tempIdx].metadata?.total_ms,
+                },
+              }
+            }
+          }
+
+        } else {
+          this.chatHistory.push(newSession)
+        }
+      }
+    },
+    resetStream() {
+      if (this.abortController) {
+        this.abortController.abort();
+      }
+      this.abortController = new AbortController();
+      this.assistantStreamedChunks = []
+      this.currentStreamText = ''
+      this.currentPhase = ''
+      this.currentPhaseDetail = ''
+      this.currentPhaseTimestamp = null
+      this.streamPhases = []
+      this.streamThinkMs = null
+      this.streamTotalMs = null
+      this.streamThinkStartTs = null
+      this.streamGeneratingStartTs = null
+      this.isAiTyping = true
+    },
+    stopStream() {
+      if (this.abortController) {
+        this.abortController.abort();
+        this.abortController = null;
+      }
+      this.isAiTyping = false;
+      this.isSending = false;
+      this.currentPhase = '';
+      this.currentPhaseDetail = '';
+    },
     async uploadAssistantFiles(files: File[] | File) {
       const formData = new FormData();
       const filesArray = Array.isArray(files) ? files : [files];
@@ -527,9 +542,8 @@ resetStream() {
         addParam("sheet_name", sheet_name);
         const query = params.toString();
 
-        const url = `${baseUrl}agent-chat/${workspace_id}/history/${
-          query ? `?${query}` : ""
-        }`;
+        const url = `${baseUrl}agent-chat/${workspace_id}/history/${query ? `?${query}` : ""
+          }`;
 
         // ✅ Removed cache headers — use query param busting above instead
         const res = await api.request<{
@@ -583,9 +597,8 @@ resetStream() {
 
         const query = params.toString();
 
-        const url = `${baseUrl}agent-chat/${workspace_id}/created-entities/${
-          query ? `?${query}` : ""
-        }`;
+        const url = `${baseUrl}agent-chat/${workspace_id}/created-entities/${query ? `?${query}` : ""
+          }`;
 
         // ✅ Removed cache headers
         const res = await api.request<{ data: CreatedEntityItem[] }>({
@@ -668,7 +681,7 @@ resetStream() {
         console.error("Failed to create Agent.", err);
         toast.error(
           err?.response?.data?.message ||
-            "Something went wrong while creating Agent.",
+          "Something went wrong while creating Agent.",
         );
       }
     },
@@ -1164,9 +1177,8 @@ resetStream() {
         addParam("skip", params?.skip ?? 0);
 
         const query = queryParams.toString();
-        const url = `${baseUrl}agent-chat/${workspace_id}/pinned-messages${
-          query ? `?${query}` : ""
-        }`;
+        const url = `${baseUrl}agent-chat/${workspace_id}/pinned-messages${query ? `?${query}` : ""
+          }`;
 
         // ✅ Removed cache headers
         const res = await api.request<{

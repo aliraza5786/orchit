@@ -100,6 +100,17 @@
                 </div>
              </div>
              <div class="rounded-[8px] bg-orchit-white/5 border border-orchit-white/10 p-3 flex flex-col gap-1">
+                <span class="text-[10px] uppercase tracking-wider text-text-secondary font-semibold">Active Version</span>
+                <span class="text-sm font-medium truncate flex items-center gap-1.5">
+                   <i class="fa-solid fa-clock-rotate-left text-[10px] text-text-secondary" />
+                   {{ activeVersionLabel }}
+                </span>
+             </div>
+             <div class="rounded-[8px] bg-orchit-white/5 border border-orchit-white/10 p-3 flex flex-col gap-1">
+                <span class="text-[10px] uppercase tracking-wider text-text-secondary font-semibold">Total Steps</span>
+                <span class="text-sm font-medium">{{ totalStatus }}</span>
+             </div>
+             <div class="rounded-[8px] bg-orchit-white/5 border border-orchit-white/10 p-3 flex flex-col gap-1">
                 <span class="text-[10px] uppercase tracking-wider text-text-secondary font-semibold">Total Transitions</span>
                 <span class="text-sm font-medium">{{ totalTransitions }}</span>
              </div>
@@ -157,7 +168,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import BaseSelectField from '../../../components/ui/BaseSelectField.vue' 
-import {useProcessGroupsWithTransitions, useProcessTransition, useUpdateTransition, useFilteredCardTypes } from '../../../queries/useProcess2'
+import {useProcessGroupsWithTransitions, useProcessTransition, useUpdateTransition, useFilteredCardTypes, useTransitionVersions } from '../../../queries/useProcess2'
 import { useRouteIds } from '../../../composables/useQueryParams'
 import BaseTextAreaField from '../../../components/ui/BaseTextAreaField.vue'
 import ProcessWorkflowPreview from './ProcessWorkflowPreview.vue'
@@ -189,6 +200,18 @@ const cardTypeOptions = computed(() => {
     title: t.title 
   })); 
   return opts;
+})
+
+const { data: versionsData } = useTransitionVersions(
+  workspaceId, 
+  processId,
+  { enabled: computed(() => !!processId.value && props.showPanel) }
+)
+
+const activeVersionLabel = computed(() => {
+  const list = versionsData.value?.data || versionsData.value || []
+  const active = list.find((v: any) => v.is_current_version)
+  return active ? active.version_label || `v${active.version}` : 'v1'
 })
 
 
