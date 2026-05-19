@@ -18,7 +18,7 @@
     <!-- File Upload with Memoization (Optional) -->
     <FileUploader
       v-model="logo"
-      label="Upload your project logo (Optional)"
+      label="Upload your workspace logo (Optional)"
       tooltip="You can upload your logo image here"
       message="Supports .png, .jpg, .jpeg file formats"
       placeholder="Choose a logo"

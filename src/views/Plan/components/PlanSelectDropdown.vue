@@ -6,7 +6,7 @@
       @click="toggle"
       type="button"
       class="text-nowrap inline-flex justify-between items-center gap-1 border rounded-[6px] font-medium cursor-pointer transition bg-transparent px-3 py-1.5 text-sm"
-      :class="isOpen ? 'border-primary-color ring-1 ring-primary-color/20' : 'border-border hover:border-primary-color-hover'"
+      :class="isOpen ? 'border-primary-color ring-1 ring-primary-color/20' : 'border-border hover:border-primary-color'"
     >
       <div class="flex items-center gap-2 truncate">
         <i class="fa-regular fa-calendar-days text-primary-color opacity-70"></i>

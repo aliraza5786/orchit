@@ -310,7 +310,7 @@
           </span>
           <button
             type="button"
-            class="w-10 h-10 rounded-full active:scale-95 text-text-primary flex items-center justify-center transition-all cursor-pointer"
+            class="w-10 h-10 rounded-lg active:scale-95 hover:bg-orchit-white/5 text-text-primary flex items-center justify-center transition-all cursor-pointer"
             @click="closeLightbox"
             title="Close (Esc)"
           >

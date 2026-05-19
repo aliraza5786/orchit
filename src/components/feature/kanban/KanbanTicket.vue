@@ -39,14 +39,14 @@
 
         <div v-if="!footer" class="flex justify-between items-center mt-3 pt-3 border-t border-border/50">
             <div class="flex items-center gap-3 flex-1">
-                <div v-if="canAssignCard || canViewCard ">
-                    <AssigmentDropdown :users="members" @assign="assignHandle" :assigneeId="ticket.seat_id"
+                <div>
+                    <AssigmentDropdown :disabled="!canAssignCard" :users="members" @assign="assignHandle" :assigneeId="ticket.seat_id"
                         :seat="ticket?.seats" />
                 </div>
 
                 <div @click.stop
                     class="flex items-center gap-2 text-nowrap overflow-ellipsis text-xs text-text-secondary">
-                    <DatePicker :inSpace="true" placeholder="end date" :model-value="dueDate" theme="dark" emit-as="ymd"
+                    <DatePicker :disabled="!canEditCard" :inSpace="true" placeholder="end date" :model-value="dueDate" theme="dark" emit-as="ymd"
                         @update:modelValue="setDueDate" />
                 </div>
             </div>

@@ -2,7 +2,7 @@
   <div class="w-full">
     <h2 class="text-2xl md:text-4xl font-semibold text-text-primary text-left m-0">Team Resources</h2>
     <p class="text-sm md:text-base text-text-secondary text-left mt-3 sm:mt-5 mb-0 ">
-      {{ ai ? ' AI-recommended team composition for your project' : 'Team composition for your project' }}
+      {{ ai ? ' AI-recommended team composition for your workspace' : 'Team composition for your workspace' }}
     </p>
   </div>
 

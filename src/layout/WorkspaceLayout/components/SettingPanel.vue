@@ -235,7 +235,7 @@
             <label class="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" :checked="isBrandMode" class="sr-only peer" @change="handleBrandToggle" />
               <div
-                class="w-11 h-6 bg-border/40 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-color"
+                class="w-11 h-6 bg-border peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-color"
               ></div>
             </label>
           </div>
@@ -315,6 +315,9 @@
                 type="button"
                 class="w-full px-4 py-2 text-sm rounded-md text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 @click="openDeleteModal"
+                :disabled="!isAdmin"
+                :class="isAdmin? 'cursor-pointer':'cursor-not-allowed'"
+
               >
                 Delete Workspace
               </button>
@@ -390,6 +393,7 @@ import {
   getPaletteIndex,
   getPresetByIndex,
 } from "../../../utilities/themeUtils";
+const {isAdmin} = usePermissions();
 
 // ─── Setup ────────────────────────────────────────────────────────────────────
 

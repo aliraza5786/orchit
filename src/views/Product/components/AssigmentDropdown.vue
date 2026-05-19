@@ -28,8 +28,8 @@
     </div>
 
     <button v-else type="button"
-      class="inline-flex items-center gap-2 rounded-full border border-border px-1 py-1 text-xs bg-bg-dropdown cursor-pointer hover:bg-bg-dropdown-menu-hover transition"
-      @click="toggle" :disabled="disabled || !canAssignCard" :class="canAssignCard?'cursor-pointer':'cursor-not-allowed'" >
+      class="inline-flex items-center gap-2 rounded-full border border-border px-1 py-1 text-xs bg-bg-dropdown  hover:bg-bg-dropdown-menu-hover transition"
+      @click="toggle" :disabled="disabled || !canAssignCard" :class="disabled || !canAssignCard ? 'cursor-not-allowed' : 'cursor-pointer'" >
       <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 opacity-70" viewBox="0 0 24 24" fill="currentColor">
         <path d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2h6z" />
       </svg>

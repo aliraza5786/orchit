@@ -1760,7 +1760,7 @@ function handleQuickCreate(title: string, group: any) {
     console.log(cardReporter);
   }
 
-  const laneId = laneOptions.value[0]?._id || "";
+  // const laneId = laneOptions.value[1]?._id || "";
 
   const payload = {
     "card-title": title,
@@ -1768,7 +1768,7 @@ function handleQuickCreate(title: string, group: any) {
     "card-type": cardType,
     priority: cardPriority,
     seat_id: cardAssignee,
-    workspace_lane_id: laneId,
+    // workspace_lane_id: laneId,
     variables: {
       "card-title": title,
       "card-status": cardStatus || "General",

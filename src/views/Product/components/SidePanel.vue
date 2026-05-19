@@ -401,20 +401,20 @@
                         class="hidden group-hover:flex items-center gap-1"
                       >
                         <button
-                          v-if="canEditCard"
+                          v-if="canEditVariable"
                           @click="handleEditVar(item)"
-                          class="text-text-secondary hover:text-primary-color transition-colors p-1"
-                          title="Edit variable"
+                          class="text-text-secondary cursor-pointer hover:text-primary-color transition-colors p-1"
+                          title="Edit variable" 
                         >
                           <i
                             class="fa-regular fa-pen-to-square text-[11px]"
                           ></i>
                         </button>
                         <button
-                          v-if="canEditCard"
+                          v-if="canDeleteVariable"
                           @click="handleDeleteVar(item)"
-                          class="text-text-secondary hover:text-red-500 transition-colors p-1"
-                          title="Delete variable"
+                          class="text-text-secondary cursor-pointer hover:text-red-500 transition-colors p-1"
+                          title="Delete variable" 
                         >
                           <i class="fa-regular fa-trash-can text-[10px]"></i>
                         </button>
@@ -648,7 +648,9 @@
                     isCreateVar = true;
                   }
                 "
-                class="w-full py-2 px-4 text-sm font-semibold text-white bg-primary-color rounded-lg border border-primary-color cursor-pointer active:scale-95 transition-all duration-150 flex items-center justify-center gap-2"
+                :disabled="!canCreateVariable"
+                :class="canCreateVariable?'cursor-pointer': 'cursor-not-allowed'"
+                class="w-full py-2 px-4 text-sm font-semibold text-white bg-primary-color rounded-lg border border-primary-color active:scale-95 transition-all duration-150 flex items-center justify-center gap-2"
               >
                 <i class="fa-solid fa-plus text-xs"></i>
                 Add Custom Fields
@@ -1369,6 +1371,9 @@ const {
   canEditCard,
   canViewAttachment,
   canAssignCard,
+  canCreateVariable,
+  canDeleteVariable,
+  canEditVariable
 } = usePermissions();
 const workspaceStore = useWorkspaceStore();
 const { workspaceId } = useRouteIds();

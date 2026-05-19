@@ -1771,7 +1771,7 @@ function handleQuickCreate(title: string, group: any) {
 
   const variableKey = selectedGroup.value?.slug;
   const label = selectedGroupLabel.value?.toLowerCase();
-  const laneId = laneOptions.value?.[0]?._id || "";
+  // const laneId = laneOptions.value?.[0]?._id || "";
 
   // Build variables object dynamically
   const variablesObj: Record<string, any> = {
@@ -1782,7 +1782,7 @@ function handleQuickCreate(title: string, group: any) {
 
   const payload: any = {
     "card-title": title,
-    workspace_lane_id: laneId,
+    // workspace_lane_id: laneId,
     variables: variablesObj,
   };
 

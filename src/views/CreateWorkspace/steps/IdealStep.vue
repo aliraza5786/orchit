@@ -5,7 +5,7 @@
       Welcome to Orchit AI Space
     </h2>
     <p v-once class="text-sm md:text-base text-text-secondary text-center mt-3 sm:mt-5 mb-0 ">
-      Describe your project, and we'll build the plan instantly with AI magic.
+      Describe your workspace, and we'll build the plan instantly with AI magic.
     </p>
   </div>
 
@@ -14,7 +14,7 @@
       <div
         :class="`${isPending ? 'neon-flow-border' : ''} flex h-[150px] items-start gap-2.5 self-stretch shadow-[-1px_-1px_0_0_rgba(255,255,255,0.20)_inset,1px_1px_1px_0_rgba(255,255,255,0.60)_inset] backdrop-blur-[5px] bg-bg-input pl-[17px] pr-[48px] py-[30px] rounded-xl max-sm:h-[120px] max-sm:px-5 max-sm:py-5`">
         <textarea autofocus :disabled="isPending" v-if="!isRecording && !audioURL" v-model="description" 
-          placeholder="Ask Orchit AI to create a project..." style="height: 100% !important;"
+          placeholder="Ask Orchit AI to create a workspace..." style="height: 100% !important;"
           class="w-full h-full bg-transparent text-text-primary text-base font-normal leading-7 resize-none outline-none placeholder:opacity-70" />
       </div>
 
