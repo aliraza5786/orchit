@@ -433,11 +433,13 @@ const isApprovedCompanyMember = computed(() => {
 
 // ── Account mode ───────────────────────────────────────────────
 const accountMode = ref<'personal' | 'professional'>('personal');
-
+// Replace ONLY the accountMode watch:
 watch(
-  [() => authStore.company_id, () => isApprovedCompanyMember.value],
-  ([id, approved]) => {
-    accountMode.value = id && id !== 'personal' && approved ? 'professional' : 'personal';
+  [() => authStore.company_id, () => activeCompanyData.value],
+  ([id, activeCompany]) => {
+    const onCompanyDomain = id && id !== 'personal';
+    const hasActiveCompany = !!activeCompany;
+    accountMode.value = (onCompanyDomain || hasActiveCompany) ? 'professional' : 'personal';
   },
   { immediate: true }
 );

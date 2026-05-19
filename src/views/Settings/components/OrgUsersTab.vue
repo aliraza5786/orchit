@@ -1,6 +1,5 @@
 <template>
   <div class="w-full flex-1 space-y-5">
-
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
       <div>
@@ -16,7 +15,7 @@
 
       <div class="flex items-center gap-2 flex-wrap self-start sm:self-auto">
         <button
-          v-if="isSuperAdminActive"
+          v-if="isSuperAdminActive && hasOrgDomain"
           @click="handleCopyInviteLink"
           class="flex items-center gap-2 px-3.5 py-2.5 border border-border/60 text-text-secondary text-sm font-medium rounded-lg hover:border-accent/40 hover:text-accent transition-all cursor-pointer"
         >
@@ -24,15 +23,41 @@
           Invite via link
         </button>
 
-        <button
-          v-if="canCreateUsers"
-          @click="handleAddMember"
-          :title="!isUserVerified ? 'Verify user first' : ''"
-          class="flex items-center gap-2 px-4 cursor-pointer py-2.5 bg-accent text-white text-sm font-semibold rounded-lg hover:bg-accent/90 active:scale-95 transition-all shadow-lg shadow-accent/20 whitespace-nowrap"
-        >
-          <i class="fa-solid fa-user-plus text-xs"></i>
-          Add member
-        </button>
+       <!-- Add member button with tooltip -->
+<div class="relative group/add">
+  <button
+    v-if="canCreateUsers"
+    @click="hasOrgDomain ? handleAddMember() : undefined"
+    :disabled="!hasOrgDomain || !isUserVerified"
+    :title="!isUserVerified ? 'Verify user first' : ''"
+    class="flex items-center gap-2 px-4 cursor-pointer py-2.5 text-white text-sm font-semibold rounded-lg transition-all shadow-lg whitespace-nowrap"
+    :class="hasOrgDomain
+      ? 'bg-accent hover:bg-accent/90 active:scale-95 shadow-accent/20'
+      : 'bg-accent/40 cursor-not-allowed shadow-none'"
+  >
+    <i class="fa-solid fa-user-plus text-xs"></i>
+    Add member
+  </button>
+
+  <!-- No custom domain tooltip -->
+  <div
+    v-if="!hasOrgDomain"
+    class="absolute right-0 top-full mt-2 z-50 w-64 rounded-xl border border-border/60 bg-bg-dropdown shadow-xl p-3 hidden group-hover/add:block pointer-events-none"
+  >
+    <div class="flex items-start gap-2.5">
+      <div class="w-7 h-7 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0 mt-0.5">
+        <i class="fa-solid fa-triangle-exclamation text-amber-500 text-xs"></i>
+      </div>
+      <div>
+        <p class="text-[12px] font-bold text-text-primary leading-tight">Custom domain required</p>
+        <p class="text-[11px] text-text-secondary mt-1 leading-relaxed">
+          You need a custom domain to add members. Set one up in
+          <span class="text-accent font-semibold">Organization Settings</span>.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
       </div>
     </div>
 
@@ -190,7 +215,7 @@
           : 'Add workspace accounts for your team members.' }}
       </p>
       <button
-        v-if="canCreateUsers && !searchQuery && !statusFilter && !roleFilter"
+        v-if="canCreateUsers && !searchQuery && !statusFilter && !roleFilter && hasOrgDomain"
         @click="openCreateModal"
         class="px-4 py-2 bg-accent text-white text-sm font-semibold rounded-lg hover:bg-accent/90 transition-all"
       >
@@ -686,32 +711,53 @@
 
               <!-- Email — built from name + org domain -->
               <div>
-                <label class="text-[11px] font-semibold text-text-primary uppercase tracking-wider block mb-1.5">
-                  Workspace email <span class="text-red-500">*</span>
-                </label>
-                <div
-                  class="flex items-center border rounded-lg overflow-hidden transition-all"
-                  :class="createErrors.emailPrefix
-                    ? 'border-red-500/60 focus-within:ring-2 focus-within:ring-red-500/10'
-                    : 'border-border/60 focus-within:border-accent/60 focus-within:ring-2 focus-within:ring-accent/10'"
-                >
-                  <input
-                    v-model="createForm.emailPrefix"
-                    placeholder="jane.doe"
-                    class="flex-1 px-3.5 py-2.5 text-sm bg-transparent outline-none placeholder:text-text-tertiary"
-                    @blur="validateCreateForm"
-                  />
-                  <span class="px-3 py-2.5 text-sm text-text-secondary bg-bg-card/60 border-l border-border/40 shrink-0 font-mono whitespace-nowrap">
-                    @{{ orgDomainSuffix }}
-                  </span>
-                </div>
-                <p v-if="createErrors.emailPrefix" class="text-[11px] text-red-500 mt-1">
-                  {{ createErrors.emailPrefix }}
-                </p>
-                <p v-else class="text-[11px] text-text-secondary mt-1">
-                  Full email: <span class="font-mono text-accent">{{ fullEmail }}</span>
-                </p>
-              </div>
+  <label class="text-[11px] font-semibold text-text-primary uppercase tracking-wider block mb-1.5">
+    Workspace email <span class="text-red-500">*</span>
+  </label>
+
+  <!-- Domain based email -->
+  <div
+    v-if="hasOrgDomain"
+    class="flex items-center border rounded-lg overflow-hidden transition-all"
+    :class="createErrors.emailPrefix
+      ? 'border-red-500/60 focus-within:ring-2 focus-within:ring-red-500/10'
+      : 'border-border/60 focus-within:border-accent/60 focus-within:ring-2 focus-within:ring-accent/10'"
+  >
+    <input
+      v-model="createForm.emailPrefix"
+      placeholder="jane.doe"
+      class="flex-1 px-3.5 py-2.5 text-sm bg-transparent outline-none placeholder:text-text-tertiary"
+      @blur="validateCreateForm"
+    />
+
+    <span
+      class="px-3 py-2.5 text-sm text-text-secondary bg-bg-card/60 border-l border-border/40 shrink-0 font-mono whitespace-nowrap"
+    >
+      @{{ orgDomainSuffix }}
+    </span>
+  </div>
+
+  <!-- Full custom email -->
+  <input
+    v-else
+    v-model="createForm.emailPrefix"
+    type="email"
+    placeholder="jane@example.com"
+    class="w-full px-3.5 py-2.5 text-sm bg-transparent border border-border/60 rounded-lg outline-none placeholder:text-text-tertiary focus-within:border-accent/60 focus-within:ring-2 focus-within:ring-accent/10"
+    @blur="validateCreateForm"
+  />
+
+  <p v-if="createErrors.emailPrefix" class="text-[11px] text-red-500 mt-1">
+    {{ createErrors.emailPrefix }}
+  </p>
+
+  <p v-else class="text-[11px] text-text-secondary mt-1">
+    Full email:
+    <span class="font-mono text-accent">
+      {{ fullEmail }}
+    </span>
+  </p>
+</div>
 
               <!-- Password -->
               <div>
@@ -1040,12 +1086,14 @@ function isSuperAdminMember(member: any) {
 // ─── Company context ──────────────────────────────────────────────────────────
 const companyId = computed<string>(() => localStorage.getItem('company_id') || '')
 const activeCompany = computed(() => props.profile?.active_company)
-
 const orgDomainSuffix = computed<string>(() => {
-  const domainLink: string = activeCompany.value?.custom_domain ?? ''
-  if (!domainLink) return 'yourcompany.orchit.ai'
-  try { return new URL(domainLink).hostname }
-  catch { return domainLink.replace(/^https?:\/\//, '') }
+  const domainLink = activeCompany.value?.custom_domain ?? ''
+  if (!domainLink) return ''
+  try {
+    return new URL(domainLink).hostname
+  } catch {
+    return domainLink.replace(/^https?:\/\//, '')
+  }
 })
 
 const inviteLink = computed<string>(() => activeCompany.value?.join_link)
@@ -1348,6 +1396,7 @@ const fullEmail = computed(() =>
     ? `${createForm.value.emailPrefix}@${orgDomainSuffix.value}`
     : ''
 )
+const hasOrgDomain = computed(() => !!activeCompany.value?.custom_domain)
 
 // Auto-fill email prefix when user types name
 function onNameInput() {

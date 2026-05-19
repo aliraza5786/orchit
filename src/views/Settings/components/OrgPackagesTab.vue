@@ -99,7 +99,7 @@ const { mutate: upgradePackage, isPending: isUpgrading } = useUpgradePackage({
 });
 
 const upgradingPackageId = ref<string | null>(null);
-
+const hasOrgDomain = computed(() => !!activeCompany.value?.custom_domain)
 function handleClick(plan: any) {
   if (isCurrentPlan(plan)) return // no-op on current plan
 
@@ -108,10 +108,12 @@ function handleClick(plan: any) {
   }
 
   if (!isSetupComplete.value) {
-    if (!hasVerifiedDomain.value && !hasVerifiedSuperAdmin.value) {
+    console.log("verified domain value", hasVerifiedDomain.value);
+    
+    if (!hasOrgDomain.value ) {
+      toast.error('Please add a custom domain and verify first')
+    } else if (!hasVerifiedDomain.value && !hasVerifiedSuperAdmin.value) {
       toast.error('Please verify your domain and super admin first before upgrading.')
-    } else if (!hasVerifiedDomain.value) {
-      toast.error('Please verify your domain first before upgrading.')
     } else {
       toast.error('Please verify your super admin first before upgrading.')
     }
@@ -386,7 +388,7 @@ if (currentInterval.value === 'year') {
               @click="handleClick(plan)"
               :disabled="(isUpgrading && upgradingPackageId === plan.packageId) || !canUpgradePackage || !isSetupComplete"
               class="w-full py-[14px] cursor-pointer rounded-[12px] font-normal text-[14px] transition relative z-10 shadow-[0_4px_6px_-4px_rgba(0,0,0,0.1)] disabled:opacity-50 disabled:cursor-not-allowed"
-              :title="!isSetupComplete ? 'Please verify domain and super admin first' : ''"
+              :title="!isSetupComplete ? 'Please add a custom domain and verify first' : ''"
               :class="[
                 isDark
                   ? plan.highlighted

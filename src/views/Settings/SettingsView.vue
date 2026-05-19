@@ -39,7 +39,7 @@
         <div class="mx-auto w-full flex-1 flex flex-col">
 
           <!-- Verification Warning Banner -->
-          <div v-if="showVerificationWarning" class="mb-6 p-4 rounded-xl border border-amber-500/20 bg-amber-500/5 shadow-sm">
+          <div v-if="showVerificationWarning && hasOrgDomain" class="mb-6 p-4 rounded-xl border border-amber-500/20 bg-amber-500/5 shadow-sm">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div class="flex gap-3">
                 <div class="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
@@ -130,7 +130,7 @@ const { data: profile } = useQuery({
 
 const profileData = computed(() => profile.value?.data ?? null)
 const authStore = useAuthStore()
-
+const hasOrgDomain = computed(() => profileData.value?.activeCompany?.custom_domain)
 // --- Verification Logic ---
 const { data: domainsData } = useListDomains()
 

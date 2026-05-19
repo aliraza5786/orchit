@@ -948,16 +948,19 @@ function openDeleteModal() {
 function closeDeleteModal() {
   deleteModal.open = false
   stopTimer()
-  router.push('/dashboard')
 }
 
+// Replace handleBackdropClick:
 function handleBackdropClick() {
-  // Don't close on backdrop click during steps 1-2 to prevent accidental dismissal
   if (deleteModal.step === 0 || deleteModal.step === 3) {
-    closeDeleteModal()
+    deleteModal.open = false
+    stopTimer()
+    // Only navigate if deletion was completed
+    if (deleteModal.step === 3) {
+      router.push('/dashboard')
+    }
   }
 }
-
 function goDeleteStep(step: number) {
   deleteModal.step = step
   if (step !== 1) stopTimer()

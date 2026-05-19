@@ -10,7 +10,7 @@
         <p class="text-sm text-text-secondary mt-1">Define roles and manage permissions for your organization.</p>
       </div>
       <button
-      v-if="canCreateRole"
+      v-if="canCreateRole && hasOrgDomain"
         @click="openCreateModal"
         :disabled="!isUserVerified"
         :title="!isUserVerified ? 'Verify user first' : ''"
@@ -134,6 +134,7 @@
             Create custom roles to tailor permissions for different team members.
           </p>
           <button
+          v-if="hasOrgDomain"
             @click="openCreateModal"
             :disabled="!isUserVerified"
             class="px-4 py-2 bg-accent text-white text-sm font-semibold rounded-lg hover:bg-accent/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
@@ -281,7 +282,7 @@ const props = defineProps<{
 }>()
 
 const activeCompany = computed(() => props.profile?.active_company)
-
+const hasOrgDomain = computed(() => !!activeCompany.value?.custom_domain)
 const membershipRole = computed(() =>
   activeCompany.value?.membership_role || null
 )
