@@ -135,6 +135,7 @@ const props = defineProps<{
   modelValue: boolean
   process: { _id?: string; id?: string; title?: string ; type_value?: string} | null
 }>()
+console.log("props values for process", props.process);
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: boolean): void

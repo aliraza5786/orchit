@@ -10,7 +10,7 @@
         <p class="text-sm text-text-secondary mt-1">Define roles and manage permissions for your organization.</p>
       </div>
       <button
-      v-if="canCreateRole && hasOrgDomain"
+      v-if="canCreateRole && hasOrgDomain && hasSuperAdmin"
         @click="openCreateModal"
         :disabled="!isUserVerified"
         :title="!isUserVerified ? 'Verify user first' : ''"
@@ -134,7 +134,7 @@
             Create custom roles to tailor permissions for different team members.
           </p>
           <button
-          v-if="hasOrgDomain"
+          v-if="hasOrgDomain && canCreateRole && hasOrgDomain && hasSuperAdmin"
             @click="openCreateModal"
             :disabled="!isUserVerified"
             class="px-4 py-2 bg-accent text-white text-sm font-semibold rounded-lg hover:bg-accent/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
@@ -156,7 +156,7 @@
               </div>
               <button
                 v-if="canDeleteRole"
-                @click="deleteRole(role._id)"
+                @click="askDeleteRole(role)"
                 class="p-1.5 text-text-secondary hover:text-red-600 hover:bg-red-500/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
                 title="Delete role"
               >
@@ -234,7 +234,39 @@
       </div>
     </div>
   </div>
+<div v-if="showDeleteModal" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+  <div class="bg-bg-card rounded-xl p-5 w-full max-w-md border border-border">
+    
+    <h3 class="text-lg font-semibold text-text-primary">
+      Delete Role
+    </h3>
 
+    <p class="text-sm text-text-secondary mt-2">
+      Are you sure you want to delete
+      <span class="font-semibold text-text-primary">
+        {{ roleToDelete?.title }}
+      </span>
+      ?
+    </p>
+
+    <div class="flex justify-end gap-2 mt-5">
+      <button
+        @click="showDeleteModal = false"
+        class="px-3 py-2 text-sm border rounded-lg"
+      >
+        Cancel
+      </button>
+
+      <button
+        @click="confirmDeleteRole"
+        class="px-3 py-2 text-sm bg-red-600 text-white rounded-lg"
+        :disabled="isDeletingRole"
+      >
+        Delete
+      </button>
+    </div>
+  </div>
+</div>
  <!-- In template — replace both modal usages with this single modal -->
 <EditCompanyRole
   v-model="showModal"
@@ -248,7 +280,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { toast } from 'vue-sonner'
-import { useCompanyRolesWithoutPermission } from '../../../queries/useCommon'
+import { useCompanyRolesWithoutPermission,useDeleteCompanyRoleById } from '../../../queries/useCommon'
 import { useCompanyUsers } from '../../../queries/useCompanyUsers'
 import EditCompanyRole from './EditCompanyRole.vue'
 
@@ -283,10 +315,12 @@ const props = defineProps<{
 
 const activeCompany = computed(() => props.profile?.active_company)
 const hasOrgDomain = computed(() => !!activeCompany.value?.custom_domain)
+const hasSuperAdmin = computed(() => activeCompany.value?.has_super_admin)
 const membershipRole = computed(() =>
   activeCompany.value?.membership_role || null
 )
-
+const { mutateAsync: deleteCompanyRole, isPending: isDeletingRole } =
+  useDeleteCompanyRoleById()
 const permissions = computed<string[]>(() =>
   activeCompany.value?.permissions || []
 )
@@ -407,16 +441,26 @@ function formatCategory(category: string): string {
 }
 
 // ── Delete ────────────────────────────────────────────────────────────────────
-async function deleteRole(roleId: string) {
-  console.log(roleId);
-  
-  if (!window.confirm('Are you sure you want to delete this role?')) return
+const showDeleteModal = ref(false)
+const roleToDelete = ref<CompanyRole | null>(null)
+
+function askDeleteRole(role: CompanyRole) {
+  roleToDelete.value = role
+  showDeleteModal.value = true
+}
+
+async function confirmDeleteRole() {
+  if (!roleToDelete.value) return
+
   try {
-    await new Promise(r => setTimeout(r, 600))
+    await deleteCompanyRole(roleToDelete.value._id)
+
     toast.success('Role deleted')
+    showDeleteModal.value = false
+    roleToDelete.value = null
     refetchRoles()
-  } catch {
-    toast.error('Failed to delete role')
+  } catch (e: any) {
+    toast.error(e?.response?.data?.message ?? 'Failed to delete role')
   }
 }
 </script>

@@ -89,28 +89,27 @@ const canCreateOrg = computed(() => {
 })
 
 const isSwitching = ref(false)
-
-// ─────────────────────────────
-// METHODS
-// ─────────────────────────────
+function resolveModeFromTab(tab: string | undefined) {
+  if (!tab) return 'personal'
+  if (ORG_TABS.has(tab)) return 'org'
+  return 'personal'
+}
 onMounted(() => {
-  // Determine initial mode
-  const saved = localStorage.getItem('sidebar_mode')
-  mode.value = (saved === 'org' && hasOrgs.value) ? 'org' : 'personal'
+  const tab = route.query.tab as string | undefined
 
+  mode.value = resolveModeFromTab(tab)
+
+  // fallback behavior only if no tab exists
+  if (!tab) {
+    mode.value = hasOrgs.value ? 'org' : 'personal'
+    selectTab(mode.value === 'org' ? 'org-setup' : 'profile')
+  }
+
+  // ensure company is selected
   if (hasOrgs.value && !activeCompanyId.value) {
     const first = companiesList.value[0]
     if (first) selectCompany(first, false)
   }
-
-  // Sync URL tab with mode
-  const tab = route.query.tab as string
-  const isOrgTab = ['org-setup', 'org-domain', 'org-users', 'org-roles',
-                    'org-packages', 'token-allocation', 'ownership-transfer',
-                    'org-create'].includes(tab)
-  
-  if (isOrgTab && hasOrgs.value) mode.value = 'org'
-  else if (['profile', 'token-utilization', 'billing'].includes(tab)) mode.value = 'personal'
 })
 
 watch(mode, (val) => localStorage.setItem('sidebar_mode', val))
@@ -158,6 +157,16 @@ function switchMode(newMode: 'personal' | 'org') {
     else selectTab('org-create')
   }
 }
+const ORG_TABS = new Set([
+  'org-setup',
+  'org-domain',
+  'org-users',
+  'org-roles',
+  'org-packages',
+  'token-allocation',
+  'ownership-transfer',
+  'org-create'
+])
 
 // ─────────────────────────────
 // MENU ITEMS

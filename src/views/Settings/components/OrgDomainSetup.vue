@@ -123,15 +123,6 @@
                 </button>
 
                 <button
-                  v-if="canManageDomain"
-                  @click="startWizard(domain)"
-                  class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-border/60 text-text-secondary hover:text-text-primary hover:border-border transition-all"
-                >
-                  <i class="fa-regular fa-pen-to-square text-[11px]"></i>
-                  Manage
-                </button>
-
-                <button
                   v-if="domain.status !== 'verified' && canVerifyDomain"
                   @click="startWizard(domain)"
                   class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-accent text-white hover:bg-accent/90 transition-all shadow-sm shadow-accent/20"
