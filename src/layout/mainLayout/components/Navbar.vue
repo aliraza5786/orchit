@@ -602,8 +602,13 @@ async function handleLogout() {
 
 function openAccountSettings() {
   closeMenu();
-  const tab = currentAccount.value.type === 'company' ? 'org-setup' : 'profile';
-  router.push({ path: "/settings", query: { tab } });
+
+  router.push({
+    path: "/settings",
+    query: {
+      tab: "profile"
+    }
+  });
 }
 
 // ── Nav links ──────────────────────────────────────────────────
