@@ -175,17 +175,15 @@ import { toast } from 'vue-sonner';
 
 const { workspaceId } = useRouteIds();
 const selectedViewBy    = ref('module');
-interface ProcessGroupsResponse {
-  data?: {
-    groups?: any[];
-  };
-  groups?: any[];
-}
+
 const queryParams = computed(() => ({
   group_by: selectedViewBy.value,
 }));
 
 const { data: processGroups, isPending } = useProcessGroupsWithTransitions(workspaceId, queryParams);
+watch(processGroups, (v) => {
+  console.log('processGroups raw:', JSON.parse(JSON.stringify(v ?? {})))
+}, { immediate: true })
 const { canCreateVariable } = usePermissions();
 
 /* -------------------------------------------------------------------------- */
@@ -214,36 +212,43 @@ const selectedViewLabel = computed(
 /* -------------------------------------------------------------------------- */
 const localList = ref<any[]>([]);
 
-watch(processGroups, (newVal) => {
-  console.log("processGroups Response:", newVal);
-  const response = newVal as ProcessGroupsResponse | null;
-const groups = response?.data?.groups || response?.groups || [];
-  if (groups) {
-    localList.value = groups.map((group: any) => {
-      let title = group.title;
-      
-      if (!title) {
-        if (group.module) {
-          title = typeof group.module === 'object' ? (group.module.title || group.module.name) : group.module;
-        } else if (group.card_status) {
-          title = typeof group.card_status === 'object' ? (group.card_status.title || group.card_status.name || group.card_status.value) : group.card_status;
-        } else if (group.card_type) {
-          title = typeof group.card_type === 'object' ? (group.card_type.title || group.card_type.name || group.card_type.value) : group.card_type;
-        } else if (group.name) {
-          title = group.name;
-        } else if (group.value) {
-          title = group.value;
-        }
-      }
-      
-      return {
-        ...group,
-        title: title || 'Untitled Group',
-        cards: group.transitions || [],
-      };
-    });
+watch(processGroups, (newVal: any) => {
+  if (!newVal?.groups) {
+    localList.value = []
+    return
   }
-}, { immediate: true });
+
+  const columns: any[] = []
+
+  newVal.groups.forEach((moduleGroup: any) => {
+    (moduleGroup.process_groups ?? []).forEach((pg: any) => {
+      columns.push({
+        _id:        pg._id,
+        columnId:   pg._id,
+        title:      pg.title      ?? 'Untitled Group',
+        color:      pg.color      ?? '#3b82f6',
+        icon:       pg.icon       ?? null,
+        is_default: pg.is_default ?? false,
+        cards: (pg.transitions ?? []).map((t: any) => ({
+          ...t,
+          title:          t.title          ?? t.name ?? 'Untitled Transition',
+          type_value:     t.type_value     ?? null,
+          variable_type:  t.variable_type  ?? null,
+          status:         t.status         ?? null,
+          ticket_count:   t.ticket_count   ?? 0,
+          flow_metadatas: t.flow_metadatas ?? [],
+          description:    t.description    ?? null,
+          assigned_to:    t.assigned_to    ?? null,
+          is_active:      t.is_active      ?? true,
+          version:        t.version        ?? 1,
+          created_by:     t.created_by     ?? null,
+        })),
+      })
+    })
+  })
+
+  localList.value = columns
+}, { immediate: true })
 
 /* -------------------------------------------------------------------------- */
 /*                                Search Logic                                */
