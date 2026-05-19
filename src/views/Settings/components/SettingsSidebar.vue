@@ -13,6 +13,11 @@ const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 const associatedCompany = computed(() => props.profile?.associated_company)
+
+const hasAssociatedCompany = computed(() => {
+  return associatedCompany.value &&
+    Object.keys(associatedCompany.value).length > 0
+})
 // ─────────────────────────────
 // STATE & MODE
 // ─────────────────────────────
@@ -176,15 +181,24 @@ const personalItems = [
   { label: 'Tokens',   tab: 'token-utilization', icon: 'fa-regular fa-coins' },
   { label: 'Billing',  tab: 'billing',           icon: 'fa-regular fa-credit-card' },
 ]
+const isMember = computed(() => {
+  return props.profile?.active_company?.membership_role === 'member';
+});
 
 const visiblePersonalItems = computed(() => {
   return personalItems.filter(item => {
-    // Hide billing from personal if user has an organization
-    if (item.tab === 'billing' && hasOrgs.value) return false
-    return true
-  })
-})
+    // Hide billing only if user has org AND is not member
+    if (
+      item.tab === 'billing' &&
+      hasOrgs.value &&
+      !isMember.value
+    ) {
+      return false;
+    }
 
+    return true;
+  });
+});
 const orgItems = [
   { label: 'Overview',        tab: 'org-setup',          icon: 'fa-regular fa-sliders',       ownerOnly: false },
   { label: 'Domain',          tab: 'org-domain',         icon: 'fa-regular fa-globe',          ownerOnly: false },
@@ -219,7 +233,6 @@ function orgInitials(title: string) {
         <i class="fa-solid fa-arrow-left text-[10px] group-hover:-translate-x-0.5 transition-transform"></i>
         Back to dashboard
       </button>
-
       <!-- Toggle Tabs (Only if they have orgs) -->
       <div v-if="hasOrgs" class="flex rounded-lg border border-border bg-bg-card p-[2px] gap-[3px]">
         <button
@@ -377,7 +390,7 @@ function orgInitials(title: string) {
           </div>
 
           <div class="mt-auto space-y-3 pt-4">
-      <div v-if="isPersonalFree && !hasOrgs && !associatedCompany" class="rounded-xl border border-accent/25 bg-gradient-to-b from-accent/10 to-accent/5 p-4">
+      <div v-if="isPersonalFree && !hasOrgs && !hasAssociatedCompany" class="rounded-xl border border-accent/25 bg-gradient-to-b from-accent/10 to-accent/5 p-4">
         <div class="flex items-center gap-2 mb-1.5">
           <i class="fa-solid fa-bolt text-accent text-[11px]"></i>
           <p class="text-[12px] font-bold text-text-primary">Free account</p>
@@ -393,7 +406,7 @@ function orgInitials(title: string) {
         </button>
       </div>
 
-      <div v-if="!hasOrgs && canCreateOrg && !associatedCompany">
+      <div v-if="!hasOrgs && canCreateOrg && !hasAssociatedCompany">
         <button
           @click="switchMode('org'); selectTab('org-create')"
           class="w-full py-2 rounded-lg border border-dashed border-accent text-accent text-[12px] cursor-pointer font-bold hover:bg-accent/10 active:scale-[0.97] transition-all"

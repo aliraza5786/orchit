@@ -60,18 +60,25 @@
     <KanbanSkeleton v-if="isPending" />
 
     <!-- Board Area -->
-    <div v-if="!isPending" class="flex-1 w-full px-2 overflow-hidden flex flex-col">
-      <div class="flex-1 overflow-x-auto flex items-start gap-2 scrollbar-visible py-2">
-        <!-- Kanban Board -->
-        <ProcessKanbanBoard
-          v-if="filteredList?.length > 0"
-          @delete:column="(e: any) => handleDeleteColumn(e)"
-          @update:column="(e: any) => handleUpdateColumn(e)"
-          @onPlus="openAddTransition"
-          @select:ticket="handleClickTicket"
-          :board="filteredList"
-          @reorder="handleReorder"
-        >
+   <div v-if="!isPending" class="flex-1 w-full px-2 overflow-hidden flex flex-col">
+  <div class="flex-1 overflow-x-auto flex items-start gap-2 scrollbar-visible py-2">
+    
+    <!-- DEBUG: remove after fix -->
+    <div style="display:none">
+      <span v-for="col in filteredList" :key="col._id">
+        {{ col.title }}: {{ col.cards?.length ?? 0 }} cards
+      </span>
+    </div>
+
+    <ProcessKanbanBoard
+      v-if="filteredList?.length > 0"
+      @delete:column="(e: any) => handleDeleteColumn(e)"
+      @update:column="(e: any) => handleUpdateColumn(e)"
+      @onPlus="openAddTransition"
+      @select:ticket="handleClickTicket"
+      :board="filteredList"
+      @reorder="handleReorder"
+    >
           <template #ticket="{ ticket, index }">
             <ProcessKanbanCard
               @click="handleClickTicket(ticket)"
@@ -178,12 +185,21 @@ const selectedViewBy    = ref('module');
 
 const queryParams = computed(() => ({
   group_by: selectedViewBy.value,
-}));
+}))
 
-const { data: processGroups, isPending } = useProcessGroupsWithTransitions(workspaceId, queryParams);
-watch(processGroups, (v) => {
-  console.log('processGroups raw:', JSON.parse(JSON.stringify(v ?? {})))
-}, { immediate: true })
+interface ProcessGroupsResponse {
+  grouped_by?: string
+  groups?: any[]
+}
+
+const query = useProcessGroupsWithTransitions(workspaceId, queryParams)
+
+const processGroups = computed<ProcessGroupsResponse | undefined>(
+  () => query.data.value as ProcessGroupsResponse
+)
+
+const isPending = query.isPending
+
 const { canCreateVariable } = usePermissions();
 
 /* -------------------------------------------------------------------------- */
@@ -213,42 +229,77 @@ const selectedViewLabel = computed(
 const localList = ref<any[]>([]);
 
 watch(processGroups, (newVal: any) => {
-  if (!newVal?.groups) {
-    localList.value = []
-    return
-  }
+  if (!newVal?.groups) { localList.value = []; return }
 
+  const groupedBy = newVal.grouped_by
   const columns: any[] = []
 
-  newVal.groups.forEach((moduleGroup: any) => {
-    (moduleGroup.process_groups ?? []).forEach((pg: any) => {
-      columns.push({
-        _id:        pg._id,
-        columnId:   pg._id,
-        title:      pg.title      ?? 'Untitled Group',
-        color:      pg.color      ?? '#3b82f6',
-        icon:       pg.icon       ?? null,
-        is_default: pg.is_default ?? false,
-        cards: (pg.transitions ?? []).map((t: any) => ({
-          ...t,
-          title:          t.title          ?? t.name ?? 'Untitled Transition',
-          type_value:     t.type_value     ?? null,
-          variable_type:  t.variable_type  ?? null,
-          status:         t.status         ?? null,
-          ticket_count:   t.ticket_count   ?? 0,
-          flow_metadatas: t.flow_metadatas ?? [],
-          description:    t.description    ?? null,
-          assigned_to:    t.assigned_to    ?? null,
-          is_active:      t.is_active      ?? true,
-          version:        t.version        ?? 1,
-          created_by:     t.created_by     ?? null,
-        })),
+  if (groupedBy === 'module') {
+    // { groups: [{ module, process_groups: [{ _id, title, transitions }] }] }
+    newVal.groups.forEach((moduleGroup: any) => {
+      const pgs = moduleGroup.process_groups ?? []
+      pgs.forEach((pg: any) => {
+        const raw = pg.transitions
+        const transitionsArray: any[] = raw
+          ? Array.isArray(raw) ? raw : Object.values(raw)
+          : []
+
+        columns.push({
+          _id:         pg._id,
+          columnId:    pg._id,
+          title:       pg.title ?? 'Untitled Group',
+          color:       pg.color ?? '#3b82f6',
+          icon:        pg.icon ?? null,
+          is_default:  pg.is_default ?? false,
+          transitions: transitionsArray.map((t: any) => ({ ...t })),
+        })
       })
     })
-  })
+
+  } else if (groupedBy === 'card_type') {
+    // { groups: [{ card_type, module, transitions: [...] }] }
+    newVal.groups.forEach((group: any) => {
+      const raw = group.transitions
+      const transitionsArray: any[] = raw
+        ? Array.isArray(raw) ? raw : Object.values(raw)
+        : []
+
+      columns.push({
+        _id:         group.card_type,   // no _id on this shape
+        columnId:    group.card_type,
+        title:       group.card_type ?? 'Untitled',
+        subtitle:    group.module ?? null,
+        color:       '#3b82f6',
+        icon:        null,
+        is_default:  false,
+        transitions: transitionsArray.map((t: any) => ({ ...t })),
+      })
+    })
+
+  } else if (groupedBy === 'card_status') {
+    // { groups: [{ card_status, color, is_start, is_end, sort_order, card_types, modules }] }
+    // No transitions — each group IS a status column, cards would be loaded separately
+    newVal.groups.forEach((group: any) => {
+      columns.push({
+        _id:         group.card_status,
+        columnId:    group.card_status,
+        title:       group.card_status ?? 'Untitled',
+        color:       group.color ?? '#3b82f6',
+        is_start:    group.is_start ?? false,
+        is_end:      group.is_end ?? false,
+        sort_order:  group.sort_order ?? 0,
+        card_types:  group.card_types ?? [],
+        modules:     group.modules ?? [],
+        transitions: [],   // no cards in this response shape
+      })
+    })
+
+  } else {
+    console.warn('[Process2] Unknown grouped_by:', groupedBy)
+  }
 
   localList.value = columns
-}, { immediate: true })
+}, { immediate: true, deep: true })
 
 /* -------------------------------------------------------------------------- */
 /*                                Search Logic                                */
@@ -259,21 +310,31 @@ const debouncedQuery = ref('');
 watch(searchQuery, debounce((val: string) => { debouncedQuery.value = val; }, 200));
 
 const filteredList = computed(() => {
-  const query = debouncedQuery.value.toLowerCase().trim();
-  if (!query) return localList.value;
+  const query = debouncedQuery.value.toLowerCase().trim()
+
+  if (!query) return localList.value
 
   return localList.value
     .map((col: any) => {
-      const matchingCards = (col.cards || []).filter((card: any) => {
-        const titleMatch = card.title?.toLowerCase().includes(query);
-        const nameMatch  = card.name?.toLowerCase().includes(query);
-        return titleMatch || nameMatch;
-      });
-      return { ...col, cards: matchingCards, transitions: matchingCards };
-    })
-    .filter((col: any) => col.cards.length > 0);
-});
+      const matchingCards = (col.transitions ?? []).filter((card: any) =>
+        card.title?.toLowerCase().includes(query) ||
+        card.name?.toLowerCase().includes(query)
+      )
 
+      return {
+        ...col,
+        transitions: matchingCards
+      }
+    })
+    .filter((col: any) => {
+      // For card_status view columns have no transitions — don't hide them
+      if (processGroups.value?.grouped_by === 'card_status') {
+        return true
+      }
+
+      return col.transitions.length > 0
+    })
+})
 /* -------------------------------------------------------------------------- */
 /*                             Add Process Group                              */
 /* -------------------------------------------------------------------------- */
