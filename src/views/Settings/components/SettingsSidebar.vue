@@ -12,7 +12,7 @@ const emit = defineEmits(['close-mobile', 'switch-company'])
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
-
+const associatedCompany = computed(() => props.profile?.associated_company)
 // ─────────────────────────────
 // STATE & MODE
 // ─────────────────────────────
@@ -377,7 +377,7 @@ function orgInitials(title: string) {
           </div>
 
           <div class="mt-auto space-y-3 pt-4">
-      <div v-if="isPersonalFree && !hasOrgs" class="rounded-xl border border-accent/25 bg-gradient-to-b from-accent/10 to-accent/5 p-4">
+      <div v-if="isPersonalFree && !hasOrgs && !associatedCompany" class="rounded-xl border border-accent/25 bg-gradient-to-b from-accent/10 to-accent/5 p-4">
         <div class="flex items-center gap-2 mb-1.5">
           <i class="fa-solid fa-bolt text-accent text-[11px]"></i>
           <p class="text-[12px] font-bold text-text-primary">Free account</p>
@@ -393,7 +393,7 @@ function orgInitials(title: string) {
         </button>
       </div>
 
-      <div v-if="!hasOrgs && canCreateOrg">
+      <div v-if="!hasOrgs && canCreateOrg && !associatedCompany">
         <button
           @click="switchMode('org'); selectTab('org-create')"
           class="w-full py-2 rounded-lg border border-dashed border-accent text-accent text-[12px] cursor-pointer font-bold hover:bg-accent/10 active:scale-[0.97] transition-all"

@@ -386,7 +386,7 @@ const { data: usersData } = useCompanyUsers(
 );
 console.log("suer profile data", profile.value?.data?.active_company);
 const isCreatingWorkspace = computed(() => {
-  return profile.value?.data?.active_company?.membership_role !== 'owner' || 'super_Admin' || 'admin';
+  return profile.value?.data?.active_company?.membership_role !== 'member';
 });
 const members = computed(() => {
   const raw = usersData.value?.data?.users ?? usersData.value?.users ?? [];
