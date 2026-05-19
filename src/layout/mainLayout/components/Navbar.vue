@@ -42,285 +42,265 @@
 
       <!-- Right controls -->
       <div class="flex items-center gap-4">
-        <NotificationBell />
-        <div class="relative" ref="menuRef">
+  <NotificationBell />
+  <div class="relative" ref="menuRef">
 
-          <!-- Avatar trigger -->
-          <button
-            v-if="profileData?.u_profile_image"
-            aria-haspopup="menu"
-            :aria-expanded="menuOpen ? 'true' : 'false'"
-            :aria-controls="menuOpen ? 'user-menu' : undefined"
-            @click="toggleMenu" @keydown.enter.prevent="toggleMenu"
-            @keydown.space.prevent="toggleMenu" @keydown.esc.prevent="closeMenu"
-          >
-            <img class="object-cover cursor-pointer w-9 h-9 rounded-full ring-2 ring-border/30 hover:ring-border transition-all" :src="profileData?.u_profile_image" alt="profile_img" />
-          </button>
-          <button
-            v-else type="button"
-            class="h-9 w-9 cursor-pointer rounded-full bg-orange-500 text-sm font-bold text-white ring-2 ring-border/20 ring-offset-1 ring-offset-bg-body hover:brightness-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300 transition-all"
-            aria-haspopup="menu" :aria-expanded="menuOpen ? 'true' : 'false'"
-            :aria-controls="menuOpen ? 'user-menu' : undefined"
-            @click="toggleMenu" @keydown.enter.prevent="toggleMenu"
-            @keydown.space.prevent="toggleMenu" @keydown.esc.prevent="closeMenu"
-          >{{ initials }}</button>
+    <!-- Avatar trigger -->
+    <button
+      v-if="profileData?.u_profile_image"
+      aria-haspopup="menu"
+      :aria-expanded="menuOpen ? 'true' : 'false'"
+      :aria-controls="menuOpen ? 'user-menu' : undefined"
+      @click="toggleMenu" @keydown.enter.prevent="toggleMenu"
+      @keydown.space.prevent="toggleMenu" @keydown.esc.prevent="closeMenu"
+    >
+      <img class="object-cover cursor-pointer w-9 h-9 rounded-full ring-2 ring-border/30 hover:ring-border transition-all" :src="profileData?.u_profile_image" alt="profile_img" />
+    </button>
+    <button
+      v-else type="button"
+      class="h-9 w-9 cursor-pointer rounded-full bg-orange-500 text-sm font-bold text-white ring-2 ring-border/20 ring-offset-1 ring-offset-bg-body hover:brightness-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300 transition-all"
+      aria-haspopup="menu" :aria-expanded="menuOpen ? 'true' : 'false'"
+      :aria-controls="menuOpen ? 'user-menu' : undefined"
+      @click="toggleMenu" @keydown.enter.prevent="toggleMenu"
+      @keydown.space.prevent="toggleMenu" @keydown.esc.prevent="closeMenu"
+    >{{ initials }}</button>
 
-          <Transition
-            enter-active-class="transition duration-150 ease-out"
-            enter-from-class="opacity-0 -translate-y-1 scale-95"
-            enter-to-class="opacity-100 translate-y-0 scale-100"
-            leave-active-class="transition duration-120 ease-in"
-            leave-from-class="opacity-100 translate-y-0 scale-100"
-            leave-to-class="opacity-0 -translate-y-1 scale-95"
-          >
+    <Transition
+      enter-active-class="transition duration-150 ease-out"
+      enter-from-class="opacity-0 -translate-y-1 scale-95"
+      enter-to-class="opacity-100 translate-y-0 scale-100"
+      leave-active-class="transition duration-120 ease-in"
+      leave-from-class="opacity-100 translate-y-0 scale-100"
+      leave-to-class="opacity-0 -translate-y-1 scale-95"
+    >
+      <div
+        v-if="menuOpen"
+        id="user-menu"
+        role="menu"
+        class="absolute right-0 mt-2 origin-top-right rounded-2xl bg-bg-dropdown z-[110] border border-border/50 shadow-xl shadow-black/10 w-[min(310px,calc(100vw-24px))] max-md:fixed max-md:left-1/2 max-md:-translate-x-1/2 max-md:right-auto max-md:top-[60px] max-md:w-[calc(100vw-32px)] flex flex-col"
+        @keydown.esc.stop.prevent="menuOpen = false"
+      >
+        <!-- ══ USER IDENTITY HEADER — always visible ══ -->
+        <!-- overflow-hidden + rounded-t-2xl to keep top corners clipped -->
+        <div class="flex flex-col items-center pt-5 pb-4 px-4 text-center border-b border-border/40 rounded-t-2xl overflow-hidden">
+          <div class="relative mb-3">
+            <img
+              v-if="profileData?.u_profile_image"
+              class="w-14 h-14 rounded-full object-cover ring-[3px] ring-border/20"
+              :src="profileData?.u_profile_image" alt="profile"
+            />
             <div
-              v-if="menuOpen"
-              id="user-menu"
-              role="menu"
-              class="absolute right-0 mt-2 origin-top-right rounded-2xl bg-bg-dropdown z-[110] border border-border/50 shadow-xl shadow-black/10 w-[min(310px,calc(100vw-24px))] max-md:fixed max-md:left-1/2 max-md:-translate-x-1/2 max-md:right-auto max-md:top-[60px] max-md:w-[calc(100vw-32px)] flex flex-col overflow-hidden"
-              @keydown.esc.stop.prevent="menuOpen = false"
-            >
-
-              <!-- ══ USER IDENTITY HEADER — always visible ══ -->
-              <div class="flex flex-col items-center pt-5 pb-4 px-4 text-center border-b border-border/40">
-                <div class="relative mb-3">
-                  <img
-                    v-if="profileData?.u_profile_image"
-                    class="w-14 h-14 rounded-full object-cover ring-[3px] ring-border/20"
-                    :src="profileData?.u_profile_image" alt="profile"
-                  />
-                  <div
-                    v-else
-                    class="w-14 h-14 rounded-full bg-orange-500 flex items-center justify-center text-xl font-bold text-white"
-                  >{{ initials }}</div>
-                  <!-- live status dot -->
-                  <span class="absolute bottom-0.5 right-0.5 w-3 h-3 rounded-full bg-green-500 ring-2 ring-bg-dropdown block">
-                    <span class="absolute inset-0 rounded-full bg-green-500 animate-ping opacity-60"></span>
-                  </span>
-                </div>
-                <p class="text-[15px] font-bold text-text-primary leading-tight">{{ profileData?.u_full_name }}</p>
-                <p class="text-[12px] text-text-secondary mt-1">{{ profileData?.u_email }}</p>
-                <!-- managed-by badge — only in professional mode with active company -->
-                <div
-                  v-if="accountMode === 'professional' && activeCompanyData"
-                  class="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent/[0.08] border border-accent/20 text-[10px] font-bold text-accent uppercase tracking-wider"
-                >
-                  <i class="fa-solid fa-shield-halved text-[9px]"></i>
-                  Managed by {{ activeCompanyData.title }}
-                </div>
-              </div>
-
-              <!-- ══ TAB SWITCHER ══ -->
-              <div v-if="isApprovedCompanyMember" class="px-3 pt-3 pb-1">
-                <div class="relative flex bg-bg-surface border border-border/40 rounded-xl p-[3px] gap-[3px]">
-                  <!-- sliding pill -->
-                  <div
-                    class="absolute inset-[3px] rounded-lg bg-bg-dropdown border border-border/50 shadow-sm transition-all duration-200 ease-[cubic-bezier(.4,0,.2,1)] pointer-events-none"
-                    :style="accountMode === 'personal'
-                      ? 'left:3px;right:calc(50% + 1.5px);top:3px;bottom:3px'
-                      : 'left:calc(50% + 1.5px);right:3px;top:3px;bottom:3px'"
-                  />
-                  <button
-                    type="button" @click="handlePersonalTabClick"
-                    class="relative z-10 flex-1 flex items-center justify-center gap-2 py-[7px] rounded-lg text-[11px] font-semibold transition-colors duration-150 cursor-pointer"
-                    :class="accountMode === 'personal' ? 'text-text-primary' : 'text-text-secondary hover:text-text-primary'"
-                  >
-                    <i class="fa-regular fa-user text-[10px]"></i>
-                    Personal
-                    <span v-if="!authStore.company_id || authStore.company_id === 'personal'" class="w-[5px] h-[5px] rounded-full bg-green-500"></span>
-                  </button>
-                  <button
-                    type="button" @click="handleProfessionalTabClick"
-                    class="relative z-10 flex-1 flex items-center justify-center gap-2 py-[7px] rounded-lg text-[11px] font-semibold transition-colors duration-150 cursor-pointer"
-                    :class="accountMode === 'professional' ? 'text-text-primary' : 'text-text-secondary hover:text-text-primary'"
-                  >
-                    <i class="fa-regular fa-building text-[10px]"></i>
-                    Professional
-                    <span v-if="authStore.company_id && authStore.company_id !== 'personal'" class="w-[5px] h-[5px] rounded-full bg-green-500"></span>
-                  </button>
-                </div>
-              </div>
-
-              <!-- ══════════════════════════════
-                   PERSONAL PANEL
-              ══════════════════════════════ -->
-              <div v-if="accountMode === 'personal'" class="flex flex-col pb-1">
-
-                <!-- Personal workspace card -->
-                <div class="mx-3 mt-3 rounded-xl border border-border/50 bg-bg-surface overflow-hidden">
-                  <div class="flex items-center gap-3 px-3 py-3">
-                    <div class="w-9 h-9 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-orange-500 text-[13px] font-bold shrink-0">
-                      {{ initials.charAt(0) }}
-                    </div>
-                    <div class="min-w-0 flex-1">
-                      <p class="text-[12px] font-bold text-text-primary truncate leading-tight">Personal workspace</p>
-                      <p class="text-[10px] text-text-secondary mt-0.5">Managed by you</p>
-                    </div>
-                    <span class="shrink-0 text-[9px] font-bold px-2 py-0.5 rounded-full bg-green-500/10 text-green-600 border border-green-500/20">Active</span>
-                  </div>
-                  <!-- nav items -->
-                  <button
-                    type="button"
-                    @click="openAccountSettings(); closeMenu()"
-                    class="w-full flex items-center gap-2.5 px-3 py-2.5 border-t border-border/40 hover:bg-bg-dropdown-menu-hover transition-colors text-left group"
-                  >
-                    <i class="fa-regular fa-gear text-[11px] text-text-secondary w-3.5 text-center"></i>
-                    <span class="text-[11px] font-semibold text-text-secondary group-hover:text-text-primary transition-colors flex-1">Manage account</span>
-                    <i class="fa-solid fa-chevron-right text-[9px] text-text-secondary opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                  </button>
-                </div>
-
-                <div class="h-px bg-border/30 mx-3 mt-3 mb-1"></div>
-
-                <!-- Appearance + Logout -->
-                <div class="px-2">
-                  <div class="relative" @mouseenter="openTheme" @mouseleave="closeTheme">
-                    <button
-                      ref="themeTriggerRef" type="button"
-                      class="flex w-full items-center justify-between rounded-xl px-3 py-2 hover:bg-bg-dropdown-menu-hover text-text-secondary hover:text-text-primary transition-colors"
-                    >
-                      <span class="flex items-center gap-2.5">
-                        <i class="fa-regular fa-circle-half-stroke text-xs w-3.5 text-center"></i>
-                        <span class="text-[13px] font-medium">Appearance</span>
-                      </span>
-                      <span class="flex items-center gap-1.5 text-[11px]">
-                        {{ isDark ? 'Dark' : 'Light' }}
-                        <i class="fa-solid fa-chevron-right text-[9px]"></i>
-                      </span>
-                    </button>
-                    <Transition enter-active-class="transition duration-150 ease-out" enter-from-class="opacity-0 translate-x-1 scale-95" enter-to-class="opacity-100 translate-x-0 scale-100" leave-active-class="transition duration-120 ease-in" leave-from-class="opacity-100 translate-x-0 scale-100" leave-to-class="opacity-0 translate-x-1 scale-95">
-                      <div v-if="themeOpen" class="absolute z-10 w-44 rounded-xl bg-bg-dropdown p-1.5 shadow-lg border border-border/60" :class="[themeFlipLeft ? 'right-0 sm:right-full sm:mr-2' : 'left-full ml-2', 'bottom-0 sm:bottom-auto sm:top-0']">
-                        <button class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left hover:bg-bg-dropdown-menu-hover text-text-secondary hover:text-text-primary text-[13px]" @click="setTheme('system'); closeMenu()" type="button"><i class="fa-solid fa-desktop w-4 text-center text-xs"></i>System</button>
-                        <button class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left hover:bg-bg-dropdown-menu-hover text-text-secondary hover:text-text-primary text-[13px]" @click="setTheme('light'); closeMenu()" type="button"><i class="fa-regular fa-sun w-4 text-center text-xs"></i>Light</button>
-                        <button class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left hover:bg-bg-dropdown-menu-hover text-text-secondary hover:text-text-primary text-[13px]" @click="setTheme('dark'); closeMenu()" type="button"><i class="fa-regular fa-moon w-4 text-center text-xs"></i>Dark</button>
-                      </div>
-                    </Transition>
-                  </div>
-                  <button type="button" class="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 hover:bg-red-500/[0.07] text-red-500 transition-colors" @click="handleLogout">
-                    <i class="fa-solid fa-arrow-right-from-bracket text-xs w-3.5 text-center"></i>
-                    <span class="text-[13px] font-medium">Log out</span>
-                  </button>
-                </div>
-              </div>
-
-              <!-- ══════════════════════════════
-                   PROFESSIONAL PANEL
-              ══════════════════════════════ -->
-              <div v-else-if="accountMode === 'professional'" class="flex flex-col pb-1">
-
-                <!-- Active org card -->
-                <div v-if="activeCompanyData" class="mx-3 mt-3 rounded-xl border border-accent/25 bg-accent/[0.03] overflow-hidden">
-                  <div class="flex items-center gap-3 px-3 py-3">
-                    <div class="relative shrink-0">
-                      <img v-if="activeCompanyData.logo" :src="activeCompanyData.logo" class="w-9 h-9 rounded-xl object-cover border border-border/40" />
-                      <div v-else class="w-9 h-9 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center text-accent text-[13px] font-bold">
-                        {{ activeCompanyData.title?.charAt(0)?.toUpperCase() || '?' }}
-                      </div>
-                    </div>
-                    <div class="min-w-0 flex-1">
-                      <p class="text-[12px] font-bold text-text-primary truncate leading-tight">{{ activeCompanyData.title }}</p>
-                      <p class="text-[10px] text-text-secondary mt-0.5 capitalize truncate">
-                        {{ activeCompanyData.user_role?.title || activeCompanyData.membership_role || 'Member' }}
-                        <span v-if="activeCompanyData.domain_link" class="text-text-secondary/60"> · {{ activeCompanyData.domain_link.replace(/https?:\/\//, '') }}</span>
-                      </p>
-                    </div>
-                    <span class="shrink-0 text-[9px] font-bold px-2 py-0.5 rounded-full bg-green-500/10 text-green-600 border border-green-500/20">Active</span>
-                  </div>
-
-                  <!-- Org nav items -->
-                  <div class="border-t border-accent/15 divide-y divide-border/30">
-                    <button
-                      type="button"
-                      @click="router.push('/settings?tab=org-setup'); closeMenu()"
-                      class="w-full flex items-center gap-2.5 px-3 py-2.5 hover:bg-accent/[0.06] transition-colors text-left group"
-                    >
-                      <i class="fa-regular fa-building text-[11px] text-accent/70 w-3.5 text-center"></i>
-                      <span class="text-[11px] font-semibold text-text-secondary group-hover:text-text-primary transition-colors flex-1">Manage organization</span>
-                      <i class="fa-solid fa-chevron-right text-[9px] text-text-secondary opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                    </button>
-                    <button
-                      type="button"
-                      @click="router.push('/settings?tab=org-members'); closeMenu()"
-                      class="w-full flex items-center gap-2.5 px-3 py-2.5 hover:bg-accent/[0.06] transition-colors text-left group"
-                    >
-                      <i class="fa-regular fa-users text-[11px] text-accent/70 w-3.5 text-center"></i>
-                      <span class="text-[11px] font-semibold text-text-secondary group-hover:text-text-primary transition-colors flex-1">Members</span>
-                      <i class="fa-solid fa-chevron-right text-[9px] text-text-secondary opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                    </button>
-                  </div>
-                </div>
-
-                <!-- Switch organization section -->
-                <template v-if="otherCompanies.length">
-                  <p class="text-[10px] font-bold text-text-secondary uppercase tracking-widest px-4 pt-4 pb-2">Switch organization</p>
-                  <div class="px-2 space-y-0.5">
-                    <div
-                      v-for="comp in otherCompanies" :key="comp._id"
-                      @click="switchToCompany(comp)"
-                      class="flex items-center gap-2.5 px-3 py-2.5 rounded-xl hover:bg-bg-dropdown-menu-hover transition-colors cursor-pointer group"
-                    >
-                      <img v-if="comp.logo" :src="comp.logo" class="w-7 h-7 rounded-lg object-cover border border-border/40 shrink-0" />
-                      <div v-else class="w-7 h-7 rounded-lg bg-bg-surface border border-border/50 flex items-center justify-center text-text-secondary text-[11px] font-bold shrink-0">
-                        {{ comp.title?.charAt(0)?.toUpperCase() || '?' }}
-                      </div>
-                      <div class="min-w-0 flex-1">
-                        <p class="text-[12px] font-semibold text-text-primary truncate">{{ comp.title }}</p>
-                        <p class="text-[10px] text-text-secondary capitalize truncate">{{ comp.membership_role || 'Member' }}</p>
-                      </div>
-                      <span class="text-[10px] font-semibold text-text-secondary group-hover:text-accent transition-colors shrink-0 flex items-center gap-1">
-                        Switch <i class="fa-solid fa-arrow-right text-[8px]"></i>
-                      </span>
-                    </div>
-                  </div>
-                </template>
-
-                <!-- No org fallback -->
-                <div v-if="!activeCompanyData" class="px-4 py-8 text-center">
-                  <div class="w-11 h-11 rounded-2xl bg-bg-surface border border-border/50 flex items-center justify-center mx-auto mb-3">
-                    <i class="fa-regular fa-building text-lg text-text-secondary opacity-40"></i>
-                  </div>
-                  <p class="text-[12px] font-bold text-text-primary mb-1">No organization yet</p>
-                  <p class="text-[11px] text-text-secondary leading-relaxed mb-3">Create or join an organization to access professional features.</p>
-                  <button type="button" @click="router.push('/settings?tab=org-create'); closeMenu()" class="text-[11px] font-bold text-accent hover:opacity-75 transition-opacity">Create organization →</button>
-                </div>
-
-                <div class="h-px bg-border/30 mx-3 mt-3 mb-1"></div>
-
-                <!-- Appearance + Logout -->
-                <div class="px-2">
-                  <div class="relative" @mouseenter="openTheme" @mouseleave="closeTheme">
-                    <button
-                      ref="themeTriggerRef" type="button"
-                      class="flex w-full items-center justify-between rounded-xl px-3 py-2 hover:bg-bg-dropdown-menu-hover text-text-secondary hover:text-text-primary transition-colors"
-                    >
-                      <span class="flex items-center gap-2.5">
-                        <i class="fa-regular fa-circle-half-stroke text-xs w-3.5 text-center"></i>
-                        <span class="text-[13px] font-medium">Appearance</span>
-                      </span>
-                      <span class="flex items-center gap-1.5 text-[11px]">
-                        {{ isDark ? 'Dark' : 'Light' }}
-                        <i class="fa-solid fa-chevron-right text-[9px]"></i>
-                      </span>
-                    </button>
-                    <Transition enter-active-class="transition duration-150 ease-out" enter-from-class="opacity-0 translate-x-1 scale-95" enter-to-class="opacity-100 translate-x-0 scale-100" leave-active-class="transition duration-120 ease-in" leave-from-class="opacity-100 translate-x-0 scale-100" leave-to-class="opacity-0 translate-x-1 scale-95">
-                      <div v-if="themeOpen" class="absolute z-10 w-44 rounded-xl bg-bg-dropdown p-1.5 shadow-lg border border-border/60" :class="[themeFlipLeft ? 'right-0 sm:right-full sm:mr-2' : 'left-full ml-2', 'bottom-0 sm:bottom-auto sm:top-0']">
-                        <button class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left hover:bg-bg-dropdown-menu-hover text-text-secondary hover:text-text-primary text-[13px]" @click="setTheme('system'); closeMenu()" type="button"><i class="fa-solid fa-desktop w-4 text-center text-xs"></i>System</button>
-                        <button class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left hover:bg-bg-dropdown-menu-hover text-text-secondary hover:text-text-primary text-[13px]" @click="setTheme('light'); closeMenu()" type="button"><i class="fa-regular fa-sun w-4 text-center text-xs"></i>Light</button>
-                        <button class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left hover:bg-bg-dropdown-menu-hover text-text-secondary hover:text-text-primary text-[13px]" @click="setTheme('dark'); closeMenu()" type="button"><i class="fa-regular fa-moon w-4 text-center text-xs"></i>Dark</button>
-                      </div>
-                    </Transition>
-                  </div>
-                  <button type="button" class="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 hover:bg-red-500/[0.07] text-red-500 transition-colors" @click="handleLogout">
-                    <i class="fa-solid fa-arrow-right-from-bracket text-xs w-3.5 text-center"></i>
-                    <span class="text-[13px] font-medium">Log out</span>
-                  </button>
-                </div>
-              </div>
-
-            </div>
-          </Transition>
+              v-else
+              class="w-14 h-14 rounded-full bg-orange-500 flex items-center justify-center text-xl font-bold text-white"
+            >{{ initials }}</div>
+            <span class="absolute bottom-0.5 right-0.5 w-3 h-3 rounded-full bg-green-500 ring-2 ring-bg-dropdown block">
+              <span class="absolute inset-0 rounded-full bg-green-500 animate-ping opacity-60"></span>
+            </span>
+          </div>
+          <p class="text-[15px] font-bold text-text-primary leading-tight">{{ profileData?.u_full_name }}</p>
+          <p class="text-[12px] text-text-secondary mt-1">{{ profileData?.u_email }}</p>
+          <div
+            v-if="accountMode === 'professional' && activeCompanyData"
+            class="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent/[0.08] border border-accent/20 text-[10px] font-bold text-accent uppercase tracking-wider"
+          >
+            <i class="fa-solid fa-shield-halved text-[9px]"></i>
+            Managed by {{ activeCompanyData.title }}
+          </div>
         </div>
+
+        <!-- ══ TAB SWITCHER ══ -->
+        <div v-if="isApprovedCompanyMember" class="px-3 pt-3 pb-1">
+          <div class="relative flex bg-bg-surface border border-border/40 rounded-xl p-[3px] gap-[3px]">
+            <div
+              class="absolute inset-[3px] rounded-lg bg-bg-dropdown border border-border/50 shadow-sm transition-all duration-200 ease-[cubic-bezier(.4,0,.2,1)] pointer-events-none"
+              :style="accountMode === 'personal'
+                ? 'left:3px;right:calc(50% + 1.5px);top:3px;bottom:3px'
+                : 'left:calc(50% + 1.5px);right:3px;top:3px;bottom:3px'"
+            />
+            <button
+              type="button" @click="handlePersonalTabClick"
+              class="relative z-10 flex-1 flex items-center justify-center gap-2 py-[7px] rounded-lg text-[11px] font-semibold transition-colors duration-150 cursor-pointer"
+              :class="accountMode === 'personal' ? 'text-text-primary' : 'text-text-secondary hover:text-text-primary'"
+            >
+              <i class="fa-regular fa-user text-[10px]"></i>
+              Personal
+              <span v-if="!authStore.company_id || authStore.company_id === 'personal'" class="w-[5px] h-[5px] rounded-full bg-green-500"></span>
+            </button>
+            <button
+              type="button" @click="handleProfessionalTabClick"
+              class="relative z-10 flex-1 flex items-center justify-center gap-2 py-[7px] rounded-lg text-[11px] font-semibold transition-colors duration-150 cursor-pointer"
+              :class="accountMode === 'professional' ? 'text-text-primary' : 'text-text-secondary hover:text-text-primary'"
+            >
+              <i class="fa-regular fa-building text-[10px]"></i>
+              Professional
+              <span v-if="authStore.company_id && authStore.company_id !== 'personal'" class="w-[5px] h-[5px] rounded-full bg-green-500"></span>
+            </button>
+          </div>
+        </div>
+
+        <!-- ══ PERSONAL PANEL ══ -->
+        <div v-if="accountMode === 'personal'" class="flex flex-col">
+          <div class="mx-3 mt-3 rounded-xl border border-border/50 bg-bg-surface overflow-hidden">
+            <div class="flex items-center gap-3 px-3 py-3">
+              <div class="w-9 h-9 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-orange-500 text-[13px] font-bold shrink-0">
+                {{ initials.charAt(0) }}
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="text-[12px] font-bold text-text-primary truncate leading-tight">Personal workspace</p>
+                <p class="text-[10px] text-text-secondary mt-0.5">Managed by you</p>
+              </div>
+              <span class="shrink-0 text-[9px] font-bold px-2 py-0.5 rounded-full bg-green-500/10 text-green-600 border border-green-500/20">Active</span>
+            </div>
+            <button
+              type="button"
+              @click="openAccountSettings(); closeMenu()"
+              class="w-full flex items-center gap-2.5 px-3 py-2.5 border-t border-border/40 hover:bg-bg-dropdown-menu-hover transition-colors text-left group"
+            >
+              <i class="fa-regular fa-gear text-[11px] text-text-secondary w-3.5 text-center"></i>
+              <span class="text-[11px] font-semibold text-text-secondary group-hover:text-text-primary transition-colors flex-1">Manage account</span>
+              <i class="fa-solid fa-chevron-right text-[9px] text-text-secondary opacity-0 group-hover:opacity-100 transition-opacity"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- ══ PROFESSIONAL PANEL ══ -->
+        <div v-else-if="accountMode === 'professional'" class="flex flex-col">
+          <div v-if="activeCompanyData" class="mx-3 mt-3 rounded-xl border border-accent/25 bg-accent/[0.03] overflow-hidden">
+            <div class="flex items-center gap-3 px-3 py-3">
+              <div class="relative shrink-0">
+                <img v-if="activeCompanyData.logo" :src="activeCompanyData.logo" class="w-9 h-9 rounded-xl object-cover border border-border/40" />
+                <div v-else class="w-9 h-9 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center text-accent text-[13px] font-bold">
+                  {{ activeCompanyData.title?.charAt(0)?.toUpperCase() || '?' }}
+                </div>
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="text-[12px] font-bold text-text-primary truncate leading-tight">{{ activeCompanyData.title }}</p>
+                <p class="text-[10px] text-text-secondary mt-0.5 capitalize truncate">
+                  {{ activeCompanyData.user_role?.title || activeCompanyData.membership_role || 'Member' }}
+                  <span v-if="activeCompanyData.domain_link" class="text-text-secondary/60"> · {{ activeCompanyData.domain_link.replace(/https?:\/\//, '') }}</span>
+                </p>
+              </div>
+              <span class="shrink-0 text-[9px] font-bold px-2 py-0.5 rounded-full bg-green-500/10 text-green-600 border border-green-500/20">Active</span>
+            </div>
+            <!-- Only show footer buttons if NOT a plain member -->
+            <div v-if="activeCompanyData?.membership_role !== 'member'" class="border-t border-accent/15">
+              <button
+                type="button"
+                @click="router.push('/settings?tab=org-setup'); closeMenu()"
+                class="w-full flex items-center gap-2.5 px-3 py-2.5 hover:bg-accent/[0.06] transition-colors text-left group"
+              >
+                <i class="fa-regular fa-building text-[11px] text-accent/70 w-3.5 text-center"></i>
+                <span class="text-[11px] font-semibold text-text-secondary group-hover:text-text-primary transition-colors flex-1">Manage organization</span>
+                <i class="fa-solid fa-chevron-right text-[9px] text-text-secondary opacity-0 group-hover:opacity-100 transition-opacity"></i>
+              </button>
+            </div>
+          </div>
+
+          <template v-if="otherCompanies.length">
+            <p class="text-[10px] font-bold text-text-secondary uppercase tracking-widest px-4 pt-4 pb-2">Switch organization</p>
+            <div class="px-2 space-y-0.5">
+              <div
+                v-for="comp in otherCompanies" :key="comp._id"
+                @click="switchToCompany(comp)"
+                class="flex items-center gap-2.5 px-3 py-2.5 rounded-xl hover:bg-bg-dropdown-menu-hover transition-colors cursor-pointer group"
+              >
+                <img v-if="comp.logo" :src="comp.logo" class="w-7 h-7 rounded-lg object-cover border border-border/40 shrink-0" />
+                <div v-else class="w-7 h-7 rounded-lg bg-bg-surface border border-border/50 flex items-center justify-center text-text-secondary text-[11px] font-bold shrink-0">
+                  {{ comp.title?.charAt(0)?.toUpperCase() || '?' }}
+                </div>
+                <div class="min-w-0 flex-1">
+                  <p class="text-[12px] font-semibold text-text-primary truncate">{{ comp.title }}</p>
+                  <p class="text-[10px] text-text-secondary capitalize truncate">{{ comp.membership_role || 'Member' }}</p>
+                </div>
+                <span class="text-[10px] font-semibold text-text-secondary group-hover:text-accent transition-colors shrink-0 flex items-center gap-1">
+                  Switch <i class="fa-solid fa-arrow-right text-[8px]"></i>
+                </span>
+              </div>
+            </div>
+          </template>
+
+          <div v-if="!activeCompanyData" class="px-4 py-8 text-center">
+            <div class="w-11 h-11 rounded-2xl bg-bg-surface border border-border/50 flex items-center justify-center mx-auto mb-3">
+              <i class="fa-regular fa-building text-lg text-text-secondary opacity-40"></i>
+            </div>
+            <p class="text-[12px] font-bold text-text-primary mb-1">No organization yet</p>
+            <p class="text-[11px] text-text-secondary leading-relaxed mb-3">Create or join an organization to access professional features.</p>
+            <button type="button" @click="router.push('/settings?tab=org-create'); closeMenu()" class="text-[11px] font-bold text-accent hover:opacity-75 transition-opacity">
+              Create organization →
+            </button>
+          </div>
+        </div>
+
+        <!-- ══ SHARED FOOTER — always visible ══ -->
+        <div class="h-px bg-border/30 mx-3 mt-3 mb-1"></div>
+        <div class="px-2 pb-2">
+
+          <!-- Appearance row — overflow visible so submenu can escape -->
+          <div class="relative" @mouseenter="openTheme" @mouseleave="closeTheme">
+            <button
+              ref="themeTriggerRef"
+              type="button"
+              class="flex w-full items-center justify-between rounded-xl px-3 py-2 hover:bg-bg-dropdown-menu-hover text-text-secondary hover:text-text-primary transition-colors"
+            >
+              <span class="flex items-center gap-2.5">
+                <i class="fa-regular fa-circle-half-stroke text-xs w-3.5 text-center"></i>
+                <span class="text-[13px] font-medium">Appearance</span>
+              </span>
+              <span class="flex items-center gap-1.5 text-[11px]">
+                {{ isDark ? 'Dark' : 'Light' }}
+                <i class="fa-solid fa-chevron-right text-[9px]"></i>
+              </span>
+            </button>
+
+            <Transition
+              enter-active-class="transition duration-150 ease-out"
+              enter-from-class="opacity-0 translate-x-1 scale-95"
+              enter-to-class="opacity-100 translate-x-0 scale-100"
+              leave-active-class="transition duration-120 ease-in"
+              leave-from-class="opacity-100 translate-x-0 scale-100"
+              leave-to-class="opacity-0 translate-x-1 scale-95"
+            >
+              <div
+                v-if="themeOpen"
+                class="absolute top-0 z-[200] w-44 rounded-xl bg-bg-dropdown p-1.5 shadow-lg border border-border/60"
+                :class="themeFlipLeft ? 'right-full mr-2' : 'left-full ml-2'"
+              >
+                <button
+                  class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left hover:bg-bg-dropdown-menu-hover text-text-secondary hover:text-text-primary text-[13px]"
+                  @click="setTheme('system'); closeMenu()" type="button"
+                >
+                  <i class="fa-solid fa-desktop w-4 text-center text-xs"></i> System
+                </button>
+                <button
+                  class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left hover:bg-bg-dropdown-menu-hover text-text-secondary hover:text-text-primary text-[13px]"
+                  @click="setTheme('light'); closeMenu()" type="button"
+                >
+                  <i class="fa-regular fa-sun w-4 text-center text-xs"></i> Light
+                </button>
+                <button
+                  class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left hover:bg-bg-dropdown-menu-hover text-text-secondary hover:text-text-primary text-[13px]"
+                  @click="setTheme('dark'); closeMenu()" type="button"
+                >
+                  <i class="fa-regular fa-moon w-4 text-center text-xs"></i> Dark
+                </button>
+              </div>
+            </Transition>
+          </div>
+
+          <button
+            type="button"
+            class="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 hover:bg-red-500/[0.07] text-red-500 transition-colors"
+            @click="handleLogout"
+          >
+            <i class="fa-solid fa-arrow-right-from-bracket text-xs w-3.5 text-center"></i>
+            <span class="text-[13px] font-medium">Log out</span>
+          </button>
+        </div>
+
       </div>
+    </Transition>
+  </div>
+</div>
     </div>
   </nav>
 
