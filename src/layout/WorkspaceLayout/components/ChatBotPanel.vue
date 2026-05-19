@@ -3043,6 +3043,8 @@ const getMessageEntityDescription = (msgId: string) => {
 };
 
 const openPreviewFromMessage = (msgId: string) => {
+  console.log(msgId);
+  
   isManuallyExpanded.value = true;
   showConfigPanel.value = false;
 };
