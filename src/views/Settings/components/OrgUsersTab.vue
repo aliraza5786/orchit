@@ -15,7 +15,7 @@
 
       <div class="flex items-center gap-2 flex-wrap self-start sm:self-auto">
         <button
-          v-if="isSuperAdminActive && hasOrgDomain"
+          v-if="isSuperAdminActive && hasOrgDomain && hasSuperAdmin"
           @click="handleCopyInviteLink"
           class="flex items-center gap-2 px-3.5 py-2.5 border border-border/60 text-text-secondary text-sm font-medium rounded-lg hover:border-accent/40 hover:text-accent transition-all cursor-pointer"
         >
@@ -26,7 +26,7 @@
        <!-- Add member button with tooltip -->
 <div class="relative group/add">
   <button
-    v-if="canCreateUsers"
+    v-if="canCreateUsers && hasSuperAdmin"
     @click="hasOrgDomain ? handleAddMember() : undefined"
     :disabled="!hasOrgDomain || !isUserVerified"
     :title="!isUserVerified ? 'Verify user first' : ''"
@@ -1086,6 +1086,7 @@ function isSuperAdminMember(member: any) {
 // ─── Company context ──────────────────────────────────────────────────────────
 const companyId = computed<string>(() => localStorage.getItem('company_id') || '')
 const activeCompany = computed(() => props.profile?.active_company)
+const hasSuperAdmin = computed(() => activeCompany.value?.has_super_admin)
 const orgDomainSuffix = computed<string>(() => {
   const domainLink = activeCompany.value?.custom_domain ?? ''
   if (!domainLink) return ''
@@ -1502,15 +1503,27 @@ const { mutate: createUser } = useCreateCompanyUser({
 
 function handleCreate() {
   if (!validateCreateForm()) return
+
   createServerError.value = ''
   isCreating.value = true
 
+  // Find default Viewer role
+  const viewerRole = allRoles.value.find(
+    role => role.slug === 'viewer'
+  )
+
   createUser({
-    company_id:  companyId.value,
+    company_id: companyId.value,
     u_full_name: createForm.value.u_full_name.trim(),
-    u_email:     fullEmail.value,
-    u_password:  createForm.value.u_password,
-    ...(createForm.value.u_job_title ? { u_job_title: createForm.value.u_job_title } : {}),
+    u_email: fullEmail.value,
+    u_password: createForm.value.u_password,
+
+    // Pass Viewer role ID
+    company_role_id: viewerRole?._id,
+
+    ...(createForm.value.u_job_title
+      ? { u_job_title: createForm.value.u_job_title }
+      : {}),
   })
 }
 

@@ -38,7 +38,7 @@ export const usePrivateUploadFile = (options = {}) => {
     ...options,
   });
 };
-export const useRolesList = ( options = {}) => {
+export const useRolesList = (options = {}) => {
   return useQuery({
     queryKey: ["roles"],
     queryFn: ({ signal }) =>
@@ -126,7 +126,16 @@ export const useCompanyRoleById = (
     ...options,
   });
 };
-
+export const useDeleteCompanyRoleById = (options = {}) => {
+  return useMutation({
+    mutationFn: (id: string | number) =>
+      request<any>({
+        url: `roles/company-roles/${id}`,
+        method: "DELETE",
+      }),
+    ...options,
+  })
+}
 //domain setup apis
 export interface DnsCheckResult {
   ok: boolean
@@ -183,21 +192,21 @@ export interface CompanyDomain {
   created_at: string
   instructions?: DnsInstructions
 }
- 
+
 export interface ApiResponse<T> {
   status: boolean
   message: string
   data: T
 }
 // ── API Response Shapes ────────────────────────────────────────────────────────
- 
+
 export interface PublicLookupData {
   domain: Pick<
     CompanyDomain,
     '_id' | 'company_id' | 'domain' | 'is_primary' | 'verified_at'
   > | null
 }
- 
+
 export interface VerifyDomainData {
   verified: boolean
   domain: CompanyDomain
@@ -205,34 +214,34 @@ export interface VerifyDomainData {
   instructions: DnsInstructions
   methodSwitched?: boolean
 }
- 
+
 export interface ListDomainsData {
   domains: CompanyDomain[]
   status?: boolean
   message?: string
 }
- 
+
 export interface GetDomainData {
   domain: CompanyDomain
   instructions: DnsInstructions | null
 }
- 
+
 export interface SetPrimaryDomainData {
   domain: Pick<CompanyDomain, '_id' | 'domain' | 'is_primary' | 'status'>
 }
- 
+
 export interface RemoveDomainData {
   domain: Pick<CompanyDomain, '_id' | 'domain' | 'is_trash' | 'is_primary'> & { deleted_at: string }
 }
- 
+
 // ── Request Payloads ───────────────────────────────────────────────────────────
- 
+
 export interface VerifyDomainPayload {
   domain: string
   verification_method?: 'cname' | 'txt' | 'http'
 }
- 
- const getCompanyId = () => {
+
+const getCompanyId = () => {
   const cookieCompanyId = getCookie('company_id')
   const localCompanyId = localStorage.getItem('company_id')
 
@@ -289,7 +298,7 @@ export const useListDomains = (
   maybeOptions: Record<string, any> = {}
 ) => {
   const isId = typeof companyIdOrOptions === 'string' || isRef(companyIdOrOptions) || (typeof companyIdOrOptions === 'object' && companyIdOrOptions !== null && 'effect' in companyIdOrOptions) // duck typing for computed
-  
+
   const companyId = computed(() => {
     if (isId) {
       return isRef(companyIdOrOptions) ? companyIdOrOptions.value : companyIdOrOptions

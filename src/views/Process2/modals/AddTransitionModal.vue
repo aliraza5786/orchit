@@ -34,6 +34,7 @@ const props = defineProps<{
   modelValue: boolean;
   group: any;
 }>();
+console.log("group", props.group);
 
 const emit = defineEmits(['update:modelValue', 'created']);
 

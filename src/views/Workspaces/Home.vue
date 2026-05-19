@@ -107,6 +107,8 @@
 
           <div class="shrink-0">
             <Button
+              :disabled="!isCreatingWorkspace"
+              :title="isCreatingWorkspace ? '' : 'You are not authorized to create workspace'"
               variant="primary"
               size="lg"
               @click="handleCreateWorkspace"
@@ -234,7 +236,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted, nextTick, watchEffect } from "vue";
+import { computed, ref, onMounted, nextTick } from "vue";
 import Button from "../../components/ui/Button.vue";
 import ProjectGallery from "../../components/ui/ProjectGallery.vue";
 import WorkspaceListTable from "./components/WorkspaceListTable.vue";
@@ -271,10 +273,6 @@ const userName = computed(() => {
   const name = authStore.user?.data?.u_full_name || authStore.user?.name;
   return name ? name.split(" ")[0] + '!' : "there!";
 });
-
-watchEffect(()=>{
-  console.log("User name computed:", authStore.user);
-})
 
 type View = "list" | "gallery";
 const currentView = ref<View>("list");
@@ -386,6 +384,10 @@ const { data: profile } = useProfile();
 const { data: usersData } = useCompanyUsers(
   computed(() => ({ company_id: authStore.company_id || '' })).value
 );
+console.log("suer profile data", profile.value?.data?.active_company);
+const isCreatingWorkspace = computed(() => {
+  return profile.value?.data?.active_company?.membership_role !== 'owner' || 'super_Admin' || 'admin';
+});
 const members = computed(() => {
   const raw = usersData.value?.data?.users ?? usersData.value?.users ?? [];
   return Array.isArray(raw) ? raw : [];
