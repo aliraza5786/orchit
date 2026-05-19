@@ -103,7 +103,7 @@
           {{ user.name }}
         </div>
         <div class="flex items-center gap-1.5 text-xs text-text-secondary cursor-default">
-          <span class="w-2 h-2 rounded-full shrink-0 bg-border/40"></span>
+          <span class="w-2 h-2 rounded-full shrink-0 bg-accent/40"></span>
           Unallocated
         </div>
       </div>
