@@ -143,11 +143,11 @@
              STEP 1 — How will you use Orchit AI?
         ════════════════════════════════════════════════════════════ -->
         <div v-show="activeStep === 1">
-          <div class="mb-8 text-center space-y-2">
-            <h2 class="text-[24px] font-medium tracking-tight text-text-primary">
+          <div class="mb-8 text-center space-y-3">
+            <h2 class="text-3xl font-bold tracking-tight text-text-primary">
               How will you use Orchit AI?
             </h2>
-            <p class="text-sm font-normal text-text-secondary max-w-md mx-auto">
+            <p class="text-sm font-medium text-text-secondary max-w-md mx-auto">
               Choose the setup that best fits your goals. You can always create or join other organizations later.
             </p>
           </div>
@@ -318,47 +318,47 @@
         <!-- ═══════════════════════════════════════════════════════
              STEP 2 — About Company / You / School
         ════════════════════════════════════════════════════════════ -->
-        <div class="space-y-2 mb-8  text-center" v-show="activeStep === 2">
-          <h2 class="text-[24px] font-medium text-text-primary" v-if="selected === 'team'">
+        <div class="space-y-2 mb-6 md:mb-12" v-show="activeStep === 2">
+          <h2 class="text-[24px] lg:text-[32px] leading-8 lg:leading-11 font-medium text-text-primary" v-if="selected === 'team'">
             Tell us about your company
           </h2>
-          <h2 class="text-[24px] font-medium text-text-primary" v-if="selected === 'personal'">
+          <h2 class="text-[24px] lg:text-[32px] leading-8 lg:leading-11 font-medium text-text-primary" v-if="selected === 'personal'">
             Tell us about yourself
           </h2>
-          <p class="text-sm sm:text-nowrap font-normal text-text-secondary">
+          <p class="text-[14px] md:text-base sm:text-nowrap font-medium text-text-secondary">
             This will help us personalize your experience in Orchit AI.
           </p>
         </div>
 
-        <div class="space-y-3 " v-show="activeStep === 2 && selected === 'team'">
-          <BaseTextField ref="teamRef" v-model="team" label="Company Name" placeholder="Company name" size="md" :error="!!errors.team" :message="errors.team" />
-          <BaseSelectField :noSearchAble="true" ref="roleRef" v-model="role" label="What role do you perform in your company?" :options="staticRolesList" placeholder="Select Role" size="md" :error="!!errors.role" :message="errors.role" />
-          <BaseSelectField :noSearchAble="true" ref="companySizeRef" v-model="companySize" label="What's your company size?" :options="companySizeOptions" placeholder="Select Company size" size="md" :error="!!errors.companySize" :message="errors.companySize" />
+        <div class="space-y-6" v-show="activeStep === 2 && selected === 'team'">
+          <BaseTextField ref="teamRef" v-model="team" label="Company Name" placeholder="Company name" size="lg" :error="!!errors.team" :message="errors.team" />
+          <BaseSelectField ref="roleRef" v-model="role" label="What role do you perform in your company?" :options="staticRolesList" placeholder="Select Role" size="lg" :error="!!errors.role" :message="errors.role" />
+          <BaseSelectField ref="companySizeRef" v-model="companySize" label="What's your company size?" :options="companySizeOptions" placeholder="Select Company size" size="lg" :error="!!errors.companySize" :message="errors.companySize" />
         </div>
 
-        <div class="space-y-3 " v-show="activeStep === 2 && selected === 'personal'">
-          <BaseTextField v-model="personalRole" label="What do you do?" placeholder="e.g. Frontend Developer, Student, Designer" size="md" :error="!!errors.personalRole" :message="errors.personalRole" />
+        <div class="space-y-6" v-show="activeStep === 2 && selected === 'personal'">
+          <BaseTextField v-model="personalRole" label="What do you do?" placeholder="e.g. Frontend Developer, Student, Designer" size="lg" :error="!!errors.personalRole" :message="errors.personalRole" />
         </div>
 
         <!-- ═══════════════════════════════════════════════════════
              STEP 3 — What would you like to manage?
         ════════════════════════════════════════════════════════════ -->
         <div v-show="activeStep === 3" class="space-y-6">
-          <div class="space-y-2 mb-8 text-center flex justify-center flex-col items-center">
-            <h2 class="text-[24px] font-medium text-text-primary">
+          <div class="space-y-2">
+            <h2 class="text-[24px] lg:text-[32px] leading-8 lg:leading-11 font-medium text-text-primary">
               What would you like to manage?
             </h2>
-            <p class="text-sm font-normal text-text-secondary max-w-[350px]">
+            <p class="text-[14px] md:text-base font-medium text-text-secondary">
               You can select multiple options. This helps us personalize your workspace.
             </p>
           </div>
-          <div class="flex flex-wrap justify-center gap-3">
+          <div class="flex flex-wrap gap-3">
             <button
               v-for="module in activeModules"
               :key="module.id"
               type="button"
               @click="toggleModule(module.id)"
-              class="px-4 py-2 rounded-[6px] border text-sm cursor-pointer transition-all duration-200 hover:scale-[1.03] hover:shadow-sm"
+              class="px-4 py-2 rounded-full border text-sm cursor-pointer transition-all duration-200 hover:scale-[1.03] hover:shadow-sm"
               :class="selectedModules.includes(module.id)
                 ? 'bg-accent/30 border-accent text-text-primary hover:bg-accent/40'
                 : 'border-border text-text-secondary hover:border-accent hover:text-text-primary hover:bg-accent/10'"
@@ -373,9 +373,9 @@
              STEP 4 — What kind of work do you do?
         ════════════════════════════════════════════════════════════ -->
         <div v-if="activeStep === 4">
-          <div class="space-y-2 mb-8 text-center">
-            <h2 class="text-[24px] font-medium text-text-primary">What kind of work do you do?</h2>
-            <p class="text-text-secondary text-sm text-normal">This helps us tailor your workspace experience.</p>
+          <div class="space-y-2 mb-6">
+            <h2 class="text-[24px] lg:text-[32px] font-medium text-text-primary">What kind of work do you do?</h2>
+            <p class="text-text-secondary text-sm md:text-base">This helps us tailor your workspace experience.</p>
           </div>
           <div class="grid grid-cols-2 gap-4">
             <button
@@ -383,7 +383,7 @@
               :key="item.id"
               @click="workType = item.id"
               type="button"
-              class="flex items-center gap-3 p-4 rounded-[6px] cursor-pointer border text-left transition-all duration-200 hover:shadow-sm hover:scale-[1.02]"
+              class="flex items-center gap-3 p-4 rounded-xl cursor-pointer border text-left transition-all duration-200 hover:shadow-sm hover:scale-[1.02]"
               :class="workType === item.id ? 'bg-accent/30 border-accent' : 'border-border hover:border-accent hover:bg-accent/10'"
             >
               <FontAwesomeIcon :icon="['fas', item.icon]" class="text-lg text-text-primary transition-colors duration-200" />
@@ -402,13 +402,13 @@
         ════════════════════════════════════════════════════════════ -->
         <div v-if="activeStep === 5" class="flex items-center justify-center w-full min-h-full py-3">
           <div class="w-full max-w-115">
-            <div class="space-y-6" style=" ">
+            <div class="rounded-2xl border p-8 md:p-10 space-y-7" style="background: var(--bg-card); border-color: var(--border);">
 
               <div class="text-center space-y-3">
                 <div class="w-14 h-14 rounded-[14px] border flex items-center justify-center mx-auto" style="background: var(--bg-lavender); border-color: rgba(125,104,200,0.2);">
                   <img src="/src/assets/global/favicon.png" alt="logo" />
                 </div>
-                <h2 class="text-[22px] font-bold tracking-tight" style="color: var(--text-primary);">Organization Setup</h2>
+                <h2 class="text-[22px] font-bold tracking-tight" style="color: var(--text-primary);">Create your workspace</h2>
                 <p class="text-sm leading-relaxed max-w-80 mx-auto" style="color: var(--text-secondary);">
                   Set up your team's home. You can always change these settings later.
                 </p>
@@ -1193,7 +1193,7 @@
         <!-- ═══════════════════════════════════════════════════════
              BOTTOM NAV (steps 1–4 only)
         ════════════════════════════════════════════════════════════ -->
-        <div class="flex justify-between items-center mt-10" v-if="showBottomNav">
+        <div class="flex justify-between items-center mt-10 md:mt-5" v-if="showBottomNav">
           <Button v-if="activeStep !== 1 && !siteCreated" variant="secondary" size="md" type="button" :disabled="isAnyMutating" @click="goBack">
             <div class="flex items-center gap-1"><FontAwesomeIcon :icon="['fas', 'arrow-left']" /> Back</div>
           </Button>
