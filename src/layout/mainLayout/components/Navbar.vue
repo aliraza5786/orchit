@@ -173,6 +173,7 @@
                   {{ activeCompanyData.title?.charAt(0)?.toUpperCase() || '?' }}
                 </div>
               </div>
+              
               <div class="min-w-0 flex-1">
                 <p class="text-[12px] font-bold text-text-primary truncate leading-tight">{{ activeCompanyData.title }}</p>
                 <p class="text-[10px] text-text-secondary mt-0.5 capitalize truncate">
