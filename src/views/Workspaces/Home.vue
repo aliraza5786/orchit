@@ -1,9 +1,9 @@
 <template>
-  <div class="w-full bg-bg-surface/40 text-text-primary">
+  <div class="w-full bg-bg-surface/70 text-text-primary">
     <div class="mx-auto w-full max-w-360 px-5 pt-10 pb-10 md:px-15">
       <!-- Sophisticated Workspace Header -->
       <div
-        class="relative overflow-hidden rounded-xl bg-bg-body p-8 md:px-10 md:py-8 shadow-sm shadow-accent/30"
+        class="relative overflow-hidden rounded-xl bg-bg-card/60 p-8 md:px-10 md:py-8 shadow-sm shadow-accent/30"
       >
         <!-- Animated Background Elements -->
         <div class="absolute inset-0 overflow-hidden pointer-events-none">

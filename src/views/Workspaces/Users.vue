@@ -1,5 +1,5 @@
 <template>
-  <div class="w-full text-text-primary bg-bg-surface/40">
+  <div class="w-full text-text-primary bg-bg-surface/70">
     <div class="mx-auto w-full max-w-360 px-5 py-10 md:px-15 md:py-20">
       <div class="flex justify-between items-center flex-wrap gap-5 mb-10">
         <div class="flex flex-col gap-1.5 max-md:gap-1">
