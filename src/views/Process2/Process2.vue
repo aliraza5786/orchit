@@ -548,7 +548,7 @@ const closeSidePanel       = () => { showSidePanel.value = false; selectedSidePa
 const variables = [
   {
     key: "created_by",
-    label: "Assignee",
+    label: "Created By",
     type: "users",
     value: [],
   },
