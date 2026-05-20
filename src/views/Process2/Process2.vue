@@ -7,33 +7,70 @@
          <h2 class="text-md font-semibold text-foreground text-nowrap">All Processes</h2>
 
         <!-- Group By split-button -->
+          <div class="relative flex items-center gap-2">
+            <button
+              ref="filterTriggerRef"
+              @click="toggleFilters"
+              class="flex items-center gap-2 px-3 h-[33px] rounded-md border cursor-pointer bg-bg-transparent hover:border-primary-color transition-all text-xs font-semibold relative"
+              :class="showFilterBar ? 'border-primary-color' : 'border-border'"
+            >
+              <i class="fa-solid fa-filter text-primary-color text-[14px]"></i>
+              <span>Filter</span>
+              <span
+                v-if="activeFilterCount"
+                class="bg-primary-color text-white rounded-full px-1.5 py-0.5 text-[9px] min-w-[16px] flex items-center justify-center"
+              >
+                {{ activeFilterCount }}
+              </span>
+            </button>
+
+            <button
+              v-if="hasActiveFilters"
+              @click="handleClearFilters"
+              class="text-[11px] font-medium text-text-secondary hover:text-primary-color transition-colors whitespace-nowrap"
+            >
+              Clear filters
+            </button>
+
+            <!-- Floating Filter Dropdown -->
+            <ProductFilters
+              v-if="showFilterBar"
+              :triggerRef="filterTriggerRef"
+              :variables="variables"
+              :workspaceId="workspaceId"
+              :activeFilters="activeFilters"
+              @apply="
+                (f) => {
+                  handleApplyFilters(f);
+                  showFilterBar = false;
+                }
+              "
+              @clear="handleClearFilters"
+              @close="showFilterBar = false"
+            />
+          </div>
         <div
           ref="viewByTriggerEl"
-          class="inline-flex items-center rounded-md border border-border overflow-hidden text-xs whitespace-nowrap shadow-sm"
+          class="inline-flex items-center rounded-md overflow-hidden text-xs whitespace-nowrap"
         >
           <!-- Left: static label -->
-          <button
-            @click="showViewDropdown = !showViewDropdown"
-            class="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-bg-surface hover:bg-bg-body text-text-secondary font-medium transition-colors"
-          >
-            <i class="fa-solid fa-layer-group text-[10px]"></i>
-            Group By
-          </button>
+         <button
+  @click="showViewDropdown = !showViewDropdown"
+  class="flex items-center gap-2 text-nowrap px-3 h-[33px] rounded-md border cursor-pointer bg-transparent hover:border-primary-color transition-all text-xs font-semibold relative"
+  :class="
+    showViewDropdown
+      ? 'border-primary-color text-primary-color'
+      : 'border-border text-text-primary'
+  "
+>
+  <i
+    class="fa-solid fa-layer-group text-[14px] text-primary-color"
+  ></i>
 
-          <!-- Divider -->
-          <div class="w-px self-stretch bg-border"></div>
-
-          <!-- Right: active value -->
-          <button
-            @click="showViewDropdown = !showViewDropdown"
-            class="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-primary/10 hover:bg-primary/15 text-primary font-semibold transition-colors"
-          >
-            {{ selectedViewLabel }}
-            <i
-              class="fa-solid fa-chevron-down text-[9px] transition-transform duration-200"
-              :class="{ 'rotate-180': showViewDropdown }"
-            ></i>
-          </button>
+  <span class="text-nowrap">
+    Group: {{ selectedViewLabel }}
+  </span>
+</button>
         </div>
 
         <VariablesDropdown
@@ -179,7 +216,7 @@ import SearchBar from '../../components/ui/SearchBar.vue';
 import { debounce } from 'lodash';
 import { usePermissions } from '../../composables/usePermissions';
 import { toast } from 'vue-sonner';
-
+import ProductFilters from '../Product/components/ProductFilters.vue';
 const { workspaceId } = useRouteIds();
 const selectedViewBy    = ref('module');
 
@@ -229,21 +266,21 @@ const selectedViewLabel = computed(
 const localList = ref<any[]>([]);
 
 watch(processGroups, (newVal: any) => {
-  if (!newVal?.groups) { localList.value = []; return }
-
-  const groupedBy = newVal.grouped_by
-  const columns: any[] = []
-
+  if (!newVal?.groups) { localList.value = []; return; }
+ 
+  const groupedBy = newVal.grouped_by;
+  const columns: any[] = [];
+ 
   if (groupedBy === 'module') {
     // { groups: [{ module, process_groups: [{ _id, title, transitions }] }] }
     newVal.groups.forEach((moduleGroup: any) => {
-      const pgs = moduleGroup.process_groups ?? []
+      const pgs = moduleGroup.process_groups ?? [];
       pgs.forEach((pg: any) => {
-        const raw = pg.transitions
+        const raw = pg.transitions;
         const transitionsArray: any[] = raw
           ? Array.isArray(raw) ? raw : Object.values(raw)
-          : []
-
+          : [];
+ 
         columns.push({
           _id:         pg._id,
           columnId:    pg._id,
@@ -252,20 +289,20 @@ watch(processGroups, (newVal: any) => {
           icon:        pg.icon ?? null,
           is_default:  pg.is_default ?? false,
           transitions: transitionsArray.map((t: any) => ({ ...t })),
-        })
-      })
-    })
-
+        });
+      });
+    });
+ 
   } else if (groupedBy === 'card_type') {
     // { groups: [{ card_type, module, transitions: [...] }] }
     newVal.groups.forEach((group: any) => {
-      const raw = group.transitions
+      const raw = group.transitions;
       const transitionsArray: any[] = raw
         ? Array.isArray(raw) ? raw : Object.values(raw)
-        : []
-
+        : [];
+ 
       columns.push({
-        _id:         group.card_type,   // no _id on this shape
+        _id:         group.card_type,
         columnId:    group.card_type,
         title:       group.card_type ?? 'Untitled',
         subtitle:    group.module ?? null,
@@ -273,33 +310,67 @@ watch(processGroups, (newVal: any) => {
         icon:        null,
         is_default:  false,
         transitions: transitionsArray.map((t: any) => ({ ...t })),
-      })
-    })
-
+      });
+    });
+ 
   } else if (groupedBy === 'card_status') {
-    // { groups: [{ card_status, color, is_start, is_end, sort_order, card_types, modules }] }
-    // No transitions — each group IS a status column, cards would be loaded separately
+    // Each group = one card_status with card_types[] and modules[]
+    // We expand card_types × modules into individual "cards" so the
+    // kanban board has something to render and filter against.
     newVal.groups.forEach((group: any) => {
+      const cardTypes: string[] = group.card_types ?? [];
+      const modules: string[]   = group.modules   ?? [];
+ 
+      // Build one synthetic card per (card_type × module) combination.
+      // If card_types is empty the status still appears but with a
+      // single placeholder card so the column is never invisible.
+      const pairs: Array<{ card_type: string; module: string }> =
+        cardTypes.length > 0
+          ? cardTypes.flatMap((ct: string) =>
+              modules.length > 0
+                ? modules.map((mod: string) => ({ card_type: ct, module: mod }))
+                : [{ card_type: ct, module: 'General' }]
+            )
+          : modules.map((mod: string) => ({ card_type: 'General', module: mod }));
+ 
+      const syntheticCards = pairs.map((pair, idx) => ({
+        // Stable synthetic id — not a real DB id, just for Vue :key
+        _id:          `${group.card_status}__${pair.card_type}__${pair.module}__${idx}`,
+        title:        pair.card_type,          // shown as card title
+        card_type:    pair.card_type,          // used by filters / resolveCardValue
+        type_value:   pair.card_type,          // alias used by resolveCardValue
+        module:       pair.module,             // shown as card subtitle
+        card_status:  group.card_status,       // the column this card belongs to
+        color:        group.color ?? '#808080',
+        is_start:     group.is_start ?? false,
+        is_end:       group.is_end   ?? false,
+        sort_order:   group.sort_order ?? 0,
+        // No real variables array for these synthetic cards
+        variables:    [],
+      }));
+ 
       columns.push({
         _id:         group.card_status,
         columnId:    group.card_status,
         title:       group.card_status ?? 'Untitled',
-        color:       group.color ?? '#3b82f6',
-        is_start:    group.is_start ?? false,
-        is_end:      group.is_end ?? false,
-        sort_order:  group.sort_order ?? 0,
-        card_types:  group.card_types ?? [],
-        modules:     group.modules ?? [],
-        transitions: [],   // no cards in this response shape
-      })
-    })
-
+        color:       group.color       ?? '#808080',
+        is_start:    group.is_start    ?? false,
+        is_end:      group.is_end      ?? false,
+        sort_order:  group.sort_order  ?? 0,
+        // Expose raw arrays on the column for any header-level display
+        card_types:  cardTypes,
+        modules:     modules,
+        // The expanded synthetic cards are the "transitions" the board renders
+        transitions: syntheticCards,
+      });
+    });
+ 
   } else {
-    console.warn('[Process2] Unknown grouped_by:', groupedBy)
+    console.warn('[Process2] Unknown grouped_by:', groupedBy);
   }
-
-  localList.value = columns
-}, { immediate: true, deep: true })
+ 
+  localList.value = columns;
+}, { immediate: true, deep: true });
 
 /* -------------------------------------------------------------------------- */
 /*                                Search Logic                                */
@@ -310,31 +381,43 @@ const debouncedQuery = ref('');
 watch(searchQuery, debounce((val: string) => { debouncedQuery.value = val; }, 200));
 
 const filteredList = computed(() => {
-  const query = debouncedQuery.value.toLowerCase().trim()
-
-  if (!query) return localList.value
-
+  const query   = debouncedQuery.value.toLowerCase().trim();
+  const filters = activeFilters.value as Record<string, any>;
+ 
+  // Check if any filter is actually active
+  const hasFilters = Object.values(filters).some(v =>
+    Array.isArray(v) ? v.length > 0 : Boolean(v)
+  );
+ 
   return localList.value
     .map((col: any) => {
-      const matchingCards = (col.transitions ?? []).filter((card: any) =>
-        card.title?.toLowerCase().includes(query) ||
-        card.name?.toLowerCase().includes(query)
-      )
-
-      return {
-        ...col,
-        transitions: matchingCards
-      }
+      const filtered = (col.transitions ?? []).filter((card: any) => {
+        // 1. Search match
+        if (query) {
+          const titleMatch = card.title?.toLowerCase().includes(query);
+          const nameMatch  = card.name?.toLowerCase().includes(query);
+          if (!titleMatch && !nameMatch) return false;
+        }
+ 
+        // 2. Active filters match
+        if (hasFilters && !cardMatchesFilters(card, filters)) return false;
+ 
+        return true;
+      });
+ 
+      return { ...col, transitions: filtered };
     })
     .filter((col: any) => {
-      // For card_status view columns have no transitions — don't hide them
-      if (processGroups.value?.grouped_by === 'card_status') {
-        return true
-      }
-
-      return col.transitions.length > 0
-    })
-})
+      // card_status columns have no transitions — always show them
+      if (processGroups.value?.grouped_by === 'card_status') return true;
+ 
+      // Hide empty columns only when a search or filter is active
+      if (query || hasFilters) return col.transitions.length > 0;
+ 
+      return true;
+    });
+});
+ 
 /* -------------------------------------------------------------------------- */
 /*                             Add Process Group                              */
 /* -------------------------------------------------------------------------- */
@@ -462,7 +545,35 @@ const handleClickTicket = (ticket: any) => {
 
 const closeWorkflowBuilder = () => { showWorkflowBuilder.value = false; selectedProcess.value = null; };
 const closeSidePanel       = () => { showSidePanel.value = false; selectedSidePanelCard.value = null; };
+const variables = [
+  {
+    key: "created_by",
+    label: "Assignee",
+    type: "users",
+    value: [],
+  },
 
+  {
+    key: "status",
+    label: "Status",
+    type: "select",
+    value: [],
+    options: [
+      { label: "Draft", value: "draft" },
+      { label: "Active", value: "active" },
+    ],
+  },
+
+  {
+    key: "date_range",
+    label: "Date Range",
+    type: "date-range",
+    value: {
+      start: null,
+      end: null,
+    },
+  },
+]
 /* -------------------------------------------------------------------------- */
 /*                             Add Transition                                 */
 /* -------------------------------------------------------------------------- */
@@ -475,8 +586,95 @@ const handleTransitionCreated = () => {
   isAddTransitionModal.value = false;
   queryClient.invalidateQueries({ queryKey: ['process-groups-with-transitions'] });
 };
-
+const showGroupDropdown = ref(false);
 const showGeneralWorkflowBuilder = ref(false);
+const showFilterBar = ref(false);
+const activeFilters = ref<any>({});
+const filterTriggerRef = ref<HTMLElement | null>(null);
+const sheetDropdownRef = ref<any>(null);
+const showVariableDropdown = ref(false);
+const toggleFilters = () => {
+  const willShow = !showFilterBar.value;
+  if (willShow) closeAllDropdowns("filter");
+  showFilterBar.value = willShow;
+};
+const activeFilterCount = computed(() => {
+  const f = activeFilters.value;
+  let count = 0;
+  Object.keys(f).forEach((key) => {
+    if (Array.isArray(f[key])) count += f[key].length;
+    else if (f[key]) count += 1;
+  });
+  return count;
+});
+const hasActiveFilters = computed(() => activeFilterCount.value > 0);
+const handleClearFilters = () => {
+  activeFilters.value = {};
+};
+const handleApplyFilters = (filters: any) => {
+  activeFilters.value = filters;
+};
+const closeAllDropdowns = (except: string) => {
+  if (except !== "sheet") {
+    sheetDropdownRef.value?.closeDropdown();
+  }
+  if (except !== "variable") {
+    showVariableDropdown.value = false;
+  }
+  if (except !== "filter") showFilterBar.value = false;
+  if (except !== "group") showGroupDropdown.value = false;
+};
+function resolveCardValue(card: any, slug: string): any {
+  // Explicit mappings for slugs that live as direct keys on the card object
+  const directKeyMap: Record<string, string> = {
+    'card-type':   'type_value',
+    'card-status': 'card_status',
+    'process':     'process',       // if stored top-level
+    'priority':    'priority',
+  };
+ 
+  if (directKeyMap[slug]) {
+    const direct = card[directKeyMap[slug]];
+    if (direct !== undefined && direct !== null && direct !== '') return direct;
+  }
+ 
+  // Fall back: scan the variables array (handles custom & process fields)
+  if (Array.isArray(card.variables)) {
+    const v = card.variables.find((vr: any) => vr.slug === slug);
+    if (v) return v.value;
+  }
+ 
+  // Last resort: try the slug as a direct key (snake_cased variants)
+  return card[slug] ?? card[slug.replace(/-/g, '_')] ?? undefined;
+}
+function cardMatchesFilters(card: any, filters: Record<string, any>): boolean {
+  for (const [slug, selected] of Object.entries(filters)) {
+    // Normalise: always work with an array
+    const allowed: string[] = Array.isArray(selected)
+      ? selected.filter(Boolean)
+      : selected ? [selected] : [];
+ 
+    if (allowed.length === 0) continue; // no constraint for this slug
+ 
+    const cardValue = resolveCardValue(card, slug);
+ 
+    // Card value can itself be an array (Multi Select fields)
+    const cardValues: string[] = Array.isArray(cardValue)
+      ? cardValue.map(String)
+      : cardValue !== undefined && cardValue !== null && cardValue !== ''
+        ? [String(cardValue)]
+        : [];
+ 
+    // OR logic: at least one of the card's values must be in the allowed list
+    const passes = cardValues.some(cv =>
+      allowed.some(a => a.toLowerCase() === cv.toLowerCase())
+    );
+ 
+    if (!passes) return false; // AND logic across slugs
+  }
+ 
+  return true;
+}
 </script>
 
 <style scoped>
