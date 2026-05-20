@@ -189,11 +189,11 @@ type Step = 'email' | 'login-password';
 const step = ref<Step>('email');
 
 const errorMessage = ref("");
-const cookieToken =
-  document.cookie
-    .split("; ")
-    .find((row) => row.startsWith("auth_token="))
-    ?.split("=")[1] ?? null;
+// const cookieToken =
+//   document.cookie
+//     .split("; ")
+//     .find((row) => row.startsWith("auth_token="))
+//     ?.split("=")[1] ?? null;
 const touched = {
   email: false,
   password: false,

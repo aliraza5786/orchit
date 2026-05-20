@@ -210,14 +210,10 @@ import { computed } from "vue";
 import { useRouter } from "vue-router";
 import AuthLayout from "../../layout/AuthLayout/AuthLayout.vue";
 import Button from "../../components/ui/Button.vue";
-import { useAuthStore } from "../../stores/auth";
-import darkLogo from "@assets/global/dark-logo.png";
-import lightLogo from "@assets/global/light-logo.png";
-import { useTheme } from "../../composables/useTheme";
+import { useAuthStore } from "../../stores/auth";  
 
 const router = useRouter();
-const authStore = useAuthStore();
-const { isDark } = useTheme();
+const authStore = useAuthStore(); 
 
 const userData = computed(() => authStore.user?.data ?? authStore.user);
 const associatedCompany = computed(() => userData.value?.associated_company);

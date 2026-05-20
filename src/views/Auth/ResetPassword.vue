@@ -427,10 +427,7 @@ const { mutateAsync: verifyToken } = useMutation({
 const { mutateAsync: resetPass, isPending } = useMutation({
   mutationFn: resetPassword,
 });
-
-const submitLabel = computed(() =>
-  isPending.value ? "Resetting..." : "Reset password",
-);
+ 
 
 onMounted(async () => {
   if (!token.value) {

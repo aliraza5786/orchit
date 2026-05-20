@@ -653,7 +653,7 @@ function cardTypeIcon(type: string): { icon: string; color: string } {
 
 const computedTickets = computed<MappedTicket[]>(() => {
   const raw: any[] = processDetails.value?.cards ?? []
-  return raw.map((card: any, idx: number) => {
+  return raw.map((card: any, _idx: number) => {
     const type   = card.variables?.['card-type']   ?? 'Task'
     const status = card.variables?.['card-status'] ?? 'Open'
     const { icon, color } = cardTypeIcon(type)

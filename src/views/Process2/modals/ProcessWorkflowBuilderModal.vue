@@ -315,9 +315,9 @@ const { mutate: updateTransition, isPending: isSaving } = useUpdateTransition({
 
 const updateButtonLabel = computed(() => isSaving.value ? 'Saving...' : 'Save Workflow')
 
-function handleUpdateWorkflow() {
-  Canvas.value?.triggerSave()
-}
+// function handleUpdateWorkflow() {
+//   Canvas.value?.triggerSave()
+// }
 
 function handleSave(payload: any) {
   updateTransition({
