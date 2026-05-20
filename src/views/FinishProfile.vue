@@ -1,98 +1,95 @@
 <template>
-    <AuthLayout>
-        <template #form>
-            <div class="max-w-125 mx-auto w-full min-h-full py-5 flex flex-col justify-center items-center">
-                <!-- Success badge -->
-                <div class="inline-flex items-center gap-2 bg-green-600/20 border border-green-600 rounded-full px-3 py-1.5 mb-6 w-fit">
-                    <span class="w-2 h-2 rounded-full bg-green-500"></span>
-                    <span class="text-xs font-medium text-green-700">Account verified</span>
-                </div>
+  <AuthLayout>
+    <template #form>
+      <div class="max-w-[360px] mx-auto w-full min-h-full py-8 flex flex-col justify-center items-center text-center">
+        
+        <!-- Premium Minimal Checkmark -->
+        <div class="w-16 h-16 rounded-full flex items-center justify-center mb-6" :style="iconBgStyle">
+          <svg class="w-8 h-8" :style="{ color: isPersonal ? '#0d9488' : 'var(--accent)' }" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
 
-                <div class="mb-8 text-center space-y-2">
-                    <h2 class="text-[24px] font-medium text-text-primary">Great! Your Account is All Set</h2>
-                    <p class="text-base font-normal text-text-secondary">Get started with Orchit AI. Create a project or explore your dashboard.</p>
-                </div>
+        <!-- Dynamic Success Title -->
+        <h2 class="text-[24px] font-medium text-text-primary tracking-tight mb-2">
+          {{ isPersonal ? 'Personal Space Ready!' : 'Organization Set Up!' }}
+        </h2>
 
-                <!-- Progress steps -->
-                <div class="flex items-center gap-1 mb-8">
-                    <div v-for="(step, i) in steps" :key="i" class="flex items-center gap-1">
-                        <div class="flex items-center gap-1.5">
-                            <div class="w-5 h-5 rounded-full bg-accent-hover flex items-center justify-center">
-                                <svg class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                                </svg>
-                            </div>
-                            <span class="text-xs font-medium text-accent-hover">{{ step }}</span>
-                        </div>
-                        <div v-if="i < steps.length - 1" class="w-20 h-px bg-purple-300 mx-1"></div>
-                    </div>
-                </div>
+        <!-- Elegant Subtitle -->
+        <p class="text-xs text-text-secondary leading-relaxed mb-6">
+          {{ isPersonal 
+            ? 'Your account is ready. Get started with Orchit AI to organize your thoughts and manage your tasks.' 
+            : 'Your team\'s digital workspace has been successfully provisioned. Start collaborating efficiently.' }}
+        </p>
 
-                <!-- Feature cards -->
-                <div class="grid grid-cols-3 gap-2.5 mb-6">
-                    <div v-for="feature in features" :key="feature.title"
-                        class="bg-bg-card border border-border rounded-xl p-3.5 cursor-pointer hover:border-accent-hover transition-all hover:-translate-y-0.5">
-                        <div class="w-8 h-8 rounded-lg flex items-center justify-center mb-2.5" :class="feature.iconBg">
-                            <i :class="[feature.icon, feature.iconColor, 'text-md']"></i>
-                        </div>
-                        <p class="text-sm font-semibold text-primary mb-1">{{ feature.title }}</p>
-                        <p class="text-xs text-secondary leading-relaxed">{{ feature.desc }}</p>
-                    </div>
-                </div>
+        <!-- Minimal Workspace Link Card -->
+        <div v-if="!isPersonal && workspaceUrl" class="w-full rounded-xl border border-border p-3.5 bg-bg-card text-left space-y-1 mb-6">
+          <span class="text-[9px] font-bold uppercase tracking-wider text-text-secondary">Workspace URL</span>
+          <div class="flex items-center justify-between gap-3">
+            <a :href="workspaceUrl" target="_blank" rel="noopener noreferrer" class="text-xs font-bold text-accent hover:underline truncate">
+              {{ workspaceUrl.replace('https://', '') }}
+            </a>
+            <svg class="w-3.5 h-3.5 text-text-tertiary" viewBox="0 0 12 12" fill="none"><path d="M3.5 8.5l5-5M8.5 3.5H5M8.5 3.5V7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+        </div>
 
-                <Button size="md" :block="true" @click="register">Explore Home</Button>
+        <!-- Main Buttons -->
+        <div class="w-full space-y-3.5">
+          <Button size="md" :block="true" @click="register">Explore Dashboard</Button>
 
-                <div class="flex items-center gap-2.5 my-3">
-                    <div class="flex-1 h-px bg-gray-200"></div>
-                    <span class="text-xs text-secondary font-medium">OR</span>
-                    <div class="flex-1 h-px bg-gray-200"></div>
-                </div>
+          <div class="flex items-center gap-3">
+            <div class="flex-1 h-px bg-border"></div>
+            <span class="text-[9px] text-text-tertiary font-bold tracking-wider uppercase">or</span>
+            <div class="flex-1 h-px bg-border"></div>
+          </div>
 
-                <Button size="md" :block="true" @click="createWS" variant="secondary">Let's Start Creating Your First WorkSpace</Button>
-            </div>
-        </template>
-    </AuthLayout>
+          <Button size="md" :block="true" @click="createWS" variant="secondary">
+            Let's Start Creating Your First Workspace
+          </Button>
+        </div>
+
+      </div>
+    </template>
+  </AuthLayout>
 </template>
 
 <script setup lang="ts">
 import AuthLayout from '../layout/AuthLayout/AuthLayout.vue';
 import Button from '../components/ui/Button.vue';
+import { computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router'
 import { useTheme } from '../composables/useTheme';
 
 const { theme } = useTheme();
-const steps = ['Sign up', 'Verify email', 'Account ready']
-const features = [
-  { 
-    title: 'Dashboard', 
-    desc: 'Overview of all your projects', 
-    icon: 'fa-regular fa-chart-bar',
-    iconBg: 'bg-purple-50', 
-    iconColor: 'text-purple-500' 
-  },
-  { 
-    title: 'Workspace', 
-    desc: 'Organize your team and flows', 
-    icon: 'fa-regular fa-folder',
-    iconBg: 'bg-teal-50', 
-    iconColor: 'text-teal-600' 
-  },
-  { 
-    title: 'AI Tools', 
-    desc: "Explore Orchit's AI features", 
-    icon: 'fa-regular fa-lightbulb',
-    iconBg: 'bg-amber-50', 
-    iconColor: 'text-amber-600' 
-  },
-]
-
 const router = useRouter()
 const route = useRoute()
+
+const isPersonal = computed(() => route.query.type === 'personal')
+
+const iconBgStyle = computed(() => {
+  if (isPersonal.value) {
+    return {
+      background: 'color-mix(in srgb, var(--teal-500, #14b8a6) 10%, transparent)',
+      border: '1.5px solid color-mix(in srgb, var(--teal-500, #14b8a6) 20%, transparent)',
+    }
+  }
+  return {
+    background: 'color-mix(in srgb, var(--accent) 10%, transparent)',
+    border: '1.5px solid color-mix(in srgb, var(--accent) 20%, transparent)',
+  }
+})
+
+const workspaceUrl = computed(() => {
+  const cd = route.query.customDomain as string
+  if (cd) return `https://${cd}`
+  const slug = route.query.siteSlug as string
+  if (slug) return `https://${slug}.streamed.space`
+  return ''
+})
 
 const COOKIE_KEY = 'auth_session'
 
 function setAuthCookie(data: { token?: string, company_id?: string }) {
-  // Read existing cookie
   let existing: Record<string, string> = {}
   try {
     const raw = document.cookie
@@ -110,11 +107,8 @@ function setAuthCookie(data: { token?: string, company_id?: string }) {
   if (hostname === 'localhost' || hostname.endsWith('.localhost')) {
     document.cookie = `${COOKIE_KEY}=${value}; path=/; max-age=${maxAge}; SameSite=Lax`
   } else if (hostname === 'orchit.ai' || hostname.endsWith('.orchit.ai')) {
-    // ✅ Use SameSite=None for cross-site cookie sending on production
     document.cookie = `${COOKIE_KEY}=${value}; domain=.orchit.ai; path=/; max-age=${maxAge}; Secure; SameSite=None`
   }
-
-  console.log('🍪 auth_session cookie set:', merged)
 }
 
 function register() {
@@ -144,7 +138,6 @@ function register() {
     return
   }
 
-  // ✅ Decode token
   let token = encodedToken
   try {
     if (!encodedToken.startsWith('eyJ')) {
@@ -155,7 +148,6 @@ function register() {
     return
   }
 
-  // ✅ Decode company_id
   let companyId = encodedCompanyId
   try {
     companyId = atob(encodedCompanyId.replace(/-/g, '+').replace(/_/g, '/').replace(/\./g, '='))
@@ -164,17 +156,12 @@ function register() {
     return
   }
 
-  console.log('✅ Token decoded:', !!token)
-  console.log('✅ company_id decoded:', companyId)
-
-  // ✅ Save both in shared cookie — accessible on ALL subdomains
   setAuthCookie({ token, company_id: companyId })
 
   const isLocalhost = window.location.hostname === 'localhost'
 
   const buildUrl = (base: string) => {
     const cleanBase = base.endsWith('/') ? base.slice(0, -1) : base
-    // ✅ Only pass _auth in URL — company_id comes from cookie
     return `${cleanBase}/dashboard?welcome=1&_auth=${encodedToken}`
   }
 

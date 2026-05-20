@@ -4,11 +4,14 @@ import { useApiMutation } from "../libs/vq";
 export const login = (payload: { u_email: string; u_password: string }) =>
   api.post("/auth/login", payload).then((res) => res.data);
 
+export const verifyEmailPreLogin = (payload: { email: string }) =>
+  api.post("/auth/verify-email-pre-login", payload).then((res) => res.data);
+
 export const register = (payload: {
   u_full_name: string;
   u_email: string;
   u_password: string;
-  agree_to_terms?: boolean
+  agree_to_terms?: boolean;
 }) => api.post("/auth/signup", payload).then((res) => res.data);
 
 export const verifyOtp = (payload: { u_email: string; otp: string }) =>
@@ -23,7 +26,6 @@ export const socialLogin = (payload: {
   u_social_id?: string;
   u_social_type?: string;
   u_full_name?: string;
-  
 }) => api.post("/auth/social-login", payload).then((res) => res.data);
 
 type createCompany = { payload: any };
@@ -39,19 +41,19 @@ export const useCreateCompany = (options = {}) =>
           url: `/workspace/company`,
           method: "POST",
           data: vars.payload,
-        })
+        });
 
         // ✅ Treat API-level failures as thrown errors
         if (data?.status === false) {
-          const err = new Error(data?.message ?? 'Request failed')
-          ;(err as any).response = { data }
-          throw err
+          const err = new Error(data?.message ?? "Request failed");
+          (err as any).response = { data };
+          throw err;
         }
 
-        return data
+        return data;
       },
       ...(options as any),
-    } as any
+    } as any,
   );
 export const useUpdateCompany = (options = {}) =>
   useApiMutation<any, createCompany>(
@@ -66,7 +68,7 @@ export const useUpdateCompany = (options = {}) =>
           data: vars.payload,
         }),
       ...(options as any),
-    } as any
+    } as any,
   );
 export const useUpdateCompanyProfile = (options = {}) =>
   useApiMutation<any, any>(
@@ -77,18 +79,18 @@ export const useUpdateCompanyProfile = (options = {}) =>
     },
     {
       mutationFn: (vars: any) => {
-        const { company_id, ...payload } = vars.payload
+        const { company_id, ...payload } = vars.payload;
 
         return request({
           url: `/profile/company/${company_id}`,
           method: "PUT",
           data: payload,
-        })
+        });
       },
       ...(options as any),
-    }
-  )
-  export const useDeleteOrganization = (options = {}) =>
+    },
+  );
+export const useDeleteOrganization = (options = {}) =>
   useApiMutation<any, any>(
     {
       key: ["delete-organization"],
@@ -97,15 +99,15 @@ export const useUpdateCompanyProfile = (options = {}) =>
     },
     {
       mutationFn: (vars: any) => {
-        const { company_id } = vars.payload
+        const { company_id } = vars.payload;
         return request({
           url: `/profile/company/${company_id}`,
           method: "DELETE",
-        })
+        });
       },
       ...(options as any),
-    }
-  )
+    },
+  );
 export const useInviteCompany = (options = {}) =>
   useApiMutation<any, createCompany>(
     {
@@ -119,7 +121,7 @@ export const useInviteCompany = (options = {}) =>
           data: vars.payload,
         }),
       ...(options as any),
-    } as any
+    } as any,
   );
 
 export const forgotPassword = (payload: { u_email: string }) =>
@@ -128,10 +130,13 @@ export const forgotPassword = (payload: { u_email: string }) =>
 export const verifyResetToken = (payload: { token: string }) =>
   api.post("/auth/verify-reset-token", payload).then((res) => res.data);
 
-export const resetPassword = (payload: { token: string; new_password: string; confirm_password: string }) =>
-  api.post("/auth/reset-password", payload).then((res) => res.data);
+export const resetPassword = (payload: {
+  token: string;
+  new_password: string;
+  confirm_password: string;
+}) => api.post("/auth/reset-password", payload).then((res) => res.data);
 
 export async function joinCompany(token: string) {
-  const response = await api.post(`/common/company-join/${token}`)
-  return response.data
+  const response = await api.post(`/common/company-join/${token}`);
+  return response.data;
 }

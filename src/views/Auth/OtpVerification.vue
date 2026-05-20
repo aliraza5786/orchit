@@ -128,9 +128,18 @@ async function verifyCode() {
 
   try {
     const fullCode = code.value.join('')
+
+    // Pre-login flow: OTP is just for identity verification before registration
+    if (route.query.preLogin === 'true') {
+      await verifyAsync({ u_email: email.value, otp: fullCode })
+      router.push({ path: '/register', query: { email: email.value, verified: 'true' } })
+      return
+    }
+
+    // Standard post-register OTP flow
     const data = await verifyAsync({ u_email: email.value, otp: fullCode })
     localStorage.setItem('token', data?.data?.token)
-    await authStore.bootstrap()
+    await authStore.bootstrap(true)
 
     // ✅ Check post_auth_intent first
     const intentStr = localStorage.getItem('post_auth_intent')
@@ -157,8 +166,14 @@ async function verifyCode() {
       return
     }
 
-    // Default → onboarding
-    router.replace('/create-profile')
+    const userData = authStore.user?.data ?? authStore.user;
+    const associatedCompany = userData?.associated_company;
+
+    if (associatedCompany && associatedCompany._id) {
+      router.replace('/associated-organization')
+    } else {
+      router.replace('/onboarding')
+    }
 
   } catch (err: any) {
     otpError.value = err?.response?.data?.message || 'Invalid code, please try again.'
@@ -285,7 +300,14 @@ function handlePaste(index: number, e: ClipboardEvent) {
   onMounted(async () => {
     // If already authenticated and verified, redirect away from this page
     if (authStore.isAuthenticated) {
-      router.replace('/create-profile')
+      const userData = authStore.user?.data ?? authStore.user;
+      const associatedCompany = userData?.associated_company;
+
+      if (associatedCompany && associatedCompany._id) {
+        router.replace('/associated-organization')
+      } else {
+        router.replace('/onboarding')
+      }
       return
     }
 

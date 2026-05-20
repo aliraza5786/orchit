@@ -2,142 +2,15 @@
   <AuthLayout
     :steps="stepLabels"
     :activeStep="displayStep"
-    :showSteps="activeStep !== 6 && !associatedCompany"
+    :showSteps="activeStep !== 6"
   >
     <template #form>
       <div 
-        class="mx-auto w-full min-h-full py-5 flex flex-col justify-center transition-all duration-300"
-        :class="activeStep === 1 ? 'max-w-2xl' : 'max-w-125'"
+        class="mx-auto w-full min-h-full py-5 flex flex-col justify-center"
+        :class="activeStep === 1 ? 'max-w-2xl' : 'max-w-[400px]'"
       >
 
-        <!-- ═══════════════════════════════════════════════════════
-             LOCKED STATE — Email associated with an existing company
-        ════════════════════════════════════════════════════════════ -->
-        <div v-if="associatedCompany" class="flex items-center justify-center min-h-full">
-          <div class="w-full max-w-md">
 
-            <!-- Card -->
-            <div
-              class="relative rounded-2xl border overflow-hidden"
-              style="background: var(--bg-card); border-color: var(--border);"
-            >
-              <!-- Gradient accent stripe at the top -->
-              <div class="h-1.5 w-full" style="background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 50%, #7c3aed));"></div>
-
-              <div class="p-8 space-y-6">
-
-                <!-- Icon + heading -->
-                <div class="flex flex-col items-center text-center space-y-4">
-                  <!-- Animated shield / lock icon -->
-                  <div
-                    class="w-16 h-16 rounded-2xl flex items-center justify-center"
-                    style="background: color-mix(in srgb, var(--accent) 12%, transparent); border: 1.5px solid color-mix(in srgb, var(--accent) 25%, transparent);"
-                  >
-                    <svg class="w-8 h-8" viewBox="0 0 24 24" fill="none" style="color: var(--accent);">
-                      <path d="M12 2L4 6v6c0 5.25 3.5 10.15 8 11.35C16.5 22.15 20 17.25 20 12V6l-8-4z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
-                      <rect x="9" y="11" width="6" height="5" rx="1" stroke="currentColor" stroke-width="1.4"/>
-                      <path d="M12 11V9a1.5 1.5 0 013 0v2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-                    </svg>
-                  </div>
-
-                  <div class="space-y-1.5">
-                    <h2 class="text-[22px] font-bold tracking-tight" style="color: var(--text-primary);">Your email is already associated with an organization</h2>
-                    <p class="text-sm leading-relaxed max-w-xs mx-auto" style="color: var(--text-secondary);">
-                      This email address is associated with an existing organisation on Orchit AI. You cannot create a new company while this association is active.
-                    </p>
-                  </div>
-                </div>
-
-                <!-- Company card -->
-                <div
-                  class="flex items-center gap-4 rounded-xl px-4 py-4 border"
-                  style="background: var(--bg-surface); border-color: var(--border);"
-                >
-                  <!-- Company logo or initials -->
-                  <div
-                    class="w-12 h-12 rounded-xl shrink-0 flex items-center justify-center overflow-hidden text-white font-bold text-base"
-                    style="background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 60%, #7c3aed));"
-                  >
-                    <img
-                      v-if="associatedCompany.logo"
-                      :src="associatedCompany.logo"
-                      :alt="associatedCompany.title"
-                      class="w-full h-full object-cover"
-                    />
-                    <span v-else>{{ associatedCompany.title?.charAt(0)?.toUpperCase() || '?' }}</span>
-                  </div>
-
-                  <div class="flex-1 min-w-0">
-                    <p class="text-sm font-bold text-text-primary truncate">{{ associatedCompany.title }}</p>
-                    <p class="text-xs mt-0.5 truncate" style="color: var(--text-secondary);">
-                      <span class="font-mono">{{ associatedCompany.slug }}</span>.streamed.space
-                    </p>
-                  </div>
-
-                  <!-- Locked badge -->
-                  <span
-                    class="shrink-0 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full"
-                    style="background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);"
-                  >Associated</span>
-                </div>
-
-                <!-- Info banner -->
-                <div
-                  class="flex items-start gap-3 rounded-xl px-4 py-3.5 border"
-                  style="background: color-mix(in srgb, #f59e0b 6%, transparent); border-color: color-mix(in srgb, #f59e0b 25%, transparent);"
-                >
-                  <svg class="w-4 h-4 mt-0.5 shrink-0" viewBox="0 0 16 16" fill="none" style="color: #f59e0b;">
-                    <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.4"/>
-                    <path d="M8 5v4M8 11v.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-                  </svg>
-                  <p class="text-xs leading-relaxed" style="color: #f59e0b;">
-                    We've notified the admin of <strong>{{ associatedCompany.title }}</strong>. If they approve, you'll be added to their organisation. Check back after receiving a confirmation email.
-                  </p>
-                </div>
-
-                <!-- What happens next -->
-                <div class="space-y-3">
-                  <p class="text-[11px] font-bold uppercase tracking-wider" style="color: var(--text-secondary);">What happens next?</p>
-                  <div class="space-y-2">
-                    <div v-for="(step, idx) in [
-                      { icon: 'M3 8l2 2 4-4', label: 'A notification has been sent to the admin of ' + associatedCompany.title },
-                      { icon: 'M8 4v8M4 8h8', label: 'The admin reviews your request and can add you to their workspace' },
-                      { icon: 'M5 8l2 2 4-4', label: 'Once accepted, you will receive an email with access instructions' },
-                    ]" :key="idx" class="flex items-start gap-3">
-                      <div
-                        class="w-5 h-5 rounded-full shrink-0 flex items-center justify-center text-[10px] font-bold mt-0.5"
-                        style="background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent);"
-                      >{{ idx + 1 }}</div>
-                      <p class="text-xs leading-relaxed" style="color: var(--text-secondary);">{{ step.label }}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Sign out action -->
-                 <div class="flex gap-3 w-full">
-                   <button
-                  type="button"
-                  class="flex-1 flex cursor-pointer items-center justify-center gap-2 py-3 rounded-[9px] text-sm font-semibold border transition-all duration-200 hover:opacity-80"
-                  style="border-color: var(--border); background: transparent; color: var(--text-secondary);"
-                  @click="authStore.logout(); router.push('/login')"
-                >
-                 
-                  Sign out and use a different account
-                </button>
-                <button class="flex-1 bg-accent text-white rounded-[9px] cursor-pointer px-4 py-3 text-sm font-semibold hover:opacity-90 transition-opacity" @click="router.push('/dashboard')">
-                  Go to Dashboard
-                </button>
-                 </div>
-                
-
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-        <!-- Normal onboarding steps (hidden when locked) -->
-        <template v-if="!associatedCompany">
 
         <!-- ═══════════════════════════════════════════════════════
              STEP 1 — How will you use Orchit AI?
@@ -152,83 +25,90 @@
             </p>
           </div>
 
-          <div class="how_help_steps grid sm:grid-cols-2 gap-6 max-w-2xl mx-auto">
+          <!-- Recommendation Banner for Company Emails -->
+          <div v-if="isCompanyEmail" class="mb-6 max-w-2xl mx-auto flex items-start gap-3 rounded-xl px-4 py-3 border text-left bg-accent/[0.04] border-accent/20">
+            <span class="w-5 h-5 rounded-full bg-accent/10 text-accent flex items-center justify-center flex-shrink-0 mt-0.5">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </span>
+            <div class="flex-1 min-w-0">
+              <p class="text-xs font-semibold text-text-primary">Recommended Option Detected</p>
+              <p class="text-xs text-text-secondary mt-0.5">
+                Since you signed up with a corporate domain (<strong class="text-accent font-mono">{{ userEmailDomain }}</strong>), we highly recommend creating an organization to unlock team collaboration features.
+              </p>
+            </div>
+          </div>
+
+          <div class="how_help_steps grid sm:grid-cols-2 gap-5 max-w-2xl mx-auto">
             <!-- For My Team Card -->
             <div
               @click="handleOptionClick('team')"
-              class="relative group border rounded-2xl p-6 transition-all duration-300 ease-out cursor-pointer flex flex-col justify-between select-none hover:-translate-y-1 active:scale-[0.99] min-h-[340px]"
+              class="relative group border rounded-xl p-5 transition-all duration-300 ease-out cursor-pointer flex flex-col justify-between select-none hover:-translate-y-0.5 active:scale-[0.99] min-h-[210px]"
               :class="[
                 selected === 'team'
-                  ? 'border-accent bg-gradient-to-b from-accent/[0.04] to-accent/[0.01] shadow-lg shadow-accent/5 ring-1 ring-accent'
-                  : 'border-border bg-bg-card hover:border-accent/40 hover:bg-accent/[0.01] hover:shadow-sm'
+                  ? 'border-accent bg-gradient-to-b from-accent/[0.04] to-accent/[0.01] shadow-md shadow-accent/5 ring-1 ring-accent'
+                  : 'border-border bg-bg-card hover:border-accent/40 hover:bg-accent/[0.01]'
               ]"
             >
-              <div>
-                <!-- Top Header Row -->
-                <div class="flex items-start justify-between w-full">
-                  <div 
-                    class="w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-300"
-                    :class="[
-                      selected === 'team' 
-                        ? 'bg-accent/15 scale-105' 
-                        : 'bg-surface group-hover:bg-accent/10 group-hover:scale-105'
-                    ]"
-                  >
-                    <!-- Display Team Icon -->
-                    <img :src="options.find(o => o._id === 'team')?.icon" class="w-8 h-8 object-contain transition-transform duration-300 group-hover:scale-110" />
-                  </div>
-
-                  <!-- Custom Checkmark -->
-                  <div 
-                    class="w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300"
-                    :class="[
-                      selected === 'team' 
-                        ? 'border-accent bg-accent shadow-sm' 
-                        : 'border-text-tertiary group-hover:border-accent/60'
-                    ]"
-                  >
+              <div class="flex flex-col h-full justify-between">
+                <div>
+                  <!-- Top Header Row -->
+                  <div class="flex items-start justify-between w-full">
                     <div 
-                      class="w-2 h-2 rounded-full bg-white transition-all duration-300"
-                      :class="[selected === 'team' ? 'scale-100' : 'scale-0']"
-                    ></div>
+                      class="w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-300"
+                      :class="[
+                        selected === 'team' 
+                          ? 'bg-accent/15 scale-105' 
+                          : 'bg-surface group-hover:bg-accent/10 group-hover:scale-105'
+                      ]"
+                    >
+                      <!-- Display Team Icon -->
+                      <img :src="options.find(o => o._id === 'team')?.icon" class="w-6 h-6 object-contain transition-transform duration-300 group-hover:scale-110" />
+                    </div>
+
+                    <!-- Custom Checkmark or Recommended Badge -->
+                    <div class="flex items-center gap-2">
+                      <span v-if="isCompanyEmail" class="text-[8px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-accent text-white shadow-sm shadow-accent/20">
+                        Recommended
+                      </span>
+                      <div 
+                        class="w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-300"
+                        :class="[
+                          selected === 'team' 
+                            ? 'border-accent bg-accent shadow-sm' 
+                            : 'border-text-tertiary group-hover:border-accent/60'
+                        ]"
+                      >
+                        <div 
+                          class="w-1.5 h-1.5 rounded-full bg-white transition-all duration-300"
+                          :class="[selected === 'team' ? 'scale-100' : 'scale-0']"
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Text Details -->
+                  <div class="mt-4 text-left">
+                    <div class="flex items-center gap-2">
+                      <h3 class="font-bold text-base text-text-primary transition-colors group-hover:text-accent">
+                        Create Organization
+                      </h3>
+                      <span class="text-[9px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
+                        Organization
+                      </span>
+                    </div>
+                    <p class="text-[12px] text-text-secondary leading-relaxed mt-2">
+                      Collaborate with team members, manage enterprise workspaces, configure a custom subdomain, and set granular role permissions.
+                    </p>
                   </div>
                 </div>
 
-                <!-- Text Details -->
-                <div class="mt-6 text-left">
-                  <div class="flex items-center gap-2">
-                    <h3 class="font-bold text-lg text-text-primary transition-colors group-hover:text-accent">
-                      For my team
-                    </h3>
-                    <span class="text-[10px] font-bold tracking-wider uppercase px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
-                      Teams
-                    </span>
-                  </div>
-                  <p class="text-[13px] text-text-secondary leading-relaxed mt-2.5">
-                    Collaborate on docs, projects, and custom organizational workspaces.
-                  </p>
-                </div>
-
-                <!-- Feature bullet list -->
-                <div class="mt-6 space-y-3 pt-5 border-t border-border text-left">
-                  <div class="flex items-start gap-2.5 text-xs text-text-secondary">
-                    <span class="w-4 h-4 rounded-full bg-green-500/10 text-green-600 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
-                    </span>
-                    <span>Real-time co-authoring & projects</span>
-                  </div>
-                  <div class="flex items-start gap-2.5 text-xs text-text-secondary">
-                    <span class="w-4 h-4 rounded-full bg-green-500/10 text-green-600 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
-                    </span>
-                    <span>Unified custom subdomain configuration</span>
-                  </div>
-                  <div class="flex items-start gap-2.5 text-xs text-text-secondary">
-                    <span class="w-4 h-4 rounded-full bg-green-500/10 text-green-600 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
-                    </span>
-                    <span>Granular team role permissions</span>
-                  </div>
+                <!-- Sleek horizontal bullet features -->
+                <div class="mt-4 pt-3 border-t border-border text-left flex flex-wrap gap-x-2 gap-y-1 text-[10px] font-medium text-text-tertiary">
+                  <span>Real-time Docs</span>
+                  <span>•</span>
+                  <span>Custom Subdomain</span>
+                  <span>•</span>
+                  <span>Granular Roles</span>
                 </div>
               </div>
             </div>
@@ -236,79 +116,68 @@
             <!-- For Personal Use Card -->
             <div
               @click="handleOptionClick('personal')"
-              class="relative group border rounded-2xl p-6 transition-all duration-300 ease-out cursor-pointer flex flex-col justify-between select-none hover:-translate-y-1 active:scale-[0.99] min-h-[340px]"
+              class="relative group border rounded-xl p-5 transition-all duration-300 ease-out cursor-pointer flex flex-col justify-between select-none hover:-translate-y-0.5 active:scale-[0.99] min-h-[210px]"
               :class="[
                 selected === 'personal'
-                  ? 'border-accent bg-gradient-to-b from-accent/[0.04] to-accent/[0.01] shadow-lg shadow-accent/5 ring-1 ring-accent'
-                  : 'border-border bg-bg-card hover:border-accent/40 hover:bg-accent/[0.01] hover:shadow-sm'
+                  ? 'border-accent bg-gradient-to-b from-accent/[0.04] to-accent/[0.01] shadow-md shadow-accent/5 ring-1 ring-accent'
+                  : 'border-border bg-bg-card hover:border-accent/40 hover:bg-accent/[0.01]'
               ]"
             >
-              <div>
-                <!-- Top Header Row -->
-                <div class="flex items-start justify-between w-full">
-                  <div 
-                    class="w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-300"
-                    :class="[
-                      selected === 'personal' 
-                        ? 'bg-accent/15 scale-105' 
-                        : 'bg-surface group-hover:bg-accent/10 group-hover:scale-105'
-                    ]"
-                  >
-                    <!-- Display Personal Icon -->
-                    <img :src="options.find(o => o._id === 'personal')?.icon" class="w-8 h-8 object-contain transition-transform duration-300 group-hover:scale-110" />
-                  </div>
-
-                  <!-- Custom Checkmark -->
-                  <div 
-                    class="w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300"
-                    :class="[
-                      selected === 'personal' 
-                        ? 'border-accent bg-accent shadow-sm' 
-                        : 'border-text-tertiary group-hover:border-accent/60'
-                    ]"
-                  >
+              <div class="flex flex-col h-full justify-between">
+                <div>
+                  <!-- Top Header Row -->
+                  <div class="flex items-start justify-between w-full">
                     <div 
-                      class="w-2 h-2 rounded-full bg-white transition-all duration-300"
-                      :class="[selected === 'personal' ? 'scale-100' : 'scale-0']"
-                    ></div>
+                      class="w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-300"
+                      :class="[
+                        selected === 'personal' 
+                          ? 'bg-accent/15 scale-105' 
+                          : 'bg-surface group-hover:bg-accent/10 group-hover:scale-105'
+                      ]"
+                    >
+                      <!-- Display Personal Icon -->
+                      <img :src="options.find(o => o._id === 'personal')?.icon" class="w-6 h-6 object-contain transition-transform duration-300 group-hover:scale-110" />
+                    </div>
+
+                    <!-- Custom Checkmark -->
+                    <div 
+                      class="w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-300"
+                      :class="[
+                        selected === 'personal' 
+                          ? 'border-accent bg-accent shadow-sm' 
+                          : 'border-text-tertiary group-hover:border-accent/60'
+                      ]"
+                    >
+                      <div 
+                        class="w-1.5 h-1.5 rounded-full bg-white transition-all duration-300"
+                        :class="[selected === 'personal' ? 'scale-100' : 'scale-0']"
+                      ></div>
+                    </div>
+                  </div>
+
+                  <!-- Text Details -->
+                  <div class="mt-4 text-left">
+                    <div class="flex items-center gap-2">
+                      <h3 class="font-bold text-base text-text-primary transition-colors group-hover:text-accent">
+                        Create Personal Profile
+                      </h3>
+                      <span class="text-[9px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded-full bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400">
+                        Personal
+                      </span>
+                    </div>
+                    <p class="text-[12px] text-text-secondary leading-relaxed mt-2">
+                      Organize your thoughts, write documents, track solo projects, and leverage a personalized AI assistant.
+                    </p>
                   </div>
                 </div>
 
-                <!-- Text Details -->
-                <div class="mt-6 text-left">
-                  <div class="flex items-center gap-2.5">
-                    <h3 class="font-bold text-lg text-text-primary transition-colors group-hover:text-accent">
-                      For personal use
-                    </h3>
-                    <span class="text-[10px] font-bold tracking-wider uppercase px-2.5 py-0.5 rounded-full bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400">
-                      Individuals
-                    </span>
-                  </div>
-                  <p class="text-[13px] text-text-secondary leading-relaxed mt-2.5">
-                    Write better, think more clearly, and keep your tasks organized.
-                  </p>
-                </div>
-
-                <!-- Feature bullet list -->
-                <div class="mt-6 space-y-3 pt-5 border-t border-border text-left">
-                  <div class="flex items-start gap-2.5 text-xs text-text-secondary">
-                    <span class="w-4 h-4 rounded-full bg-green-500/10 text-green-600 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
-                    </span>
-                    <span>Fast and private solo note-taking</span>
-                  </div>
-                  <div class="flex items-start gap-2.5 text-xs text-text-secondary">
-                    <span class="w-4 h-4 rounded-full bg-green-500/10 text-green-600 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
-                    </span>
-                    <span>Lightweight personal lanes & dashboards</span>
-                  </div>
-                  <div class="flex items-start gap-2.5 text-xs text-text-secondary">
-                    <span class="w-4 h-4 rounded-full bg-green-500/10 text-green-600 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
-                    </span>
-                    <span>Personalized AI assistant tailored for you</span>
-                  </div>
+                <!-- Sleek horizontal bullet features -->
+                <div class="mt-4 pt-3 border-t border-border text-left flex flex-wrap gap-x-2 gap-y-1 text-[10px] font-medium text-text-tertiary">
+                  <span>Private Notes</span>
+                  <span>•</span>
+                  <span>Task Kanban</span>
+                  <span>•</span>
+                  <span>AI Assistant</span>
                 </div>
               </div>
             </div>
@@ -352,21 +221,30 @@
               You can select multiple options. This helps us personalize your workspace.
             </p>
           </div>
-          <div class="flex flex-wrap justify-center gap-3">
+          <div class="grid grid-cols-2 gap-3 w-full">
             <button
               v-for="module in activeModules"
               :key="module.id"
               type="button"
               @click="toggleModule(module.id)"
-              class="px-4 py-2 rounded-[6px] border text-sm cursor-pointer transition-all duration-200 hover:scale-[1.03] hover:shadow-sm"
+              class="flex items-center justify-between p-3.5 rounded-xl border text-left cursor-pointer transition-all duration-200 hover:shadow-sm"
               :class="selectedModules.includes(module.id)
-                ? 'bg-accent/30 border-accent text-text-primary hover:bg-accent/40'
-                : 'border-border text-text-secondary hover:border-accent hover:text-text-primary hover:bg-accent/10'"
+                ? 'bg-accent/[0.04] border-accent text-text-primary'
+                : 'border-border bg-bg-card hover:border-accent/40 text-text-secondary hover:text-text-primary'"
             >
-              {{ module.label }}
+              <span class="text-xs font-semibold select-none">{{ module.label }}</span>
+              <!-- Selection indicator checkmark -->
+              <span 
+                class="w-4 h-4 rounded border flex items-center justify-center transition-all duration-200 shrink-0"
+                :class="selectedModules.includes(module.id)
+                  ? 'border-accent bg-accent text-white'
+                  : 'border-text-tertiary'"
+              >
+                <svg v-if="selectedModules.includes(module.id)" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4"><path d="M20 6L9 17l-5-5"/></svg>
+              </span>
             </button>
           </div>
-          <p v-if="errors.selectedModules" class="text-xs text-red-500">{{ errors.selectedModules }}</p>
+          <p v-if="errors.selectedModules" class="text-xs text-red-500 text-center">{{ errors.selectedModules }}</p>
         </div>
 
         <!-- ═══════════════════════════════════════════════════════
@@ -377,20 +255,33 @@
             <h2 class="text-[24px] font-medium text-text-primary">What kind of work do you do?</h2>
             <p class="text-text-secondary text-sm text-normal">This helps us tailor your workspace experience.</p>
           </div>
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-2 gap-3 w-full">
             <button
               v-for="item in workTypeOptions"
               :key="item.id"
               @click="workType = item.id"
               type="button"
-              class="flex items-center gap-3 p-4 rounded-[6px] cursor-pointer border text-left transition-all duration-200 hover:shadow-sm hover:scale-[1.02]"
-              :class="workType === item.id ? 'bg-accent/30 border-accent' : 'border-border hover:border-accent hover:bg-accent/10'"
+              class="flex items-center justify-between p-3.5 rounded-xl border text-left cursor-pointer transition-all duration-200 hover:shadow-sm"
+              :class="workType === item.id
+                ? 'bg-accent/[0.04] border-accent text-text-primary'
+                : 'border-border bg-bg-card hover:border-accent/40 text-text-secondary hover:text-text-primary'"
             >
-              <FontAwesomeIcon :icon="['fas', item.icon]" class="text-lg text-text-primary transition-colors duration-200" />
-              <span class="text-sm font-medium text-text-primary">{{ item.label }}</span>
+              <div class="flex items-center gap-2.5 min-w-0">
+                <FontAwesomeIcon :icon="['fas', item.icon]" class="text-sm shrink-0" :class="workType === item.id ? 'text-accent' : 'text-text-secondary'" />
+                <span class="text-xs font-semibold select-none truncate">{{ item.label }}</span>
+              </div>
+              <!-- Selection indicator radio checkmark -->
+              <span 
+                class="w-4 h-4 rounded-full border flex items-center justify-center transition-all duration-200 shrink-0"
+                :class="workType === item.id
+                  ? 'border-accent bg-accent text-white'
+                  : 'border-text-tertiary'"
+              >
+                <svg v-if="workType === item.id" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4"><path d="M20 6L9 17l-5-5"/></svg>
+              </span>
             </button>
           </div>
-          <p v-if="errors.workType" class="text-xs text-red-500 mt-2">{{ errors.workType }}</p>
+          <p v-if="errors.workType" class="text-xs text-red-500 mt-2 text-center">{{ errors.workType }}</p>
         </div>
 
         <!-- ═══════════════════════════════════════════════════════
@@ -401,15 +292,12 @@
              Scenario 3 (company email any type): subdomain only + auto-verified banner
         ════════════════════════════════════════════════════════════ -->
         <div v-if="activeStep === 5" class="flex items-center justify-center w-full min-h-full py-3">
-          <div class="w-full max-w-115">
-            <div class="space-y-6" style=" ">
+          <div class="w-full">
+            <div class="space-y-6">
 
-              <div class="text-center space-y-3">
-                <div class="w-14 h-14 rounded-[14px] border flex items-center justify-center mx-auto" style="background: var(--bg-lavender); border-color: rgba(125,104,200,0.2);">
-                  <img src="/src/assets/global/favicon.png" alt="logo" />
-                </div>
-                <h2 class="text-[22px] font-bold tracking-tight" style="color: var(--text-primary);">Organization Setup</h2>
-                <p class="text-sm leading-relaxed max-w-80 mx-auto" style="color: var(--text-secondary);">
+              <div class="text-center space-y-3 mb-8">
+                <h2 class="text-[24px] font-medium text-text-primary">Organization Setup</h2>
+                <p class="text-text-secondary text-sm text-normal">
                   Set up your team's home. You can always change these settings later.
                 </p>
               </div>
@@ -417,240 +305,182 @@
               <!-- Scenario 3: domain auto-detected banner -->
               <div
                 v-if="isCompanyEmail"
-                class="flex items-start gap-3 rounded-xl px-4 py-3.5 border"
-                style="background: color-mix(in srgb, #1d9e75 8%, transparent); border-color: color-mix(in srgb, #1d9e75 25%, transparent);"
+                class="flex items-start gap-3 rounded-xl px-4 py-3.5 border bg-accent/[0.04] border-accent/20 text-left"
               >
-                <svg class="w-4 h-4 mt-0.5 shrink-0" viewBox="0 0 16 16" fill="none" style="color: #1d9e75;">
+                <svg class="w-4 h-4 mt-0.5 shrink-0 text-accent" viewBox="0 0 16 16" fill="none">
                   <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.4"/>
                   <path d="M5 8l2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
-                <p class="text-sm leading-relaxed" style="color: #1d9e75;">
-                  Your company domain <strong>{{ userEmailDomain }}</strong> is auto-detected. No custom domain setup or super-admin verification needed.
+                <p class="text-xs text-text-secondary leading-relaxed">
+                  Your company domain <strong class="text-accent font-mono">{{ userEmailDomain }}</strong> is auto-detected. No custom domain setup or super-admin verification needed.
                 </p>
               </div>
 
-              <!-- Scenario 2: MODE SWITCH toggle (generic email only) -->
-             <button
-  v-if="!isCompanyEmail"
-  type="button"
-  class="group w-full flex items-center justify-between cursor-pointer gap-4 px-5 py-4 rounded-2xl border-2 transition-all duration-300 text-left hover:scale-[1.01] hover:shadow-lg active:scale-[0.99]"
-  :style="{
-    borderColor: hasCustomDomain ? 'var(--accent)' : 'var(--border)',
-    background: hasCustomDomain
-      ? 'color-mix(in srgb, var(--accent) 10%, var(--bg-surface))'
-      : 'var(--bg-surface)',
-    boxShadow: hasCustomDomain
-      ? '0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent)'
-      : 'none',
-  }"
-  @click="toggleCustomDomain"
->
-  <!-- Left Content -->
-  <div class="flex-1 min-w-0">
-    <div class="flex items-center gap-2 mb-1">
-      <div
-        class="w-2.5 h-2.5 rounded-full transition-all duration-300"
-        :style="{
-          background: hasCustomDomain
-            ? 'var(--accent)'
-            : 'var(--text-secondary)',
-          boxShadow: hasCustomDomain
-            ? '0 0 10px color-mix(in srgb, var(--accent) 60%, transparent)'
-            : 'none',
-        }"
-      />
-
-      <p
-        class="text-sm font-semibold transition-colors duration-300"
-        :style="{
-          color: hasCustomDomain
-            ? 'var(--accent)'
-            : 'var(--text-primary)',
-        }"
-      >
-        {{
-          hasCustomDomain
-            ? 'I have a custom domain'
-            : "I don't have a custom domain"
-        }}
-      </p>
-    </div>
-
-    <p
-      class="text-xs transition-opacity duration-300 group-hover:opacity-100 opacity-80"
-      style="color: var(--text-secondary);"
-    >
-      {{
-        hasCustomDomain
-          ? 'Use your own branded domain for streaming'
-          : 'Use a free .streamed.space subdomain'
-      }}
-    </p>
-  </div>
-
-  <!-- Toggle -->
-  <div
-    class="relative w-12 h-7 rounded-full border-2 flex items-center px-0.5 transition-all duration-300 shrink-0"
-    :style="{
-      borderColor: hasCustomDomain ? 'var(--accent)' : 'var(--border)',
-      background: hasCustomDomain
-        ? 'var(--accent)'
-        : 'transparent',
-    }"
-  >
-    <div
-      class="w-5 h-5 rounded-full bg-white shadow-md transition-all duration-300"
-      :style="{
-        transform: hasCustomDomain
-          ? 'translateX(20px)'
-          : 'translateX(0px)',
-      }"
-    />
-  </div>
-</button>
+              <!-- Scenario 2: Segment Switcher (subdomain vs custom domain) -->
+              <div v-if="!isCompanyEmail" class="flex p-1 rounded-xl bg-surface border border-border select-none w-full">
+                <button
+                  type="button"
+                  @click="hasCustomDomain && toggleCustomDomain()"
+                  class="flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold transition-all duration-200 cursor-pointer text-center"
+                  :class="!hasCustomDomain 
+                    ? 'bg-accent text-white shadow-sm' 
+                    : 'text-text-secondary hover:text-text-primary'"
+                >
+                  Subdomain
+                </button>
+                <button
+                  type="button"
+                  @click="!hasCustomDomain && toggleCustomDomain()"
+                  class="flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold transition-all duration-200 cursor-pointer text-center"
+                  :class="hasCustomDomain 
+                    ? 'bg-accent text-white shadow-sm' 
+                    : 'text-text-secondary hover:text-text-primary'"
+                >
+                  Custom Domain
+                </button>
+              </div>
 
               <!-- SUBDOMAIN MODE: shown for Scenario 3 always, Scenario 2 when hasCustomDomain===false -->
-              <div class="space-y-5" v-if="!hasCustomDomain && !isCompanyEmail">
+              <div class="space-y-4 text-left" v-if="!hasCustomDomain && !isCompanyEmail">
                 <div class="space-y-1.5">
-                  <label class="text-[11px] font-semibold uppercase tracking-wider" style="color: var(--text-secondary);">Site name</label>
+                  <label class="text-[10px] font-bold uppercase tracking-wider text-text-secondary">Site Name</label>
                   <div
-                    class="flex items-stretch rounded-[10px] overflow-hidden border-[1.5px]"
-                    :style="{
-                      borderColor: isFocused && isSlugAvailable ? 'var(--accent)'
-                                 : isFocused && isAnyUnavailable ? '#e55050'
-                                 : 'var(--border-input)',
-                      background: 'var(--bg-input)',
-                    }"
+                    class="flex items-stretch rounded-xl overflow-hidden border transition-all duration-200 bg-bg-card animate-duration-150"
+                    :class="isFocused ? 'border-accent ring-1 ring-accent' : 'border-border'"
                   >
                     <input
                       v-model="siteName"
                       type="text"
                       placeholder="e.g. acme, my-team"
-                      class="flex-1 min-w-0 px-3.5 py-2.5 text-[15px] outline-none bg-transparent"
+                      class="flex-1 min-w-0 px-3.5 py-2.5 text-xs outline-none bg-transparent text-text-primary"
                       @focus="isFocused = true"
                       @blur="isFocused = false"
-                      style="color: var(--text-primary);"
                     />
-                    <div class="flex items-center px-3.5 border-l" style="background: var(--bg-surface); border-color: var(--border);">
-                      <span class="text-[13px] font-semibold" style="color: var(--text-secondary);">.streamed.space</span>
+                    <div class="flex items-center px-3.5 border-l bg-surface border-border">
+                      <span class="text-[11px] font-semibold text-text-secondary">.streamed.space</span>
                     </div>
                   </div>
-                  <p v-if="isCheckingSlug" class="text-xs" style="color: var(--text-secondary);">Checking availability…</p>
-                  <p v-else-if="isSlugAvailable === true && isDnsAvailable === true" class="text-xs" style="color: #1d9e75;">{{ siteSlug }}.streamed.space is available</p>
-                  <p v-else-if="isSlugAvailable === true && isCheckingDns" class="text-xs" style="color: var(--text-secondary);">Verifying domain…</p>
-                  <p v-else-if="isSlugAvailable === true && isDnsAvailable === false" class="text-xs" style="color: #e55050;">Domain check failed — please try a different name.</p>
-                  <p v-else-if="isSlugAvailable === false" class="text-xs" style="color: #e55050;">This site name is already taken.</p>
+                  <p v-if="isCheckingSlug" class="text-xs text-text-secondary">Checking availability…</p>
+                  <p v-else-if="isSlugAvailable === true && isDnsAvailable === true" class="text-xs text-green-600 flex items-center gap-1 font-medium">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+                    {{ siteSlug }}.streamed.space is available
+                  </p>
+                  <p v-else-if="isSlugAvailable === true && isCheckingDns" class="text-xs text-text-secondary">Verifying domain…</p>
+                  <p v-else-if="isSlugAvailable === true && isDnsAvailable === false" class="text-xs text-red-500 font-medium">{{ dnsError || 'Domain check failed — please try a different name.' }}</p>
+                  <p v-else-if="isSlugAvailable === false" class="text-xs text-red-500 font-medium">This site name is already taken.</p>
                 </div>
                 <div
                   v-if="siteSlug && isSlugAvailable === true && isDnsAvailable === true"
-                  class="flex items-center gap-2 rounded-lg px-3.5 py-2.5 border"
-                  style="background: var(--bg-lavender); border-color: rgba(125,104,200,0.18);"
+                  class="flex items-center gap-2 rounded-lg px-3.5 py-2 border bg-accent/[0.04] border-accent/15"
                 >
-                  <span class="text-[13px] font-semibold" style="color: var(--accent);">https://{{ siteSlug }}.streamed.space</span>
+                  <span class="text-xs font-semibold text-accent truncate">https://{{ siteSlug }}.streamed.space</span>
                 </div>
               </div>
 
               <!-- CUSTOM DOMAIN MODE (Scenario 2 only) -->
-              <div v-else-if="hasCustomDomain" class="space-y-5">
+              <div v-else-if="hasCustomDomain" class="space-y-4 text-left">
                 <div class="space-y-1.5">
-                  <label class="text-[11px] font-semibold uppercase tracking-wider" style="color: var(--text-secondary);">Custom domain</label>
+                  <label class="text-[10px] font-bold uppercase tracking-wider text-text-secondary">Custom Domain</label>
                   <div
-                    class="flex items-stretch rounded-[10px] overflow-hidden border-[1.5px]"
-                    :style="{
-                      borderColor: isDnsAvailable === true ? '#1d9e75' : isDnsNotRegistered ? '#f59e0b' : isDnsAvailable === false ? '#e55050' : 'var(--border-input)',
-                      background: 'var(--bg-input)',
-                    }"
+                    class="flex items-stretch rounded-xl overflow-hidden border transition-all duration-200 bg-bg-card animate-duration-150"
+                    :class="[
+                      isDnsAvailable === true ? 'border-green-500 ring-1 ring-green-500/20' :
+                      isDnsNotRegistered ? 'border-amber-500 ring-1 ring-amber-500/20' :
+                      isDnsAvailable === false ? 'border-red-500 ring-1 ring-red-500/20' :
+                      isDnsFocused ? 'border-accent ring-1 ring-accent' : 'border-border'
+                    ]"
                   >
                     <input
                       v-model="dnsInput"
                       type="text"
                       placeholder="e.g. mycompany.com"
-                      class="flex-1 min-w-0 px-3.5 py-2.5 text-[15px] outline-none bg-transparent"
-                      style="color: var(--text-primary);"
+                      class="flex-1 min-w-0 px-3.5 py-2.5 text-xs outline-none bg-transparent text-text-primary"
+                      @focus="isDnsFocused = true"
+                      @blur="isDnsFocused = false"
                     />
                   </div>
-                  <p v-if="dnsValidationError" class="text-xs" style="color: #e55050;">{{ dnsValidationError }}</p>
-                  <p v-else-if="isCheckingDns" class="text-xs" style="color: var(--text-secondary);">Checking DNS availability…</p>
-                  <p v-else-if="isDnsAvailable === true" class="text-xs" style="color: #1d9e75;">{{ dnsInput }} is active and ready</p>
+                  <p v-if="dnsValidationError" class="text-xs text-red-500 font-medium">{{ dnsValidationError }}</p>
+                  <p v-else-if="isCheckingDns" class="text-xs text-text-secondary">Checking DNS availability…</p>
+                  <p v-else-if="isDnsAvailable === true" class="text-xs text-green-600 flex items-center gap-1 font-medium">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+                    {{ dnsInput }} is active and ready
+                  </p>
                   <!-- NOT_REGISTERED: domain available for purchase -->
                   <div
                     v-else-if="isDnsNotRegistered"
-                    class="flex items-start gap-3 rounded-xl px-4 py-3.5 border mt-1.5"
-                    style="background: color-mix(in srgb, #f59e0b 6%, transparent); border-color: color-mix(in srgb, #f59e0b 25%, transparent);"
+                    class="flex flex-col gap-2 rounded-xl p-4 border bg-amber-500/[0.04] border-amber-500/20 mt-1.5"
                   >
-                    <svg class="w-4 h-4 mt-0.5 shrink-0" viewBox="0 0 16 16" fill="none" style="color: #f59e0b;">
-                      <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.4"/>
-                      <path d="M8 5v4M8 11v.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-                    </svg>
-                    <div class="flex-1 space-y-2.5">
-                      <p class="text-xs leading-relaxed" style="color: #f59e0b;">
-                        <strong>{{ dnsInput.trim() }}</strong> is not registered yet. You can purchase it from one of these registrars:
+                    <div class="flex items-start gap-2">
+                      <svg class="w-4 h-4 shrink-0 text-amber-500 mt-0.5" viewBox="0 0 16 16" fill="none">
+                        <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.4"/>
+                        <path d="M8 5v4M8 11v.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                      </svg>
+                      <p class="text-xs text-text-secondary leading-relaxed">
+                        <strong class="text-text-primary">{{ dnsInput.trim() }}</strong> is not registered yet. You can purchase it from:
                       </p>
-                      <div class="flex flex-wrap gap-2">
-                        <a
-                          v-for="r in domainRegistrars"
-                          :key="r.name"
-                          :href="r.getUrl(dnsInput.trim())"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold border transition-all duration-200 hover:scale-[1.03] hover:shadow-sm cursor-pointer"
-                          style="background: var(--bg-surface); border-color: var(--border); color: var(--text-primary);"
-                        >
-                          {{ r.name }}
-                          <svg class="w-3 h-3" viewBox="0 0 12 12" fill="none" style="color: var(--text-secondary);"><path d="M3.5 8.5l5-5M8.5 3.5H5M8.5 3.5V7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        </a>
-                      </div>
+                    </div>
+                    <div class="flex flex-wrap gap-1.5">
+                      <a
+                        v-for="r in domainRegistrars"
+                        :key="r.name"
+                        :href="r.getUrl(dnsInput.trim())"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-semibold border transition-all duration-200 hover:scale-[1.02] bg-surface border-border text-text-primary hover:border-accent/40"
+                      >
+                        {{ r.name }}
+                        <svg class="w-2.5 h-2.5 text-text-tertiary" viewBox="0 0 12 12" fill="none"><path d="M3.5 8.5l5-5M8.5 3.5H5M8.5 3.5V7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                      </a>
                     </div>
                   </div>
-                  <!-- Generic DNS error (registered but inactive, or other errors) -->
-                  <p v-else-if="isDnsAvailable === false" class="text-xs" style="color: #e55050;">{{ dnsError || 'Domain not available or inactive' }}</p>
+                  <!-- Generic DNS error -->
+                  <p v-else-if="isDnsAvailable === false" class="text-xs text-red-500 font-medium">{{ dnsError || 'Domain not available or inactive' }}</p>
                 </div>
 
                 <div
                   v-if="isDnsAvailable === true"
-                  class="flex items-start gap-3 rounded-xl px-4 py-3.5 border"
-                  style="background: color-mix(in srgb, var(--accent) 6%, transparent); border-color: color-mix(in srgb, var(--accent) 20%, transparent);"
+                  class="flex items-start gap-2.5 rounded-xl px-4 py-3 border bg-accent/[0.04] border-accent/20"
                 >
-                  <svg class="w-4 h-4 mt-0.5 shrink-0" viewBox="0 0 16 16" fill="none" style="color: var(--accent);">
+                  <svg class="w-3.5 h-3.5 text-accent shrink-0 mt-0.5" viewBox="0 0 16 16" fill="none">
                     <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.4"/>
                     <path d="M8 5v4M8 11v.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
                   </svg>
-                  <p class="text-xs leading-relaxed" style="color: var(--text-secondary);">
-                    Next you'll verify a super admin email at <strong style="color: var(--text-primary);">@{{ dnsInput }}</strong>, then verify domain ownership via DNS.
+                  <p class="text-xs text-text-secondary leading-relaxed">
+                    Next you'll verify a super admin email at <strong class="text-text-primary">@{{ dnsInput }}</strong>, then verify domain ownership via DNS.
                   </p>
                 </div>
               </div>
 
               <!-- Scenario 3 (company email): suggest the custom domain in place of dns and slug both -->
-              <div v-else-if="isCompanyEmail" class="space-y-5">
-                <div class="rounded-xl border border-accent bg-accent/5 p-5 space-y-3">
+              <div v-else-if="isCompanyEmail" class="space-y-4">
+                <div class="rounded-xl border border-accent/20 bg-accent/[0.04] p-4 text-left space-y-3">
                   <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center text-accent">
-                      <i class="fa-solid fa-globe text-lg"></i>
+                    <div class="w-9 h-9 rounded-lg bg-accent/10 flex items-center justify-center text-accent">
+                      <i class="fa-solid fa-globe text-base"></i>
                     </div>
-                    <div class="text-left">
-                      <h4 class="text-sm font-semibold text-text-primary">Corporate Domain Suggestion</h4>
-                      <p class="text-xs text-text-secondary">Based on your email <strong>{{ userEmail }}</strong></p>
+                    <div>
+                      <h4 class="text-xs font-bold text-text-primary">Corporate Domain Suggestion</h4>
+                      <p class="text-[11px] text-text-secondary">Based on your email <strong>{{ userEmail }}</strong></p>
                     </div>
                   </div>
                   <div class="h-px bg-border" />
                   <div class="space-y-1 text-left">
-                    <label class="text-[11px] font-semibold uppercase tracking-wider text-text-secondary">Your Workspace Domain</label>
-                    <div class="text-lg font-semibold text-accent">{{ userEmailDomain }}</div>
+                    <label class="text-[10px] font-bold uppercase tracking-wider text-text-secondary">Your Workspace Domain</label>
+                    <div class="text-base font-bold text-accent">{{ userEmailDomain }}</div>
                   </div>
                 </div>
               </div>
 
-              <button
-                type="button"
+              <!-- Standardized Submit Button -->
+              <Button
                 :disabled="isCreateSiteDisabled"
-                class="w-full flex items-center justify-center gap-2 cursor-pointer py-3 rounded-[9px] font-bold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                style="background: var(--accent); color: var(--accent-text);"
+                :loading="creatingProfile"
+                size="md"
+                :block="true"
                 @click="continueSiteHandler"
               >
-                <span v-if="creatingProfile" class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                <span>{{ isCompanyEmail ? `Continue with ${userEmailDomain}` : hasCustomDomain ? `Continue with ${dnsInput}` : 'Create site' }}</span>
-              </button>
+                {{ isCompanyEmail ? `Continue with ${userEmailDomain}` : hasCustomDomain ? `Continue with ${dnsInput}` : 'Create site' }}
+              </Button>
             </div>
           </div>
         </div>
@@ -738,26 +568,6 @@
                       @keyup.enter="sendSuperAdminOtp"
                     />
                     <!-- Fixed @domain suffix -->
-                    <div class="flex items-center px-3.5 border-l shrink-0" style="background: var(--bg-surface); border-color: var(--border);">
-                      <span class="text-[13px] font-semibold select-none" style="color: var(--text-secondary);">@{{ dnsInput.trim() }}</span>
-                    </div>
-                  </div>
-                  <p v-if="superAdminEmailError" class="text-xs" style="color: #e55050;">{{ superAdminEmailError }}</p>
-                </div>
-
-                <!-- Super Admin Password -->
-                <div class="space-y-1.5">
-                  <label class="text-[11px] font-semibold uppercase tracking-wider" style="color: var(--text-secondary);">Super Admin Password</label>
-                  <div
-                    class="flex items-stretch rounded-[10px] overflow-hidden border-[1.5px] transition-colors"
-                    :style="{
-                      borderColor: superAdminPasswordError ? '#e55050' : superAdminPasswordFocused ? 'var(--accent)' : 'var(--border-input)',
-                      background: 'var(--bg-input)',
-                    }"
-                  >
-                    <input
-                      v-model="superAdminPassword"
-                      type="password"
                       placeholder="*****"
                       class="flex-1 min-w-0 px-3.5 py-2.5 text-[15px] outline-none bg-transparent"
                       style="color: var(--text-primary);"
@@ -863,23 +673,32 @@
              STEP 7 — Where did you hear about us?
         ════════════════════════════════════════════════════════════ -->
         <div v-show="activeStep === 7" class="flex items-center justify-center min-h-full">
-          <div class="w-full max-w-130 space-y-8">
+          <div class="w-full max-w-[400px] space-y-6">
             <div class="space-y-2 text-center">
-              <h2 class="text-[28px] font-semibold text-text-primary">Where did you hear about us?</h2>
+              <h2 class="text-[24px] font-medium text-text-primary">Where did you hear about us?</h2>
               <p class="text-text-secondary text-sm">This helps us improve onboarding experience.</p>
             </div>
-            <div class="grid grid-cols-2 gap-3">
+            <div class="grid grid-cols-2 gap-3 w-full">
               <button
                 v-for="item in referralOptions"
                 :key="item.id"
                 @click="toggleReferral(item.id)"
                 type="button"
-                class="px-4 py-3 rounded-xl border text-sm cursor-pointer font-medium transition-all duration-200 hover:scale-[1.02] hover:shadow-sm"
+                class="flex items-center justify-between p-3.5 rounded-xl border text-left cursor-pointer transition-all duration-200 hover:scale-[1.02] hover:shadow-sm"
                 :class="referralSources.includes(item.id)
-                  ? 'bg-accent/30 border-accent hover:bg-accent/40'
-                  : 'border-border hover:border-accent hover:bg-accent/10 text-text-secondary hover:text-text-primary'"
+                  ? 'bg-accent/[0.04] border-accent text-text-primary'
+                  : 'border-border bg-bg-card hover:border-accent/40 text-text-secondary hover:text-text-primary'"
               >
-                {{ item.label }}
+                <span class="text-xs font-semibold select-none">{{ item.label }}</span>
+                <!-- Selection indicator checkmark -->
+                <span 
+                  class="w-4 h-4 rounded border flex items-center justify-center transition-all duration-200 shrink-0"
+                  :class="referralSources.includes(item.id)
+                    ? 'border-accent bg-accent text-white'
+                    : 'border-text-tertiary'"
+                >
+                  <svg v-if="referralSources.includes(item.id)" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4"><path d="M20 6L9 17l-5-5"/></svg>
+                </span>
               </button>
             </div>
             <div class="flex justify-end items-center">
@@ -995,51 +814,117 @@
                 </div>
               </div>
 
-              <div v-if="currentInstructions && currentDomain?.status !== 'verified'" class="space-y-3">
+              <div v-if="currentInstructions && currentDomain?.status !== 'verified'" class="space-y-4">
                 <template v-if="currentInstructions.method === 'cname' || currentInstructions.method === 'txt'">
                   <p class="text-xs leading-relaxed" style="color: var(--text-secondary);">Add the following DNS record at your DNS host (GoDaddy, Cloudflare, Namecheap, etc.)</p>
-                  <div class="rounded-xl overflow-hidden border" style="border-color: var(--border);">
-                    <div class="grid grid-cols-2 divide-x" style="background: var(--bg-surface); border-bottom: 1px solid var(--border); divide-color: var(--border);">
-                      <div class="px-4 py-2.5"><p class="text-[10px] font-bold uppercase tracking-wider mb-0.5" style="color: var(--text-secondary);">Type</p><p class="text-sm font-bold" style="color: var(--text-primary);">{{ currentInstructions.record_type }}</p></div>
-                      <div class="px-4 py-2.5"><p class="text-[10px] font-bold uppercase tracking-wider mb-0.5" style="color: var(--text-secondary);">TTL</p><p class="text-sm font-bold" style="color: var(--text-primary);">{{ currentInstructions.ttl_recommended }}s</p></div>
-                    </div>
-                    <div class="divide-y" style="divide-color: var(--border);">
-                      <div class="px-4 py-3 flex items-center justify-between gap-3">
-                        <div class="min-w-0 flex-1"><p class="text-[10px] font-bold uppercase tracking-wider mb-0.5" style="color: var(--text-secondary);">Host / Name</p><p class="text-sm font-mono break-all" style="color: var(--text-primary);">{{ currentInstructions.record_host }}</p></div>
-                        <button type="button" @click="copyToClipboard(currentInstructions.record_host, 'host')" class="shrink-0 p-1.5 rounded-lg cursor-pointer transition-all hover:scale-110" style="color: var(--text-secondary);">
-                          <svg v-if="copiedField !== 'host'" class="w-4 h-4" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M2 11V3a1 1 0 011-1h8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
-                          <svg v-else class="w-4 h-4" viewBox="0 0 16 16" fill="none" style="color: #1d9e75;"><path d="M3 8l3.5 3.5L13 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        </button>
-                      </div>
-                      <div class="px-4 py-3 flex items-center justify-between gap-3">
-                        <div class="min-w-0 flex-1"><p class="text-[10px] font-bold uppercase tracking-wider mb-0.5" style="color: var(--text-secondary);">Value / Points to</p><p class="text-sm font-mono break-all" style="color: var(--text-primary);">{{ currentInstructions.record_value }}</p></div>
-                        <button type="button" @click="copyToClipboard(currentInstructions.record_value, 'value')" class="shrink-0 p-1.5 rounded-lg cursor-pointer transition-all hover:scale-110" style="color: var(--text-secondary);">
-                          <svg v-if="copiedField !== 'value'" class="w-4 h-4" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M2 11V3a1 1 0 011-1h8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
-                          <svg v-else class="w-4 h-4" viewBox="0 0 16 16" fill="none" style="color: #1d9e75;"><path d="M3 8l3.5 3.5L13 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        </button>
-                      </div>
-                    </div>
+                  <div class="overflow-x-auto rounded-xl border" style="border-color: var(--border); background: var(--bg-card);">
+                    <table class="w-full text-left border-collapse min-w-[480px]">
+                      <thead>
+                        <tr style="background: var(--bg-surface); border-bottom: 1px solid var(--border);">
+                          <th class="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-text-secondary w-20">Type</th>
+                          <th class="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-text-secondary">Host / Name</th>
+                          <th class="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-text-secondary">Value / Points to</th>
+                          <th class="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-text-secondary w-24">TTL</th>
+                        </tr>
+                      </thead>
+                      <tbody class="divide-y" style="divide-color: var(--border);">
+                        <tr class="transition-colors hover:bg-surface/30">
+                          <td class="px-4 py-3 align-middle">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase" style="background: color-mix(in srgb, var(--accent) 10%, transparent); color: var(--accent); border: 1px solid color-mix(in srgb, var(--accent) 20%, transparent);">
+                              {{ currentInstructions.record_type }}
+                            </span>
+                          </td>
+                          <td class="px-4 py-3 align-middle">
+                            <div class="flex items-center justify-between gap-2 max-w-[140px]">
+                              <span class="text-xs font-mono break-all font-medium" style="color: var(--text-primary);">{{ currentInstructions.record_host }}</span>
+                              <button
+                                type="button"
+                                @click="copyToClipboard(currentInstructions.record_host, 'host')"
+                                class="shrink-0 p-1 rounded-lg transition-all duration-200" 
+                                style="color: var(--text-secondary);"
+                                title="Copy Host"
+                              >
+                                <svg v-if="copiedField !== 'host'" class="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M2 11V3a1 1 0 011-1h8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                                <svg v-else class="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" style="color: #1d9e75;"><path d="M3 8l3.5 3.5L13 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                              </button>
+                            </div>
+                          </td>
+                          <td class="px-4 py-3 align-middle">
+                            <div class="flex items-center justify-between gap-2 max-w-[200px]">
+                              <span class="text-xs font-mono break-all font-medium" style="color: var(--text-primary);">{{ currentInstructions.record_value }}</span>
+                              <button
+                                type="button"
+                                @click="copyToClipboard(currentInstructions.record_value, 'value')"
+                                class="shrink-0 p-1 rounded-lg transition-all duration-200" 
+                                style="color: var(--text-secondary);"
+                                title="Copy Value"
+                              >
+                                <svg v-if="copiedField !== 'value'" class="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M2 11V3a1 1 0 011-1h8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                                <svg v-else class="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" style="color: #1d9e75;"><path d="M3 8l3.5 3.5L13 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                              </button>
+                            </div>
+                          </td>
+                          <td class="px-4 py-3 align-middle">
+                            <span class="text-xs font-semibold text-text-secondary">
+                              {{ currentInstructions.ttl_recommended }}s
+                            </span>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
                   </div>
                   <p class="text-xs leading-relaxed px-1" style="color: var(--text-secondary);">{{ currentInstructions.note }}</p>
                 </template>
 
                 <template v-else-if="currentInstructions.method === 'http'">
                   <p class="text-xs leading-relaxed" style="color: var(--text-secondary);">Upload a verification file to your web server so it's reachable at the URL below.</p>
-                  <div class="rounded-xl overflow-hidden border divide-y" style="border-color: var(--border); divide-color: var(--border);">
-                    <div class="px-4 py-3 flex items-center justify-between gap-3">
-                      <div class="min-w-0 flex-1"><p class="text-[10px] font-bold uppercase tracking-wider mb-0.5" style="color: var(--text-secondary);">File URL</p><p class="text-sm font-mono break-all" style="color: var(--text-primary);">{{ currentInstructions.file_url }}</p></div>
-                      <button type="button" @click="copyToClipboard(currentInstructions.file_url, 'file_url')" class="shrink-0 p-1.5 rounded-lg transition-all hover:scale-110" style="color: var(--text-secondary);">
-                        <svg v-if="copiedField !== 'file_url'" class="w-4 h-4" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M2 11V3a1 1 0 011-1h8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
-                        <svg v-else class="w-4 h-4" viewBox="0 0 16 16" fill="none" style="color: #1d9e75;"><path d="M3 8l3.5 3.5L13 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                      </button>
-                    </div>
-                    <div class="px-4 py-3 flex items-center justify-between gap-3">
-                      <div class="min-w-0 flex-1"><p class="text-[10px] font-bold uppercase tracking-wider mb-0.5" style="color: var(--text-secondary);">File content</p><p class="text-sm font-mono break-all" style="color: var(--text-primary);">{{ currentInstructions.file_content }}</p></div>
-                      <button type="button" @click="copyToClipboard(currentInstructions.file_content, 'file_content')" class="shrink-0 p-1.5 rounded-lg transition-all hover:scale-110" style="color: var(--text-secondary);">
-                        <svg v-if="copiedField !== 'file_content'" class="w-4 h-4" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M2 11V3a1 1 0 011-1h8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
-                        <svg v-else class="w-4 h-4" viewBox="0 0 16 16" fill="none" style="color: #1d9e75;"><path d="M3 8l3.5 3.5L13 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                      </button>
-                    </div>
+                  <div class="overflow-x-auto rounded-xl border" style="border-color: var(--border); background: var(--bg-card);">
+                    <table class="w-full text-left border-collapse min-w-[400px]">
+                      <thead>
+                        <tr style="background: var(--bg-surface); border-bottom: 1px solid var(--border);">
+                          <th class="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-text-secondary w-28">Property</th>
+                          <th class="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-text-secondary">Value</th>
+                        </tr>
+                      </thead>
+                      <tbody class="divide-y" style="divide-color: var(--border);">
+                        <tr class="transition-colors hover:bg-surface/30">
+                          <td class="px-4 py-3 align-middle text-[11px] font-bold uppercase tracking-wider text-text-secondary bg-surface/5 w-28">File URL</td>
+                          <td class="px-4 py-3 align-middle">
+                            <div class="flex items-center justify-between gap-2">
+                              <span class="text-xs font-mono break-all font-medium" style="color: var(--text-primary);">{{ currentInstructions.file_url }}</span>
+                              <button
+                                type="button"
+                                @click="copyToClipboard(currentInstructions.file_url, 'file_url')"
+                                class="shrink-0 p-1 rounded-lg transition-all duration-200"
+                                style="color: var(--text-secondary);"
+                                title="Copy File URL"
+                              >
+                                <svg v-if="copiedField !== 'file_url'" class="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M2 11V3a1 1 0 011-1h8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                                <svg v-else class="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" style="color: #1d9e75;"><path d="M3 8l3.5 3.5L13 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                        <tr class="transition-colors hover:bg-surface/30">
+                          <td class="px-4 py-3 align-middle text-[11px] font-bold uppercase tracking-wider text-text-secondary bg-surface/5 w-28">File content</td>
+                          <td class="px-4 py-3 align-middle">
+                            <div class="flex items-center justify-between gap-2">
+                              <span class="text-xs font-mono break-all font-bold" style="color: var(--text-primary);">{{ currentInstructions.file_content }}</span>
+                              <button
+                                type="button"
+                                @click="copyToClipboard(currentInstructions.file_content, 'file_content')"
+                                class="shrink-0 p-1 rounded-lg transition-all duration-200"
+                                style="color: var(--text-secondary);"
+                                title="Copy File Content"
+                              >
+                                <svg v-if="copiedField !== 'file_content'" class="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M2 11V3a1 1 0 011-1h8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                                <svg v-else class="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" style="color: #1d9e75;"><path d="M3 8l3.5 3.5L13 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
                   </div>
                   <button type="button" :disabled="isDownloadingFile" class="w-full flex items-center justify-center gap-2 py-2.5 rounded-[9px] text-sm font-semibold border transition-all duration-200 hover:shadow-sm" style="border-color: var(--border); background: var(--bg-surface); color: var(--text-primary);" @click="downloadVerificationFile">
                     <span v-if="isDownloadingFile" class="w-4 h-4 rounded-full border-2 border-accent/30 border-t-accent animate-spin" />
@@ -1194,7 +1079,7 @@
              BOTTOM NAV (steps 1–4 only)
         ════════════════════════════════════════════════════════════ -->
         <div class="flex justify-between items-center mt-10" v-if="showBottomNav">
-          <Button v-if="activeStep !== 1 && !siteCreated" variant="secondary" size="md" type="button" :disabled="isAnyMutating" @click="goBack">
+          <Button v-if="activeStep > (isCompanyEmail ? 1 : 2) && !siteCreated" variant="secondary" size="md" type="button" :disabled="isAnyMutating" @click="goBack">
             <div class="flex items-center gap-1"><FontAwesomeIcon :icon="['fas', 'arrow-left']" /> Back</div>
           </Button>
           <div v-else-if="activeStep !== 1" />
@@ -1207,10 +1092,9 @@
             </Button>
           </div>
         </div>
-        </template><!-- end v-if="!associatedCompany" -->
       </div>
 
-      <div class="max-w-125 md:mx-auto w-full space-y-6"></div>
+      <div class="max-w-[400px] md:mx-auto w-full space-y-6"></div>
 
       <!-- Workspace creation error modal -->
       <Transition enter-active-class="transition duration-150 ease-out" enter-from-class="opacity-0 scale-95" enter-to-class="opacity-100 scale-100" leave-active-class="transition duration-100 ease-in" leave-from-class="opacity-100 scale-100" leave-to-class="opacity-0 scale-95">
@@ -1261,7 +1145,10 @@ const { mutateAsync: verifyOtp } = useVerifySuperAdminOtp()
 // ─── Core State ──────────────────────────────────────────────────────────────
 const companyID = ref()
 const activeStep = ref(1)
-const selected = ref('team')
+const selected = ref(localStorage.getItem('onboarding_selected_type') || 'team')
+watch(selected, (v) => {
+  if (v) localStorage.setItem('onboarding_selected_type', v)
+})
 const siteCreated = ref(false)
 const dnsInput = ref('')
 const siteName = ref('')
@@ -1295,8 +1182,7 @@ const route = useRoute()
 const isLoaderRunning = ref(false)
 const profileData = ref(null)
 
-// ─── Associated company (email already claimed) ───────────────────────────────
-const associatedCompany = ref(null)
+
 
 // ─── Error map ────────────────────────────────────────────────────────────────
 const errors = ref({})
@@ -1350,6 +1236,15 @@ const filteredOptions = computed(() => {
 
 
 onMounted(async () => {
+  const storedUser = authStore.user?.data ?? authStore.user
+  if (storedUser && storedUser.u_email) {
+    profileData.value = storedUser
+    const ac = storedUser.associated_company
+    if (ac && ac._id) {
+      router.replace('/associated-organization')
+      return
+    }
+  }
 
   try {
     const res = await getProfile()
@@ -1357,11 +1252,9 @@ onMounted(async () => {
     if (res?.status) {
       profileData.value = res.data
 
-      // ── Check for associated company (email already claimed by an org) ──
       const ac = res.data?.associated_company
       if (ac && ac._id) {
-        associatedCompany.value = ac
-        // Page is locked — nothing else to do
+        router.replace('/associated-organization')
         return
       }
     }
@@ -1402,6 +1295,7 @@ const isDnsNotRegistered = ref(false)
 const dnsError = ref(null)
 const dnsValidationError = ref(null)
 const isDnsLocked = ref(false)
+const isDnsFocused = ref(false)
 
 // ─── Domain registrar links (shown when domain is not registered) ─────────────
 const domainRegistrars = [
@@ -1495,18 +1389,27 @@ watchEffect(() => {
   }
 })
 
-// Auto-select based on email domain
-watch(isCompanyEmail, (isCompany) => {
-  if (activeStep.value !== 1) return
+const isEmailLoaded = computed(() => !!userEmail.value)
+
+// Auto-select based on email domain and route steps
+watch([isCompanyEmail, isEmailLoaded], ([isCompany, isLoaded]) => {
+  if (!isLoaded) return
   if (isCompany) {
-    selected.value = 'team'
+    if (!localStorage.getItem('onboarding_selected_type')) {
+      selected.value = 'team'
+    }
   } else {
     selected.value = 'personal'
+    localStorage.setItem('onboarding_selected_type', 'personal')
+    if (activeStep.value === 1) {
+      activeStep.value = 2
+    }
   }
 }, { immediate: true })
 
 function handleOptionClick(id) {
   selected.value = id
+  localStorage.setItem('onboarding_selected_type', id)
 }
 
 // ─── Verification methods ─────────────────────────────────────────────────────
@@ -1546,7 +1449,8 @@ const companySizeOptions = Object.freeze([
 
 const referralOptions = [
   { id: 'google',      label: 'Google Search' },
-  { id: 'social',      label: 'Social Media' },
+  { id: 'facebook',      label: 'Facebook' },
+  { id: 'instagram',      label: 'Instagram' },
   { id: 'friend',      label: 'Friend / Colleague' },
   { id: 'youtube',     label: 'YouTube' },
   { id: 'twitter',     label: 'X (Twitter)' },
@@ -1674,17 +1578,21 @@ const workTypeOptions = computed(() => workTypeOptionsMap[selected.value] || [])
 // ─── Computed: step labels ────────────────────────────────────────────────────
 const stepLabels = computed(() => {
   if (selected.value === 'personal') {
+    if (isEmailLoaded.value && !isCompanyEmail.value) {
+      return ['About You', 'Modules', 'Work Type', 'Done']
+    }
     return ['Purpose', 'About You', 'Modules', 'Work Type', 'Done']
   }
   return ['Purpose', 'About Company', 'Modules', 'Work Type', 'Create Site', 'Done']
 })
 
 const displayStep = computed(() => {
-  if (activeStep.value <= 4) return activeStep.value
-  if (activeStep.value === 5) return 5
-  if (activeStep.value === 51) return 5  // super admin sub-step shows as step 5
+  const shift = (isEmailLoaded.value && !isCompanyEmail.value) ? 1 : 0
+  if (activeStep.value <= 4) return activeStep.value - shift
+  if (activeStep.value === 5) return 5 - shift
+  if (activeStep.value === 51) return 5 - shift  // super admin sub-step shows as step 5
   if (activeStep.value >= 6) return stepLabels.value.length
-  return activeStep.value
+  return activeStep.value - shift
 })
 
 // ─── Browser Back Button Lock ─────────────────────────────────────────────────
@@ -1767,20 +1675,24 @@ watch(activeStep, (step) => {
 
 // Sync URL → Step (Back/Forward button support)
 watch(() => route.query.step, (step) => {
+  const minStep = (isEmailLoaded.value && !isCompanyEmail.value) ? 2 : 1
   if (step) {
     const s = Number(step)
-    if (activeStep.value !== s) {
-      activeStep.value = s
+    const targetStep = Math.max(minStep, s)
+    if (activeStep.value !== targetStep) {
+      activeStep.value = targetStep
     }
-  } else if (activeStep.value !== 1) {
-    activeStep.value = 1
+  } else if (activeStep.value !== minStep) {
+    activeStep.value = minStep
   }
 })
 
 onMounted(() => {
   // Restore step from URL on refresh
   if (route.query.step) {
-    activeStep.value = Number(route.query.step)
+    const s = Number(route.query.step)
+    const minStep = (isEmailLoaded.value && !isCompanyEmail.value) ? 2 : 1
+    activeStep.value = Math.max(minStep, s)
   }
 })
 
@@ -2103,6 +2015,11 @@ function toggleCustomDomain() {
     recheckError.value        = null
     stopCountdown()
     workspaceStore.clearDomainVerification?.()
+
+    // RE-TRIGGER subdomain DNS check if we have a valid slug
+    if (siteSlug.value && isSlugAvailable.value === true) {
+      runSubdomainDnsCheck(siteSlug.value)
+    }
   }
 }
 
@@ -2152,7 +2069,7 @@ function clearOnboardingState() {
     'onboarding_super_admin_otp_sent', 'onboarding_super_admin_user_id',
     'onboarding_super_admin_email_prefix', 'onboarding_super_admin_name',
     'onboarding_domain_phase', 'onboarding_current_domain', 'onboarding_current_instructions',
-    'onboarding_selected_verification_method'
+    'onboarding_selected_verification_method', 'onboarding_selected_type'
   ]
   keys.forEach(k => localStorage.removeItem(k))
 }
@@ -2592,7 +2509,8 @@ function validatePersonalStep() {
 // ─── Navigation ───────────────────────────────────────────────────────────────
 function goBack() {
   if (siteCreated.value) return
-  activeStep.value = Math.max(1, activeStep.value - 1)
+  const minStep = (isEmailLoaded.value && !isCompanyEmail.value) ? 2 : 1
+  activeStep.value = Math.max(minStep, activeStep.value - 1)
 }
 
 async function continueHandler() {

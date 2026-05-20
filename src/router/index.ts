@@ -15,6 +15,7 @@ const Login = () => import("../views/Auth/Login.vue");
 const Register = () => import("../views/Auth/Register.vue");
 const OtpVerification = () => import("../views/Auth/OtpVerification.vue");
 const CreateProfile = () => import("../views/Auth/CreateProfile.vue");
+const AssociatedOrganization = () => import("../views/Auth/AssociatedOrganization.vue");
 const ForgotPassword = () => import("../views/Auth/ForgotPassword.vue");
 const ResetPassword = () => import("../views/Auth/ResetPassword.vue");
 const FinishProfile = () => import("../views/FinishProfile.vue");
@@ -50,7 +51,7 @@ const SettingsView = () => import("../views/Settings/SettingsView.vue");
 const ONBOARDING_ROUTE_NAMES = new Set([
   'Register',
   'Otp',
-  'create-profile',
+  'onboarding',
 ])
 
 function resolveOnboardingRedirect(auth: ReturnType<typeof useAuthStore>): string | null {
@@ -128,7 +129,8 @@ const routes: RouteRecordRaw[] = [
   { path: "/login",                  name: "Login",          component: Login,            meta: { requiresAuth: false } },
   { path: "/register",               name: "Register",       component: Register,         meta: { requiresAuth: false, onboarding: true } },
   { path: "/otp-verification/:email",name: "Otp",            component: OtpVerification,  meta: { requiresAuth: false, onboarding: true } },
-  { path: "/create-profile",         name: "create-profile", component: CreateProfile,    meta: { requiresAuth: false, onboarding: true } },
+  { path: "/onboarding",             name: "onboarding",     component: CreateProfile,    meta: { requiresAuth: false, onboarding: true } },
+  { path: "/associated-organization", name: "associated-organization", component: AssociatedOrganization, meta: { requiresAuth: true } },
   { path: "/forgot-password",        name: "ForgotPassword", component: ForgotPassword,   meta: { requiresAuth: false } },
   { path: "/reset-password",         name: "ResetPassword",  component: ResetPassword,    meta: { requiresAuth: false } },
   { path: "/finish-profile",         name: "finishProfile",  component: FinishProfile,    meta: { requiresAuth: true } },

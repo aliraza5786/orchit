@@ -93,6 +93,8 @@ export function getToken(): string | null {
   return localStorage.getItem('token')
 }
 
+let bootstrapPromise: Promise<void> | null = null
+
 export const useAuthStore = defineStore('auth', {
   state: () => {
     const session = parseCookie()
@@ -131,119 +133,129 @@ export const useAuthStore = defineStore('auth', {
   writeCookie({ company_id: null, personal_mode: true, company_switched: null }) // ← clear it
 },
 
-    async bootstrap() {
-  if (this.initialized) return
-
-  const relayToken = sessionStorage.getItem('_relay_token')
-  if (relayToken) {
-    localStorage.setItem('token', relayToken)
-    writeCookie({ token: relayToken })
-    sessionStorage.removeItem('_relay_token')
-  }
-
-  const urlParams = new URLSearchParams(window.location.search)
-
-  // ── 1. Handle _auth (existing) ──────────────────────────────
-  const encodedToken = urlParams.get('_auth')
-  if (encodedToken) {
-    try {
-      const token = encodedToken.startsWith('eyJ')
-        ? encodedToken
-        : atob(encodedToken.replace(/-/g, '+').replace(/_/g, '/').replace(/\./g, '='))
-      localStorage.setItem('token', token)
-      writeCookie({ token })
-    } catch {
-      // keep existing token
-    }
-  }
-
-  // ── 2. Handle _token (sent by confirmSwitch) ────────────────
-  const rawToken = urlParams.get('_token')
-  if (rawToken) {
-    localStorage.setItem('token', rawToken)
-    writeCookie({ token: rawToken })
-  }
-
-  // ── 3. Handle company_id from URL ───────────────────────────
-  const urlCompanyId = urlParams.get('company_id')
-  if (urlCompanyId) {
-    localStorage.setItem('company_id', urlCompanyId)
-    this.company_id = urlCompanyId
-    writeCookie({ company_id: urlCompanyId, company_switched: true })
-  }
-
-  // ── 3.5. Handle _cid from URL (Base64 encoded company_id) ────
-  const encodedCompanyId = urlParams.get('_cid')
-  if (encodedCompanyId) {
-    try {
-      const companyId = atob(encodedCompanyId.replace(/-/g, '+').replace(/_/g, '/').replace(/\./g, '='))
-      if (companyId === 'personal') {
-        this.clearCompany()
-      } else if (companyId) {
-        this.setCompany(companyId)
+    async bootstrap(force = false) {
+      if (force) {
+        this.initialized = false
+        bootstrapPromise = null
       }
-    } catch (e) {
-      console.error('❌ Failed to decode _cid from URL:', e)
-    }
-  }
 
-  // ── 4. Clean ALL auth params from URL in one shot ───────────
-  //    Previously only ran inside if(encodedToken) — so _token
-  //    and company_id were NEVER removed from the URL.
-  const hadAuthParams =
-    urlParams.has('_auth') ||
-    urlParams.has('_token') ||
-    urlParams.has('company_id') ||
-    urlParams.has('_cid') ||
-    urlParams.has('welcome')
+      if (this.initialized) return
+      if (bootstrapPromise) return bootstrapPromise
 
-  if (hadAuthParams) {
-    urlParams.delete('_auth')
-    urlParams.delete('_token')
-    urlParams.delete('company_id')
-    urlParams.delete('_cid')
-    urlParams.delete('welcome')
-    const newUrl =
-      window.location.pathname +
-      (urlParams.toString() ? '?' + urlParams.toString() : '')
-    window.history.replaceState({}, '', newUrl)
-  }
+      bootstrapPromise = (async () => {
+        const relayToken = sessionStorage.getItem('_relay_token')
+        if (relayToken) {
+          localStorage.setItem('token', relayToken)
+          writeCookie({ token: relayToken })
+          sessionStorage.removeItem('_relay_token')
+        }
 
-  // ── rest is unchanged ────────────────────────────────────────
-  const token = getToken()
-  if (!token) {
-    this.initialized = true
-    return
-  }
-  const session = parseCookie()
-  if (!session?.token) {
-    writeCookie({ token })
-  }
+        const urlParams = new URLSearchParams(window.location.search)
 
-  if (session?.personal_mode) {
-    localStorage.removeItem('company_id')
-    this.company_id = null
-  } else if (session?.company_id) {
-    localStorage.setItem('company_id', session.company_id)
-    this.company_id = session.company_id
-  }
+        // ── 1. Handle _auth (existing) ──────────────────────────────
+        const encodedToken = urlParams.get('_auth')
+        if (encodedToken) {
+          try {
+            const token = encodedToken.startsWith('eyJ')
+              ? encodedToken
+              : atob(encodedToken.replace(/-/g, '+').replace(/_/g, '/').replace(/\./g, '='))
+            localStorage.setItem('token', token)
+            writeCookie({ token })
+          } catch {
+            // keep existing token
+          }
+        }
 
-  try {
-    const res = await api.get('/profile')
-    this.user = res.data
-    const activeCompanyId = res.data?.data?.active_company_id
-    const hasExplicitlySwitched = session?.company_switched === true
-    if (activeCompanyId && !this.company_id && !session?.personal_mode && hasExplicitlySwitched) {
-      localStorage.setItem('company_id', activeCompanyId)
-      this.company_id = activeCompanyId
-      writeCookie({ company_id: activeCompanyId })
-    }
-  } catch (e) {
-    console.warn('⚠️ Profile fetch failed:', (e as any)?.response?.status)
-  } finally {
-    this.initialized = true
-  }
-},
+        // ── 2. Handle _token (sent by confirmSwitch) ────────────────
+        const rawToken = urlParams.get('_token')
+        if (rawToken) {
+          localStorage.setItem('token', rawToken)
+          writeCookie({ token: rawToken })
+        }
+
+        // ── 3. Handle company_id from URL ───────────────────────────
+        const urlCompanyId = urlParams.get('company_id')
+        if (urlCompanyId) {
+          localStorage.setItem('company_id', urlCompanyId)
+          this.company_id = urlCompanyId
+          writeCookie({ company_id: urlCompanyId, company_switched: true })
+        }
+
+        // ── 3.5. Handle _cid from URL (Base64 encoded company_id) ────
+        const encodedCompanyId = urlParams.get('_cid')
+        if (encodedCompanyId) {
+          try {
+            const companyId = atob(encodedCompanyId.replace(/-/g, '+').replace(/_/g, '/').replace(/\./g, '='))
+            if (companyId === 'personal') {
+              this.clearCompany()
+            } else if (companyId) {
+              this.setCompany(companyId)
+            }
+          } catch (e) {
+            console.error('❌ Failed to decode _cid from URL:', e)
+          }
+        }
+
+        // ── 4. Clean ALL auth params from URL in one shot ───────────
+        //    Previously only ran inside if(encodedToken) — so _token
+        //    and company_id were NEVER removed from the URL.
+        const hadAuthParams =
+          urlParams.has('_auth') ||
+          urlParams.has('_token') ||
+          urlParams.has('company_id') ||
+          urlParams.has('_cid') ||
+          urlParams.has('welcome')
+
+        if (hadAuthParams) {
+          urlParams.delete('_auth')
+          urlParams.delete('_token')
+          urlParams.delete('company_id')
+          urlParams.delete('_cid')
+          urlParams.delete('welcome')
+          const newUrl =
+            window.location.pathname +
+            (urlParams.toString() ? '?' + urlParams.toString() : '')
+          window.history.replaceState({}, '', newUrl)
+        }
+
+        // ── rest is unchanged ────────────────────────────────────────
+        const token = getToken()
+        if (!token) {
+          this.initialized = true
+          return
+        }
+        const session = parseCookie()
+        if (!session?.token) {
+          writeCookie({ token })
+        }
+
+        if (session?.personal_mode) {
+          localStorage.removeItem('company_id')
+          this.company_id = null
+        } else if (session?.company_id) {
+          localStorage.setItem('company_id', session.company_id)
+          this.company_id = session.company_id
+        }
+
+        try {
+          const res = await api.get('/profile')
+          this.user = res.data
+          const activeCompanyId = res.data?.data?.active_company_id
+          const hasExplicitlySwitched = session?.company_switched === true
+          if (activeCompanyId && !this.company_id && !session?.personal_mode && hasExplicitlySwitched) {
+            localStorage.setItem('company_id', activeCompanyId)
+            this.company_id = activeCompanyId
+            writeCookie({ company_id: activeCompanyId })
+          }
+        } catch (e) {
+          console.warn('⚠️ Profile fetch failed:', (e as any)?.response?.status)
+        } finally {
+          this.initialized = true
+        }
+      })()
+
+      return bootstrapPromise
+    },
 
     seedFromStorage() {
       const session = parseCookie()
@@ -276,6 +288,7 @@ export const useAuthStore = defineStore('auth', {
       this.user = null
       this.company_id = null
       this.initialized = false
+      bootstrapPromise = null
     },
   },
 })

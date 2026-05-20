@@ -163,7 +163,7 @@ const errors = ref<{ title?: string; description?: string }>({})
 
 function validateManual() {
     const next: any = {}
-    if (!form.value.title.trim()) next.title = 'Please enter a sheet name.'
+    if (!form.value.title.trim()) next.title = 'Please enter a module name.'
     if (!form.value.description.trim()) next.description = 'Please enter a description.'
     errors.value = next
     return Object.keys(next).length === 0

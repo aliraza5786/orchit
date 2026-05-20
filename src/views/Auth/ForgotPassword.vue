@@ -1,64 +1,88 @@
 <template>
   <AuthLayout>
     <template #form>
-      <div class="max-w-[500px] mx-auto w-full min-h-full py-5 flex flex-col justify-center">
-        <div v-if="!emailSent">
-          <h2 class="text-[24px] md:text-[32px] font-medium text-text-primary">
-            Forgot Password?
-          </h2>
-          <p class="text-sm text-text-secondary mb-8">
-            Enter your email address and we'll send you instructions to reset your password.
-          </p>
+      <div class="max-w-[400px] mx-auto w-full text-text-primary min-h-full py-10 flex flex-col justify-center px-4">
+        <!-- Logo -->
+        <router-link to="/">
+          <img
+            :src="isDark ? darkLogo : lightLogo"
+            class="w-[130px] mb-6 d-block mx-auto"
+            alt="logo"
+          />
+        </router-link>
 
-          <form @submit.prevent="handleForgotPassword" class="space-y-4 w-full">
+        <div v-if="!emailSent" class="space-y-6">
+          <div class="mb-6 text-center animate-slide-up-step-1">
+            <h3 class="text-[24px] leading-7 font-medium text-text-primary">Forgot Password?</h3>
+            <p class="text-sm text-text-secondary mt-3">Enter your email address and we'll send you instructions to reset your password.</p>
+          </div>
+
+          <form @submit.prevent="handleForgotPassword" class="space-y-3 w-full">
             <BaseTextField
               v-model="email"
-              label="Email"
               placeholder="Email address"
-              size="lg"
+              size="md"
               :error="emailHasError"
               :message="emailError"
               @blur="touched.email = true"
               @update:modelValue="onFieldInput"
+              :disabled="isPending"
             />
 
-            <Button :disabled="submitDisabled" size="lg" :block="true" type="submit">
-              {{ submitLabel }}
+            <Button :loading="isPending" size="md" :block="true" type="submit">
+              Send reset instructions
+            </Button>
+
+            <Button
+              size="md"
+              :block="true"
+              appearance="outlined"
+              variant="ghost"
+              type="button"
+              @click="router.push('/login')"
+              :disabled="isPending"
+            >
+              Back to login
             </Button>
 
             <p v-if="errorMessage" class="text-red-500 text-sm text-center mt-2">
               {{ errorMessage }}
             </p>
           </form>
-
-          <div class="text-center mt-6">
-            <router-link to="/login" class="text-sm text-text-secondary hover:text-text-primary">
-              <i class="fa-solid fa-arrow-left mr-2"></i>Back to login
-            </router-link>
-          </div>
         </div>
 
-        <div v-else class="text-center">
-          <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <i class="fa-solid fa-check text-green-600 text-2xl"></i>
+        <div v-else class="text-center space-y-6">
+          
+          <div class="space-y-3">
+            <h3 class="text-[24px] leading-7 font-medium text-text-primary">Check your email</h3>
+            <p class="text-sm text-text-secondary mt-1">
+              We've sent password reset instructions to<br />
+              <strong class="text-text-primary">{{ email }}</strong>
+            </p>
           </div>
-          <h2 class="text-2xl font-medium mb-4 text-text-primary">
-            Check your email
-          </h2>
-          <p class="text-sm text-text-secondary mb-8">
-            We've sent password reset instructions to<br />
-            <strong class="text-text-primary">{{ email }}</strong>
-          </p>
-          <p class="text-sm text-text-secondary mb-6">
-            Didn't receive the email? Check your spam folder or
-          </p>
-          <Button size="md" variant="secondary" @click="resendEmail">
-            Resend email
-          </Button>
-          <div class="mt-8">
-            <router-link to="/login" class="text-sm text-text-secondary hover:text-text-primary">
-              <i class="fa-solid fa-arrow-left mr-2"></i>Back to login
-            </router-link>
+
+          <div class="space-y-3 pt-2">
+            <p class="text-xs text-text-secondary">
+              Didn't receive the email? Check your spam folder or
+            </p>
+            <Button
+              size="md"
+              variant="secondary"
+              :block="true"
+              :disabled="cooldown > 0 || isPending"
+              @click="resendEmail"
+            >
+              {{ cooldown > 0 ? `Resend email in ${cooldown}s` : 'Resend email' }}
+            </Button>
+            <Button
+              size="md"
+              appearance="outlined"
+              variant="ghost"
+              :block="true"
+              @click="emailSent = false"
+            >
+              Back
+            </Button>
           </div>
         </div>
       </div>
@@ -67,14 +91,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive } from 'vue'
+import { ref, computed, reactive, onUnmounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { useMutation } from '@tanstack/vue-query'
 import AuthLayout from '../../layout/AuthLayout/AuthLayout.vue'
 import BaseTextField from '../../components/ui/BaseTextField.vue'
 import Button from '../../components/ui/Button.vue'
 import { forgotPassword } from '../../services/auth'
+import darkLogo from '@assets/global/dark-logo.png'
+import lightLogo from '@assets/global/light-logo.png'
+import { useTheme } from '../../composables/useTheme'
 
 defineOptions({ name: 'ForgotPasswordPage' })
+
+const router = useRouter()
+const { isDark } = useTheme()
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -98,8 +129,37 @@ const isFormValid = computed(() => EMAIL_RE.test(email.value))
 
 const { mutateAsync, isPending } = useMutation({ mutationFn: forgotPassword })
 
-const submitDisabled = computed(() => isPending.value || !isFormValid.value)
-const submitLabel = computed(() => (isPending.value ? 'Sending...' : 'Send reset instructions'))
+const cooldown = ref(0)
+let timerInterval: any = null
+
+function startCooldown() {
+  cooldown.value = 30
+  if (timerInterval) clearInterval(timerInterval)
+  timerInterval = setInterval(() => {
+    if (cooldown.value > 0) {
+      cooldown.value--
+    } else {
+      clearInterval(timerInterval)
+      timerInterval = null
+    }
+  }, 1000)
+}
+
+watch(emailSent, (sent) => {
+  if (sent) {
+    startCooldown()
+  } else {
+    if (timerInterval) {
+      clearInterval(timerInterval)
+      timerInterval = null
+    }
+    cooldown.value = 0
+  }
+})
+
+onUnmounted(() => {
+  if (timerInterval) clearInterval(timerInterval)
+})
 
 function onFieldInput() {
   if (errorMessage.value) errorMessage.value = ''
@@ -128,3 +188,42 @@ function resendEmail() {
   handleForgotPassword()
 }
 </script>
+
+<style scoped>
+.icon-container {
+  animation: float 4s ease-in-out infinite;
+}
+
+.lock-icon {
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.icon-container:hover .lock-icon {
+  transform: scale(1.1) rotate(5deg);
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { transform: scale(1); opacity: 0.2; }
+  50% { transform: scale(1.08); opacity: 0.35; }
+}
+
+.animate-slide-up-step-1 {
+  animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideUpFade {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+</style>
