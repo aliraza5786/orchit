@@ -338,48 +338,71 @@ watch(processGroups, (newVal: any) => {
     });
 
   } else if (groupedBy === 'card_status') {
-    newVal.groups.forEach((group: any) => {
-      const cardTypes: string[] = group.card_types ?? [];
-      const modules: string[]   = group.modules   ?? [];
 
-      const pairs: Array<{ card_type: string; module: string }> =
-        cardTypes.length > 0
-          ? cardTypes.flatMap((ct: string) =>
-              modules.length > 0
-                ? modules.map((mod: string) => ({ card_type: ct, module: mod }))
-                : [{ card_type: ct, module: 'General' }]
+  newVal.groups.forEach((group: any) => {
+
+    const processGroups = group.process_groups ?? [];
+
+    const transitions = processGroups.flatMap((pg: any) => {
+      const raw = pg.transitions;
+
+      const transitionsArray: any[] = raw
+        ? Array.isArray(raw)
+          ? raw
+          : Object.values(raw)
+        : [];
+
+      return transitionsArray
+        .filter((t: any) => {
+          // ensure transition belongs to this status column
+          return (
+            t.step?.status === group.card_status ||
+            t.flow_metadatas?.some(
+              (meta: any) => meta.status === group.card_status
             )
-          : modules.map((mod: string) => ({ card_type: 'General', module: mod }));
+          );
+        })
+        .map((t: any) => ({
+          ...t,
 
-      const syntheticCards = pairs.map((pair, idx) => ({
-        _id:         `${group.card_status}__${pair.card_type}__${pair.module}__${idx}`,
-        title:       pair.card_type,
-        card_type:   pair.card_type,
-        type_value:  pair.card_type,
-        module:      pair.module,
-        card_status: group.card_status,
-        color:       group.color ?? '#808080',
-        is_start:    group.is_start ?? false,
-        is_end:      group.is_end   ?? false,
-        sort_order:  group.sort_order ?? 0,
-        variables:   [],
-      }));
+          // preserve existing UI expectations
+          title: t.title ?? t.type_value ?? 'Untitled',
+          card_type: t.assigned_to?.card_type ?? t.type_value,
+          module: t.assigned_to?.module ?? pg.title,
 
-      columns.push({
-        _id:        group.card_status,
-        columnId:   group.card_status,
-        title:      group.card_status ?? 'Untitled',
-        color:      group.color       ?? '#808080',
-        is_start:   group.is_start    ?? false,
-        is_end:     group.is_end      ?? false,
-        sort_order: group.sort_order  ?? 0,
-        card_types: cardTypes,
-        modules:    modules,
-        transitions: syntheticCards,
-      });
+          card_status: group.card_status,
+
+          process_group_id: pg._id,
+          process_group_title: pg.title,
+
+          // status metadata
+          status_color: group.color,
+          is_start: group.is_start,
+          is_end: group.is_end,
+          sort_order: group.sort_order,
+        }));
     });
 
-  } else {
+    columns.push({
+      _id: group.card_status,
+      columnId: group.card_status,
+
+      title: group.card_status ?? 'Untitled',
+
+      color: group.color ?? '#808080',
+
+      is_start: group.is_start ?? false,
+      is_end: group.is_end ?? false,
+      sort_order: group.sort_order ?? 0,
+
+      card_types: group.card_types ?? [],
+      modules: group.modules ?? [],
+
+      // REAL transitions
+      transitions,
+    });
+  });
+} else {
     console.warn('[Process2] Unknown grouped_by:', groupedBy);
   }
 
