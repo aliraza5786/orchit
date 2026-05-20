@@ -356,14 +356,19 @@ import { avatarColor } from "../../../utilities/avatarColor";
 import { getInitials } from "../../../utilities";
 import SwitchTab from "../../../components/ui/SwitchTab.vue";
 
-const props = defineProps<{
-  triggerRef: HTMLElement | null;
-  variables: any[];
-  workspaceId: string;
-  moduleId?: string;
-  activeFilters: any;
-  hidePlanItems?: boolean;
-}>();
+const props = withDefaults(defineProps<{
+  triggerRef: HTMLElement | null
+  variables: any[]
+  workspaceId: string
+  moduleId?: string
+  activeFilters: any
+
+  hideCategories?: Record<string, boolean>
+  labelOverrides?: Record<string, string>
+}>(), {
+  hideCategories: () => ({}),
+  labelOverrides: () => ({})
+})
 
 const emit = defineEmits(['apply', 'clear', 'close']);
 
@@ -391,16 +396,22 @@ const categories = computed(() => {
     { id: 'type', label: 'Card Type', icon: 'fa-solid fa-briefcase' },
     { id: 'plan', label: 'Plan Items', icon: 'fa-solid fa-map-location-dot' },
     { id: 'dates', label: 'Date Ranges', icon: 'fa-solid fa-calendar-days' },
-  ];
-  return props.hidePlanItems ? base.filter(c => c.id !== 'plan') : base;
-});
+  ]
+
+  return base
+    .filter(c => !props.hideCategories?.[c.id])
+    .map(c => ({
+      ...c,
+      label: props.labelOverrides?.[c.id] ?? c.label,
+    }))
+})
 
 const dateCategories = [
-  { id: 'start', label: 'Start Date', from: 'start_date_from', to: 'start_date_to' },
-  { id: 'end', label: 'End Date', from: 'end_date_from', to: 'end_date_to' },
-  { id: 'created', label: 'Created At', from: 'created_at_from', to: 'created_at_to' },
+  { id: 'start',   label: 'Start Date',  from: 'start_date_from',  to: 'start_date_to'  },
+  { id: 'end',     label: 'End Date',    from: 'end_date_from',    to: 'end_date_to'    },
+  { id: 'created', label: 'Created At',  from: 'created_at_from',  to: 'created_at_to'  },
+  { id: 'updated', label: 'Updated At',  from: 'updated_at_from',  to: 'updated_at_to'  },
 ];
-
 const localFilters = ref<any>({
   seat_ids: [],
   priority: [],
@@ -414,7 +425,9 @@ const localFilters = ref<any>({
   end_date_from: "",
   end_date_to: "",
   created_at_from: "",
-  created_at_to: ""
+  created_at_to: "",
+  updated_at_from: "",   // ← new
+  updated_at_to: "",
 });
 
 const selectedPlanType = ref('milestone');
@@ -591,10 +604,12 @@ const currentPlanOptionsFiltered = computed(() => {
 });
 
 function getVariableOptions(slug: string) {
-  const v = props.variables?.find((varItem: any) => varItem.slug === slug || varItem.title?.toLowerCase() === slug.toLowerCase());
-  return (v?.data || []).map((val: any) => ({ 
-    _id: val.value || val, 
-    title: val.value || val 
+  const v = props.variables?.find(
+    (varItem: any) => varItem.slug === slug || varItem.title?.toLowerCase() === slug.toLowerCase()
+  );
+  return (v?.data || []).map((val: any) => ({
+    _id: val.value ?? val,
+    title: val.title ?? val.value ?? val
   }));
 }
 

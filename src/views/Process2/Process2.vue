@@ -6,7 +6,6 @@
        <div class="flex gap-4 ms-1.5">
          <h2 class="text-md font-semibold text-foreground text-nowrap">All Processes</h2>
 
-        <!-- Group By split-button -->
           <div class="relative flex items-center gap-2">
             <button
               ref="filterTriggerRef"
@@ -32,45 +31,38 @@
               Clear filters
             </button>
 
-            <!-- Floating Filter Dropdown -->
             <ProductFilters
               v-if="showFilterBar"
               :triggerRef="filterTriggerRef"
               :variables="variables"
               :workspaceId="workspaceId"
               :activeFilters="activeFilters"
-              @apply="
-                (f) => {
-                  handleApplyFilters(f);
-                  showFilterBar = false;
-                }
-              "
+              :hideCategories="{
+                plan: true,
+                priority: true,
+                type: true
+              }"
+              :labelOverrides="{
+                assignees: 'Created By'
+              }"
+              @apply="(f) => { handleApplyFilters(f); showFilterBar = false; }"
               @clear="handleClearFilters"
               @close="showFilterBar = false"
             />
           </div>
+
         <div
           ref="viewByTriggerEl"
           class="inline-flex items-center rounded-md overflow-hidden text-xs whitespace-nowrap"
         >
-          <!-- Left: static label -->
-         <button
-  @click="showViewDropdown = !showViewDropdown"
-  class="flex items-center gap-2 text-nowrap px-3 h-[33px] rounded-md border cursor-pointer bg-transparent hover:border-primary-color transition-all text-xs font-semibold relative"
-  :class="
-    showViewDropdown
-      ? 'border-primary-color text-primary-color'
-      : 'border-border text-text-primary'
-  "
->
-  <i
-    class="fa-solid fa-layer-group text-[14px] text-primary-color"
-  ></i>
-
-  <span class="text-nowrap">
-    Group: {{ selectedViewLabel }}
-  </span>
-</button>
+          <button
+            @click="showViewDropdown = !showViewDropdown"
+            class="flex items-center gap-2 text-nowrap px-3 h-[33px] rounded-md border cursor-pointer bg-transparent hover:border-primary-color transition-all text-xs font-semibold relative"
+            :class="showViewDropdown ? 'border-primary-color text-primary-color' : 'border-border text-text-primary'"
+          >
+            <i class="fa-solid fa-layer-group text-[14px] text-primary-color"></i>
+            <span class="text-nowrap">Group: {{ selectedViewLabel }}</span>
+          </button>
         </div>
 
         <VariablesDropdown
@@ -93,29 +85,25 @@
       </div>
     </div>
 
-    <!-- Skeleton Loader -->
+    <!-- Skeleton Loader — first load only -->
     <KanbanSkeleton v-if="isPending" />
 
-    <!-- Board Area -->
-   <div v-if="!isPending" class="flex-1 w-full px-2 overflow-hidden flex flex-col">
-  <div class="flex-1 overflow-x-auto flex items-start gap-2 scrollbar-visible py-2">
-    
-    <!-- DEBUG: remove after fix -->
-    <div style="display:none">
-      <span v-for="col in filteredList" :key="col._id">
-        {{ col.title }}: {{ col.cards?.length ?? 0 }} cards
-      </span>
-    </div>
+    <!-- Refetch indicator -->
+    <div v-if="!isPending && isFetching" class="h-[2px] bg-primary-color animate-pulse shrink-0" />
 
-    <ProcessKanbanBoard
-      v-if="filteredList?.length > 0"
-      @delete:column="(e: any) => handleDeleteColumn(e)"
-      @update:column="(e: any) => handleUpdateColumn(e)"
-      @onPlus="openAddTransition"
-      @select:ticket="handleClickTicket"
-      :board="filteredList"
-      @reorder="handleReorder"
-    >
+    <!-- Board Area -->
+    <div v-if="!isPending" class="flex-1 w-full px-2 overflow-hidden flex flex-col">
+      <div class="flex-1 overflow-x-auto flex items-start gap-2 scrollbar-visible py-2">
+
+        <ProcessKanbanBoard
+          v-if="filteredList?.length > 0"
+          @delete:column="(e: any) => handleDeleteColumn(e)"
+          @update:column="(e: any) => handleUpdateColumn(e)"
+          @onPlus="openAddTransition"
+          @select:ticket="handleClickTicket"
+          :board="filteredList"
+          @reorder="handleReorder"
+        >
           <template #ticket="{ ticket, index }">
             <ProcessKanbanCard
               @click="handleClickTicket(ticket)"
@@ -217,26 +205,64 @@ import { debounce } from 'lodash';
 import { usePermissions } from '../../composables/usePermissions';
 import { toast } from 'vue-sonner';
 import ProductFilters from '../Product/components/ProductFilters.vue';
+
+/* -------------------------------------------------------------------------- */
+/*                                Route IDs                                   */
+/* -------------------------------------------------------------------------- */
 const { workspaceId } = useRouteIds();
-const selectedViewBy    = ref('module');
 
-const queryParams = computed(() => ({
-  group_by: selectedViewBy.value,
-}))
+/* -------------------------------------------------------------------------- */
+/*                           Filters & View State                             */
+/* -------------------------------------------------------------------------- */
+// ← Declare these FIRST so queryParams can safely reference them
+const activeFilters        = ref<any>({});
+const selectedViewBy       = ref('module');
+const showFilterBar        = ref(false);
+const showGroupDropdown    = ref(false);
+const showVariableDropdown = ref(false);
+const filterTriggerRef     = ref<HTMLElement | null>(null);
+const sheetDropdownRef     = ref<any>(null);
 
+const queryParams = computed(() => {
+  const f = activeFilters.value ?? {}
+
+  const params: Record<string, any> = {
+    group_by: selectedViewBy.value,
+    sort: 'sort_order',
+  }
+
+  Object.entries(f).forEach(([key, val]) => {
+    if (Array.isArray(val) && val.length > 0) {
+      // convert array → single value OR comma string
+      params[key] = val.join(',') // or val[0] if single-select
+    } else if (val !== null && val !== undefined && val !== '') {
+      params[key] = val
+    }
+  })
+
+  return params
+})
+
+/* -------------------------------------------------------------------------- */
+/*                                Query                                       */
+/* -------------------------------------------------------------------------- */
 interface ProcessGroupsResponse {
   grouped_by?: string
   groups?: any[]
 }
 
-const query = useProcessGroupsWithTransitions(workspaceId, queryParams)
+const query = useProcessGroupsWithTransitions(workspaceId, queryParams);
 
 const processGroups = computed<ProcessGroupsResponse | undefined>(
   () => query.data.value as ProcessGroupsResponse
-)
+);
 
-const isPending = query.isPending
+const isPending  = query.isPending;
+const isFetching = query.isFetching;
 
+/* -------------------------------------------------------------------------- */
+/*                              Permissions                                   */
+/* -------------------------------------------------------------------------- */
 const { canCreateVariable } = usePermissions();
 
 /* -------------------------------------------------------------------------- */
@@ -253,26 +279,25 @@ const processOptions = ref<ProcessOption[]>([
   { _id: 'card_type',   title: 'Card Type'   },
 ]);
 
-const viewByTriggerEl   = ref<HTMLElement | null>(null);
-const showViewDropdown  = ref(false);
+const viewByTriggerEl  = ref<HTMLElement | null>(null);
+const showViewDropdown = ref(false);
 
 const selectedViewLabel = computed(
   () => processOptions.value.find(o => o._id === selectedViewBy.value)?.title ?? 'View by'
 );
 
 /* -------------------------------------------------------------------------- */
-/*                                 Local List                                 */
+/*                                Local List                                  */
 /* -------------------------------------------------------------------------- */
 const localList = ref<any[]>([]);
 
 watch(processGroups, (newVal: any) => {
-  if (!newVal?.groups) { localList.value = []; return; }
- 
+  if (!newVal?.groups) return; // keep previous data visible during refetch
+
   const groupedBy = newVal.grouped_by;
   const columns: any[] = [];
- 
+
   if (groupedBy === 'module') {
-    // { groups: [{ module, process_groups: [{ _id, title, transitions }] }] }
     newVal.groups.forEach((moduleGroup: any) => {
       const pgs = moduleGroup.process_groups ?? [];
       pgs.forEach((pg: any) => {
@@ -280,7 +305,7 @@ watch(processGroups, (newVal: any) => {
         const transitionsArray: any[] = raw
           ? Array.isArray(raw) ? raw : Object.values(raw)
           : [];
- 
+
         columns.push({
           _id:         pg._id,
           columnId:    pg._id,
@@ -292,15 +317,14 @@ watch(processGroups, (newVal: any) => {
         });
       });
     });
- 
+
   } else if (groupedBy === 'card_type') {
-    // { groups: [{ card_type, module, transitions: [...] }] }
     newVal.groups.forEach((group: any) => {
       const raw = group.transitions;
       const transitionsArray: any[] = raw
         ? Array.isArray(raw) ? raw : Object.values(raw)
         : [];
- 
+
       columns.push({
         _id:         group.card_type,
         columnId:    group.card_type,
@@ -312,18 +336,12 @@ watch(processGroups, (newVal: any) => {
         transitions: transitionsArray.map((t: any) => ({ ...t })),
       });
     });
- 
+
   } else if (groupedBy === 'card_status') {
-    // Each group = one card_status with card_types[] and modules[]
-    // We expand card_types × modules into individual "cards" so the
-    // kanban board has something to render and filter against.
     newVal.groups.forEach((group: any) => {
       const cardTypes: string[] = group.card_types ?? [];
       const modules: string[]   = group.modules   ?? [];
- 
-      // Build one synthetic card per (card_type × module) combination.
-      // If card_types is empty the status still appears but with a
-      // single placeholder card so the column is never invisible.
+
       const pairs: Array<{ card_type: string; module: string }> =
         cardTypes.length > 0
           ? cardTypes.flatMap((ct: string) =>
@@ -332,43 +350,39 @@ watch(processGroups, (newVal: any) => {
                 : [{ card_type: ct, module: 'General' }]
             )
           : modules.map((mod: string) => ({ card_type: 'General', module: mod }));
- 
+
       const syntheticCards = pairs.map((pair, idx) => ({
-        // Stable synthetic id — not a real DB id, just for Vue :key
-        _id:          `${group.card_status}__${pair.card_type}__${pair.module}__${idx}`,
-        title:        pair.card_type,          // shown as card title
-        card_type:    pair.card_type,          // used by filters / resolveCardValue
-        type_value:   pair.card_type,          // alias used by resolveCardValue
-        module:       pair.module,             // shown as card subtitle
-        card_status:  group.card_status,       // the column this card belongs to
-        color:        group.color ?? '#808080',
-        is_start:     group.is_start ?? false,
-        is_end:       group.is_end   ?? false,
-        sort_order:   group.sort_order ?? 0,
-        // No real variables array for these synthetic cards
-        variables:    [],
+        _id:         `${group.card_status}__${pair.card_type}__${pair.module}__${idx}`,
+        title:       pair.card_type,
+        card_type:   pair.card_type,
+        type_value:  pair.card_type,
+        module:      pair.module,
+        card_status: group.card_status,
+        color:       group.color ?? '#808080',
+        is_start:    group.is_start ?? false,
+        is_end:      group.is_end   ?? false,
+        sort_order:  group.sort_order ?? 0,
+        variables:   [],
       }));
- 
+
       columns.push({
-        _id:         group.card_status,
-        columnId:    group.card_status,
-        title:       group.card_status ?? 'Untitled',
-        color:       group.color       ?? '#808080',
-        is_start:    group.is_start    ?? false,
-        is_end:      group.is_end      ?? false,
-        sort_order:  group.sort_order  ?? 0,
-        // Expose raw arrays on the column for any header-level display
-        card_types:  cardTypes,
-        modules:     modules,
-        // The expanded synthetic cards are the "transitions" the board renders
+        _id:        group.card_status,
+        columnId:   group.card_status,
+        title:      group.card_status ?? 'Untitled',
+        color:      group.color       ?? '#808080',
+        is_start:   group.is_start    ?? false,
+        is_end:     group.is_end      ?? false,
+        sort_order: group.sort_order  ?? 0,
+        card_types: cardTypes,
+        modules:    modules,
         transitions: syntheticCards,
       });
     });
- 
+
   } else {
     console.warn('[Process2] Unknown grouped_by:', groupedBy);
   }
- 
+
   localList.value = columns;
 }, { immediate: true, deep: true });
 
@@ -383,41 +397,31 @@ watch(searchQuery, debounce((val: string) => { debouncedQuery.value = val; }, 20
 const filteredList = computed(() => {
   const query   = debouncedQuery.value.toLowerCase().trim();
   const filters = activeFilters.value as Record<string, any>;
- 
-  // Check if any filter is actually active
+
   const hasFilters = Object.values(filters).some(v =>
     Array.isArray(v) ? v.length > 0 : Boolean(v)
   );
- 
+
   return localList.value
     .map((col: any) => {
       const filtered = (col.transitions ?? []).filter((card: any) => {
-        // 1. Search match
         if (query) {
           const titleMatch = card.title?.toLowerCase().includes(query);
           const nameMatch  = card.name?.toLowerCase().includes(query);
           if (!titleMatch && !nameMatch) return false;
         }
- 
-        // 2. Active filters match
         if (hasFilters && !cardMatchesFilters(card, filters)) return false;
- 
         return true;
       });
- 
       return { ...col, transitions: filtered };
     })
     .filter((col: any) => {
-      // card_status columns have no transitions — always show them
       if (processGroups.value?.grouped_by === 'card_status') return true;
- 
-      // Hide empty columns only when a search or filter is active
       if (query || hasFilters) return col.transitions.length > 0;
- 
       return true;
     });
 });
- 
+
 /* -------------------------------------------------------------------------- */
 /*                             Add Process Group                              */
 /* -------------------------------------------------------------------------- */
@@ -457,9 +461,8 @@ const { mutate: deleteList, isPending: isDeletingList } = useDeleteProcessGroup(
   onError: (err: any) => { toast.error(err.message || 'Something went wrong!'); },
 });
 
-const handleDeleteColumn = (col: any) => { localColumn.value = col; showDelete.value = true; };
-
-const confirmDeleteColumn = () => {
+const handleDeleteColumn   = (col: any) => { localColumn.value = col; showDelete.value = true; };
+const confirmDeleteColumn  = () => {
   if (localColumn.value) {
     deleteList({ workspace_id: workspaceId.value, group_id: localColumn.value.columnId });
   }
@@ -479,9 +482,9 @@ const handleUpdateColumn = (col: any) => {
 /* -------------------------------------------------------------------------- */
 /*                               Reorder Logic                                */
 /* -------------------------------------------------------------------------- */
-const { mutate: reorderGroups }     = useReorderProcessGroups();
-const { mutate: reorderTransitions} = useReorderTransitions();
-const { mutate: updateTransition }  = useUpdateTransition({
+const { mutate: reorderGroups }      = useReorderProcessGroups();
+const { mutate: reorderTransitions } = useReorderTransitions();
+const { mutate: updateTransition }   = useUpdateTransition({
   onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['process-groups-with-transitions'] }); },
 });
 
@@ -517,11 +520,11 @@ const handleReorder = (event: any) => {
 /* -------------------------------------------------------------------------- */
 /*                              Ticket Handling                               */
 /* -------------------------------------------------------------------------- */
-const selectedProcess        = ref<any>(null);
-const showWorkflowBuilder    = ref(false);
-const showSidePanel          = ref(false);
-const selectedSidePanelCard  = ref<any>(null);
-const singleClickTimer       = ref<ReturnType<typeof setTimeout> | null>(null);
+const selectedProcess       = ref<any>(null);
+const showWorkflowBuilder   = ref(false);
+const showSidePanel         = ref(false);
+const selectedSidePanelCard = ref<any>(null);
+const singleClickTimer      = ref<ReturnType<typeof setTimeout> | null>(null);
 
 const handleOpenBuilder = (ticket: any) => {
   selectedProcess.value     = ticket;
@@ -545,59 +548,65 @@ const handleClickTicket = (ticket: any) => {
 
 const closeWorkflowBuilder = () => { showWorkflowBuilder.value = false; selectedProcess.value = null; };
 const closeSidePanel       = () => { showSidePanel.value = false; selectedSidePanelCard.value = null; };
+
+/* -------------------------------------------------------------------------- */
+/*                                Variables                                   */
+/* -------------------------------------------------------------------------- */
 const variables = [
   {
-    key: "created_by",
-    label: "Created By",
-    type: "users",
+    key:   'created_by',
+    slug:  'created_by',
+    label: 'Created By',
+    type:  'users',
     value: [],
   },
-
   {
-    key: "status",
-    label: "Status",
-    type: "select",
+    key:   'status',
+    slug:  'card-status',
+    label: 'Status',
+    type:  'select',
     value: [],
-    options: [
-      { label: "Draft", value: "draft" },
-      { label: "Active", value: "active" },
+    data: [
+      { title: 'Draft',  value: 'draft'  },
+      { title: 'Active', value: 'active' },
     ],
   },
-
   {
-    key: "date_range",
-    label: "Date Range",
-    type: "date-range",
-    value: {
-      start: null,
-      end: null,
-    },
+    key:   'date_range',
+    slug:  'date_range',
+    label: 'Date Range',
+    type:  'date-range',
+    value: { start: null, end: null },
   },
-]
+];
+
 /* -------------------------------------------------------------------------- */
 /*                             Add Transition                                 */
 /* -------------------------------------------------------------------------- */
-const isAddTransitionModal  = ref(false);
-const selectedGroupForAdd   = ref<any>(null);
+const isAddTransitionModal = ref(false);
+const selectedGroupForAdd  = ref<any>(null);
 
-const openAddTransition = (group: any) => { selectedGroupForAdd.value = group; isAddTransitionModal.value = true; };
+const openAddTransition = (group: any) => {
+  selectedGroupForAdd.value  = group;
+  isAddTransitionModal.value = true;
+};
 
 const handleTransitionCreated = () => {
   isAddTransitionModal.value = false;
   queryClient.invalidateQueries({ queryKey: ['process-groups-with-transitions'] });
 };
-const showGroupDropdown = ref(false);
+
+/* -------------------------------------------------------------------------- */
+/*                            Filter Helpers                                  */
+/* -------------------------------------------------------------------------- */
 const showGeneralWorkflowBuilder = ref(false);
-const showFilterBar = ref(false);
-const activeFilters = ref<any>({});
-const filterTriggerRef = ref<HTMLElement | null>(null);
-const sheetDropdownRef = ref<any>(null);
-const showVariableDropdown = ref(false);
+
 const toggleFilters = () => {
   const willShow = !showFilterBar.value;
-  if (willShow) closeAllDropdowns("filter");
+  if (willShow) closeAllDropdowns('filter');
   showFilterBar.value = willShow;
 };
+
 const activeFilterCount = computed(() => {
   const f = activeFilters.value;
   let count = 0;
@@ -607,72 +616,92 @@ const activeFilterCount = computed(() => {
   });
   return count;
 });
+
 const hasActiveFilters = computed(() => activeFilterCount.value > 0);
-const handleClearFilters = () => {
-  activeFilters.value = {};
-};
-const handleApplyFilters = (filters: any) => {
-  activeFilters.value = filters;
-};
+
+const handleClearFilters = () => { activeFilters.value = {}; };
+const handleApplyFilters = (filters: any) => { activeFilters.value = filters; };
+
 const closeAllDropdowns = (except: string) => {
-  if (except !== "sheet") {
-    sheetDropdownRef.value?.closeDropdown();
-  }
-  if (except !== "variable") {
-    showVariableDropdown.value = false;
-  }
-  if (except !== "filter") showFilterBar.value = false;
-  if (except !== "group") showGroupDropdown.value = false;
+  if (except !== 'sheet')    sheetDropdownRef.value?.closeDropdown();
+  if (except !== 'variable') showVariableDropdown.value = false;
+  if (except !== 'filter')   showFilterBar.value = false;
+  if (except !== 'group')    showGroupDropdown.value = false;
 };
+
+/* -------------------------------------------------------------------------- */
+/*                            Card Filter Logic                               */
+/* -------------------------------------------------------------------------- */
 function resolveCardValue(card: any, slug: string): any {
-  // Explicit mappings for slugs that live as direct keys on the card object
   const directKeyMap: Record<string, string> = {
     'card-type':   'type_value',
     'card-status': 'card_status',
-    'process':     'process',       // if stored top-level
+    'process':     'process',
     'priority':    'priority',
   };
- 
+
   if (directKeyMap[slug]) {
     const direct = card[directKeyMap[slug]];
     if (direct !== undefined && direct !== null && direct !== '') return direct;
   }
- 
-  // Fall back: scan the variables array (handles custom & process fields)
+
   if (Array.isArray(card.variables)) {
     const v = card.variables.find((vr: any) => vr.slug === slug);
     if (v) return v.value;
   }
- 
-  // Last resort: try the slug as a direct key (snake_cased variants)
+
   return card[slug] ?? card[slug.replace(/-/g, '_')] ?? undefined;
 }
+
 function cardMatchesFilters(card: any, filters: Record<string, any>): boolean {
+  const dateRangeFields = [
+    { from: 'created_at_from', to: 'created_at_to', keys: ['created_at', 'createdAt'] },
+    { from: 'updated_at_from', to: 'updated_at_to', keys: ['updated_at', 'updatedAt'] },
+    { from: 'start_date_from', to: 'start_date_to', keys: ['start_date', 'startDate'] },
+    { from: 'end_date_from',   to: 'end_date_to',   keys: ['end_date',   'endDate']   },
+  ];
+
+  const dateKeys = new Set(dateRangeFields.flatMap(d => [d.from, d.to]));
+
+  // 1. Date range checks
+  for (const { from, to, keys } of dateRangeFields) {
+    const fromVal = filters[from];
+    const toVal   = filters[to];
+    if (!fromVal && !toVal) continue;
+
+    const raw = keys.map(k => card[k]).find(v => v != null && v !== '');
+    if (!raw) return false;
+
+    const cardDate = new Date(raw).getTime();
+    if (fromVal && cardDate < new Date(fromVal).getTime()) return false;
+    if (toVal   && cardDate > new Date(toVal).getTime())   return false;
+  }
+
+  // 2. Regular filters
   for (const [slug, selected] of Object.entries(filters)) {
-    // Normalise: always work with an array
+    if (dateKeys.has(slug)) continue;
+
     const allowed: string[] = Array.isArray(selected)
       ? selected.filter(Boolean)
       : selected ? [selected] : [];
- 
-    if (allowed.length === 0) continue; // no constraint for this slug
- 
+
+    if (allowed.length === 0) continue;
+
     const cardValue = resolveCardValue(card, slug);
- 
-    // Card value can itself be an array (Multi Select fields)
+
     const cardValues: string[] = Array.isArray(cardValue)
       ? cardValue.map(String)
       : cardValue !== undefined && cardValue !== null && cardValue !== ''
         ? [String(cardValue)]
         : [];
- 
-    // OR logic: at least one of the card's values must be in the allowed list
+
     const passes = cardValues.some(cv =>
       allowed.some(a => a.toLowerCase() === cv.toLowerCase())
     );
- 
-    if (!passes) return false; // AND logic across slugs
+
+    if (!passes) return false;
   }
- 
+
   return true;
 }
 </script>

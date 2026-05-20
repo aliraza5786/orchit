@@ -194,109 +194,203 @@
           </section>
 
           <!-- ── TAB: Added Tickets ── -->
-          <section v-else-if="activeTab === 'tickets'" key="tab-tickets" class="space-y-4">
-            <div class="flex items-center justify-between">
-              <div class="text-xs font-semibold text-text-secondary uppercase tracking-wider">
-                Tickets using this process
+          <!-- ── TAB: Added Tickets ── -->
+<section v-else-if="activeTab === 'tickets'" key="tab-tickets" class="space-y-4">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between">
+    <div class="text-xs font-semibold text-text-secondary uppercase tracking-wider">
+      Tickets using this process
+    </div>
+    <div
+      class="text-[11px] text-text-secondary bg-orchit-white/5 px-2 py-0.5 rounded-full border border-border"
+      v-if="computedTickets.length"
+    >
+      {{ computedTickets.length }} ticket{{ computedTickets.length !== 1 ? 's' : '' }}
+    </div>
+  </div>
+
+  <!-- Ticket list -->
+  <div v-if="computedTickets.length" class="space-y-2">
+    <div
+      v-for="ticket in computedTickets"
+      :key="ticket.id"
+      class="group flex items-start gap-3 p-3 rounded-xl bg-orchit-white/5 border border-border hover:bg-orchit-white/8 hover:border-orchit-white/20 transition-all duration-150 cursor-pointer"
+    >
+      <!-- Type icon -->
+      <div
+        class="mt-0.5 w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+        :class="ticket.typeColor"
+      >
+        <i :class="['text-[11px]', ticket.typeIcon]"></i>
+      </div>
+
+      <div class="flex-1 min-w-0">
+        <!-- Code + status badge -->
+        <div class="flex items-center gap-2 mb-1">
+          <span class="text-[11px] font-mono text-text-secondary tracking-tight">{{ ticket.code }}</span>
+          <span
+            class="text-[9px] px-1.5 py-0.5 rounded-md font-bold uppercase tracking-tighter border"
+            :class="ticket.statusClass"
+          >
+            {{ ticket.status }}
+          </span>
+        </div>
+        <!-- Title -->
+        <div class="text-[13px] font-medium text-text-primary leading-snug truncate">
+          {{ ticket.title }}
+        </div>
+        <!-- Meta -->
+        <div class="flex items-center gap-3 mt-1.5">
+          <div class="flex items-center gap-1 text-[10px] text-text-secondary">
+            <i class="fa-regular fa-user text-[9px]"></i>
+            <span>{{ ticket.assignee }}</span>
+          </div>
+          <div class="flex items-center gap-1 text-[10px] text-text-secondary">
+            <i class="fa-regular fa-calendar text-[9px]"></i>
+            <span>{{ ticket.date }}</span>
+          </div>
+        </div>
+      </div>
+
+      <i class="fa-solid fa-chevron-right text-[10px] text-text-secondary opacity-0 group-hover:opacity-60 transition-opacity mt-1 flex-shrink-0"></i>
+    </div>
+  </div>
+
+  <!-- Empty state -->
+  <div
+    v-else
+    class="flex flex-col items-center justify-center gap-3 py-10 px-4 rounded-xl border border-dashed border-orchit-white/10 bg-orchit-white/3"
+  >
+    <div class="w-10 h-10 rounded-full bg-orchit-white/5 border border-orchit-white/10 flex items-center justify-center">
+      <i class="fa-regular fa-rectangle-list text-text-secondary text-base"></i>
+    </div>
+    <div class="text-center space-y-1">
+      <p class="text-[13px] font-medium text-text-primary">No tickets linked</p>
+      <p class="text-[11px] text-text-secondary leading-relaxed max-w-[200px]">
+        Tickets that use this process will appear here once linked.
+      </p>
+    </div>
+  </div>
+
+</section>
+
+<!-- ── TAB: History ── -->
+<section v-else-if="activeTab === 'history'" key="tab-history" class="space-y-4">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between">
+    <div class="text-xs font-semibold text-text-secondary uppercase tracking-wider">
+      Change History
+    </div>
+    <div
+      class="text-[11px] text-text-secondary bg-orchit-white/5 px-2 py-0.5 rounded-full border border-border"
+      v-if="computedHistory.length"
+    >
+      {{ computedHistory.length }} event{{ computedHistory.length !== 1 ? 's' : '' }}
+    </div>
+  </div>
+
+  <!-- Timeline -->
+  <ol v-if="computedHistory.length" class="space-y-3">
+    <li
+      v-for="(h, i) in computedHistory"
+      :key="i"
+      class="relative flex gap-3"
+    >
+      <!-- Dot + vertical line -->
+      <div class="flex flex-col items-center flex-shrink-0">
+        <div
+          class="w-2.5 h-2.5 rounded-full mt-[14px] ring-[3px] ring-bg-surface flex-shrink-0"
+          :class="h.dotColor || 'bg-primary-color/70'"
+        ></div>
+        <div
+          v-if="i < computedHistory.length - 1"
+          class="w-px flex-1 min-h-[16px] bg-border mt-1"
+        ></div>
+      </div>
+
+      <!-- Card -->
+      <div class="flex-1 pb-1">
+        <div class="rounded-xl bg-orchit-white/5 border border-border p-3 hover:bg-orchit-white/8 hover:border-orchit-white/15 transition-all duration-150">
+
+          <!-- Actor + time -->
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <div class="w-5 h-5 rounded-full bg-primary-color/15 text-primary-color flex items-center justify-center text-[9px] font-semibold flex-shrink-0 tracking-tight">
+                {{ initials(h.user) }}
               </div>
-              <div class="text-[11px] text-text-secondary bg-orchit-white/5 px-2 py-0.5 rounded-full border border-border">
-                {{ staticTickets.length }} tickets
-              </div>
+              <span class="text-[12px] font-semibold text-text-primary truncate max-w-[140px]">{{ h.user }}</span>
             </div>
+            <span class="text-[10px] text-text-secondary whitespace-nowrap">{{ h.time }}</span>
+          </div>
 
-            <div class="space-y-2">
-              <div
-                v-for="ticket in staticTickets"
-                :key="ticket.id"
-                class="group flex items-start gap-3 p-3 rounded-xl bg-orchit-white/5 border border-border hover:bg-orchit-white/8 hover:border-orchit-white/20 transition-all duration-150 cursor-pointer"
-              >
-                <!-- Type icon -->
-                <div class="mt-0.5 w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0"
-                  :class="ticket.typeColor">
-                  <i :class="['text-[10px]', ticket.typeIcon]"></i>
-                </div>
+          <!-- Action description -->
+          <div class="text-[12px] text-text-secondary leading-snug flex flex-wrap items-center gap-x-1 gap-y-1">
+            <!-- Action verb pill -->
+            <span
+              class="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-md border"
+              :class="{
+                'bg-blue-500/10 text-blue-400 border-blue-500/20':   h.dotColor === 'bg-blue-500/70',
+                'bg-red-500/10 text-red-400 border-red-500/20':      h.dotColor === 'bg-red-500/70',
+                'bg-green-500/10 text-green-400 border-green-500/20': h.dotColor === 'bg-green-500/70',
+                'bg-primary-color/10 text-primary-color border-primary-color/20': !h.dotColor || h.dotColor === 'bg-primary-color/70',
+              }"
+            >
+              <i
+                class="text-[8px]"
+                :class="{
+                  'fa-solid fa-plus':           h.action.toLowerCase().includes('added'),
+                  'fa-solid fa-minus':          h.action.toLowerCase().includes('removed'),
+                  'fa-solid fa-pen':            h.action.toLowerCase().includes('updated'),
+                  'fa-solid fa-arrow-right-arrow-left': h.action.toLowerCase().includes('changed'),
+                  'fa-solid fa-bolt':           !h.action.toLowerCase().match(/added|removed|updated|changed/),
+                }"
+              ></i>
+              {{ h.action }}
+            </span>
 
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-center gap-2 mb-1">
-                    <span class="text-[11px] font-mono text-text-secondary">{{ ticket.code }}</span>
-                    <span
-                      class="text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-tighter border"
-                      :class="ticket.statusClass"
-                    >
-                      {{ ticket.status }}
-                    </span>
-                  </div>
-                  <div class="text-[13px] font-medium text-text-primary leading-snug truncate">
-                    {{ ticket.title }}
-                  </div>
-                  <div class="flex items-center gap-3 mt-1.5">
-                    <div class="flex items-center gap-1 text-[10px] text-text-secondary">
-                      <i class="fa-regular fa-user text-[9px]"></i>
-                      <span>{{ ticket.assignee }}</span>
-                    </div>
-                    <div class="flex items-center gap-1 text-[10px] text-text-secondary">
-                      <i class="fa-regular fa-calendar text-[9px]"></i>
-                      <span>{{ ticket.date }}</span>
-                    </div>
-                  </div>
-                </div>
+            <!-- Field -->
+            <template v-if="h.field">
+              <span class="text-text-secondary text-[11px]">on</span>
+              <span class="font-semibold text-text-primary text-[11px]">{{ h.field }}</span>
+            </template>
 
-                <i class="fa-solid fa-chevron-right text-[10px] text-text-secondary opacity-0 group-hover:opacity-60 transition-opacity mt-1 flex-shrink-0"></i>
-              </div>
-            </div>
+            <!-- From → To chips -->
+            <template v-if="h.from && h.to">
+              <span class="text-text-secondary text-[11px] ml-0.5">from</span>
+              <span class="inline-flex items-center px-1.5 py-0.5 rounded-md bg-orchit-white/5 border border-border text-[10px] font-mono text-text-secondary line-through decoration-red-400/60">
+                {{ h.from }}
+              </span>
+              <i class="fa-solid fa-arrow-right text-[8px] text-text-secondary/50"></i>
+              <span class="inline-flex items-center px-1.5 py-0.5 rounded-md bg-primary-color/10 border border-primary-color/20 text-primary-color text-[10px] font-mono">
+                {{ h.to }}
+              </span>
+            </template>
+          </div>
 
-            <!-- Empty hint -->
-            <div class="py-2 px-3 rounded-lg bg-orchit-white/3 border border-dashed border-border text-[11px] text-text-secondary text-center">
-              Showing static preview — real tickets will appear here once linked
-            </div>
-          </section>
+        </div>
+      </div>
+    </li>
+  </ol>
 
-          <!-- ── TAB: History ── -->
-          <section v-else-if="activeTab === 'history'" key="tab-history" class="space-y-4">
-            <div class="flex items-center justify-between">
-              <div class="text-xs font-semibold text-text-secondary uppercase tracking-wider">
-                Change History
-              </div>
-              <div class="text-[11px] text-text-secondary bg-orchit-white/5 px-2 py-0.5 rounded-full border border-border">
-                {{ staticHistory.length }} events
-              </div>
-            </div>
+  <!-- Empty state -->
+  <div
+    v-else
+    class="flex flex-col items-center justify-center gap-3 py-10 px-4 rounded-xl border border-dashed border-orchit-white/10 bg-orchit-white/3"
+  >
+    <div class="w-10 h-10 rounded-full bg-orchit-white/5 border border-orchit-white/10 flex items-center justify-center">
+      <i class="fa-regular fa-clock-rotate-left text-text-secondary text-base"></i>
+    </div>
+    <div class="text-center space-y-1">
+      <p class="text-[13px] font-medium text-text-primary">No history yet</p>
+      <p class="text-[11px] text-text-secondary leading-relaxed max-w-[200px]">
+        Changes to this process will be recorded here automatically.
+      </p>
+    </div>
+  </div>
 
-            <ol class="relative border-l border-border pl-5 space-y-4 ml-1">
-              <li v-for="(h, i) in staticHistory" :key="i" class="group">
-                <span class="absolute -left-[5px] top-0 w-2.5 h-2.5 rounded-full ring-4 ring-primary-color/10"
-                  :class="h.dotColor || 'bg-primary-color/70'">
-                </span>
-                <div class="rounded-xl bg-orchit-white/5 border border-border p-3 hover:bg-orchit-white/8 transition">
-                  <div class="flex items-center justify-between mb-1">
-                    <div class="flex items-center gap-2">
-                      <div class="w-5 h-5 rounded-full bg-primary-color/15 text-primary-color flex items-center justify-center text-[9px] font-semibold flex-shrink-0">
-                        {{ initials(h.user) }}
-                      </div>
-                      <span class="text-[13px] font-semibold text-text-primary">{{ h.user }}</span>
-                    </div>
-                    <span class="text-[10px] text-text-secondary">{{ h.time }}</span>
-                  </div>
-                  <div class="text-[12px] text-text-secondary leading-snug">
-                    <span class="text-text-primary font-medium">{{ h.action }}</span>
-                    <span v-if="h.field"> on </span>
-                    <span v-if="h.field" class="font-semibold text-text-primary">{{ h.field }}</span>
-                    <span v-if="h.from && h.to">
-                      &nbsp;from
-                      <span class="inline-flex items-center px-1.5 py-0.5 rounded bg-orchit-white/5 border border-border text-[10px] font-mono">{{ h.from }}</span>
-                      to
-                      <span class="inline-flex items-center px-1.5 py-0.5 rounded bg-primary-color/10 border border-primary-color/20 text-primary-color text-[10px] font-mono">{{ h.to }}</span>
-                    </span>
-                  </div>
-                </div>
-              </li>
-            </ol>
-
-            <!-- Empty hint -->
-            <div class="py-2 px-3 rounded-lg bg-orchit-white/3 border border-dashed border-border text-[11px] text-text-secondary text-center">
-              Showing static preview — real history will stream here once connected
-            </div>
-          </section>
+</section>
 
         </Transition>
       </div>
@@ -318,7 +412,7 @@ const SwitchTab = defineAsyncComponent(
 
 const props = defineProps<{
   showPanel: boolean
-  details: { _id: string; title: string; description?: string; [key: string]: any }
+  details: { _id: string; title: string; description?: string; history?: any[]; cards?: any[]; [key: string]: any }
 }>()
 
 const emit = defineEmits(['close', 'open-builder'])
@@ -335,82 +429,6 @@ const tabOptions = [
   { label: 'History',        value: 'history' },
 ]
 
-// ── Static Data (placeholder until real data is wired) ─────
-const staticTickets = [
-  {
-    id: 1,
-    code: 'TKT-0042',
-    title: 'Onboarding flow needs approval gate before provisioning',
-    status: 'In Progress',
-    statusClass: 'bg-blue-500/15 text-blue-400 border-blue-500/20',
-    assignee: 'Sarah M.',
-    date: 'May 14, 2026',
-    typeIcon: 'fa-solid fa-bolt',
-    typeColor: 'bg-yellow-500/15 text-yellow-400',
-  },
-  {
-    id: 2,
-    code: 'TKT-0038',
-    title: 'Review stage skipped when submitter is also approver',
-    status: 'Open',
-    statusClass: 'bg-orchit-white/10 text-text-secondary border-border',
-    assignee: 'Hamza R.',
-    date: 'May 10, 2026',
-    typeIcon: 'fa-solid fa-bug',
-    typeColor: 'bg-red-500/15 text-red-400',
-  },
-  {
-    id: 3,
-    code: 'TKT-0031',
-    title: 'Add SLA timer to the pending-review transition step',
-    status: 'Done',
-    statusClass: 'bg-green-500/15 text-green-400 border-green-500/20',
-    assignee: 'Aisha K.',
-    date: 'Apr 28, 2026',
-    typeIcon: 'fa-solid fa-circle-check',
-    typeColor: 'bg-green-500/15 text-green-400',
-  },
-]
-
-const staticHistory = [
-  {
-    user: 'Hamza Raza',
-    action: 'Updated',
-    field: 'Title',
-    from: 'Draft Process',
-    to: 'Approval Workflow',
-    time: '2h ago',
-    dotColor: 'bg-primary-color/70',
-  },
-  {
-    user: 'Sarah Malik',
-    action: 'Changed status',
-    field: null,
-    from: 'Inactive',
-    to: 'Active',
-    time: 'Yesterday',
-    dotColor: 'bg-green-500/70',
-  },
-  {
-    user: 'Aisha Khan',
-    action: 'Added step',
-    field: 'Pending Review',
-    from: null,
-    to: null,
-    time: '3 days ago',
-    dotColor: 'bg-blue-500/70',
-  },
-  {
-    user: 'Hamza Raza',
-    action: 'Created process',
-    field: null,
-    from: null,
-    to: null,
-    time: 'Apr 21, 2026',
-    dotColor: 'bg-orchit-white/30',
-  },
-]
-
 // ── Helpers ────────────────────────────────────────────────
 const initials = (name: string) =>
   (name ?? '')
@@ -421,7 +439,243 @@ const initials = (name: string) =>
     .join('')
     .toUpperCase()
 
-// ── Data Fetching (unchanged) ──────────────────────────────
+function formatRelativeTime(dateStr: string): string {
+  if (!dateStr) return ''
+  const diff = Date.now() - new Date(dateStr).getTime()
+  const mins = Math.floor(diff / 60000)
+  if (mins < 60) return `${mins}m ago`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24) return `${hrs}h ago`
+  const days = Math.floor(hrs / 24)
+  if (days < 7) return `${days}d ago`
+  return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
+function formatDate(dateStr: string): string {
+  if (!dateStr) return ''
+  return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
+// ── Derived: History from real API data ────────────────────
+//
+// Each history entry has:
+//   changes.flow_metadatas.from[]  — steps before
+//   changes.flow_metadatas.to[]    — steps after
+//
+// We diff them to surface:
+//   - added steps (in "to" but not "from")
+//   - removed steps (in "from" but not "to")
+//   - changed steps (same _id but different values)
+//
+// performed_by.u_email is used as the actor name.
+// created_at is used for the timestamp.
+
+interface MappedHistoryItem {
+  user: string
+  action: string
+  field: string | null
+  from: string | null
+  to: string | null
+  time: string
+  dotColor: string
+}
+
+const computedHistory = computed<MappedHistoryItem[]>(() => {
+  const raw: any[] = processDetails.value?.history ?? []
+  if (!raw.length) return []
+
+  const items: MappedHistoryItem[] = []
+
+  for (const entry of raw) {
+    const actor: string = entry.performed_by?.u_email ?? 'Unknown'
+    const time: string = formatRelativeTime(entry.created_at)
+    const changes = entry.changes ?? {}
+
+    // ── flow_metadatas diff ──────────────────────────────
+    if (changes.flow_metadatas) {
+      const fromSteps: any[] = changes.flow_metadatas.from ?? []
+      const toSteps: any[]   = changes.flow_metadatas.to   ?? []
+
+      const fromMap = new Map(fromSteps.map((s: any) => [s._id, s]))
+      const toMap   = new Map(toSteps.map((s: any) => [s._id, s]))
+
+      // Added steps
+      for (const step of toSteps) {
+        if (!fromMap.has(step._id)) {
+          items.push({
+            user: actor,
+            action: 'Added step',
+            field: step.status,
+            from: null,
+            to: null,
+            time,
+            dotColor: 'bg-blue-500/70',
+          })
+        }
+      }
+
+      // Removed steps
+      for (const step of fromSteps) {
+        if (!toMap.has(step._id)) {
+          items.push({
+            user: actor,
+            action: 'Removed step',
+            field: step.status,
+            from: null,
+            to: null,
+            time,
+            dotColor: 'bg-red-500/70',
+          })
+        }
+      }
+
+      // Changed: forward_moves (transition target changed)
+      for (const step of toSteps) {
+        const prev = fromMap.get(step._id)
+        if (!prev) continue
+
+        const prevFwd = JSON.stringify(prev.forward_moves ?? [])
+        const nextFwd = JSON.stringify(step.forward_moves ?? [])
+        if (prevFwd !== nextFwd) {
+          items.push({
+            user: actor,
+            action: 'Updated transition',
+            field: step.status,
+            from: (prev.forward_moves ?? []).join(', ') || '—',
+            to:   (step.forward_moves  ?? []).join(', ') || '—',
+            time,
+            dotColor: 'bg-primary-color/70',
+          })
+        }
+
+        // is_end changed (step gained/lost end status)
+        if (prev.is_end !== step.is_end) {
+          items.push({
+            user: actor,
+            action: 'Changed end status',
+            field: step.status,
+            from: prev.is_end ? 'End' : 'Not end',
+            to:   step.is_end ? 'End' : 'Not end',
+            time,
+            dotColor: 'bg-green-500/70',
+          })
+        }
+      }
+
+      // Fallback: if none of the above fired but action is "updated"
+      if (!items.length && entry.action) {
+        items.push({
+          user: actor,
+          action: entry.action.charAt(0).toUpperCase() + entry.action.slice(1),
+          field: `Version ${entry.version_label ?? entry.version_number}`,
+          from: null,
+          to: null,
+          time,
+          dotColor: 'bg-primary-color/70',
+        })
+      }
+    }
+
+    // ── raw_object diff (node/edge counts) ──────────────
+    if (changes.raw_object && !changes.flow_metadatas) {
+      const fromNodes: any[] = changes.raw_object.from?.flow_diagram?.nodes ?? []
+      const toNodes: any[]   = changes.raw_object.to?.flow_diagram?.nodes ?? []
+      const fromEdges: any[] = changes.raw_object.from?.flow_diagram?.edges ?? []
+      const toEdges: any[]   = changes.raw_object.to?.flow_diagram?.edges ?? []
+
+      if (toNodes.length !== fromNodes.length) {
+        items.push({
+          user: actor,
+          action: 'Updated workflow nodes',
+          field: null,
+          from: `${fromNodes.length} nodes`,
+          to:   `${toNodes.length} nodes`,
+          time,
+          dotColor: 'bg-primary-color/70',
+        })
+      }
+      if (toEdges.length !== fromEdges.length) {
+        items.push({
+          user: actor,
+          action: 'Updated workflow edges',
+          field: null,
+          from: `${fromEdges.length} edges`,
+          to:   `${toEdges.length} edges`,
+          time,
+          dotColor: 'bg-blue-500/70',
+        })
+      }
+    }
+  }
+
+  return items
+})
+
+// ── Derived: Tickets from real cards data ──────────────────
+//
+// Each card has:
+//   variables['card-type']   → displayed as type/icon hint
+//   variables['card-status'] → badge
+//   created_at               → formatted date
+//   created_by               → user id (no name available without lookup)
+//
+// Icon and color are derived from the card-type string.
+
+interface MappedTicket {
+  id: string
+  code: string
+  title: string
+  status: string
+  statusClass: string
+  assignee: string
+  date: string
+  typeIcon: string
+  typeColor: string
+}
+
+function cardStatusClass(status: string): string {
+  const s = (status ?? '').toLowerCase()
+  if (s.includes('progress') || s.includes('doing')) return 'bg-blue-500/15 text-blue-400 border-blue-500/20'
+  if (s.includes('done') || s.includes('complete')) return 'bg-green-500/15 text-green-400 border-green-500/20'
+  if (s.includes('block') || s.includes('hold')) return 'bg-red-500/15 text-red-400 border-red-500/20'
+  // Default: "To Do" / "Open"
+  return 'bg-orchit-white/10 text-text-secondary border-border'
+}
+
+function cardTypeIcon(type: string): { icon: string; color: string } {
+  const t = (type ?? '').toLowerCase()
+  if (t.includes('bug'))     return { icon: 'fa-solid fa-bug',          color: 'bg-red-500/15 text-red-400' }
+  if (t.includes('feature')) return { icon: 'fa-solid fa-star',         color: 'bg-purple-500/15 text-purple-400' }
+  if (t.includes('web'))     return { icon: 'fa-solid fa-globe',        color: 'bg-blue-500/15 text-blue-400' }
+  if (t.includes('task'))    return { icon: 'fa-solid fa-circle-check', color: 'bg-green-500/15 text-green-400' }
+  return { icon: 'fa-solid fa-bolt', color: 'bg-yellow-500/15 text-yellow-400' }
+}
+
+const computedTickets = computed<MappedTicket[]>(() => {
+  const raw: any[] = processDetails.value?.cards ?? []
+  return raw.map((card: any, idx: number) => {
+    const type   = card.variables?.['card-type']   ?? 'Task'
+    const status = card.variables?.['card-status'] ?? 'Open'
+    const { icon, color } = cardTypeIcon(type)
+
+    // Generate a short code from the _id tail
+    const shortId = (card._id ?? '').slice(-4).toUpperCase()
+
+    return {
+      id:          card._id,
+      code:        `TKT-${shortId}`,
+      title:       `${type} card — ${status}`,
+      status,
+      statusClass: cardStatusClass(status),
+      assignee:    card.created_by ? `${(card.created_by as string).slice(-6).toUpperCase()}` : 'Unassigned',
+      date:        formatDate(card.updated_at ?? card.created_at),
+      typeIcon:    icon,
+      typeColor:   color,
+    }
+  })
+})
+
+// ── Data Fetching ──────────────────────────────────────────
 const processId = computed(() => props.details?._id)
 const { data: processDetails, isLoading, refetch } = useProcessTransition(workspaceId, processId, {
   enabled: computed(() => !!processId.value && props.showPanel)
@@ -452,20 +706,20 @@ const activeVersionLabel = computed(() => {
   return active ? active.version_label || `v${active.version}` : 'v1'
 })
 
-// ── Local State Sync (unchanged) ──────────────────────────
+// ── Local State Sync ───────────────────────────────────────
 const localTitle = ref('')
-const localDesc = ref('')
-const localType = ref('')
+const localDesc  = ref('')
+const localType  = ref('')
 
 watch(() => processDetails.value, (val) => {
   if (val) {
-    localTitle.value = val.title || ''
-    localDesc.value = val.description || ''
-    localType.value = val.type_value || ''
+    localTitle.value = val.title       || ''
+    localDesc.value  = val.description || ''
+    localType.value  = val.type_value  || ''
   }
 }, { immediate: true })
 
-// ── Stats (unchanged) ─────────────────────────────────────
+// ── Stats ──────────────────────────────────────────────────
 const totalStatus = computed(() => {
   const raw = processDetails.value?.raw_object
   if (raw?.flow_diagram?.nodes && Array.isArray(raw.flow_diagram.nodes)) return raw.flow_diagram.nodes.length
@@ -482,7 +736,7 @@ const totalTransitions = computed(() => {
   return 0
 })
 
-// ── Mutations (unchanged) ─────────────────────────────────
+// ── Mutations ──────────────────────────────────────────────
 const { mutate: updateTransition } = useUpdateTransition({
   onSuccess: () => {
     refetch()
@@ -490,7 +744,7 @@ const { mutate: updateTransition } = useUpdateTransition({
   }
 })
 
-// ── Logic: Title (unchanged) ──────────────────────────────
+// ── Logic: Title ───────────────────────────────────────────
 const editingTitle = ref(false)
 const titleInput = ref<HTMLInputElement | null>(null)
 
@@ -516,13 +770,11 @@ function cancelEditTitle() {
   editingTitle.value = false
 }
 
-// ── Logic: Description (unchanged) ────────────────────────
+// ── Logic: Description ─────────────────────────────────────
 const editingDesc = ref(false)
 const descEditorWrap = ref<HTMLElement | null>(null)
 
-function startEditDesc() {
-  editingDesc.value = true
-}
+function startEditDesc() { editingDesc.value = true }
 
 function finishDescEdit() {
   if (localDesc.value !== processDetails.value?.description) {
@@ -544,7 +796,7 @@ function onDocMouseDown(e: MouseEvent) {
 onMounted(() => document.addEventListener('mousedown', onDocMouseDown))
 onBeforeUnmount(() => document.removeEventListener('mousedown', onDocMouseDown))
 
-// ── Logic: Card Type (unchanged) ──────────────────────────
+// ── Logic: Card Type ───────────────────────────────────────
 function handleTypeChange(val: any) {
   localType.value = val
   updateTransition({

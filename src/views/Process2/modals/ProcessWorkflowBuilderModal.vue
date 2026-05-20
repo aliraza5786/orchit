@@ -1,4 +1,4 @@
- <template>
+<template>
   <transition name="fade">
     <div v-if="isOpen" class="fixed inset-0 z-50 bottom-[60px] sm:bottom-0 flex items-center justify-center bg-black/80 backdrop-blur-sm"
       @keydown.esc="close">
@@ -6,31 +6,30 @@
         <!-- Header -->
         <div class="border-b border-border px-[20px] sm:px-6 py-4 relative z-10">
           <div class="flex items-center justify-between max-w-content gap-3">
-            <div class="flex items-center gap-4">
+            <!-- Left: Title + Version Dropdown -->
+            <div class="flex items-center gap-3">
               <h2 class="flex items-center gap-2 text-lg sm:text-xl font-semibold text-text-primary text-nowrap">
                 <i class="fa-solid fa-diagram-project text-primary-color" aria-hidden="true" />
                 Workflow for {{ processTitle }}
               </h2>
-            </div>
 
-            <div class="flex items-center gap-3">
-              <!-- Version History Dropdown -->
+              <!-- Version History Dropdown (now next to title) -->
               <div class="relative" ref="versionDropdownRef">
                 <Button :inSpace="true" variant="secondary" size="sm" @click="toggleVersionDropdown" :loading="isVersionsLoading">
                   <i class="fa-solid fa-clock-rotate-left mr-2" aria-hidden="true" />
                   {{ currentVersionLabel }}
                 </Button>
-                
-                <div v-if="showVersionDropdown" class="absolute right-0 mt-2 w-64 bg-bg-dropdown border border-border shadow-2xl rounded-md z-[9999] py-1 flex flex-col">
+
+                <div v-if="showVersionDropdown" class="absolute left-0 mt-2 w-64 bg-bg-dropdown border border-border shadow-2xl rounded-md z-[9999] py-1 flex flex-col">
                   <div class="px-3 py-1.5 border-b border-border/40 text-left">
                     <span class="text-[10px] font-bold text-text-secondary uppercase tracking-wider">Version History</span>
                   </div>
-                  
+
                   <div class="max-h-[240px] overflow-y-auto py-1 scrollbar-custom text-left">
                     <div v-if="!versionsList?.length" class="px-3 py-2 text-xs text-text-secondary text-center">
                       No past versions found
                     </div>
-                    <div 
+                    <div
                       v-else
                       v-for="v in versionsList"
                       :key="v._id"
@@ -44,7 +43,7 @@
                             Active
                           </span>
                         </span>
-                        
+
                         <span v-if="!v.is_current_version" class="text-[10px] text-primary-color font-medium hover:underline">
                           Restore
                         </span>
@@ -56,22 +55,18 @@
                   </div>
                 </div>
               </div>
+            </div>
 
+            <!-- Right: Actions -->
+            <div class="flex items-center gap-3">
               <Button :inSpace="true" :disabled="!canCreateCard" variant="secondary" size="sm" @click="handleAddStatus">
                 <i class="fa-solid fa-plus mr-2" aria-hidden="true" /> Add Steps
               </Button>
 
-              <input 
-                v-model="versionNotes"
-                type="text" 
-                placeholder="What changed? (version notes)"
-                class="hidden sm:block w-44 h-[34px] bg-bg-input border border-border rounded-md px-2.5 text-xs focus:ring-1 focus:ring-primary-color outline-none transition-all placeholder:text-text-secondary/40"
-              />
- 
-              <Button :inSpace="true" variant="primary" size="sm" :disabled="isSaving || !canEditCard || !canCreateCard" @click="handleUpdateWorkflow">
+              <Button :inSpace="true" variant="primary" size="sm" :disabled="isSaving || !canEditCard || !canCreateCard" @click="openSaveModal">
                 {{ updateButtonLabel }}
               </Button>
- 
+
               <button class="text-xl text-text-secondary hover:text-text-primary" @click="close" aria-label="Close">
                 <i class="fa-solid fa-times" aria-hidden="true" />
               </button>
@@ -87,22 +82,80 @@
               <p class="text-sm text-text-secondary">Loading workflow data...</p>
             </div>
           </div>
-          <WorkflowCanvas v-else ref="Canvas" 
+          <WorkflowCanvas v-else ref="Canvas"
             :process-id="processId"
             :can-edit="canEditCard"
             :can-delete="canDeleteCard"
             :workflow-data="transitionData?.raw_object || {}"
             :show-transition-labels="true"
-            :isSaving="isSaving" 
+            :isSaving="isSaving"
             @save="handleSave"
             @update:workflow="handleWorkflowUpdate"
-            @add:status="handleAddStatus" 
+            @add:status="handleAddStatus"
             @edit:node="handleEditNode" />
         </div>
       </div>
     </div>
   </transition>
-  
+
+  <!-- Save Workflow Modal -->
+  <transition name="fade">
+    <div v-if="showSaveModal" class="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm" @click.self="closeSaveModal">
+      <div class="bg-bg-body border border-border rounded-xl shadow-2xl w-full max-w-sm mx-4 p-6 flex flex-col gap-5">
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between">
+          <h3 class="text-base font-semibold text-text-primary flex items-center gap-2">
+            <i class="fa-solid fa-floppy-disk text-primary-color" aria-hidden="true" />
+            Save Workflow
+          </h3>
+          <button class="text-text-secondary hover:text-text-primary transition-colors" @click="closeSaveModal" aria-label="Close">
+            <i class="fa-solid fa-times" aria-hidden="true" />
+          </button>
+        </div>
+
+        <!-- Save Status Dropdown -->
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-medium text-text-secondary uppercase tracking-wide">Save as</label>
+          <div class="relative">
+            <select
+              v-model="saveStatus"
+              class="w-full h-9 bg-bg-input border border-border rounded-md px-3 pr-8 text-sm text-text-primary focus:ring-1 focus:ring-primary-color outline-none appearance-none cursor-pointer transition-all"
+            >
+              <option value="active">Active</option>
+              <option value="draft">Draft</option>
+            </select>
+            <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-xs text-text-secondary pointer-events-none" aria-hidden="true" />
+          </div>
+          <p class="text-[11px] text-text-secondary">
+            <template v-if="saveStatus === 'active'">This version will become the live workflow immediately.</template>
+            <template v-else>This version will be saved but not applied until activated.</template>
+          </p>
+        </div>
+
+        <!-- Comments -->
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-medium text-text-secondary uppercase tracking-wide">Comments</label>
+          <textarea
+            v-model="versionNotes"
+            placeholder="What changed in this version?"
+            rows="3"
+            class="w-full bg-bg-input border border-border rounded-md px-3 py-2 text-sm text-text-primary focus:ring-1 focus:ring-primary-color outline-none resize-none transition-all placeholder:text-text-secondary/40"
+          />
+        </div>
+
+        <!-- Modal Actions -->
+        <div class="flex items-center justify-end gap-2 pt-1">
+          <Button :inSpace="true" variant="secondary" size="sm" @click="closeSaveModal">
+            Cancel
+          </Button>
+          <Button :inSpace="true" variant="primary" size="sm" :disabled="isSaving" :loading="isSaving" @click="confirmSave">
+            {{ isSaving ? 'Saving...' : 'Confirm Save' }}
+          </Button>
+        </div>
+      </div>
+    </div>
+  </transition>
+
   <AddStatusModal v-model="showAddStatusModal" :process-id="processId" :editing-status="editingStatus"
     @status:added="handleStatusAdded" @edit:node="handleEditConfirm" />
 </template>
@@ -113,8 +166,8 @@ import { useQueryClient } from '@tanstack/vue-query'
 import Button from '../../../components/ui/Button.vue'
 import WorkflowCanvas from '../components/WorkflowCanvas.vue'
 import AddStatusModal from './AddStatusModal.vue'
-import { 
-  useProcessTransition, 
+import {
+  useProcessTransition,
   useUpdateTransition,
   useTransitionVersions,
   useRestoreTransitionVersion
@@ -124,16 +177,17 @@ import { useRouteIds } from '../../../composables/useQueryParams'
 import { usePermissions } from "../../../composables/usePermissions";
 import { toast } from 'vue-sonner'
 import { onClickOutside } from '@vueuse/core'
-const { 
+
+const {
   canCreateCard,
   canEditCard,
-  canDeleteCard 
+  canDeleteCard
 } = usePermissions();
 
 /* Props & emits */
 const props = defineProps<{
   modelValue: boolean
-  process: { _id?: string; id?: string; title?: string ; type_value?: string} | null
+  process: { _id?: string; id?: string; title?: string; type_value?: string } | null
 }>()
 console.log("props values for process", props.process);
 
@@ -151,16 +205,15 @@ const editingStatus = ref<any>(null)
 const isOpen = computed(() => props.modelValue)
 const processId = computed(() => props.process?._id ?? props.process?.id ?? '')
 const processTitle = computed(() => props.process?.title ?? 'Process Workflow')
-const processTypeValue =  computed(() => props.process?.type_value ?? '')
+const processTypeValue = computed(() => props.process?.type_value ?? '')
 const { workspaceId } = useRouteIds()
 
 /* Versioning State & Queries */
 const showVersionDropdown = ref(false)
 const versionDropdownRef = ref<HTMLElement | null>(null)
-const versionNotes = ref('')
 
 const { data: versionsData, isLoading: isVersionsLoading, refetch: refetchVersions } = useTransitionVersions(
-  workspaceId, 
+  workspaceId,
   processId,
   { enabled: computed(() => isOpen.value && !!processId.value) }
 )
@@ -211,7 +264,7 @@ function handleRestore(v: any) {
 
 /* Data fetching */
 const { data: transitionData, isLoading, refetch } = useProcessTransition(workspaceId, processId, {
-    enabled: computed(() => isOpen.value && !!processId.value)
+  enabled: computed(() => isOpen.value && !!processId.value)
 })
 
 /* Workflow State */
@@ -220,52 +273,69 @@ provide('workflowState', workflowState)
 
 /* Initialize Workflow on Open / Data Load */
 watch(() => transitionData.value, (data) => {
-    if (data && isOpen.value) {
-         
-    }
+  if (data && isOpen.value) {
+    // initialize as needed
+  }
 })
 
- 
+/* Save Modal State */
+const showSaveModal = ref(false)
+const saveStatus = ref<'active' | 'draft'>('active')
+const versionNotes = ref('')
+
+function openSaveModal() {
+  saveStatus.value = 'active'
+  versionNotes.value = ''
+  showSaveModal.value = true
+}
+
+function closeSaveModal() {
+  showSaveModal.value = false
+}
+
+function confirmSave() {
+  Canvas.value?.triggerSave()
+}
 
 /* Saving */
 const queryClient = useQueryClient()
 const { mutate: updateTransition, isPending: isSaving } = useUpdateTransition({
-    onSuccess: async () => {
-        refetch()
-        refetchVersions()
-        queryClient.invalidateQueries({ queryKey: ['process-groups-with-transitions'] })
-        queryClient.invalidateQueries({ queryKey: ['sheets'] }) 
-        toast.success('Workflow saved successfully!')
-    },
-     onError: (err: any) => {
-        toast.error(err?.message || 'Failed to save workflow') 
-    }
-    
+  onSuccess: async () => {
+    refetch()
+    refetchVersions()
+    queryClient.invalidateQueries({ queryKey: ['process-groups-with-transitions'] })
+    queryClient.invalidateQueries({ queryKey: ['sheets'] })
+    closeSaveModal()
+    toast.success('Workflow saved successfully!')
+  },
+  onError: (err: any) => {
+    toast.error(err?.message || 'Failed to save workflow')
+  }
 })
 
 const updateButtonLabel = computed(() => isSaving.value ? 'Saving...' : 'Save Workflow')
 
 function handleUpdateWorkflow() {
-    Canvas.value?.triggerSave() 
+  Canvas.value?.triggerSave()
 }
 
 function handleSave(payload: any) {
-    updateTransition({
-        workspace_id: workspaceId.value,
-        transition_id: processId.value,
-        payload: {
-            raw_object: {
-               workspace_id: payload.workspace_id,
-               flow_diagram: payload.flow_diagram
-            },
-            variable_type: props.process?.title?.toLocaleLowerCase().includes('general') ? 'card-status' : 'card-type',
-            type_value: processTypeValue.value,
-            flow_metadatas: payload.flow_metadata,
-            version_notes: versionNotes.value.trim() || undefined
-             // Save the whole flow
-        }
-    })
-    versionNotes.value = ''
+  updateTransition({
+    workspace_id: workspaceId.value,
+    transition_id: processId.value,
+    payload: {
+      raw_object: {
+        workspace_id: payload.workspace_id,
+        flow_diagram: payload.flow_diagram
+      },
+      variable_type: props.process?.title?.toLocaleLowerCase().includes('general') ? 'card-status' : 'card-type',
+      type_value: processTypeValue.value,
+      flow_metadatas: payload.flow_metadata,
+      version_notes: versionNotes.value.trim() || undefined,
+      status: saveStatus.value
+    }
+  })
+  versionNotes.value = ''
 }
 
 function close() {
@@ -273,13 +343,12 @@ function close() {
   emit('close')
 }
 
-// ... event handlers
+// Event handlers
 function handleAddStatus() { showAddStatusModal.value = true; editingStatus.value = ''; }
 function handleStatusAdded(e: any) { showAddStatusModal.value = false; Canvas.value?.handleAddNode?.(e); }
 function handleEditNode(nodeData: any) { editingStatus.value = nodeData; showAddStatusModal.value = true; }
 function handleEditConfirm(id: string, data: any) { Canvas.value?.handleConfirmEdit(id, data); }
 function handleWorkflowUpdate() { refetch(); }
-
 </script>
 
 <style scoped>
