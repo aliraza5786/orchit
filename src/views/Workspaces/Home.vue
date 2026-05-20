@@ -1,9 +1,11 @@
 <template>
   <div class="w-full bg-bg-surface/40 text-text-primary">
-    <div class="mx-auto w-full max-w-360 px-5 pt-10 pb-10 md:px-15">
+    <div
+      class="mx-auto w-full max-w-[1400px] pt-8 pb-10 px-[15px] md:pt-10"
+    >
       <!-- Sophisticated Workspace Header -->
       <div
-        class="relative overflow-hidden rounded-xl bg-bg-body p-8 md:px-10 md:py-8 shadow-sm shadow-accent/30"
+        class="relative overflow-hidden rounded-xl bg-bg-body p-5 shadow-sm shadow-accent/30 max-md:p-6 md:p-8 md:px-10 md:py-8"
       >
         <!-- Animated Background Elements -->
         <div class="absolute inset-0 overflow-hidden pointer-events-none">
@@ -178,9 +180,9 @@
         />
       </div>
 
-      <div v-show="currentView === 'gallery'">
+      <div v-if="currentView === 'gallery'">
         <ProjectGallery
-          :projects="galleryWorkspaces?.workspaces || []"
+          :projects="galleryWorkspaces?.workspaces ?? []"
           :loading="isGalleryLoading"
           :filter="filter"
           @share="openShareModal"
@@ -362,15 +364,15 @@ const openInviteModal = (ws: any) => {
 
 // --- Data Fetching ---
 const galleryPageSize = ref(1000);
-const {
-  data: galleryWorkspaces,
-  isPending: galleryPending,
-  isFetching: galleryFetching,
-} = useWorkspaces(ref(1), galleryPageSize, filter, ref(false));
-
-const isGalleryLoading = computed(
-  () => galleryPending.value || galleryFetching.value,
+const { data: galleryWorkspaces, isPending: galleryPending } = useWorkspaces(
+  ref(1),
+  galleryPageSize,
+  filter,
+  ref(false),
 );
+
+/** Pending only — refetch must not hide gallery cards (list view keeps rows the same way). */
+const isGalleryLoading = computed(() => galleryPending.value);
 
 const timeGreeting = computed(() => {
   const hour = new Date().getHours();

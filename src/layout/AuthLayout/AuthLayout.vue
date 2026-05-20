@@ -1,10 +1,13 @@
 <template>
-  <div class="bg-bg-body h-full sm:h-screen overflow-hidden"> 
-    <div class="lg:shadow-xl flex w-full h-full">
-      <!-- Left Panel -->
-      <div class="w-full overflow-y-auto h-full px-[15px]">
-        <slot name="form" />
-      </div> 
+  <div class="bg-bg-body min-h-screen h-full sm:h-screen overflow-hidden">
+    <div class="lg:shadow-xl flex w-full h-full min-h-screen">
+      <div class="w-full h-full min-h-screen overflow-y-auto">
+        <div
+          class="min-h-screen w-full flex flex-col items-center justify-center px-[15px] py-8 sm:py-10"
+        >
+          <slot name="form" />
+        </div>
+      </div>
     </div>
   </div>
 </template>

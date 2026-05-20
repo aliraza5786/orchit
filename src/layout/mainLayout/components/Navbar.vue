@@ -5,33 +5,62 @@
     role="navigation"
     aria-label="Primary"
   >
-    <div class="mx-auto flex max-w-[1400px] items-center justify-between px-10 max-md:p-4">
-      <div class="flex items-center gap-2">
+    <div
+      class="mx-auto flex h-14 w-full max-w-[1400px] items-center justify-between gap-2 px-[15px] md:grid md:grid-cols-[1fr_auto_1fr] md:justify-normal md:gap-0"
+    >
+      <!-- Logo -->
+      <div class="flex min-w-0 flex-1 items-center gap-2 md:flex-none md:justify-self-start">
         <button
           @click="isSidebarOpen = !isSidebarOpen"
-          class="md:hidden grid h-9 w-9 place-items-center rounded-lg text-text-primary hover:bg-bg-dropdown-menu-hover transition-colors"
+          class="grid shrink-0 place-items-center text-text-primary md:hidden"
           aria-label="Toggle Menu"
         >
-          <i class="fa-solid" :class="isSidebarOpen ? 'fa-xmark' : 'fa-bars'"></i>
+          <i class="fa-solid text-[20px]" :class="isSidebarOpen ? 'fa-xmark' : 'fa-bars'"></i>
         </button>
-        <div class="flex items-center gap-2 cursor-pointer" @click="handleLogoClick">
-          <img v-if="!isDark" src="../../../assets/global/light-logo.png" alt="Orchit AI logo" class="w-24 sm:w-30" loading="eager" decoding="async" />
-          <img v-else src="../../../assets/global/dark-logo.png" alt="Orchit AI logo" class="w-24 sm:w-30" loading="eager" decoding="async" />
+        <div
+          class="flex cursor-pointer items-center"
+          @click="handleLogoClick"
+        >
+          <img
+            v-if="!isDark"
+            src="../../../assets/global/light-logo.png"
+            alt="Orchit AI logo"
+            class="w-auto max-w-[120px] "
+            loading="eager"
+            decoding="async"
+          />
+          <img
+            v-else
+            src="../../../assets/global/dark-logo.png"
+            alt="Orchit AI logo"
+            class="w-auto max-w-[120px] "
+            loading="eager"
+            decoding="async"
+          />
         </div>
       </div>
 
-      <!-- Primary nav -->
-      <ul class="relative hidden items-stretch py-2 gap-9 text-sm font-medium text-text-primary md:flex" ref="linksContainerRef">
+      <!-- Primary nav (centered) -->
+      <ul
+        ref="linksContainerRef"
+        class="relative hidden h-14 items-center justify-center gap-8 text-sm font-medium text-text-primary md:flex"
+      >
         <div
           class="pointer-events-none absolute bottom-0 h-[2px] rounded-full bg-text-primary transition-all duration-300 ease-out"
           :style="{ left: indicatorLeft + 'px', width: indicatorWidth + 'px' }"
         />
-        <RouterLink v-for="link in visibleLinks" :key="link.to" :to="link.to" custom v-slot="{ navigate, isActive, isExactActive }">
+        <RouterLink
+          v-for="link in visibleLinks"
+          :key="link.to"
+          :to="link.to"
+          custom
+          v-slot="{ navigate, isActive, isExactActive }"
+        >
           <li
             :ref="(el) => setLinkRef(link.to, el as HTMLElement)"
-            @click="navigate"
-            class="relative cursor-pointer py-3 transition-colors"
+            class="relative flex h-14 cursor-pointer items-center whitespace-nowrap px-0.5 transition-colors"
             :class="isActive || (link.exact && isExactActive) ? 'text-text-primary' : 'text-text-secondary hover:text-text-primary'"
+            @click="navigate"
             @mouseenter="() => previewIndicator(link.to)"
             @mouseleave="syncIndicatorToRoute()"
           >
@@ -41,29 +70,44 @@
       </ul>
 
       <!-- Right controls -->
-      <div class="flex items-center gap-4">
-  <NotificationBell />
-  <div class="relative" ref="menuRef">
-
-    <!-- Avatar trigger -->
-    <button
-      v-if="profileData?.u_profile_image"
-      aria-haspopup="menu"
-      :aria-expanded="menuOpen ? 'true' : 'false'"
-      :aria-controls="menuOpen ? 'user-menu' : undefined"
-      @click="toggleMenu" @keydown.enter.prevent="toggleMenu"
-      @keydown.space.prevent="toggleMenu" @keydown.esc.prevent="closeMenu"
-    >
-      <img class="object-cover cursor-pointer w-9 h-9 rounded-full ring-2 ring-border/30 hover:ring-border transition-all" :src="profileData?.u_profile_image" alt="profile_img" />
-    </button>
-    <button
-      v-else type="button"
-      class="h-9 w-9 cursor-pointer rounded-full bg-orange-500 text-sm font-bold text-white ring-2 ring-border/20 ring-offset-1 ring-offset-bg-body hover:brightness-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300 transition-all"
-      aria-haspopup="menu" :aria-expanded="menuOpen ? 'true' : 'false'"
-      :aria-controls="menuOpen ? 'user-menu' : undefined"
-      @click="toggleMenu" @keydown.enter.prevent="toggleMenu"
-      @keydown.space.prevent="toggleMenu" @keydown.esc.prevent="closeMenu"
-    >{{ initials }}</button>
+      <div class="flex shrink-0 items-center justify-end gap-2.5 md:gap-3 md:justify-self-end">
+        <div class="flex h-9 w-9 shrink-0 items-center justify-center [&_button]:!mt-0">
+          <NotificationBell />
+        </div>
+        <div class="relative shrink-0" ref="menuRef">
+          <!-- Avatar trigger -->
+          <button
+            v-if="profileData?.u_profile_image"
+            type="button"
+            class="inline-flex h-9 w-9 items-center justify-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300"
+            aria-haspopup="menu"
+            :aria-expanded="menuOpen ? 'true' : 'false'"
+            :aria-controls="menuOpen ? 'user-menu' : undefined"
+            @click="toggleMenu"
+            @keydown.enter.prevent="toggleMenu"
+            @keydown.space.prevent="toggleMenu"
+            @keydown.esc.prevent="closeMenu"
+          >
+            <img
+              class="h-9 w-9 cursor-pointer rounded-full object-cover ring-2 ring-border/30 transition-all hover:ring-border"
+              :src="profileData?.u_profile_image"
+              alt="profile_img"
+            />
+          </button>
+          <button
+            v-else
+            type="button"
+            class="inline-flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full bg-orange-500 text-sm font-bold text-white ring-2 ring-border/20 ring-offset-1 ring-offset-bg-body transition-all hover:brightness-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300"
+            aria-haspopup="menu"
+            :aria-expanded="menuOpen ? 'true' : 'false'"
+            :aria-controls="menuOpen ? 'user-menu' : undefined"
+            @click="toggleMenu"
+            @keydown.enter.prevent="toggleMenu"
+            @keydown.space.prevent="toggleMenu"
+            @keydown.esc.prevent="closeMenu"
+          >
+            {{ initials }}
+          </button>
 
     <Transition
       enter-active-class="transition duration-150 ease-out"
@@ -77,7 +121,7 @@
         v-if="menuOpen"
         id="user-menu"
         role="menu"
-        class="absolute right-0 mt-2 origin-top-right rounded-2xl bg-bg-dropdown z-[110] border border-border/50 shadow-xl shadow-black/10 w-[min(310px,calc(100vw-24px))] max-md:fixed max-md:left-1/2 max-md:-translate-x-1/2 max-md:right-auto max-md:top-[60px] max-md:w-[calc(100vw-32px)] flex flex-col"
+        class="absolute right-0 mt-0 sm:mt-2.5 origin-top-right rounded-[6px] bg-bg-dropdown z-[110] border border-border shadow-xl shadow-black/10 w-[min(310px,calc(100vw-24px))] max-md:fixed max-md:left-1/2 max-md:-translate-x-1/2 max-md:right-auto max-md:top-14 max-md:w-[calc(100vw-32px)] flex flex-col"
         @keydown.esc.stop.prevent="menuOpen = false"
       >
         <!-- ══ USER IDENTITY HEADER — always visible ══ -->
@@ -298,10 +342,10 @@
           </button>
         </div>
 
+        </div>
+      </Transition>
+        </div>
       </div>
-    </Transition>
-  </div>
-</div>
     </div>
   </nav>
 
@@ -314,8 +358,8 @@
       enter-to-class="translate-x-0" leave-active-class="transition duration-300 ease-in"
       leave-from-class="translate-x-0" leave-to-class="-translate-x-full"
     >
-      <div v-if="isSidebarOpen" class="fixed top-[70px] left-0 right-0 bottom-0 z-[100] bg-bg-body md:hidden overflow-y-auto">
-        <nav class="py-8 px-4">
+      <div v-if="isSidebarOpen" class="fixed top-14 left-0 right-0 bottom-0 z-[100] bg-bg-body md:hidden overflow-y-auto">
+        <nav class="px-5 py-8 ps-[max(1.25rem,env(safe-area-inset-left,0px))] pe-[max(1.25rem,env(safe-area-inset-right,0px))]">
           <ul class="flex flex-col space-y-6">
             <RouterLink v-for="link in links" :key="link.to" :to="link.to" custom v-slot="{ navigate, isActive, isExactActive }">
               <li

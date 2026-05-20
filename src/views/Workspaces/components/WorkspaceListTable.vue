@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import Table from "../../../components/ui/Table.vue";
+import EmptyState from "../../../components/ui/EmptyState.vue";
 import { h, ref, computed, watch } from "vue";
 import { formatDate } from "../../../utilities/FormatDate";
 import Collaborators from "../../../components/ui/Collaborators.vue";
@@ -445,8 +446,15 @@ const emptyMessage = computed(() => {
     case "shared":
       return "No shared workspaces";
     default:
-      return "No workspaces yet — create your first one";
+      return "No workspaces yet";
   }
+});
+
+const emptyDescription = computed(() => {
+  if (props.filter === "all" || !props.filter) {
+    return "Get started by creating your first workspace to organize your tasks.";
+  }
+  return "Try switching to a different filter or check your settings.";
 });
 </script>
 
@@ -491,38 +499,13 @@ const emptyMessage = computed(() => {
         </template>
       </Table>
 
-      <!-- Custom empty state -->
-      <div
+      <EmptyState
         v-if="!isLoading && !items.length"
-        class="flex flex-col items-center justify-center gap-4 py-24 text-center bg-bg-surface/30 rounded-3xl border border-dashed border-border"
-      >
-        <div class="relative">
-          <div
-            class="h-20 w-20 rounded-2xl bg-bg-card border border-border shadow-xl flex items-center justify-center"
-          >
-            <i
-              class="fa-regular fa-folder-open text-3xl text-accent/40"
-            ></i>
-          </div>
-          <div
-            class="absolute -bottom-1 -right-1 h-6 w-6 rounded-full bg-accent flex items-center justify-center text-white shadow-lg"
-          >
-            <i class="fa-solid fa-plus text-[10px]"></i>
-          </div>
-        </div>
-        <div class="flex flex-col gap-1.5">
-          <h3 class="text-base font-semibold text-text-primary">
-            {{ emptyMessage }}
-          </h3>
-          <p class="text-sm text-text-secondary max-w-[280px]">
-            {{
-              props.filter === "all"
-                ? "Get started by creating your first workspace to organize your tasks."
-                : "Try switching to a different filter or check your settings."
-            }}
-          </p>
-        </div>
-      </div>
+        icon="fa-regular fa-folder-open"
+        :title="emptyMessage"
+        :description="emptyDescription"
+        container-class="px-6 py-20"
+      />
     </div>
   </div>
 </template>

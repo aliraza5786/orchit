@@ -1,7 +1,7 @@
 <template>
   <AuthLayout>
     <template #form>
-      <div class="max-w-[400px] mx-auto w-full text-text-primary min-h-full py-10 flex flex-col justify-center px-4">
+      <div class="max-w-[400px] mx-auto w-full">
         <!-- Logo -->
         <router-link to="/">
           <img
@@ -61,7 +61,7 @@
             </p>
           </div>
 
-          <div class="space-y-3 pt-2">
+          <div class="space-y-3">
             <p class="text-xs text-text-secondary">
               Didn't receive the email? Check your spam folder or
             </p>

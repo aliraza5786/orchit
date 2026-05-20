@@ -2,7 +2,7 @@
   <AuthLayout>
     <template #form>
       <div
-        class="max-w-[400px] mx-auto w-full text-text-primary min-h-full py-10 flex flex-col justify-center px-4"
+        class="max-w-[400px] mx-auto w-full"
       >
         <!-- Logo -->
         <router-link to="/">

@@ -6,7 +6,7 @@
   >
     <template #form>
       <div 
-        class="mx-auto w-full min-h-full py-5 flex flex-col justify-center"
+        class="mx-auto w-full min-h-full"
         :class="activeStep === 1 ? 'max-w-2xl' : 'max-w-[400px]'"
       >
 

@@ -1,6 +1,8 @@
 <template>
   <div class="w-full text-text-primary bg-bg-surface/40">
-    <div class="mx-auto w-full max-w-360 px-5 py-10 md:px-15 md:py-20">
+    <div
+      class="mx-auto w-full max-w-[1400px] pt-8 pb-10 px-[15px] md:pt-10"
+    >
       <div class="flex justify-between items-center flex-wrap gap-5 mb-10">
         <div class="flex flex-col gap-1.5 max-md:gap-1">
           <h1 class="text-2xl font-medium">My Tasks</h1>
@@ -10,32 +12,13 @@
         </div>
       </div>
 
-      <!-- Custom empty state -->
-      <div
+      <EmptyState
         v-if="!isPending && !data?.data?.cards?.length"
-        class="flex flex-col items-center justify-center gap-4 py-24 text-center bg-bg-surface/30 rounded-3xl border border-dashed border-border"
-      >
-        <div class="relative">
-          <div
-            class="h-20 w-20 rounded-2xl bg-bg-card border border-border shadow-xl flex items-center justify-center"
-          >
-            <i class="fa-solid fa-list-check text-3xl text-accent/40"></i>
-          </div>
-          <div
-            class="absolute -bottom-1 -right-1 h-6 w-6 rounded-full bg-accent flex items-center justify-center text-white shadow-lg"
-          >
-            <i class="fa-solid fa-check text-[10px]"></i>
-          </div>
-        </div>
-        <div class="flex flex-col gap-1.5">
-          <h3 class="text-base font-semibold text-text-primary">
-            No tasks assigned
-          </h3>
-          <p class="text-sm text-text-secondary max-w-[280px]">
-            You don't have any tasks assigned to you at the moment.
-          </p>
-        </div>
-      </div>
+        icon="fa-regular fa-list-check"
+        title="No tasks assigned"
+        description="You don't have any tasks assigned to you at the moment. New assignments will appear here."
+        container-class="px-6 py-20"
+      />
 
       <div class="workspace-module-wrapper" v-else>
         <div class="workspace-list-container">
@@ -106,6 +89,7 @@ import { h, ref } from "vue";
 import { useUserId } from "../../services/user";
 import { useTasks } from "../../queries/useWorkspace";
 import Table from "../../components/ui/Table.vue";
+import EmptyState from "../../components/ui/EmptyState.vue";
 import TaskDetailsModal from "./Modals/TaskDetailsModal.vue";
 import AssigmentDropdown from "../../views/Product/components/AssigmentDropdown.vue";
 import { useMoveCard } from "../../queries/useSheets";

@@ -1,18 +1,18 @@
 <template>
   <div class="relative" ref="dropdownRef">
     <!--  Bell Icon -->
-    <button @click="toggleDropdown" class="relative flex items-center justify-center sm:mt-2  rounded-full cursor-pointer">
+    <button @click="toggleDropdown" class="relative flex h-9 w-9 items-center justify-center rounded-full cursor-pointer">
       <i class="fa-solid fa-bell text-primary text-[20px] font-bold"></i>
 
       <span v-if="count > 0"
-        class="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-semibold rounded-full px-[5px] py-[1px]">
+        class="absolute -top-0 -right-0.5 bg-red-500 text-white text-[10px] font-semibold rounded-full px-[5px] py-[1px]">
         {{ count }}
       </span>
     </button>
 
     <!--  Dropdown -->
     <div v-if="isOpen"
-      class="absolute -right-14 mt-3 w-70 sm:w-96 bg-bg-surface border border-border rounded-[6px] shadow-2xl overflow-hidden z-50">
+      class="absolute -right-[30px] sm:right-1 mt-2.5 w-70 sm:w-96 bg-bg-body border border-border rounded-[6px] shadow-2xl overflow-hidden z-50">
       <!-- Header -->
       <div class="px-4 bg-bg-body py-3 border-b border-border-input  flex items-center justify-between">
         <h3 class="text-[16px] font-bold font-manrope text-primary">Notifications</h3>
@@ -31,7 +31,7 @@
         <template v-for="(group, label) in groupedNotifications" :key="label">
           <div class="px-4 py-2 text-xs font-semibold text-primary uppercase">{{ label }}</div>
           <div v-for="notification in group" :key="notification.id" @click="openNotification(notification)"
-            class="flex gap-3 px-4 py-3 border-b border-border-input last:border-b-0  cursor-pointer transition-colors"
+            class="flex gap-3 px-4 py-3 border-b border-border-input last:border-b-0 hover:bg-bg-surface cursor-pointer transition-colors"
             :class="{
               'bg-bg-body ': !notification.read && !isDark,
               'hover:bg-bg-body': true
@@ -69,45 +69,12 @@
         </template>
       </div>
 
-      <!-- Empty --> 
-      <div
+      <EmptyState
         v-else
-        class="flex flex-col items-center justify-center px-6 py-14 text-center"
-      >
-        <!-- Icon -->
-        <div
-          class="relative mb-5 flex h-10 w-10 items-center justify-center rounded-[6px] border border-border bg-bg-body shadow-sm"
-        >
-          <div
-            class="absolute inset-0 rounded-[6px] bg-primary-color/5 blur-xl"
-          ></div>
-
-          <i
-            class="fa-regular fa-bell text-xl text-accent relative z-10"
-          ></i>
-        </div>
-
-        <!-- Content -->
-        <h4
-          class="text-[15px] font-bold text-text-primary font-manrope"
-        >
-          You're all caught up
-        </h4>
-
-        <p
-          class="mt-1 max-w-[260px] text-[13px] leading-relaxed text-text-secondary font-manrope"
-        >
-         New notifications, mentions, task updates, and activity alerts
-         will appear here.
-        </p>
-
-        <!-- Decorative dots -->
-        <div class="mt-5 flex items-center gap-1.5 opacity-50">
-          <span class="h-1.5 w-1.5 rounded-full bg-primary-color"></span>
-          <span class="h-1.5 w-1.5 rounded-full bg-primary-color"></span>
-          <span class="h-1.5 w-1.5 rounded-full bg-primary-color"></span>
-        </div>
-      </div>
+        icon="fa-regular fa-bell"
+        title="You're all caught up"
+        description="New notifications, mentions, task updates, and activity alerts will appear here."
+      />
     </div>
 
     <!-- Notification Detail Modal -->
@@ -151,6 +118,7 @@ import { useNotificationsQuery } from "../../../queries/useNotifications";
 import { useTheme } from "../../../composables/useTheme";
 import router from "../../../router";
 import BaseModal from "../../../components/ui/BaseModal.vue";
+import EmptyState from "../../../components/ui/EmptyState.vue";
 const { isDark } = useTheme();
 
 const showDetailModal = ref(false);

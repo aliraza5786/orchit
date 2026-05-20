@@ -2,7 +2,7 @@
   <AuthLayout>
     <template #form>
       <div
-        class="max-w-[400px] mx-auto w-full text-text-primary min-h-full flex flex-col justify-center"
+        class="max-w-[400px] mx-auto w-full text-text-primary"
       > 
       <router-link to="/">
           <img

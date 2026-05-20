@@ -1,8 +1,8 @@
 <template>
     <AuthLayout>
       <template #form>
-        <div class="max-w-[400px] mx-auto w-full min-h-full py-5 flex flex-col justify-center">
-          <div class="mb-8 space-y-2">
+        <div class="max-w-[400px] mx-auto w-full">
+          <div class="mb-8 space-y-3">
             <h2 class="text-[24px] font-medium text-text-primary text-center" v-once>Enter Verification Code</h2>
             <p
               class="text-sm font-normal text-text-secondary text-center"

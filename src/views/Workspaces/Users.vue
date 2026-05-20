@@ -1,7 +1,9 @@
 <template>
   <div class="w-full text-text-primary bg-bg-surface/40">
-    <div class="mx-auto w-full max-w-360 px-5 py-10 md:px-15 md:py-20">
-      <div class="flex justify-between items-center flex-wrap gap-5 mb-10">
+    <div
+      class="mx-auto w-full max-w-[1400px] pt-8 pb-10 px-[15px] md:pt-10"
+    >
+      <div class="mb-10 flex flex-wrap items-center justify-between gap-5 max-md:gap-4">
         <div class="flex flex-col gap-1.5 max-md:gap-1">
           <h1 class="text-2xl font-medium">Users</h1>
           <p class="text-sm text-text-secondary">
@@ -15,32 +17,13 @@
         </Button>
       </div>
 
-      <!-- Custom empty state -->
-      <div
+      <EmptyState
         v-if="!isLoading && !data?.data?.users?.length"
-        class="flex flex-col items-center justify-center gap-4 py-24 text-center bg-bg-surface/30 rounded-3xl border border-dashed border-border"
-      >
-        <div class="relative">
-          <div
-            class="h-20 w-20 rounded-2xl bg-bg-card border border-border shadow-xl flex items-center justify-center"
-          >
-            <i class="fa-solid fa-users text-3xl text-accent/40"></i>
-          </div>
-          <div
-            class="absolute -bottom-1 -right-1 h-6 w-6 rounded-full bg-accent flex items-center justify-center text-white shadow-lg"
-          >
-            <i class="fa-solid fa-plus text-[10px]"></i>
-          </div>
-        </div>
-        <div class="flex flex-col gap-1.5">
-          <h3 class="text-base font-semibold text-text-primary">
-            No users found
-          </h3>
-          <p class="text-sm text-text-secondary max-w-[280px]">
-            Invite team members to start collaborating on your projects.
-          </p>
-        </div>
-      </div>
+        icon="fa-regular fa-users"
+        title="No users found"
+        description="Invite team members to start collaborating on your projects."
+        container-class="px-6 py-20"
+      />
 
       <div class="workspace-module-wrapper" v-else>
         <div class="workspace-list-container">
@@ -100,6 +83,7 @@ import { useCompanyId } from "../../services/user";
 import Table from "../../components/ui/Table.vue";
 import { useUsers } from "../../queries/useWorkspace";
 import Button from "../../components/ui/Button.vue";
+import EmptyState from "../../components/ui/EmptyState.vue";
 import Collaborators from "../../components/ui/Collaborators.vue";
 import { avatarColor } from "../../utilities/avatarColor";
 const InviteUsers = defineAsyncComponent(

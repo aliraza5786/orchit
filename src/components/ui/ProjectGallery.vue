@@ -1,9 +1,9 @@
 <template>
-  <AnimatePresence mode="wait">
+  <div class="w-full">
+    <!-- Data grid (keep visible during background refetch, same as list view) -->
     <div
-      v-if="!loading && safeProjects.length"
+      v-if="hasProjects"
       class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4"
-      :aria-busy="loading ? 'true' : 'false'"
       aria-live="polite"
     >
       <Motion
@@ -233,10 +233,11 @@
       </Motion>
     </div>
 
-    <!-- Skeletons -->
+    <!-- Initial load skeleton -->
     <div
-      v-else-if="loading"
+      v-else-if="showSkeleton"
       class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4"
+      aria-busy="true"
     >
       <Motion
         v-for="n in resolvedSkeletonCount"
@@ -273,28 +274,14 @@
       </Motion>
     </div>
 
-    <!-- Empty -->
-    <div
+    <EmptyState
       v-else
-      class="col-span-full flex flex-col items-center justify-center gap-3 py-20 text-center"
-    >
-      <div
-        class="grid h-14 w-14 place-items-center rounded-2xl bg-bg-card border border-border/70"
-      >
-        <i class="fa-regular fa-folder-open text-xl text-text-secondary"></i>
-      </div>
-      <div class="flex flex-col gap-1">
-        <p class="text-sm font-medium text-text-primary">{{ emptyMessage }}</p>
-        <p class="text-xs text-text-secondary">
-          {{
-            filter === "all"
-              ? "Get started by creating your first workspace."
-              : "Try switching to a different filter."
-          }}
-        </p>
-      </div>
-    </div>
-  </AnimatePresence>
+      icon="fa-regular fa-folder-open"
+      :title="emptyMessage"
+      :description="emptyDescription"
+      container-class="px-6 py-20 w-full"
+    />
+  </div>
 </template>
 
 <style scoped>
@@ -309,10 +296,11 @@
 </style>
 
 <script setup lang="ts">
-import { computed, watchEffect } from "vue";
+import { computed } from "vue";
 import { useRouter } from "vue-router";
-import { Motion, AnimatePresence } from "motion-v";
+import { Motion } from "motion-v";
 import Collaborators from "./Collaborators.vue";
+import EmptyState from "./EmptyState.vue";
 
 interface Project {
   _id: string;
@@ -352,11 +340,14 @@ const props = withDefaults(
   }>(),
   { loading: false, skeletonCount: 8 },
 );
-const safeProjects = computed(() => props.projects || []);
+const safeProjects = computed(() =>
+  Array.isArray(props.projects) ? props.projects : [],
+);
 
-watchEffect(() => {
-  console.log("Projects in gallery:", props.projects);
-});
+const hasProjects = computed(() => safeProjects.value.length > 0);
+
+/** Only skeleton on first load with no cached rows (list view keeps data during refetch). */
+const showSkeleton = computed(() => props.loading && !hasProjects.value);
 const emptyMessage = computed(() => {
   switch (props.filter) {
     case "archived":
@@ -368,8 +359,15 @@ const emptyMessage = computed(() => {
     case "shared":
       return "No shared workspaces";
     default:
-      return "No workspaces yet — create your first one";
+      return "No workspaces yet";
   }
+});
+
+const emptyDescription = computed(() => {
+  if (props.filter === "all" || !props.filter) {
+    return "Get started by creating your first workspace to organize your tasks.";
+  }
+  return "Try switching to a different filter or check your settings.";
 });
 const router = useRouter();
 
