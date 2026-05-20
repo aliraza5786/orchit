@@ -900,6 +900,7 @@ const { data: variables, isPending: isVariablesPending } = useVariables(
   moduleId,
   selected_sheet_id,
 );
+console.log("variables data", variables.value);
 
 const sheetName = ref("");
 

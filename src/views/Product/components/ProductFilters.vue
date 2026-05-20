@@ -360,7 +360,7 @@ const props = defineProps<{
   triggerRef: HTMLElement | null;
   variables: any[];
   workspaceId: string;
-  moduleId: string;
+  moduleId?: string;
   activeFilters: any;
   hidePlanItems?: boolean;
 }>();
