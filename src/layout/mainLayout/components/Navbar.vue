@@ -163,30 +163,13 @@
                   </button>
                 </div>
               </div>
-
-              <!-- ══ PERSONAL PANEL ══ -->
-              <div v-if="accountMode === 'personal'" class="flex flex-col">
-                <div class="mx-3 mt-3 rounded-xl border border-border/50 bg-bg-surface overflow-hidden">
-                  <div class="flex items-center gap-3 px-3 py-3">
-                    <div class="w-9 h-9 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-orange-500 text-[13px] font-bold shrink-0">
-                      {{ initials.charAt(0) }}
-                    </div>
-                    <div class="min-w-0 flex-1">
-                      <p class="text-[12px] font-bold text-text-primary truncate leading-tight">Personal workspace</p>
-                      <p class="text-[10px] text-text-secondary mt-0.5">Managed by you</p>
-                    </div>
-                    <span class="shrink-0 text-[9px] font-bold px-2 py-0.5 rounded-full bg-green-500/10 text-green-600 border border-green-500/20">Active</span>
-                  </div>
-                  <button
-                    type="button"
-                    @click="openAccountSettings(); closeMenu()"
-                    class="w-full flex items-center gap-2.5 px-3 py-2.5 border-t border-border/40 hover:bg-bg-dropdown-menu-hover transition-colors text-left group"
-                  >
-                    <i class="fa-regular fa-gear text-[11px] text-text-secondary w-3.5 text-center"></i>
-                    <span class="text-[11px] font-semibold text-text-secondary group-hover:text-text-primary transition-colors flex-1">Manage account</span>
-                    <i class="fa-solid fa-chevron-right text-[9px] text-text-secondary opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                  </button>
-                </div>
+              
+              <div class="min-w-0 flex-1">
+                <p class="text-[12px] font-bold text-text-primary truncate leading-tight">{{ activeCompanyData.title }}</p>
+                <p class="text-[10px] text-text-secondary mt-0.5 capitalize truncate">
+                  {{ activeCompanyData.user_role?.title || activeCompanyData.membership_role || 'Member' }}
+                  <span v-if="activeCompanyData.domain_link" class="text-text-secondary/60"> · {{ activeCompanyData.domain_link.replace(/https?:\/\//, '') }}</span>
+                </p>
               </div>
 
               <!-- ══ PROFESSIONAL PANEL ══ -->
