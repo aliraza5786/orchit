@@ -1,20 +1,20 @@
  <template>
   <AuthLayout>
     <template #form>
-      <div class="max-w-[400px] mx-auto w-full min-h-full py-5 flex flex-col justify-center">
+      <div class="max-w-[500px] mx-auto w-full min-h-full py-5 flex flex-col justify-center">
         <router-link to="/">
         <img :src="isDark? darkLogo : lightLogo" class="w-[130px] d-block mx-auto" alt="image">
         </router-link>
-        <div class="mb-8 space-y-2 text-center">
-          <h2 class="text-[24px] font-medium text-text-primary">Welcome to Orchit AI</h2>
-          <p class="text-sm font-normal text-text-secondary">Create your free account</p>
+        <div class="mb-8 sm:mb-12 space-y-2 text-center">
+          <h2 class="text-[24px] md:text-[32px] font-medium text-text-primary">Welcome to Orchit AI</h2>
+          <p class="text-base font-medium text-text-secondary">Create your free account</p>
         </div>
-        <form @submit.prevent="handleRegister" class="space-y-3 w-full">
-          <BaseTextField v-model="fName" label="Full Name" placeholder="Full Name" size="md" :error="!!nameError"
+        <form @submit.prevent="handleRegister" class="space-y-4 w-full">
+          <BaseTextField v-model="fName" label="Full Name" placeholder="Full Name" size="lg" :error="!!nameError"
             :message="nameError" @blur="touched.fName.value = true" />
-          <BaseTextField v-model="email" label="Email" placeholder="john@example.com" size="md" :error="!!emailError"
+          <BaseTextField v-model="email" label="Email" placeholder="john@example.com" size="lg" :error="!!emailError"
             :message="emailError" @blur="touched.email.value = true" />
-          <BaseTextField v-model="password" label="Password" placeholder="Password" size="md" type="password"
+          <BaseTextField v-model="password" label="Password" placeholder="Password" size="lg" type="password"
             :error="!!passwordError" :message="passwordError" @blur="touched.password.value = true" />
           <div class="flex items-start gap-2"> 
             <input
@@ -23,17 +23,17 @@
                 type="checkbox" 
                 class=" h-4 w-4 mt-0.5 rounded border-border accent-accent cursor-pointer flex-shrink-0"
             />
-           <p class="text-left font-medium text-text-secondary text-[12px]" > 
+           <p class="text-left font-medium text-text-secondary text-sm " > 
             
                By signing up, I agree to the
-           <router-link to="/privacy-policy"> <span class="text-text-primary font-medium text-[12px]" >Privacy Policy</span></router-link> and
-           <router-link to="/terms-of-services"> <span class="text-text-primary font-medium text-[12px]">Terms of Service</span></router-link>.
+           <router-link to="/privacy-policy"> <span class="text-text-primary font-medium text-sm" >Privacy Policy</span></router-link> and
+           <router-link to="/terms-of-services"> <span class="text-text-primary font-medium text-sm">Terms of Service</span></router-link>.
           </p> 
           </div> 
           <p v-if="termsError" class="text-red-500 text-[12px]">
            {{ termsError }}
             </p>
-          <Button :disabled="isPending" size="md" :block="true" type="submit">
+          <Button :disabled="isPending" size="lg" :block="true" type="submit">
             {{ isPending ? 'Creating Account...' : 'Sign up' }}
           </Button>
           <div class="flex items-center">
@@ -42,7 +42,7 @@
             <div class="flex-grow border-t border-border"></div>
           </div>
           <Button
-            size="md"
+            size="lg"
             :block="true"
             appearance="outlined"
             variant="ghost"
@@ -56,7 +56,7 @@
           </Button>
 
           <Button
-            size="md"
+            size="lg"
             :block="true"
             appearance="outlined"
             variant="ghost"
@@ -72,7 +72,7 @@
             {{ errorMessage }}
           </p>
          
-          <p class="text-sm font-medium text-text-secondary text-center mt-1">
+          <p class="text-sm font-medium text-text-secondary text-center mt-8">
             Already have an account?
             <router-link to="/login" class="text-text-primary font-bold underline">Sign in</router-link>
           </p>

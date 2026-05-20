@@ -66,7 +66,7 @@
             @mouseenter="handleMouseEnter(option)"
             @mouseleave="handleItemLeave"
             class="px-3 py-2 flex items-center justify-between cursor-pointer transition-colors group relative"
-            :class="modelValue === option._id ? 'bg-primary-color/10 text-primary-color font-semibold' : 'hover:bg-bg-card text-text-primary'"
+            :class="modelValue === option._id ? 'bg-primary-color/10 text-primary-color font-semibold' : 'hover:bg-bg-body text-text-primary'"
           >
             <div class="flex items-center gap-2 min-w-0">
                <i v-if="option.icon" :class="[option.icon.prefix, option.icon.iconName]" class="text-primary-color text-[14px]"></i>

@@ -1,16 +1,16 @@
 <template>
     <AuthLayout>
         <template #form>
-            <div class="max-w-125 mx-auto w-full min-h-full py-5 flex flex-col justify-center items-center">
+            <div class="max-w-125 mx-auto w-full min-h-full py-5 flex flex-col justify-center">
                 <!-- Success badge -->
-                <div class="inline-flex items-center gap-2 bg-green-600/20 border border-green-600 rounded-full px-3 py-1.5 mb-6 w-fit">
+                <div class="inline-flex items-center gap-2 bg-green-50 border border-green-200 rounded-full px-3 py-1.5 mb-6 w-fit">
                     <span class="w-2 h-2 rounded-full bg-green-500"></span>
                     <span class="text-xs font-medium text-green-700">Account verified</span>
                 </div>
 
-                <div class="mb-8 text-center space-y-2">
-                    <h2 class="text-[24px] font-medium text-text-primary">Great! Your Account is All Set</h2>
-                    <p class="text-base font-normal text-text-secondary">Get started with Orchit AI. Create a project or explore your dashboard.</p>
+                <div class="mb-6 space-y-2">
+                    <h2 class="text-[24px] md:text-[32px] font-medium text-text-primary">Great! Your Account is All Set</h2>
+                    <p class="text-base font-medium text-text-secondary">Get started with Orchit AI. Create a project or explore your dashboard.</p>
                 </div>
 
                 <!-- Progress steps -->
@@ -24,7 +24,7 @@
                             </div>
                             <span class="text-xs font-medium text-accent-hover">{{ step }}</span>
                         </div>
-                        <div v-if="i < steps.length - 1" class="w-20 h-px bg-purple-300 mx-1"></div>
+                        <div v-if="i < steps.length - 1" class="w-6 h-px bg-purple-300 mx-1"></div>
                     </div>
                 </div>
 
@@ -40,7 +40,7 @@
                     </div>
                 </div>
 
-                <Button size="md" :block="true" @click="register">Explore Home</Button>
+                <Button size="lg" :block="true" @click="register">Explore Home</Button>
 
                 <div class="flex items-center gap-2.5 my-3">
                     <div class="flex-1 h-px bg-gray-200"></div>
@@ -48,7 +48,7 @@
                     <div class="flex-1 h-px bg-gray-200"></div>
                 </div>
 
-                <Button size="md" :block="true" @click="createWS" variant="secondary">Let's Start Creating Your First WorkSpace</Button>
+                <Button size="lg" :block="true" @click="createWS" variant="secondary">Let's Start Creating Your First WorkSpace</Button>
             </div>
         </template>
     </AuthLayout>
