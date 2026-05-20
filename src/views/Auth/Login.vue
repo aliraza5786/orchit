@@ -1,23 +1,23 @@
 <template>
   <AuthLayout>
     <template #form>
-      <div class="max-w-[500px] py-5  mx-auto w-full text-text-primary bg-bg-body  min-h-full flex flex-col justify-center">
+      <div class="max-w-[400px] mx-auto w-full text-text-primary min-h-full flex flex-col justify-center">
         <router-link to="/">
         <img :src="isDark? darkLogo : lightLogo" class="w-[130px] d-block mx-auto" alt="image">
         </router-link>
         <h2
-          class="text-[24px] md:text-[32px] font-medium mb-8 sm:mb-12 text-center text-text-primary"
+          class="text-[24px] font-medium mb-8 text-center text-text-primary"
           v-once
         >
           Sign in to Orchit AI
         </h2>
           {{ cookieToken }}
-        <form @submit.prevent="handleLogin" class="space-y-4 w-full">
+        <form @submit.prevent="handleLogin" class="space-y-3 w-full">
           <BaseTextField
             v-model="email"
-            label="Email"
+            label="Email" 
             placeholder="Email address"
-            size="lg"
+            size="md"
             :error="emailHasError"
             :message="emailError"
             @blur="touched.email = true"
@@ -28,7 +28,7 @@
             v-model="password"
             label="Password"
             placeholder="Enter your password"
-            size="lg"
+            size="md"
             type="password"
             :error="passwordHasError"
             :message="passwordError"
@@ -48,7 +48,7 @@
 
           <Button
             :disabled="submitDisabled"
-            size="lg"
+            size="md"
             :block="true"
             type="submit"
           >
@@ -61,7 +61,7 @@
           </div>
         
           <Button
-            size="lg"
+            size="md"
             :block="true"
             appearance="outlined"
             variant="ghost"
@@ -75,7 +75,7 @@
           </Button>
 
           <Button
-            size="lg"
+            size="md"
             :block="true"
             appearance="outlined"
             variant="ghost"
@@ -99,7 +99,7 @@
        
 
         <p
-          class="text-sm font-medium text-text-secondary text-center mt-8"
+          class="text-sm font-medium text-text-secondary text-center mt-5"
           v-once
         >
           Don’t have an account?

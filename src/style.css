@@ -34,7 +34,7 @@
   /* Dropdowns & Inputs */
   --bg-input: #ffffff; /* input & dropdown background */
   --border-input: #d9d9d9; /* input borders */
-  --bg-dropdown: #ffffff; /* dropdown menus */
+  --bg-dropdown: #f4f4f4; /* dropdown menus */
   /* Use brand hue plus complimentary neon accents */
   --glow-brand: var(--sidebar-primary);
   --glow-2: 190 95% 62%; /* cyan */
@@ -51,16 +51,16 @@ html.theme-switching * {
 [data-theme="dark"] {
   --text-primary: #f5f5f5;
   --text-secondary: #b0b0b0;
-  --border: #1d222ca3;
-  --bg-body: #0d0c0c;
-  --bg-surface: #151515; /* table headers, panels */
-  --bg-card: #1a1b1c;
+  --border: #3b3a3a;
+  --bg-body: #1f1f1e;
+  --bg-surface: #2c2c2b; /* table headers, panels */
+  --bg-card: #2c2c2b;
   --sidebar-primary: 224.3 76.3% 48%;
   --small-color: #82cfff;
   --bg-charcoal: #2a2a2c;
   --bg-lavender: #27272a;
 
-  --accent: #9356c5;
+  --accent: #9356c5;  
   --accent-hover: #6e3b96;
   --accent-text: #ffffff;
 
@@ -69,9 +69,9 @@ html.theme-switching * {
   --secondary-color: var(--accent-hover);
 
   /* Dropdowns & Inputs */
-  --bg-input: #141414; /* dark input backgrounds */
+  --bg-input: #383838; /* dark input backgrounds */
   --border-input: #1d222c; /* input borders */
-  --bg-dropdown: #2b2c30; /* dropdown menus */
+  --bg-dropdown: #1f1f1e; /* dropdown menus */
   /* Use brand hue plus complimentary neon accents */
   --glow-brand: var(--sidebar-primary);
   --glow-2: 190 95% 62%; /* cyan */
@@ -98,8 +98,8 @@ html.theme-switching * {
   /* Dropdowns & Inputs */
   --color-bg-input: var(--bg-input); /* input & dropdown background */
   --color-border-input: var(--border-input); /* input borders */
-  --color-bg-dropdown: var(--bg-input); /* dropdown menus */
-  --color-bg-dropdown-menu-hover: var(--bg-body); /* dropdown menus */
+  --color-bg-dropdown: var(--bg-dropdown); /* dropdown menus */
+  --color-bg-dropdown-menu-hover: var(--bg-card); /* dropdown menus */
   --color-sky: var(--small-color);
   --font-sans: "Inter", sans-serif;
   --font-manrope: "Manrope", sans-serif;

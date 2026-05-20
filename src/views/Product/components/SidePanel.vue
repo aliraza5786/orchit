@@ -244,7 +244,7 @@
               <!-- Meta tiles -->
               <div class="grid grid-cols-2 gap-4 text-sm">
                 <div
-                  class="rounded-xl bg-orchit-white/5 border border-border p-4"
+                  class="rounded-xl bg-bg-body border border-border p-4"
                 >
                   <div
                     class="text-xs uppercase tracking-wider text-text-secondary"
@@ -254,7 +254,7 @@
                   <div class="mt-1 font-medium">{{ dateISO }}</div>
                 </div>
                 <div
-                  class="rounded-xl bg-orchit-white/5 border border-border p-4"
+                  class="rounded-xl bg-bg-body border border-border p-4"
                 >
                   <div
                     class="text-xs uppercase tracking-wider text-text-secondary"
@@ -269,7 +269,7 @@
 
               <!-- Fields grid -->
               <div
-                class="rounded-2xl border border-border bg-orchit-white/5 p-4 grid grid-cols-1 gap-4"
+                class="rounded-2xl border border-border bg-bg-body  p-4 grid grid-cols-1 gap-4"
               >
                 <div class="space-y-2">
                   <div

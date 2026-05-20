@@ -1,17 +1,17 @@
 <template>
     <AuthLayout>
       <template #form>
-        <div class="max-w-[500px] mx-auto w-full min-h-full py-5 flex flex-col justify-center">
-          <div class="mb-12 space-y-2">
-            <h2 class="text-[24px] md:text-[32px] font-medium text-text-primary text-center" v-once>Enter Verification Code</h2>
+        <div class="max-w-[400px] mx-auto w-full min-h-full py-5 flex flex-col justify-center">
+          <div class="mb-8 space-y-2">
+            <h2 class="text-[24px] font-medium text-text-primary text-center" v-once>Enter Verification Code</h2>
             <p
-              class="text-base font-medium text-text-secondary text-center"
+              class="text-sm font-normal text-text-secondary text-center"
               v-once
             >
               We sent a five-digit code to your email
-              <span class="block sm:inline font-bold break-all">
+              <span class="block sm:inline font-medium text-text-primary break-all">
                 ({{ email }})
-              </span>.
+              </span>
             </p>
           </div>
   
@@ -28,7 +28,7 @@
                 maxlength="1"
                 autocomplete="one-time-code"
                 enterkeyhint="done"
-                class="w-full aspect-square text-3xl sm:text-5xl p-1 md:p-2 font-bold text-center border rounded-lg focus:outline-none"
+                class="w-full aspect-square text-3xl p-1 md:p-2 font-bold text-center border rounded-lg focus:outline-none"
                 :class="[
                   'border-accent',
                   otpError ? 'border-red-500' : '',
@@ -42,14 +42,14 @@
               />
             </div>
   
-            <Button :disabled="isVerifying" size="lg" :block="true" @click="verifyCode">
+            <Button :disabled="isVerifying" size="md" :block="true" @click="verifyCode">
               {{ isVerifying ? 'Verifying...' : 'Verify' }}
             </Button>
   
             <p v-if="otpError" class="text-red-500 text-sm text-center mt-2">{{ otpError }}</p>
   
             <!-- Resend -->
-            <p class="text-sm font-medium text-text-secondary text-center">
+            <p class="text-sm font-normal text-text-secondary text-center">
               Didn't receive an email? Try checking your junk folder.
               <span
                 class="text-text-primary font-medium underline"

@@ -23,7 +23,7 @@
                 v-for="cat in categories"
                 :key="cat.id"
                 @click="activeCategory = cat.id"
-                class="w-full px-4 py-3 flex items-center justify-between group transition-colors hover:bg-bg-body"
+                class="w-full px-4 py-3 flex items-center justify-between group transition-colors hover:bg-bg-card"
                 :class="activeCategory === cat.id ? 'bg-bg-body text-primary-color' : 'text-text-secondary'"
               >
                 <div class="flex items-center gap-3">
@@ -99,7 +99,7 @@
                     v-for="option in currentPlanOptionsFiltered" 
                     :key="option._id"
                     @click="togglePlanOption(option)"
-                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-bg-body transition-colors group"
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-bg-card transition-colors group"
                   >
                     <div 
                       class="w-4 h-4 border rounded flex items-center justify-center transition-colors shrink-0"
@@ -126,7 +126,7 @@
                   v-for="option in filteredOptions" 
                   :key="option._id"
                   @click="toggleOption(option._id)"
-                  class="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-bg-body transition-colors group"
+                  class="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-bg-card transition-colors group"
                 >
                   <div 
                     class="w-4 h-4 border rounded flex items-center justify-center transition-colors shrink-0"
@@ -177,7 +177,7 @@
               <!-- Accordion Header -->
               <button
                 @click="activeCategory = activeCategory === cat.id ? '' : cat.id"
-                class="w-full px-4 py-3 flex items-center justify-between transition-colors hover:bg-bg-body sticky top-0 bg-bg-dropdown z-10"
+                class="w-full px-4 py-3 flex items-center justify-between transition-colors hover:bg-bg-card sticky top-0 bg-bg-dropdown z-10"
               >
                 <div class="flex items-center gap-3">
                   <i :class="[cat.icon, 'text-sm', activeCategory === cat.id ? 'text-primary-color' : 'text-text-secondary']"></i>
@@ -240,7 +240,7 @@
                         v-for="option in currentPlanOptionsFiltered" 
                         :key="option._id"
                         @click="togglePlanOption(option)"
-                        class="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-bg-body transition-colors group"
+                        class="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-bg-card transition-colors group"
                       >
                         <div 
                           class="w-4 h-4 border rounded flex items-center justify-center transition-colors shrink-0"
@@ -265,7 +265,7 @@
                       v-for="option in filteredOptions" 
                       :key="option._id"
                       @click="toggleOption(option._id)"
-                      class="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-bg-body transition-colors group"
+                      class="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-bg-card transition-colors group"
                     >
                       <div 
                         class="w-4 h-4 border rounded flex items-center justify-center transition-colors shrink-0"

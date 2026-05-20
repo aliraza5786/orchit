@@ -59,9 +59,9 @@
                 'flex items-center gap-3 p-[8px] cursor-pointer transition-colors rounded-[8px]',
                 selectedBacklogIds.includes(ticket.id)
                   ? 'border-2 border-[#5a2d7f]'
-                  : 'border border-border-input',
+                  : 'border border-border',
                 isDark
-                  ? 'bg-bg-body hover:bg-bg-surface'
+                  ? 'bg-bg-body hover:bg-bg-card'
                   : 'bg-bg-charcoal hover:bg-bg-body',
               ]"
               @dragstart="onDragStart($event, ticket, 'backlog')"
