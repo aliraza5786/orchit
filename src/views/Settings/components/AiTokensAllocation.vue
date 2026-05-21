@@ -470,6 +470,9 @@ const permissions    = computed<string[]>(() => activeCompany.value?.permissions
 
 const isViewer = computed(() => {
   if (membershipRole.value === 'owner') return false
+  if (membershipRole.value === 'super_admin') return false
+  if (membershipRole.value === 'admin') return false
+  if (membershipRole.value === 'editor') return false
   const roleSlug = activeCompany.value?.role?.slug?.toLowerCase() ?? ''
   if (roleSlug.includes('super') || roleSlug === 'admin') return false
   if (membershipRole.value === 'viewer' || membershipRole.value === 'member') return true
@@ -486,7 +489,7 @@ const isUserVerified = computed(() => {
   
   // Find owner from per_user list in allocationData
   const perUser = allocationData.value?.allocation?.per_user ?? []
-  const ownerUser = perUser.find((u: any) => u.membership_role === 'owner')
+  const ownerUser = perUser.find((u: any) => u.membership_role === 'owner' || 'super_admin' || 'admin' || 'editor')
   const isSuperAdminActiveVal = ownerUser?.membership_status === 'active'
   const isCurrentUserActive = activeCompany?.membership_status === 'active'
   const isPendingOtp = activeCompany?.membership_status === 'pending_super_admin_otp'

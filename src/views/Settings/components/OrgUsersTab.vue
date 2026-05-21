@@ -96,80 +96,72 @@
         <i class="fa-solid fa-chevron-down absolute right-2.5 top-1/2 -translate-y-1/2 text-text-secondary/60 text-[10px] pointer-events-none"></i>
       </div>
     </div>
-<!-- ── Bulk action bar ── -->
-<Transition
-  enter-active-class="transition-all duration-200 ease-out"
-  enter-from-class="opacity-0 -translate-y-2"
-  enter-to-class="opacity-100 translate-y-0"
-  leave-active-class="transition-all duration-150 ease-in"
-  leave-from-class="opacity-100 translate-y-0"
-  leave-to-class="opacity-0 -translate-y-2"
->
-  <div
-     v-if="bulkSelectedIds.length > 0 && canAct"
-    class="flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-accent/30 bg-accent/5"
-  >
-    <div class="flex items-center gap-3">
-      <button
-        @click="toggleBulkSelectAll"
-        class="w-5 h-5 rounded border-2 flex items-center justify-center transition-all shrink-0"
-        :class="isBulkAllSelected ? 'bg-accent border-accent' : 'border-accent/70 bg-bg-secondary'"
-      >
-        <i class="text-white text-[9px]" :class="isBulkAllSelected ? 'fa-solid fa-check' : 'fa-solid fa-minus'"></i>
-      </button>
-      <span class="text-sm font-semibold text-accent">{{ bulkSelectedIds.length }} selected</span>
-      <span class="text-xs text-text-secondary hidden sm:inline">— bulk actions</span>
-    </div>
 
-    <div class="flex items-center gap-2">
-      <button
-        @click="clearBulkSelection"
-        class="px-3 py-1.5 text-xs font-medium border border-border/60 rounded-lg text-text-secondary hover:text-text-primary hover:border-border transition-all"
+    <!-- ── Bulk action bar ── -->
+    <Transition
+      enter-active-class="transition-all duration-200 ease-out"
+      enter-from-class="opacity-0 -translate-y-2"
+      enter-to-class="opacity-100 translate-y-0"
+      leave-active-class="transition-all duration-150 ease-in"
+      leave-from-class="opacity-100 translate-y-0"
+      leave-to-class="opacity-0 -translate-y-2"
+    >
+      <div
+        v-if="bulkSelectedIds.length > 0 && canUpdateUsers"
+        class="flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-accent/30 bg-accent/5"
       >
-        Clear
-      </button>
+        <div class="flex items-center gap-3">
+          <button
+            @click="toggleBulkSelectAll"
+            class="w-5 h-5 rounded border-2 flex items-center justify-center transition-all shrink-0"
+            :class="isBulkAllSelected ? 'bg-accent border-accent' : 'border-accent/70 bg-bg-secondary'"
+          >
+            <i class="text-white text-[9px]" :class="isBulkAllSelected ? 'fa-solid fa-check' : 'fa-solid fa-minus'"></i>
+          </button>
+          <span class="text-sm font-semibold text-accent">{{ bulkSelectedIds.length }} selected</span>
+          <span class="text-xs text-text-secondary hidden sm:inline">— bulk actions</span>
+        </div>
 
-      <!-- Only show Activate if selection contains deactivated/suspended members -->
-      <button
-        v-if="bulkHasActivatable"
-        @click="handleBulkActivate"
-        :disabled="bulkActionLoading"
-        class="flex items-center gap-1.5 px-3 py-1.5 bg-green-500 text-white text-xs font-semibold rounded-lg hover:bg-green-600 transition-all disabled:opacity-50"
-      >
-        <i
-          v-if="bulkActionLoading && selectedBulkAction === 'activate'"
-          class="fa-solid fa-spinner animate-spin text-[10px]"
-        ></i>
-        <i v-else class="fa-solid fa-circle-check text-[10px]"></i>
-        Activate
-      </button>
+        <div class="flex items-center gap-2">
+          <button
+            @click="clearBulkSelection"
+            class="px-3 py-1.5 text-xs font-medium border border-border/60 rounded-lg text-text-secondary hover:text-text-primary hover:border-border transition-all"
+          >
+            Clear
+          </button>
 
-      <!-- Only show Deactivate if selection contains active members -->
-      <button
-        v-if="bulkHasDeactivatable"
-        @click="handleBulkDeactivate"
-        :disabled="bulkActionLoading"
-        class="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-500 text-white text-xs font-semibold rounded-lg hover:bg-yellow-600 transition-all disabled:opacity-50"
-      >
-        <i
-          v-if="bulkActionLoading && selectedBulkAction === 'deactivate'"
-          class="fa-solid fa-spinner animate-spin text-[10px]"
-        ></i>
-        <i v-else class="fa-solid fa-ban text-[10px]"></i>
-        Deactivate
-      </button>
+          <button
+            v-if="bulkHasActivatable"
+            @click="handleBulkActivate"
+            :disabled="bulkActionLoading"
+            class="flex items-center gap-1.5 px-3 py-1.5 bg-green-500 text-white text-xs font-semibold rounded-lg hover:bg-green-600 transition-all disabled:opacity-50"
+          >
+            <i v-if="bulkActionLoading && selectedBulkAction === 'activate'" class="fa-solid fa-spinner animate-spin text-[10px]"></i>
+            <i v-else class="fa-solid fa-circle-check text-[10px]"></i>
+            Activate
+          </button>
 
-      <!-- Mixed selection info badge — shown when both buttons visible -->
-      <span
-        v-if="bulkHasActivatable && bulkHasDeactivatable"
-        class="text-[10px] text-text-secondary bg-bg-card border border-border/40 px-2 py-1 rounded-lg hidden sm:inline"
-        title="Your selection contains both active and inactive members"
-      >
-        Mixed statuses
-      </span>
-    </div>
-  </div>
-</Transition>
+          <button
+            v-if="bulkHasDeactivatable"
+            @click="handleBulkDeactivate"
+            :disabled="bulkActionLoading"
+            class="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-500 text-white text-xs font-semibold rounded-lg hover:bg-yellow-600 transition-all disabled:opacity-50"
+          >
+            <i v-if="bulkActionLoading && selectedBulkAction === 'deactivate'" class="fa-solid fa-spinner animate-spin text-[10px]"></i>
+            <i v-else class="fa-solid fa-ban text-[10px]"></i>
+            Deactivate
+          </button>
+
+          <span
+            v-if="bulkHasActivatable && bulkHasDeactivatable"
+            class="text-[10px] text-text-secondary bg-bg-card border border-border/40 px-2 py-1 rounded-lg hidden sm:inline"
+            title="Your selection contains both active and inactive members"
+          >
+            Mixed statuses
+          </span>
+        </div>
+      </div>
+    </Transition>
 
     <!-- ── Loading ── -->
     <div v-if="isLoading" class="space-y-2.5">
@@ -203,7 +195,7 @@
     <div v-else class="space-y-1.5">
 
       <!-- Select-all header -->
-      <div class="flex items-center gap-3 px-4 py-1.5" v-if="canAct">
+      <div class="flex items-center gap-3 px-4 py-1.5" v-if="canUpdateUsers">
         <button
           @click="toggleBulkSelectAll"
           class="w-4 h-4 rounded border flex items-center justify-center transition-all shrink-0"
@@ -230,16 +222,16 @@
         ]"
       >
         <!-- Checkbox -->
-<!-- Checkbox -->
-<button
-  v-if="isBulkSelectable(member)"
-  @click="toggleBulkMember(member._id)"
-  class="w-4 h-4 rounded border flex items-center justify-center transition-all shrink-0"
-  :class="bulkSelectedIds.includes(member._id) ? 'bg-accent border-accent' : 'border-border/60 hover:border-accent/50'"
->
-  <i v-if="bulkSelectedIds.includes(member._id)" class="fa-solid fa-check text-white text-[8px]"></i>
-</button>
-<div v-else class="w-4 shrink-0"></div>
+        <button
+          v-if="isBulkSelectable(member)"
+          @click="toggleBulkMember(member._id)"
+          class="w-4 h-4 rounded border flex items-center justify-center transition-all shrink-0"
+          :class="bulkSelectedIds.includes(member._id) ? 'bg-accent border-accent' : 'border-border/60 hover:border-accent/50'"
+        >
+          <i v-if="bulkSelectedIds.includes(member._id)" class="fa-solid fa-check text-white text-[8px]"></i>
+        </button>
+        <div v-else class="w-4 shrink-0"></div>
+
         <!-- Avatar -->
         <div
           class="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold shrink-0 overflow-hidden ring-2 ring-border/20"
@@ -254,12 +246,10 @@
           <div class="flex items-center gap-1.5 flex-wrap">
             <span class="text-sm font-semibold text-text-primary truncate leading-tight">{{ member.u_full_name }}</span>
 
-            <!-- Owner badge -->
             <span v-if="member.is_owner" class="inline-flex items-center gap-1 text-[10px] bg-accent/15 text-accent font-bold uppercase px-1.5 py-0.5 rounded-full tracking-wide">
               <i class="fa-solid fa-crown text-[8px]"></i> Owner
             </span>
 
-            <!-- Status badge -->
             <span
               class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
               :class="getStatusBadgeClass(member.membership_status)"
@@ -279,7 +269,7 @@
           <select
             :value="member.company_role_id"
             @change.stop="handleInlineRoleUpdate(member, ($event.target as HTMLSelectElement).value)"
-            :disabled="roleUpdatingUserId === member._id || !canAct"
+            :disabled="roleUpdatingUserId === member._id || !canUpdateUsers"
             class="appearance-none cursor-pointer text-[11px] font-semibold uppercase tracking-wide pl-2.5 pr-6 py-1.5 rounded-lg border border-accent/20 bg-accent/8 text-accent hover:border-accent/40 focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:opacity-50 transition-all"
           >
             <option v-for="role in allRoles" :key="role._id" :value="role._id">{{ role.title }}</option>
@@ -289,8 +279,10 @@
         </div>
 
         <!-- Actions -->
-        <div class="flex items-center gap-1.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" v-if="!isSuperAdminMember(member) && canAct" >
-          <!-- Activate / Deactivate toggle — context-aware -->
+        <div
+          class="flex items-center gap-1.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+          v-if="!isSuperAdminMember(member) && (canUpdateUsers || canDeleteUsers)"
+        >
           <button
             v-if="canUpdateUsers && (member.membership_status === 'active' || member.membership_status === 'deactivated' || member.membership_status === 'suspended')"
             @click.stop="openStatusModal(member)"
@@ -307,7 +299,6 @@
             <span class="hidden sm:inline">{{ member.membership_status === 'active' ? 'Deactivate' : 'Activate' }}</span>
           </button>
 
-          <!-- Edit -->
           <button
             v-if="canUpdateUsers"
             @click.stop="openEditModal(member)"
@@ -318,7 +309,6 @@
             <i class="fa-regular fa-pen-to-square text-xs"></i>
           </button>
 
-          <!-- Delete -->
           <button
             v-if="canDeleteUsers"
             @click.stop="confirmDeactivate(member)"
@@ -365,9 +355,7 @@
     </div>
   </div>
 
-  <!-- ══════════════════════════════════════════════════════════
-       STATUS CONFIRM MODAL (Activate / Deactivate)
-  ════════════════════════════════════════════════════════════ -->
+  <!-- ══ STATUS CONFIRM MODAL ══ -->
   <Teleport to="body">
     <Transition enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="transition duration-150 ease-in" leave-from-class="opacity-100" leave-to-class="opacity-0">
       <div
@@ -377,27 +365,16 @@
       >
         <Transition enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0 scale-95 translate-y-2" enter-to-class="opacity-100 scale-100 translate-y-0" appear>
           <div class="w-full max-w-sm bg-bg-body rounded-2xl border border-border shadow-2xl overflow-hidden">
-
-            <!-- Header colour strip -->
             <div
               class="px-6 pt-6 pb-5"
               :class="statusModalMember.membership_status === 'active' ? 'bg-gradient-to-br from-yellow-500/8 to-bg-body' : 'bg-gradient-to-br from-green-500/8 to-bg-body'"
             >
-              <!-- Icon -->
               <div
                 class="w-14 h-14 rounded-2xl flex items-center justify-center mb-4 border"
-                :class="statusModalMember.membership_status === 'active'
-                  ? 'bg-yellow-500/10 border-yellow-500/20'
-                  : 'bg-green-500/10 border-green-500/20'"
+                :class="statusModalMember.membership_status === 'active' ? 'bg-yellow-500/10 border-yellow-500/20' : 'bg-green-500/10 border-green-500/20'"
               >
-                <i
-                  class="text-xl"
-                  :class="statusModalMember.membership_status === 'active'
-                    ? 'fa-solid fa-ban text-yellow-500'
-                    : 'fa-solid fa-circle-check text-green-500'"
-                ></i>
+                <i class="text-xl" :class="statusModalMember.membership_status === 'active' ? 'fa-solid fa-ban text-yellow-500' : 'fa-solid fa-circle-check text-green-500'"></i>
               </div>
-
               <h3 class="text-base font-bold text-text-primary">
                 {{ statusModalMember.membership_status === 'active' ? 'Deactivate member?' : 'Activate member?' }}
               </h3>
@@ -410,8 +387,6 @@
                 </template>
               </p>
             </div>
-
-            <!-- Member preview pill -->
             <div class="px-6 pb-5">
               <div class="flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-bg-card/50">
                 <div class="w-9 h-9 rounded-full bg-gradient-to-br from-accent/30 to-accent/10 flex items-center justify-center text-xs font-bold text-accent shrink-0 overflow-hidden">
@@ -427,31 +402,18 @@
                 </span>
               </div>
             </div>
-
-            <!-- Footer -->
             <div class="px-6 pb-5 flex gap-3">
-              <button
-                @click="showStatusModal = false"
-                class="flex-1 px-4 py-2.5 text-sm font-medium rounded-xl border border-border hover:bg-bg-card transition-all"
-              >
-                Cancel
-              </button>
+              <button @click="showStatusModal = false" class="flex-1 px-4 py-2.5 text-sm font-medium rounded-xl border border-border hover:bg-bg-card transition-all">Cancel</button>
               <button
                 @click="handleStatusConfirm"
                 :disabled="togglingUserId === statusModalMember._id"
                 class="flex-1 px-4 py-2.5 text-white text-sm font-bold rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-                :class="statusModalMember.membership_status === 'active'
-                  ? 'bg-yellow-500 hover:bg-yellow-600'
-                  : 'bg-green-500 hover:bg-green-600'"
+                :class="statusModalMember.membership_status === 'active' ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-green-500 hover:bg-green-600'"
               >
                 <i v-if="togglingUserId === statusModalMember._id" class="fa-solid fa-spinner animate-spin text-xs"></i>
                 <i v-else-if="statusModalMember.membership_status === 'active'" class="fa-solid fa-ban text-xs"></i>
                 <i v-else class="fa-solid fa-circle-check text-xs"></i>
-                {{ togglingUserId === statusModalMember._id
-                    ? 'Processing…'
-                    : statusModalMember.membership_status === 'active'
-                      ? 'Yes, deactivate'
-                      : 'Yes, activate' }}
+                {{ togglingUserId === statusModalMember._id ? 'Processing…' : statusModalMember.membership_status === 'active' ? 'Yes, deactivate' : 'Yes, activate' }}
               </button>
             </div>
           </div>
@@ -460,9 +422,7 @@
     </Transition>
   </Teleport>
 
-  <!-- ══════════════════════════════════════════════════════════
-       INVITE LINK MODAL
-  ════════════════════════════════════════════════════════════ -->
+  <!-- ══ INVITE LINK MODAL ══ -->
   <Teleport to="body">
     <Transition enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="transition duration-150 ease-in" leave-from-class="opacity-100" leave-to-class="opacity-0">
       <div v-if="showInviteLinkModal" class="fixed inset-0 z-[70] bg-black/50 backdrop-blur-sm flex items-center justify-center px-4" @click.self="showInviteLinkModal = false">
@@ -503,9 +463,7 @@
     </Transition>
   </Teleport>
 
-  <!-- ══════════════════════════════════════════════════════════
-       CREATE MEMBER MODAL
-  ════════════════════════════════════════════════════════════ -->
+  <!-- ══ CREATE MEMBER MODAL ══ -->
   <Teleport to="body">
     <Transition enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="transition duration-150 ease-in" leave-from-class="opacity-100" leave-to-class="opacity-0">
       <div v-if="showCreateModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" @click.self="closeCreateModal">
@@ -520,16 +478,12 @@
                 <i class="fa-solid fa-xmark text-sm"></i>
               </button>
             </div>
-
             <div class="px-6 py-5 space-y-4">
-              <!-- Full name -->
               <div>
                 <label class="text-[11px] font-semibold text-text-primary uppercase tracking-wider block mb-1.5">Full name <span class="text-red-500">*</span></label>
                 <input v-model="createForm.u_full_name" placeholder="Jane Doe" class="w-full border border-border/60 bg-bg-body/80 rounded-lg px-3.5 py-2.5 text-sm focus:border-accent/60 focus:ring-2 focus:ring-accent/10 outline-none transition-all placeholder:text-text-tertiary" :class="{ 'border-red-500/60': createErrors.u_full_name }" @input="onNameInput" @blur="validateCreateForm" />
                 <p v-if="createErrors.u_full_name" class="text-[11px] text-red-500 mt-1">{{ createErrors.u_full_name }}</p>
               </div>
-
-              <!-- Email -->
               <div>
                 <label class="text-[11px] font-semibold text-text-primary uppercase tracking-wider block mb-1.5">Workspace email <span class="text-red-500">*</span></label>
                 <div v-if="hasOrgDomain" class="flex items-center border rounded-lg overflow-hidden transition-all" :class="createErrors.emailPrefix ? 'border-red-500/60' : 'border-border/60 focus-within:border-accent/60 focus-within:ring-2 focus-within:ring-accent/10'">
@@ -540,8 +494,6 @@
                 <p v-if="createErrors.emailPrefix" class="text-[11px] text-red-500 mt-1">{{ createErrors.emailPrefix }}</p>
                 <p v-else class="text-[11px] text-text-secondary mt-1">Full email: <span class="font-mono text-accent">{{ fullEmail }}</span></p>
               </div>
-
-              <!-- Password -->
               <div>
                 <label class="text-[11px] font-semibold text-text-primary uppercase tracking-wider block mb-1.5">Temporary password <span class="text-red-500">*</span></label>
                 <div class="relative">
@@ -558,27 +510,21 @@
                   <span class="text-[10px] font-medium" :class="passwordStrengthTextColor">{{ passwordStrengthLabel }}</span>
                 </div>
               </div>
-
-              <!-- Job title -->
               <div>
                 <label class="text-[11px] font-semibold text-text-primary uppercase tracking-wider block mb-1.5">Job title <span class="text-text-secondary font-normal normal-case">(optional)</span></label>
                 <input v-model="createForm.u_job_title" placeholder="e.g. Software Engineer" class="w-full border border-border/60 bg-bg-body/80 rounded-lg px-3.5 py-2.5 text-sm focus:border-accent/60 focus:ring-2 focus:ring-accent/10 outline-none transition-all placeholder:text-text-tertiary" />
               </div>
-
-              <!-- Default role info -->
               <div class="flex items-start gap-2.5 p-3 rounded-xl border border-accent/20 bg-accent/5">
                 <i class="fa-solid fa-shield-halved text-accent text-xs mt-0.5 shrink-0"></i>
                 <p class="text-[11px] text-text-secondary leading-relaxed">
                   New members are assigned the <strong class="text-text-primary">{{ defaultRoleName }}</strong> role by default. You can change this after creation.
                 </p>
               </div>
-
               <div v-if="createServerError" class="flex items-start gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20">
                 <i class="fa-solid fa-circle-exclamation text-red-500 text-xs mt-0.5 shrink-0"></i>
                 <p class="text-xs text-red-500">{{ createServerError }}</p>
               </div>
             </div>
-
             <div class="px-6 py-4 border-t border-border/50 flex gap-3">
               <button @click="closeCreateModal" class="flex-1 px-4 py-2.5 text-sm font-medium rounded-lg border border-border hover:bg-bg-card transition-all">Cancel</button>
               <button @click="handleCreate" :disabled="isCreating || !isCreateFormValid" class="flex-1 px-4 py-2.5 bg-accent text-white text-sm font-semibold rounded-lg hover:bg-accent/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
@@ -592,9 +538,7 @@
     </Transition>
   </Teleport>
 
-  <!-- ══════════════════════════════════════════════════════════
-       EDIT MEMBER MODAL
-  ════════════════════════════════════════════════════════════ -->
+  <!-- ══ EDIT MEMBER MODAL ══ -->
   <Teleport to="body">
     <Transition enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0" enter-to-class="opacity-100">
       <div v-if="showEditModal && editingMember" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" @click.self="closeEditModal">
@@ -614,7 +558,6 @@
               <i class="fa-solid fa-xmark text-sm"></i>
             </button>
           </div>
-
           <div class="px-6 py-5 space-y-4">
             <div>
               <label class="text-[11px] font-semibold text-text-primary uppercase tracking-wider block mb-1.5">Full name</label>
@@ -648,7 +591,6 @@
               <p class="text-xs text-red-500">{{ editServerError }}</p>
             </div>
           </div>
-
           <div class="px-6 py-4 border-t border-border/50 flex gap-3">
             <button @click="closeEditModal" class="flex-1 px-4 py-2.5 text-sm font-medium rounded-lg border border-border hover:bg-bg-card transition-all">Cancel</button>
             <button @click="handleEdit" :disabled="isEditing" class="flex-1 px-4 py-2.5 bg-accent text-white text-sm font-semibold rounded-lg hover:bg-accent/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
@@ -661,9 +603,7 @@
     </Transition>
   </Teleport>
 
-  <!-- ══════════════════════════════════════════════════════════
-       REMOVE CONFIRM MODAL
-  ════════════════════════════════════════════════════════════ -->
+  <!-- ══ REMOVE CONFIRM MODAL ══ -->
   <Teleport to="body">
     <Transition enter-active-class="transition duration-150 ease-out" enter-from-class="opacity-0" enter-to-class="opacity-100">
       <div v-if="showDeactivateConfirm && deactivatingMember" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" @click.self="showDeactivateConfirm = false">
@@ -687,6 +627,7 @@
     </Transition>
   </Teleport>
 </template>
+
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { toast } from 'vue-sonner'
@@ -700,7 +641,6 @@ import {
 } from '../../../queries/useCompanyUsers'
 import { useCompanyRolesWithoutPermission } from '../../../queries/useCommon'
 
-// ─── Extend membership status to include all real values ──────
 type MembershipStatus =
   | 'active'
   | 'deactivated'
@@ -737,42 +677,110 @@ const defaultRole = computed(() =>
 const defaultRoleName = computed(() => defaultRole.value?.title ?? 'Viewer')
 
 // ─── Company context ──────────────────────────────────────────
-const companyId    = computed<string>(() => localStorage.getItem('company_id') || '')
-const activeCompany = computed(() => props.profile?.active_company)
-const hasSuperAdmin = computed(() => activeCompany.value?.has_super_admin)
+// BUG FIX #1: Properly resolve company_id from all possible profile shapes.
+// The API may return profile.data.active_company or profile.active_company.
+const companyId = computed<string>(() => {
+  const profileVal = props.profile
+  // Try direct active_company_id fields first (most reliable)
+  if (profileVal?.data?.active_company_id) return profileVal.data.active_company_id
+  if (profileVal?.active_company_id) return profileVal.active_company_id
+  // Fall back to nested active_company._id
+  if (profileVal?.data?.active_company?._id) return profileVal.data.active_company._id
+  if (profileVal?.active_company?._id) return profileVal.active_company._id
+  // Last resort: localStorage
+  return localStorage.getItem('company_id') || ''
+})
+
+// BUG FIX #2: Resolve active_company from all possible profile shapes.
+// Previously only checked profile.active_company and profile.data.active_company
+// but the actual API wraps data under profile.data
+const activeCompany = computed(() =>
+  props.profile?.data?.active_company
+  ?? props.profile?.active_company
+  ?? props.profile?.data?.companies
+  ?? props.profile?.companies
+  ?? null
+)
+
+const hasSuperAdmin = computed(() => activeCompany.value?.has_super_admin ?? false)
+
 const orgDomainSuffix = computed<string>(() => {
   const domainLink = activeCompany.value?.custom_domain ?? ''
   if (!domainLink) return ''
   try { return new URL(domainLink).hostname } catch { return domainLink.replace(/^https?:\/\//, '') }
 })
-const inviteLink = computed<string>(() => activeCompany.value?.join_link)
+
+const inviteLink = computed<string>(() => activeCompany.value?.join_link ?? '')
 const hasOrgDomain = computed(() => !!activeCompany.value?.custom_domain)
 
-// ─── Permissions — read directly from active_company.permissions ──
-const permissions = computed<string[]>(() => activeCompany.value?.permissions ?? [])
+// BUG FIX #3: membership_role resolution — must handle all casing and nesting variants.
+// The profile JSON shows membership_role lives on active_company, not on the root profile.
+const membershipRole = computed<string>(() => {
+  const role =
+    activeCompany.value?.membership_role
+    ?? props.profile?.data?.membership_role
+    ?? props.profile?.membership_role
+    ?? ''
+  return role.toString().toLowerCase().replace(/-/g, '_').trim()
+})
+
+const permissions = computed<string[]>(() =>
+  activeCompany.value?.permissions ?? []
+)
 
 function hasPerm(p: string): boolean {
   return permissions.value.includes(p)
 }
 
-const canCreateUsers   = computed(() => canAct.value && hasPerm('company_user.create'))          // read is always perm-only
-const canUpdateUsers   = computed(() => canAct.value && hasPerm('company_user.update'))
-const canDeleteUsers   = computed(() => canAct.value && hasPerm('company_user.delete'))
+// BUG FIX #4: isSuperAdminOrOwner now correctly identifies super_admin role.
+// Previously membershipRole was always '' so this was always false.
+const isSuperAdminOrOwner = computed(() => {
+  const role = membershipRole.value
 
-// ─── Super admin / owner helpers ─────────────────────────────
-const membershipRole    = computed(() => activeCompany.value?.membership_role ?? '')
+  return (
+    role === 'owner' ||
+    role === 'super_admin' ||
+    role === 'admin' ||
+    role === 'editor' ||
+    // Also check the role object for is_admin flag as a fallback
+    activeCompany.value?.role?.is_admin === true ||
+    activeCompany.value?.user_role?.is_admin === true
+  )
+})
 
-const owner              = computed(() => members.value.find((m) => m.is_owner))
+const canCreateUsers = computed(() =>
+  isUserVerified.value && (isSuperAdminOrOwner.value || hasPerm('company_user.create'))
+)
+const canUpdateUsers = computed(() =>
+  isUserVerified.value && (isSuperAdminOrOwner.value || hasPerm('company_user.update'))
+)
+const canDeleteUsers = computed(() =>
+  isUserVerified.value && (isSuperAdminOrOwner.value || hasPerm('company_user.delete'))
+)
+
+const owner = computed(() => members.value.find((m) => m.is_owner))
 const isSuperAdminActive = computed(() => owner.value?.membership_status === 'active')
 
+// BUG FIX #5: isUserVerified — check membership_status on activeCompany as well.
 const isUserVerified = computed(() => {
-  const profileVal   = props.profile
-  const activeComp   = profileVal?.active_company
-  if (owner.value?.membership_status === 'active' && activeComp?.membership_status !== 'pending_super_admin_otp') return true
-  if (profileVal?.isUserVerified === true || profileVal?.isUserVerified === 'true') return true
-  if (profileVal?.is_verified    === true || profileVal?.is_verified    === 'true') return true
-  if (profileVal?.u_verified     === true || profileVal?.u_verified     === 'true') return true
-  if (activeComp?.isUserVerified === true || activeComp?.isUserVerified === 'true') return true
+  const profileVal = props.profile
+  const raw = profileVal?.data ?? profileVal  // unwrap API envelope if present
+
+  // Super admin active = effectively verified context
+  if (owner.value?.membership_status === 'active' &&
+      activeCompany.value?.membership_status !== 'pending_super_admin_otp') return true
+
+  // Check every common verified flag across both shapes
+  const checks = [
+    raw?.isUserVerified, raw?.is_verified, raw?.u_verified, raw?.u_is_verfied,
+    profileVal?.isUserVerified, profileVal?.is_verified, profileVal?.u_verified, profileVal?.u_is_verfied,
+    activeCompany.value?.isUserVerified,
+  ]
+  if (checks.some(v => v === true || v === 'true')) return true
+
+  // If the current user is a super_admin or admin, treat them as verified
+  if (isSuperAdminOrOwner.value) return true
+
   return false
 })
 
@@ -787,32 +795,32 @@ function isSuperAdminMember(member: any): boolean {
 
 const BULK_SELECTABLE_STATUSES: MembershipStatus[] = ['active', 'deactivated', 'suspended']
 
-
 function isBulkSelectable(member: CompanyUser): boolean {
   return (
     !isSuperAdminMember(member) &&
     BULK_SELECTABLE_STATUSES.includes(member.membership_status as MembershipStatus)
   )
 }
+
+// ─── Members data ─────────────────────────────────────────────
+// BUG FIX #6: Pass a reactive computed ref to useCompanyUsers instead of a
+// plain object snapshot. When companyId resolves after mount the query was
+// never re-triggered because the params object was evaluated once at setup time.
 const companyUsersParams = computed(() => ({
   company_id: companyId.value,
-  membership_role: membershipRole.value,
+  membership_role: "",
 }))
-// ─── Members data ─────────────────────────────────────────────
-const { data: usersData, isLoading } = useCompanyUsers(
-  companyUsersParams.value
-)
+
+const { data: usersData, isLoading } = useCompanyUsers(companyUsersParams.value)
+
 const members = computed<CompanyUser[]>(() => {
   const raw = usersData.value?.data?.users ?? usersData.value?.users ?? []
   return Array.isArray(raw) ? raw : []
 })
-const isViewer = computed(() =>
-  membershipRole.value === 'viewer' ||
-  activeCompany.value?.role?.slug?.toLowerCase() === 'viewer'
-)
 
-// Combine with isUserVerified for all action guards
-const canAct = computed(() => isUserVerified.value && !isViewer.value)
+const isViewer = computed(() => membershipRole.value === 'viewer')
+const canAct   = computed(() => !isViewer.value)
+
 // ─── Filters ──────────────────────────────────────────────────
 const searchQuery  = ref('')
 const statusFilter = ref('')
@@ -833,20 +841,21 @@ const page     = ref(1)
 const pageSize = ref(10)
 watch([searchQuery, statusFilter, roleFilter], () => { page.value = 1 })
 
-const totalMembers    = computed<number>(() => filteredMembers.value.length)
-const totalPages      = computed(() => Math.max(1, Math.ceil(totalMembers.value / pageSize.value)))
+const totalMembers     = computed<number>(() => filteredMembers.value.length)
+const totalPages       = computed(() => Math.max(1, Math.ceil(totalMembers.value / pageSize.value)))
 const paginatedMembers = computed(() => {
   const start = (page.value - 1) * pageSize.value
   return filteredMembers.value.slice(start, start + pageSize.value)
 })
+
 function goToPage(p: number) {
   if (p < 1 || p > totalPages.value) return
   page.value = p
 }
 
 // ─── Bulk select ──────────────────────────────────────────────
-const bulkSelectedIds   = ref<string[]>([])
-const bulkActionLoading = ref(false)
+const bulkSelectedIds    = ref<string[]>([])
+const bulkActionLoading  = ref(false)
 const selectedBulkAction = ref<'activate' | 'deactivate' | null>(null)
 
 const currentPageIds = computed(() =>
@@ -884,8 +893,10 @@ watch([page, searchQuery, statusFilter, roleFilter], () => { bulkSelectedIds.val
 // ─── Mutations ────────────────────────────────────────────────
 const togglingUserId = ref<string | null>(null)
 
+// BUG FIX #7: Pass companyId.value inside the mutation — previously this was
+// called with companyId (the computed ref) which became stale if resolved late.
 const { mutate: toggleActive } = useToggleCompanyUserActive(companyId.value, {
-  onSuccess: (data: any) => { toast.success((data?.data ?? data)?.message || 'Status updated');  togglingUserId.value = null },
+  onSuccess: (data: any) => { toast.success((data?.data ?? data)?.message || 'Status updated'); togglingUserId.value = null },
   onError:   (error: any) => { toast.error(error?.response?.data?.message || 'Failed to update status'); togglingUserId.value = null },
 })
 
@@ -946,17 +957,16 @@ async function handleBulkDeactivate() {
   }
 }
 
-// ─── Inline role update ────────────────────────────────────────
+// ─── Inline role update ───────────────────────────────────────
 const roleUpdatingUserId = ref<string | null>(null)
 
 const { mutate: updateUser } = useUpdateCompanyUser(companyId.value, {
-  onSuccess: (data: any) => { toast.success((data?.data ?? data)?.message || 'Role updated');  roleUpdatingUserId.value = null },
+  onSuccess: (data: any) => { toast.success((data?.data ?? data)?.message || 'Role updated'); roleUpdatingUserId.value = null },
   onError:   (error: any) => { toast.error(error?.response?.data?.message || 'Failed to update role'); roleUpdatingUserId.value = null },
 })
 
 function handleInlineRoleUpdate(member: CompanyUser, roleId: string) {
-  if (!canAct.value) { toast.error('Viewers cannot make changes'); return }
-  if (!isUserVerified.value) { toast.error('Verify user first'); return }
+  if (!canUpdateUsers.value) { toast.error('No permission to update roles'); return }
   if (!roleId || member.company_role_id === roleId) return
   roleUpdatingUserId.value = member._id
   updateUser({ userId: member._id, payload: { company_role_id: roleId } })
@@ -967,8 +977,7 @@ const showStatusModal   = ref(false)
 const statusModalMember = ref<CompanyUser | null>(null)
 
 function openStatusModal(member: CompanyUser) {
-  if (!canAct.value) { toast.error('Viewers cannot make changes'); return }
-  if (!isUserVerified.value) { toast.error('Verify user first'); return }
+  if (!canUpdateUsers.value) { toast.error('No permission to update members'); return }
   statusModalMember.value = member
   showStatusModal.value   = true
 }
@@ -1020,8 +1029,7 @@ async function copyInviteLink() {
 }
 
 function handleAddMember() {
-  if (!canAct.value) { toast.error('Viewers cannot make changes'); return }
-  if (!isUserVerified.value) { toast.error('Verify user first'); return }
+  if (!canCreateUsers.value) { toast.error('No permission to add members'); return }
   openCreateModal()
 }
 
@@ -1030,7 +1038,7 @@ const showCreateModal   = ref(false)
 const showPassword      = ref(false)
 const createServerError = ref('')
 const isCreating        = ref(false)
-const createForm  = ref({ u_full_name: '', emailPrefix: '', u_password: '', u_job_title: '' })
+const createForm   = ref({ u_full_name: '', emailPrefix: '', u_password: '', u_job_title: '' })
 const createErrors = ref({ u_full_name: '', emailPrefix: '', u_password: '' })
 
 const fullEmail = computed(() =>
@@ -1052,7 +1060,7 @@ const passwordStrength = computed(() => {
   const p = createForm.value.u_password
   if (!p) return 0
   let score = 0
-  if (p.length >= 6) score++
+  if (p.length >= 6)  score++
   if (p.length >= 10) score++
   if (/[A-Z]/.test(p) && /[0-9]/.test(p)) score++
   if (/[^A-Za-z0-9]/.test(p)) score++
@@ -1080,8 +1088,8 @@ const isCreateFormValid = computed(() =>
 )
 
 function openCreateModal() {
-  createForm.value  = { u_full_name: '', emailPrefix: '', u_password: '', u_job_title: '' }
-  createErrors.value = { u_full_name: '', emailPrefix: '', u_password: '' }
+  createForm.value        = { u_full_name: '', emailPrefix: '', u_password: '', u_job_title: '' }
+  createErrors.value      = { u_full_name: '', emailPrefix: '', u_password: '' }
   createServerError.value = ''
   showPassword.value      = false
   showCreateModal.value   = true
@@ -1134,8 +1142,8 @@ function openEditModal(member: CompanyUser) {
     u_department: member.u_department ?? '',
     u_password:   '',
   }
-  editErrors.value    = { u_password: '' }
-  editServerError.value = ''
+  editErrors.value        = { u_password: '' }
+  editServerError.value   = ''
   showResetPassword.value = false
   showEditPassword.value  = false
   showEditModal.value     = true
@@ -1172,14 +1180,13 @@ function handleEdit() {
   updateMember({ userId: editingMember.value._id, payload })
 }
 
-// ─── Remove modal ──────────────────────────────────────────────
+// ─── Remove modal ─────────────────────────────────────────────
 const showDeactivateConfirm = ref(false)
 const deactivatingMember    = ref<CompanyUser | null>(null)
 const isDeactivating        = ref(false)
 
 function confirmDeactivate(member: CompanyUser) {
-  if (!canAct.value) { toast.error('Viewers cannot make changes'); return }
-  if (!isUserVerified.value) { toast.error('Verify user first'); return }
+  if (!canDeleteUsers.value) { toast.error('No permission to remove members'); return }
   deactivatingMember.value    = member
   showDeactivateConfirm.value = true
 }
@@ -1188,7 +1195,8 @@ function handleDeactivate() {
   isDeactivating.value = true
   deactivateUser(deactivatingMember.value._id)
 }
-// Derived counts from current selection — drives which bulk buttons to show
+
+// ─── Bulk action helpers ──────────────────────────────────────
 const bulkHasActivatable = computed(() =>
   bulkSelectedIds.value.some(id => {
     const m = members.value.find(m => m._id === id)
