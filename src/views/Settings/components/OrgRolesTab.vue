@@ -315,7 +315,7 @@ const props = defineProps<{
 
 const activeCompany = computed(() => props.profile?.active_company)
 const hasOrgDomain = computed(() => !!activeCompany.value?.custom_domain)
-const hasSuperAdmin = computed(() => activeCompany.value?.has_super_admin)
+const hasSuperAdmin = computed(() => activeCompany.value?.membership_role === 'super_admin')
 const membershipRole = computed(() =>
   activeCompany.value?.membership_role || null
 )
@@ -331,7 +331,7 @@ function can(permission: string) {
 
 const isOwner = computed(() => membershipRole.value === 'owner')
 const canCreateRole = computed(() =>
-  isOwner.value || can('role.create')
+  isOwner.value || activeCompany.value?.membership_role === 'super_admin' || can('role.create')
 )
 
 const canUpdateRole = computed(() =>

@@ -85,9 +85,6 @@
           <OrgDomainSetup v-else-if="currentTab === 'org-domain'" :profile="profileData" />
           <OrgAiTokensAllocationTab v-else-if="currentTab === 'token-allocation'" :profile="profileData" />
 
-          <!-- Create org tab -->
-          <OrganizationTab v-else-if="currentTab === 'org-create'" :profile="profileData" :force-create="true" />
-
         </div>
       </div>
     </main>

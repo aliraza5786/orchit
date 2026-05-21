@@ -260,8 +260,19 @@
             </span>
             <span class="text-text-secondary">/ {{ selectedInterval === 'month' ? 'mo' : 'yr' }}</span>
           </div>
-          <p v-if="selectedInterval === 'year'" class="text-xs text-green-500 font-medium mt-1">
-            Save {{ getPriceInfo(nextPackage, 'year').currencySymbol }}{{ Number(getPriceInfo(nextPackage, 'year').originalAmount) - Number(getPriceInfo(nextPackage, 'year').amount) }} per year
+          <p
+            v-if="selectedInterval === 'year'"
+            class="text-xs text-green-500 font-medium mt-1"
+          >
+            Save
+            {{ getPriceInfo(nextPackage, 'year').currencySymbol }}
+            {{
+              (
+                Number(getPriceInfo(nextPackage, 'year').originalAmount) -
+                Number(getPriceInfo(nextPackage, 'year').amount)
+              ).toFixed(2)
+            }}
+            per year
           </p>
           <p v-if="selectedInterval === 'month'" class="text-xs text-green-500 font-medium mt-1">
             Save {{ getPriceInfo(nextPackage, 'month')?.trialInfo }}

@@ -106,19 +106,18 @@
               </div> 
             </div>
           </div>
-
           <div class="shrink-0">
             <Button
-              :disabled="!isCreatingWorkspace"
-              :title="isCreatingWorkspace ? '' : 'You are not authorized to create workspace'"
-              variant="primary"
-              size="lg"
-              @click="handleCreateWorkspace"
-              class="h-10 px-6 rounded-[6px] shadow-md shadow-accent/10 hover:shadow-lg hover:shadow-accent/20 transition-all duration-300 font-bold text-[14px]"
-            >
-              <i class="fa-solid fa-plus mr-2 text-xs"></i>
-              Create Workspace
-            </Button>
+            :disabled="!canUserCreateWorkspace"
+            :title="!canUserCreateWorkspace ? 'You are not authorized to create workspace' : ''"
+            variant="primary"
+            size="lg"
+            @click="handleCreateWorkspace"
+            class="h-10 px-6 rounded-[6px] shadow-md shadow-accent/10 hover:shadow-lg hover:shadow-accent/20 transition-all duration-300 font-bold text-[14px]"
+          >
+            <i class="fa-solid fa-plus mr-2 text-xs"></i>
+            Create Workspace
+          </Button>
           </div>
         </div>
       </div>
@@ -386,9 +385,35 @@ const { data: profile } = useProfile();
 const { data: usersData } = useCompanyUsers(
   computed(() => ({ company_id: authStore.company_id || '' })).value
 );
-console.log("suer profile data", profile.value?.data?.active_company);
-const isCreatingWorkspace = computed(() => {
-  return profile.value?.data?.active_company?.membership_role !== 'member';
+
+const isEmptyObject = (obj :any) => {
+  return !obj || Object.keys(obj).length === 0;
+};
+
+const canUserCreateWorkspace = computed(() => {
+  const data = profile.value?.data;
+
+  const activeCompany = data?.active_company;
+  const associatedCompany = data?.associated_company;
+
+  const hasCompanyContext =
+    associatedCompany && !isEmptyObject(associatedCompany);
+
+  const role = activeCompany?.membership_role;
+
+  // 1. Pure personal user → ALLOW
+  if (!hasCompanyContext) return true;
+
+  // 2. Company user but not joined → BLOCK
+  if (!activeCompany) return false;
+
+  // 3. Member → BLOCK
+  if (role === "member") return false;
+
+  // 4. Admin roles → ALLOW
+  if (["owner", "admin", "super_admin"].includes(role)) return true;
+
+  return false;
 });
 const members = computed(() => {
   const raw = usersData.value?.data?.users ?? usersData.value?.users ?? [];

@@ -279,9 +279,9 @@ function removeAt(i: number) {
 
 /** Optional: Name extraction for chip display */
 function extractNameFromEmail(email: string) {
-  const local = (email.split("@")[0] || "").split("+")[0];
-  const parts = local.split(/[^a-zA-Z]+/).filter(Boolean);
-  if (!parts.length) return email;
+  const local = (email?.split("@")[0] || "").split("+")[0];
+  const parts = local?.split(/[^a-zA-Z]+/).filter(Boolean);
+  if (!parts?.length) return email;
   return parts
     .map((p) => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase())
     .join(" ");

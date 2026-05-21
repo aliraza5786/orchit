@@ -40,7 +40,7 @@
       <div v-if="wizardStep === 'list'" class="space-y-5">
 
         <!-- Header -->
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3" v-if="isViewer">
           <div>
             <h2 class="text-base font-bold text-text-primary flex items-center gap-2">
               <i class="fa-solid fa-globe text-accent text-sm"></i>
@@ -162,7 +162,8 @@
                   <div class="px-5 py-4 space-y-3">
                     <div class="flex items-center justify-between">
                       <div class="flex items-center gap-3">
-                        <label class="flex items-center gap-2 cursor-pointer">
+                        <template v-if="!isViewer">
+                          <label class="flex items-center gap-2 cursor-pointer">
                           <div
                             class="w-4 h-4 rounded border-[1.5px] flex items-center justify-center transition-all"
                             :class="isDomainAllSelected(domain._id) ? 'bg-accent border-accent' : 'border-border/60 hover:border-accent/50'"
@@ -182,9 +183,12 @@
                           <i class="fa-solid fa-arrow-right-to-bracket text-[10px]"></i>
                           Enrol ({{ domainSelectedIds[domain._id].length }})
                         </button>
+                        </template>
+                        
                       </div>
 
                       <button
+                      v-if="!isViewer"
                         @click="openCreateUserModal(domain._id)"
                         class="text-[11px] font-semibold text-accent hover:underline flex items-center gap-1"
                       >
@@ -200,6 +204,7 @@
                         class="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-border/30 bg-bg-surface/30 hover:bg-bg-surface/60 transition-all"
                       >
                         <div
+                        v-if="!isViewer"
                           class="w-4 h-4 rounded border-[1.5px] flex items-center justify-center cursor-pointer transition-all shrink-0"
                           :class="(domainSelectedIds[domain._id] ?? []).includes(user._id) ? 'bg-accent border-accent' : 'border-border/60'"
                           @click="toggleDomainUser(domain._id, user._id)"
@@ -846,10 +851,10 @@ const permissions     = computed<string[]>(() => activeCompany.value?.permission
 const isOwner         = computed(() => membershipRole.value === 'owner')
 function can(p: string) { return permissions.value.includes(p) }
 
-const canManageDomain     = computed(() => isOwner.value || can('domain.manage') || can('company_domain.manage'))
-const canAddDomain        = computed(() => canManageDomain.value || can('company_domain.create'))
-const canVerifyDomain     = computed(() => canManageDomain.value || can('company_domain.verify'))
-const canSetPrimaryDomain = computed(() => canManageDomain.value || can('company_domain.set_primary'))
+const canManageDomain     = computed(() => !isViewer.value && (isOwner.value || can('domain.manage') || can('company_domain.manage')))
+const canAddDomain        = computed(() => !isViewer.value && (canManageDomain.value || can('company_domain.create')))
+const canVerifyDomain     = computed(() => !isViewer.value && (canManageDomain.value || can('company_domain.verify')))
+const canSetPrimaryDomain = computed(() => !isViewer.value && (canManageDomain.value || can('company_domain.set_primary')))
 
 // ── Queries ───────────────────────────────────────────────────────────────────
 const workspaceStore = useWorkspaceStore()
@@ -1370,4 +1375,12 @@ function statusDotClass(status: string): string {
     disabled:  'bg-text-secondary/40',
   }[status] ?? 'bg-text-secondary/40'
 }
+// ─── Viewer lock ──────────────────────────────────────────────
+const isViewer = computed(() => {
+  if (membershipRole.value === 'owner') return false
+  const roleSlug = activeCompany.value?.role?.slug?.toLowerCase() ?? ''
+  if (roleSlug.includes('super') || roleSlug === 'admin') return false
+  return membershipRole.value === 'viewer' || membershipRole.value === 'member'
+})
+
 </script>
