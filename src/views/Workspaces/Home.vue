@@ -411,7 +411,7 @@ const canUserCreateWorkspace = computed(() => {
   if (role === "member") return false;
 
   // 4. Admin roles → ALLOW
-  if (["owner", "admin", "super_admin"].includes(role)) return true;
+  if (["owner", "admin", "super_admin", "editor"].includes(role)) return true;
 
   return false;
 });
@@ -442,7 +442,6 @@ const isUserVerified = computed(() => {
   return false;
 });
 
-const canCreateWorkspace = computed(() => isUserVerified.value);
 
 const restrictionMessage = computed(() => {
   if (!isUserVerified.value) return "Verify user first";
@@ -477,11 +476,6 @@ function launchConfetti() {
 }
 
 function handleCreateWorkspace() {
-  if (!canCreateWorkspace.value) {
-    toast.error(restrictionMessage.value);
-    return;
-  }
-  
   const wsFeature = workspaceStore.getFeature("no-of-workspaces");
   if (wsFeature && wsFeature.usage.current >= wsFeature.limits.limit) {
     workspaceStore.setLimitExccedModal(true);

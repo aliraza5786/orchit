@@ -576,7 +576,7 @@ onBeforeUnmount(() => window.removeEventListener('company-changed', handleCompan
 const currentCompany = computed(() => props.profile?.active_company ?? null)
 const membershipRole = computed(() => currentCompany.value?.membership_role || null)
 const permissions    = computed<string[]>(() => currentCompany.value?.permissions || [])
-const isOwner        = computed(() => membershipRole.value === 'owner')
+const isOwner        = computed(() => membershipRole.value === 'owner' || membershipRole.value === 'super_admin' || membershipRole.value === 'admin' || membershipRole.value === 'editor')
 const READONLY_ROLES = ['member', 'viewer']
 
 const isMember = computed(() =>
