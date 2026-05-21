@@ -32,6 +32,7 @@
 
         <!-- Input -->
         <input
+          ref="inputEl"
           v-bind="$attrs"
           v-model="model"
           :type="inputType"
@@ -146,4 +147,12 @@ const isPasswordVisible = ref(false);
 const inputType = computed(() =>
   props.type === 'password' ? (isPasswordVisible.value ? 'text' : 'password') : props.type
 );
+
+const inputEl = ref<HTMLInputElement | null>(null)
+
+function focus() {
+  inputEl.value?.focus()
+}
+
+defineExpose({ focus })
 </script>

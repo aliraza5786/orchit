@@ -149,8 +149,10 @@ defineOptions({ name: 'CreateOrganization' })
 
 const router = useRouter()
 const authStore = useAuthStore()
+type FocusableTextField = { focus: () => void }
+
 const activeStep = ref(1)
-const teamRef = ref(null)
+const teamRef = ref<FocusableTextField | null>(null)
 const errors = ref<Record<string, string>>({})
 
 const team = ref('')
@@ -262,7 +264,7 @@ function continueCompanyStep() {
 
 function goBack() {
   activeStep.value = 1
-  nextTick(() => teamRef.value?.focus?.())
+  nextTick(() => teamRef.value?.focus())
 }
 
 const { mutateAsync: registerMutate, isPending: isRegisterPending } = useMutation({
