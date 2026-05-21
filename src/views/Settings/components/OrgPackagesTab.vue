@@ -7,8 +7,6 @@ import PricingSkeleton from "../../../components/skeletons/PricingSkeleton.vue";
 import { useAuthStore } from "../../../stores/auth";
 import { useRouter } from "vue-router";
 import { useUpgradePackage } from "../../../queries/usePackages";
-import { useListDomains, useCompanyRolesWithoutPermission } from "../../../queries/useCommon";
-import { useCompanyUsers } from "../../../queries/useCompanyUsers";
 import { toast } from "vue-sonner";
 
 const props = defineProps<{
@@ -36,19 +34,19 @@ const canUpgradePackage = computed(() =>
 )
 
 // ── Verification checks ───────────────────────────────────────────────────────
-const companyId = computed<string>(() => localStorage.getItem('company_id') || '')
+// const companyId = computed<string>(() => localStorage.getItem('company_id') || '')
 
-const { data: domainsData } = useListDomains()
-const domains = computed(() => domainsData.value?.domains ?? [])
-const hasVerifiedDomain = computed(() => domains.value.some((d: any) => d.status === 'verified'))
+// const { data: domainsData } = useListDomains()
+// const domains = computed(() => domainsData.value?.domains ?? [])
+// const hasVerifiedDomain = computed(() => domains.value.some((d: any) => d.status === 'verified'))
 
-const { data: rolesData } = useCompanyRolesWithoutPermission()
-const allRoles = computed(() => rolesData.value?.data ?? rolesData.value ?? [])
-const superAdminRoles = computed(() => allRoles.value.filter((r: any) => r.is_super_admin).map((r: any) => r._id))
+// const { data: rolesData } = useCompanyRolesWithoutPermission()
+// const allRoles = computed(() => rolesData.value?.data ?? rolesData.value ?? [])
+// const superAdminRoles = computed(() => allRoles.value.filter((r: any) => r.is_super_admin).map((r: any) => r._id))
 
-const { data: usersData } = useCompanyUsers(computed(() => ({ company_id: companyId.value })).value)
-const members = computed(() => usersData.value?.data?.users ?? usersData.value?.users ?? [])
-const hasVerifiedSuperAdmin = computed(() => members.value.some((m: any) => m.company_role_id && superAdminRoles.value.includes(m.company_role_id)))
+// const { data: usersData } = useCompanyUsers(computed(() => ({ company_id: companyId.value })).value)
+// const members = computed(() => usersData.value?.data?.users ?? usersData.value?.users ?? [])
+// const hasVerifiedSuperAdmin = computed(() => members.value.some((m: any) => m.company_role_id && superAdminRoles.value.includes(m.company_role_id)))
 
 
 // ── Current active plan detection ─────────────────────────────────────────────
@@ -98,7 +96,7 @@ const { mutate: upgradePackage, isPending: isUpgrading } = useUpgradePackage({
 });
 
 const upgradingPackageId = ref<string | null>(null);
-const hasOrgDomain = computed(() => !!activeCompany.value?.custom_domain)
+// const hasOrgDomain = computed(() => !!activeCompany.value?.custom_domain)
 function handleClick(plan: any) {
   if (isCurrentPlan(plan)) return // no-op on current plan
 
