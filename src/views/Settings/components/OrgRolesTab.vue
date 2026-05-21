@@ -281,7 +281,7 @@
 import { ref, computed } from 'vue'
 import { toast } from 'vue-sonner'
 import { useCompanyRolesWithoutPermission,useDeleteCompanyRoleById } from '../../../queries/useCommon'
-import { useCompanyUsers } from '../../../queries/useCompanyUsers'
+// import { useCompanyUsers } from '../../../queries/useCompanyUsers'
 import EditCompanyRole from './EditCompanyRole.vue'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -315,7 +315,7 @@ const props = defineProps<{
 
 const activeCompany = computed(() => props.profile?.active_company)
 const hasOrgDomain = computed(() => !!activeCompany.value?.custom_domain)
-const hasSuperAdmin = computed(() => activeCompany.value?.membership_role === 'super_admin')
+// const hasSuperAdmin = computed(() => activeCompany.value?.membership_role === 'super_admin')
 const membershipRole = computed(() =>
   activeCompany.value?.membership_role || null
 )
@@ -346,14 +346,14 @@ const canViewRole = computed(() =>
   isOwner.value || can('role.read')
 )
 
-const companyId = computed<string>(() => localStorage.getItem('company_id') || '')
-const { data: usersData } = useCompanyUsers(
-  computed(() => ({ company_id: companyId.value })).value
-)
-const members = computed(() => {
-  const raw = usersData.value?.data?.users ?? usersData.value?.users ?? []
-  return Array.isArray(raw) ? raw : []
-})
+// const companyId = computed<string>(() => localStorage.getItem('company_id') || '')
+// const { data: usersData } = useCompanyUsers(
+//   computed(() => ({ company_id: companyId.value })).value
+// )
+// const members = computed(() => {
+//   const raw = usersData.value?.data?.users ?? usersData.value?.users ?? []
+//   return Array.isArray(raw) ? raw : []
+// })
 const isOwnerAdmin = props.profile?.membership_role === 'admin' || 'owner' || 'super_admin' || 'editor';
 
 // ── Fetch all roles ───────────────────────────────────────────────────────────

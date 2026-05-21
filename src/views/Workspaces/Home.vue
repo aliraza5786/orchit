@@ -254,7 +254,7 @@ import BaseSelectField from "../../components/ui/BaseSelectField.vue";
 import { useQueryClient } from "@tanstack/vue-query";
 import { toast } from "vue-sonner";
 import { useProfile } from "../../services/user";
-import { useCompanyUsers } from "../../queries/useCompanyUsers";
+// import { useCompanyUsers } from "../../queries/useCompanyUsers";
 
 // Modals
 import InviteUsersWithPermissions from "./Modals/InviteUsersWithPermissions.vue";
@@ -382,9 +382,9 @@ const timeGreeting = computed(() => {
 
 // --- Verification Logic ---
 const { data: profile } = useProfile();
-const { data: usersData } = useCompanyUsers(
-  computed(() => ({ company_id: authStore.company_id || '' })).value
-);
+// const { data: usersData } = useCompanyUsers(
+//   computed(() => ({ company_id: authStore.company_id || '' })).value
+// );
 
 const isEmptyObject = (obj :any) => {
   return !obj || Object.keys(obj).length === 0;
@@ -415,38 +415,38 @@ const canUserCreateWorkspace = computed(() => {
 
   return false;
 });
-const members = computed(() => {
-  const raw = usersData.value?.data?.users ?? usersData.value?.users ?? [];
-  return Array.isArray(raw) ? raw : [];
-});
-const owner = computed(() => members.value.find((m: any) => m.is_owner));
+// const members = computed(() => {
+//   const raw = usersData.value?.data?.users ?? usersData.value?.users ?? [];
+//   return Array.isArray(raw) ? raw : [];
+// });
+// const owner = computed(() => members.value.find((m: any) => m.is_owner));
 
-const isUserVerified = computed(() => {
-  if (!authStore.company_id) return true;
-  const profileVal = profile.value?.data;
-  const activeCompany = profileVal?.active_company;
+// const isUserVerified = computed(() => {
+//   if (!authStore.company_id) return true;
+//   const profileVal = profile.value?.data;
+//   const activeCompany = profileVal?.active_company;
   
-  const isSuperAdminActiveVal = owner.value?.membership_status === 'active';
-  const isCurrentUserActive = activeCompany?.membership_status === 'active';
-  const isPendingOtp = activeCompany?.membership_status === 'pending_super_admin_otp';
+//   const isSuperAdminActiveVal = owner.value?.membership_status === 'active';
+//   const isCurrentUserActive = activeCompany?.membership_status === 'active';
+//   const isPendingOtp = activeCompany?.membership_status === 'pending_super_admin_otp';
 
-  if ((isSuperAdminActiveVal || isCurrentUserActive) && !isPendingOtp) {
-    return true;
-  }
+//   if ((isSuperAdminActiveVal || isCurrentUserActive) && !isPendingOtp) {
+//     return true;
+//   }
 
-  if (profileVal?.isUserVerified === true || profileVal?.isUserVerified === 'true') return true;
-  if (profileVal?.is_verified === true || profileVal?.is_verified === 'true') return true;
-  if (profileVal?.u_verified === true || profileVal?.u_verified === 'true') return true;
-  if (activeCompany?.isUserVerified === true || activeCompany?.isUserVerified === 'true') return true;
+//   if (profileVal?.isUserVerified === true || profileVal?.isUserVerified === 'true') return true;
+//   if (profileVal?.is_verified === true || profileVal?.is_verified === 'true') return true;
+//   if (profileVal?.u_verified === true || profileVal?.u_verified === 'true') return true;
+//   if (activeCompany?.isUserVerified === true || activeCompany?.isUserVerified === 'true') return true;
 
-  return false;
-});
+//   return false;
+// });
 
 
-const restrictionMessage = computed(() => {
-  if (!isUserVerified.value) return "Verify user first";
-  return "";
-});
+// const restrictionMessage = computed(() => {
+//   if (!isUserVerified.value) return "Verify user first";
+//   return "";
+// });
  
 
 function launchConfetti() {
