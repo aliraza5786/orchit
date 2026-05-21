@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { request } from '../libs/api'
-
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface CompanyUser {
@@ -17,7 +16,7 @@ export interface CompanyUser {
   u_is_verfied: boolean
   created_at: string
   membership_role: 'owner' | 'admin' | 'member' | 'viewer'
-  membership_status: 'active' | 'suspended' | 'deactivated' | 'pending' | 'pending_super_admin_otp'
+  membership_status: 'active' | 'suspended' | 'deactivated' | 'pending' | 'pending_super_admin_otp' |'invited'
   accepted_at: string | null
 }
 
@@ -69,33 +68,26 @@ export const companyUserKeys = {
 
 // ─── List Users ───────────────────────────────────────────────────────────────
 
-export function useCompanyUsers(params: ListCompanyUsersParams) {
+export function useCompanyUsers(params: any) {
   return useQuery({
-    queryKey: companyUserKeys.list(params.company_id, {
-      page: params.page,
-      per_page: params.per_page,
-      search: params.search,
-      is_active: params.is_active,
-      membership_role: params.membership_role,
-    }),
+    queryKey: companyUserKeys.list(
+      params.company_id,
+      {
+        membership_role: params.membership_role,
+      }
+    ),
     queryFn: () =>
       request({
         url: 'workspace/company/users',
         method: 'GET',
         params: {
           company_id: params.company_id,
-          page: params.page ?? 1,
-          per_page: params.per_page ?? 50,
-          search: params.search || undefined,
-          is_active: params.is_active,
-          membership_role: params.membership_role || undefined,
+          membership_role: params.membership_role,
         },
       }),
     enabled: !!params.company_id,
-    staleTime: 1000 * 30,
   })
 }
-
 // ─── Get Single User ──────────────────────────────────────────────────────────
 
 export function useCompanyUser(companyId: string, userId: string) {

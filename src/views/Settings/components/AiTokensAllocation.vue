@@ -16,7 +16,7 @@
       </div>
 
       <!-- Mode toggle -->
-      <div class="flex items-center gap-2 self-start sm:self-auto">
+      <div class="flex items-center gap-2 self-start sm:self-auto" v-if="!isViewer">
         <button
           @click="allocationMode = 'percentage'"
           :class="[
@@ -231,7 +231,7 @@
               max="100"
               step="1"
               @change="requestAllocationChange(user)"
-              :disabled="!isUserVerified"
+              :disabled="!isUserVerified || isViewer"
               class="w-20 text-right text-sm font-bold text-text-primary bg-border/10 border border-border/40 rounded-md px-2 py-1 outline-none focus:border-accent/50 hover:border-border/70 transition-colors duration-150 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
             />
             <span class="text-xs text-text-secondary ml-1">%</span>
@@ -463,7 +463,19 @@ async function confirmSave() {
     showSaveConfirm.value = false
   }
 }
+// ─── Viewer lock ──────────────────────────────────────────────
+const activeCompany  = computed(() => props.profile?.active_company)
+const membershipRole = computed(() => activeCompany.value?.membership_role ?? '')
+const permissions    = computed<string[]>(() => activeCompany.value?.permissions ?? [])
 
+const isViewer = computed(() => {
+  if (membershipRole.value === 'owner') return false
+  const roleSlug = activeCompany.value?.role?.slug?.toLowerCase() ?? ''
+  if (roleSlug.includes('super') || roleSlug === 'admin') return false
+  if (membershipRole.value === 'viewer' || membershipRole.value === 'member') return true
+  // Editor/admin without package.change → read-only
+  return !permissions.value.includes('package.change')
+})
 const { data: allocationData } = useCompanyTokenAllocation()
 const { mutateAsync: setUserAllocation, isPending: isSaving } = useSetUserAllocation()
 const { mutateAsync: setAllocationMode } = useSetAllocationMode()
