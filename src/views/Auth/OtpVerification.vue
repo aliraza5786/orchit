@@ -79,6 +79,7 @@
   import { verifyOtp, resendOtp } from '../../services/auth'
   import { useAuthStore } from '../../stores/auth'
   import { getPostAuthRedirectPath } from '../../utilities/onboardingRedirect'
+  import { hasCreateOrgPendingOnboarding, clearCreateOrgPendingFlag } from '../../utilities/createOrganizationDraft'
   import type { ComponentPublicInstance } from 'vue'
 
   defineOptions({ name: 'OtpVerify' })
@@ -164,6 +165,12 @@ async function verifyCode() {
     const pendingToken = localStorage.getItem('pending_invite_token')
     if (pendingToken) {
       router.push(`/company-join/${pendingToken}`)
+      return
+    }
+
+    if (hasCreateOrgPendingOnboarding()) {
+      clearCreateOrgPendingFlag()
+      router.replace({ path: '/onboarding', query: { step: '3' } })
       return
     }
 

@@ -98,6 +98,7 @@ export const ONBOARDING_STORAGE_KEYS = [
   'onboarding_super_admin_email_prefix', 'onboarding_super_admin_name',
   'onboarding_domain_phase', 'onboarding_current_domain', 'onboarding_current_instructions',
   'onboarding_selected_verification_method',
+  'onboarding_org_draft', 'onboarding_from_create_org',
 ] as const
 
 export function clearOnboardingStorageKeys(): void {

@@ -1144,6 +1144,16 @@ import { toast } from 'vue-sonner'
 import { useCompanyRolesWithoutPermission } from '../../queries/useCommon'
 import { useTheme } from '../../composables/useTheme';
 import { isCompanyEmail as checkIsCompanyEmail } from '../../utilities/onboardingRedirect'
+import {
+  getOrgDraft,
+  hasOrgDraft,
+  saveOrgDraft,
+  hasCreateOrgPendingOnboarding,
+  clearCreateOrgPendingFlag,
+  clearOrgDraft,
+  CREATE_ORG_DRAFT_KEY,
+  CREATE_ORG_PENDING_KEY,
+} from '../../utilities/createOrganizationDraft'
 
 const { theme } = useTheme();
 defineOptions({ name: 'OnboardingFlow' })
@@ -1151,10 +1161,38 @@ const { data: rolesData, isLoading: isRolesLoading, refetch: refetchRoles } = us
 const { mutateAsync: sendOtp } = useSendSuperAdminOtp()
 const { mutateAsync: verifyOtp } = useVerifySuperAdminOtp()
 
+// ─── Stores & Router ──────────────────────────────────────────────────────────
+const workspaceStore = useWorkspaceStore()
+const authStore = useAuthStore()
+const router = useRouter()
+const route = useRoute()
+
+// /create-organization: start on step 3 immediately so step 1/2 never flash
+const orgDraftAtInit = getOrgDraft()
+const isCreateOrgEntry = !!(
+  orgDraftAtInit ||
+  hasCreateOrgPendingOnboarding() ||
+  route.query.step === '3'
+)
+
+function resolveInitialOnboardingStep() {
+  if (orgDraftAtInit || hasCreateOrgPendingOnboarding()) return 3
+  const queryStep = Number(route.query.step)
+  if (queryStep && !Number.isNaN(queryStep)) return queryStep
+  return 1
+}
+
+if (orgDraftAtInit) {
+  localStorage.setItem('onboarding_selected_type', 'team')
+  clearCreateOrgPendingFlag()
+}
+
 // ─── Core State ──────────────────────────────────────────────────────────────
 const companyID = ref()
-const activeStep = ref(1)
-const selected = ref(localStorage.getItem('onboarding_selected_type') || 'team')
+const activeStep = ref(resolveInitialOnboardingStep())
+const selected = ref(
+  orgDraftAtInit ? 'team' : (localStorage.getItem('onboarding_selected_type') || 'team'),
+)
 watch(selected, (v) => {
   if (v) localStorage.setItem('onboarding_selected_type', v)
 })
@@ -1164,6 +1202,18 @@ const siteName = ref('')
 const siteSlug = ref('')
 const isProvisioning = ref(false)
 const isUpdatingProfile = ref(false)
+
+const teamRef = ref(null)
+const roleRef = ref(null)
+const companySizeRef = ref(null)
+
+// ─── Step 2 (hydrate from org draft before first paint when coming from /create-organization)
+const role = ref(orgDraftAtInit?.role ?? '')
+const team = ref(orgDraftAtInit?.team ?? '')
+const companySize = ref(orgDraftAtInit?.companySize ?? '')
+const personalRole = ref('')
+const schoolName = ref('')
+const educationLevel = ref('')
 
 // ─── Super Admin State ───────────────────────────────────────────────────────
 const superAdminRole = ref("")
@@ -1182,12 +1232,6 @@ const allRoles = computed(() => {
   return Array.isArray(raw) ? raw : []
 })
 
-
-// ─── Stores & Router ──────────────────────────────────────────────────────────
-const workspaceStore = useWorkspaceStore()
-const authStore = useAuthStore()
-const router = useRouter()
-const route = useRoute()
 const isLoaderRunning = ref(false)
 const profileData = ref(null)
 
@@ -1226,7 +1270,41 @@ const filteredOptions = computed(() => {
 })
 
 
+function applyOrgDraftFromStorage() {
+  const draft = getOrgDraft()
+  if (!draft) return
+  selected.value = 'team'
+  localStorage.setItem('onboarding_selected_type', 'team')
+  team.value = draft.team
+  role.value = draft.role
+  companySize.value = draft.companySize
+}
+
+function applyCreateOrgOnboardingEntry() {
+  const fromCreateOrg =
+    hasCreateOrgPendingOnboarding() ||
+    hasOrgDraft() ||
+    route.query.from === 'create-organization'
+  if (!fromCreateOrg) return false
+
+  applyOrgDraftFromStorage()
+  clearCreateOrgPendingFlag()
+  activeStep.value = 3
+  if (Number(route.query.step) !== 3) {
+    router.replace({ path: '/onboarding', query: { step: '3' } })
+  }
+  return true
+}
+
 onMounted(async () => {
+  if (isCreateOrgEntry) {
+    applyOrgDraftFromStorage()
+    activeStep.value = 3
+    if (Number(route.query.step) !== 3) {
+      router.replace({ path: '/onboarding', query: { step: '3' } })
+    }
+  }
+
   const storedUser = authStore.user?.data ?? authStore.user
   if (storedUser && storedUser.u_email) {
     profileData.value = storedUser
@@ -1252,19 +1330,19 @@ onMounted(async () => {
   } catch (error) {
     console.error('Failed to fetch profile', error)
   }
+
+  if (isCreateOrgEntry) return
+
+  if (applyCreateOrgOnboardingEntry()) return
+
+  if (route.query.step) {
+    const s = Number(route.query.step)
+    const minStep = (isEmailLoaded.value && !isCompanyEmail.value && !hasOrgDraft()) ? 2 : 1
+    activeStep.value = Math.max(minStep, s)
+  } else {
+    applyOrgDraftFromStorage()
+  }
 })
-
-const teamRef = ref(null)
-const roleRef = ref(null)
-const companySizeRef = ref(null)
-
-// ─── Step 2 ───────────────────────────────────────────────────────────────────
-const role = ref('')
-const team = ref('')
-const companySize = ref('')
-const personalRole = ref('')
-const schoolName = ref('')
-const educationLevel = ref('')
 
 // ─── Step 3 ───────────────────────────────────────────────────────────────────
 const selectedModules = ref([])
@@ -1394,9 +1472,14 @@ watchEffect(() => {
 
 const isEmailLoaded = computed(() => !!userEmail.value)
 
-// Auto-select based on email domain and route steps
+// Auto-select based on email domain and route steps (skip when org draft from /create-organization)
 watch([isCompanyEmail, isEmailLoaded, userEmailDomain], ([isCompany, isLoaded]) => {
   if (!isLoaded) return
+  if (hasOrgDraft() || isCreateOrgEntry) {
+    selected.value = 'team'
+    localStorage.setItem('onboarding_selected_type', 'team')
+    return
+  }
   if (isCompany) {
     if (!localStorage.getItem('onboarding_selected_type')) {
       selected.value = 'team'
@@ -1690,26 +1773,18 @@ watch(activeStep, (step) => {
 
 // Sync URL → Step (Back/Forward button support)
 watch(() => route.query.step, (step) => {
-  const minStep = (isEmailLoaded.value && !isCompanyEmail.value) ? 2 : 1
+  const minStep = (isEmailLoaded.value && !isCompanyEmail.value && !hasOrgDraft()) ? 2 : 1
   if (step) {
     const s = Number(step)
     const targetStep = Math.max(minStep, s)
     if (activeStep.value !== targetStep) {
       activeStep.value = targetStep
     }
-  } else if (activeStep.value !== minStep) {
+  } else if (activeStep.value !== minStep && !hasOrgDraft()) {
     activeStep.value = minStep
   }
 })
 
-onMounted(() => {
-  // Restore step from URL on refresh
-  if (route.query.step) {
-    const s = Number(route.query.step)
-    const minStep = (isEmailLoaded.value && !isCompanyEmail.value) ? 2 : 1
-    activeStep.value = Math.max(minStep, s)
-  }
-})
 
 watch(
   () => activeStep.value,
@@ -2140,9 +2215,11 @@ function clearOnboardingState() {
     'onboarding_super_admin_otp_sent', 'onboarding_super_admin_user_id',
     'onboarding_super_admin_email_prefix', 'onboarding_super_admin_name',
     'onboarding_domain_phase', 'onboarding_current_domain', 'onboarding_current_instructions',
-    'onboarding_selected_verification_method', 'onboarding_selected_type'
+    'onboarding_selected_verification_method', 'onboarding_selected_type',
+    CREATE_ORG_DRAFT_KEY, CREATE_ORG_PENDING_KEY,
   ]
   keys.forEach(k => localStorage.removeItem(k))
+  clearOrgDraft()
 }
 
 function routeToFinishProfile() {
@@ -2195,6 +2272,15 @@ function handleConflictRedirect() {
   companySlugError.value = null
   isNameConflictError.value = false
   siteName.value = ''
+  // /create-organization: clear stale site slug so step 5 regenerates from updated company name
+  if (hasOrgDraft()) {
+    siteSlug.value = ''
+    isSlugAvailable.value = null
+    isCheckingSlug.value = false
+    siteCreated.value = false
+    localStorage.removeItem('onboarding_site_name')
+    localStorage.removeItem('onboarding_site_slug')
+  }
 }
 
 function onProvisioningComplete() {
@@ -2611,6 +2697,13 @@ async function continueHandler() {
   if (activeStep.value === 2) {
     if (selected.value === 'team'     && !validateCompanyStep())  return
     if (selected.value === 'personal' && !validatePersonalStep()) return
+    if (selected.value === 'team' && hasOrgDraft()) {
+      saveOrgDraft({
+        team: team.value.trim(),
+        role: role.value,
+        companySize: companySize.value,
+      })
+    }
     activeStep.value++
     return
   }

@@ -19,6 +19,7 @@ const Login = () => import("../views/Auth/Login.vue");
 const Register = () => import("../views/Auth/Register.vue");
 const OtpVerification = () => import("../views/Auth/OtpVerification.vue");
 const CreateProfile = () => import("../views/Auth/CreateProfile.vue");
+const CreateOrganization = () => import("../views/Auth/CreateOrganization.vue");
 const AssociatedOrganization = () => import("../views/Auth/AssociatedOrganization.vue");
 const ForgotPassword = () => import("../views/Auth/ForgotPassword.vue");
 const ResetPassword = () => import("../views/Auth/ResetPassword.vue");
@@ -122,6 +123,7 @@ const routes: RouteRecordRaw[] = [
   { path: "/register",               name: "Register",       component: Register,         meta: { requiresAuth: false, onboarding: true } },
   { path: "/otp-verification/:email",name: "Otp",            component: OtpVerification,  meta: { requiresAuth: false, onboarding: true } },
   { path: "/onboarding",             name: "onboarding",     component: CreateProfile,    meta: { requiresAuth: false, onboarding: true } },
+  { path: "/create-organization",    name: "create-organization", component: CreateOrganization, meta: { requiresAuth: false, onboarding: true } },
   { path: "/associated-organization", name: "associated-organization", component: AssociatedOrganization, meta: { requiresAuth: true } },
   { path: "/forgot-password",        name: "ForgotPassword", component: ForgotPassword,   meta: { requiresAuth: false } },
   { path: "/reset-password",         name: "ResetPassword",  component: ResetPassword,    meta: { requiresAuth: false } },
