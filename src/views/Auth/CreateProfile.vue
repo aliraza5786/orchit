@@ -1143,6 +1143,7 @@ import gsap from 'gsap'
 import { toast } from 'vue-sonner'
 import { useCompanyRolesWithoutPermission } from '../../queries/useCommon'
 import { useTheme } from '../../composables/useTheme';
+import { isCompanyEmail as checkIsCompanyEmail } from '../../utilities/onboardingRedirect'
 
 const { theme } = useTheme();
 defineOptions({ name: 'OnboardingFlow' })
@@ -1195,14 +1196,6 @@ const profileData = ref(null)
 // ─── Error map ────────────────────────────────────────────────────────────────
 const errors = ref({})
 
-// ─── Generic email providers ──────────────────────────────────────────────────
-const GENERIC_EMAIL_PROVIDERS = new Set([
-  'gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'icloud.com',
-  'live.com', 'msn.com', 'aol.com', 'protonmail.com', 'mail.com',
-  'zoho.com', 'yandex.com', 'inbox.com', 'gmx.com', 'fastmail.com',
-  'tutanota.com', 'hey.com', 'pm.me', 'googlemail.com',
-])
-
 // ─── Computed: user email & domain ────────────────────────────────────────────
 const userEmail = computed(() =>
   profileData.value?.u_email ||
@@ -1222,17 +1215,7 @@ const userEmailDomain = computed(() => {
  * true  → Scenario 3: company domain, skip DNS/super-admin/domain-verify
  * false → Scenario 1/2: generic email
  */
-const isCompanyEmail = computed(() => {
-  const domain = userEmailDomain.value
-  if (!domain) return false
-  return !GENERIC_EMAIL_PROVIDERS.has(domain)
-})
-
-
-const isGenericEmail = computed(() => {
-  const domain = userEmailDomain.value
-  return domain && GENERIC_EMAIL_PROVIDERS.has(domain)
-})
+const isCompanyEmail = computed(() => checkIsCompanyEmail(userEmail.value))
 
 // Enforce options based on domain
 const mandatoryOptionId = computed(() => null)
@@ -1612,9 +1595,9 @@ const workTypeOptions = computed(() => workTypeOptionsMap[selected.value] || [])
 const stepLabels = computed(() => {
   if (selected.value === 'personal') {
     if (isEmailLoaded.value && !isCompanyEmail.value) {
-      return ['About You', 'Modules', 'Work Type', 'Done']
+      return ['About You', 'Modules', 'Work Type', 'Hear About Us', 'Done']
     }
-    return ['Purpose', 'About You', 'Modules', 'Work Type', 'Done']
+    return ['Purpose', 'About You', 'Modules', 'Work Type', 'Hear About Us', 'Done']
   }
   return ['Purpose', 'About Company', 'Modules', 'Work Type', 'Create Site', 'Done']
 })
@@ -2650,20 +2633,18 @@ async function continueHandler() {
     }
     if (selected.value === 'personal') {
       isUpdatingProfile.value = true
-      isLoaderRunning.value = true
       try {
         await updateUserProfile({
           u_work_to_do:   personalRole.value,
           work_to_do:     workType.value,
           like_to_manage: selectedModules.value,
-          heard_about_us: referralSources.value,
         })
         await authStore.bootstrap()
-        activeStep.value      = 6
+        activeStep.value = 7
       } catch {
         // stay on step 4 if the API call fails
+      } finally {
         isUpdatingProfile.value = false
-        isLoaderRunning.value = false
       }
       return
     }
@@ -2675,6 +2656,20 @@ async function continueHandler() {
 
   // ── Step 7: referral sources → determine next step by scenario ──────────
   if (activeStep.value === 7) {
+    if (selected.value === 'personal') {
+      isUpdatingProfile.value = true
+      isLoaderRunning.value = true
+      try {
+        await updateUserProfile({ heard_about_us: referralSources.value })
+        await authStore.bootstrap()
+        activeStep.value = 6
+      } catch {
+        isLoaderRunning.value = false
+      } finally {
+        isUpdatingProfile.value = false
+      }
+      return
+    }
     // Team/school: updateProfile → onSuccess handles routing per scenario
     updateProfile({ payload: buildProfilePayload() })
     return

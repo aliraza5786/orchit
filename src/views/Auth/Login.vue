@@ -173,6 +173,7 @@ import darkLogo from "@assets/global/dark-logo.png";
 import lightLogo from "@assets/global/light-logo.png";
  
 import { useTheme } from "../../composables/useTheme";
+import { getPostAuthRedirectPath } from "../../utilities/onboardingRedirect";
 const { isDark } = useTheme();
 declare const AppleID: any;
 defineProps<{
@@ -338,17 +339,10 @@ async function handleLoginSuccess(data: any) {
   }
 
   const userData = authStore.user?.data ?? authStore.user;
-  const associatedCompany = userData?.associated_company;
-  const hasActiveCompany = !!userData?.active_company_id;
-  const hasWorkspaces = Array.isArray(userData?.workspaces) && userData.workspaces.length > 0;
+  const destination = getPostAuthRedirectPath(userData, { isLogin: true });
 
-  if (associatedCompany && associatedCompany._id && !hasActiveCompany && !hasWorkspaces) {
-    router.push("/associated-organization");
-    return;
-  }
-
-  if (!hasActiveCompany && !hasWorkspaces) {
-    router.push("/onboarding");
+  if (destination !== "/dashboard") {
+    router.push(destination);
     return;
   }
 

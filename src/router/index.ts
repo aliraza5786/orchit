@@ -5,6 +5,10 @@ import {
 } from "vue-router";
 import { useAuthStore, getToken } from "../stores/auth";
 import { redirectToLogin } from "../utilities/authRedirect";
+import {
+  clearOnboardingStorageKeys,
+  isOnboardingComplete,
+} from "../utilities/onboardingRedirect";
 import Task from "../views/Workspaces/Task.vue";
 import Users from "../views/Workspaces/Users.vue";
 import api from "../libs/api";
@@ -63,20 +67,8 @@ function resolveOnboardingRedirect(auth: ReturnType<typeof useAuthStore>): strin
   // API wraps data under .data in some responses
   const userData = auth.user?.data ?? auth.user
  
-  const hasActiveCompany = !!userData?.active_company_id
-  const hasWorkspaces    = Array.isArray(userData?.workspaces) && userData.workspaces.length > 0
- 
-  // Onboarding complete: has a company or has workspaces → send to dashboard & clear keys
-  if (hasActiveCompany || hasWorkspaces) {
-    const keys = [
-      'onboarding_active_step', 'onboarding_dns_input', 'onboarding_has_custom_domain',
-      'onboarding_company_id', 'onboarding_site_name', 'onboarding_site_slug',
-      'onboarding_super_admin_otp_sent', 'onboarding_super_admin_user_id',
-      'onboarding_super_admin_email_prefix', 'onboarding_super_admin_name',
-      'onboarding_domain_phase', 'onboarding_current_domain', 'onboarding_current_instructions',
-      'onboarding_selected_verification_method'
-    ]
-    keys.forEach(k => localStorage.removeItem(k))
+  if (isOnboardingComplete(userData)) {
+    clearOnboardingStorageKeys()
     return '/dashboard'
   }
 
@@ -245,19 +237,8 @@ router.beforeEach(async (to, _from, next) => {
   // 1.5 Clean onboarding keys if onboarding is completed
   if (hasToken && auth.user) {
     const userData = auth.user?.data ?? auth.user
-    const hasActiveCompany = !!userData?.active_company_id
-    const hasWorkspaces    = Array.isArray(userData?.workspaces) && userData.workspaces.length > 0
-
-    if (hasActiveCompany || hasWorkspaces) {
-      const keys = [
-        'onboarding_active_step', 'onboarding_dns_input', 'onboarding_has_custom_domain',
-        'onboarding_company_id', 'onboarding_site_name', 'onboarding_site_slug',
-        'onboarding_super_admin_otp_sent', 'onboarding_super_admin_user_id',
-        'onboarding_super_admin_email_prefix', 'onboarding_super_admin_name',
-        'onboarding_domain_phase', 'onboarding_current_domain', 'onboarding_current_instructions',
-        'onboarding_selected_verification_method'
-      ]
-      keys.forEach(k => localStorage.removeItem(k))
+    if (isOnboardingComplete(userData)) {
+      clearOnboardingStorageKeys()
     }
   }
 

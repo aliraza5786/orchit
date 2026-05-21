@@ -167,6 +167,7 @@ import { useWorkspaceStore } from "../../stores/workspace";
 import darkLogo from "@assets/global/dark-logo.png";
 import lightLogo from "@assets/global/light-logo.png";
 import { useTheme } from "../../composables/useTheme";
+import { getPostAuthRedirectPath } from "../../utilities/onboardingRedirect";
 import lightApple from "@assets/LandingPageImages/header-icons/lightapple.png";
 import darkApple from "@assets/LandingPageImages/header-icons/apple.png";
 const { isDark } = useTheme();
@@ -346,7 +347,6 @@ async function handleLoginSuccess(data: any) {
   await authStore.bootstrap(true);
 
   const userData = authStore.user?.data ?? authStore.user;
-  const associatedCompany = userData?.associated_company;
 
   const intentStr = localStorage.getItem("post_auth_intent");
   if (intentStr) {
@@ -366,22 +366,10 @@ async function handleLoginSuccess(data: any) {
     }
   }
 
-  const hasActiveCompany = !!userData?.active_company_id;
-  const hasWorkspaces =
-    Array.isArray(userData?.workspaces) && userData.workspaces.length > 0;
+  const destination = getPostAuthRedirectPath(userData);
 
-  if (
-    associatedCompany &&
-    associatedCompany._id &&
-    !hasActiveCompany &&
-    !hasWorkspaces
-  ) {
-    router.push("/associated-organization");
-    return;
-  }
-
-  if (!hasActiveCompany && !hasWorkspaces) {
-    router.push("/onboarding");
+  if (destination !== "/dashboard") {
+    router.push(destination);
     return;
   }
 

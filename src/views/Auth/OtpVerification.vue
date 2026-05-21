@@ -78,6 +78,7 @@
   import Button from '../../components/ui/Button.vue'
   import { verifyOtp, resendOtp } from '../../services/auth'
   import { useAuthStore } from '../../stores/auth'
+  import { getPostAuthRedirectPath } from '../../utilities/onboardingRedirect'
   import type { ComponentPublicInstance } from 'vue'
 
   defineOptions({ name: 'OtpVerify' })
@@ -167,13 +168,7 @@ async function verifyCode() {
     }
 
     const userData = authStore.user?.data ?? authStore.user;
-    const associatedCompany = userData?.associated_company;
-
-    if (associatedCompany && associatedCompany._id) {
-      router.replace('/associated-organization')
-    } else {
-      router.replace('/onboarding')
-    }
+    router.replace(getPostAuthRedirectPath(userData))
 
   } catch (err: any) {
     otpError.value = err?.response?.data?.message || 'Invalid code, please try again.'
@@ -301,13 +296,7 @@ function handlePaste(index: number, e: ClipboardEvent) {
     // If already authenticated and verified, redirect away from this page
     if (authStore.isAuthenticated) {
       const userData = authStore.user?.data ?? authStore.user;
-      const associatedCompany = userData?.associated_company;
-
-      if (associatedCompany && associatedCompany._id) {
-        router.replace('/associated-organization')
-      } else {
-        router.replace('/onboarding')
-      }
+      router.replace(getPostAuthRedirectPath(userData))
       return
     }
 
