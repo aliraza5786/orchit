@@ -76,13 +76,6 @@
             Go Back
           </button>
         </div>
-
-        <!-- Quick links -->
-        <div class="quick-links">
-          <span class="quick-label">Quick links:</span>
-          <a href="/dashboard" class="quick-link">Dashboard</a>
-          <a href="/peak" class="quick-link">Peak</a>
-        </div>
       </div>
     </div>
 
