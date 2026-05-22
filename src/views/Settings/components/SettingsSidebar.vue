@@ -287,6 +287,26 @@ function orgInitials(title: string) {
 
       <!-- ── ORGANIZATION ── -->
       <template v-if="isCompanyEmail || mode === 'org'">
+        <div v-if="!hasOrgs" class="flex flex-col gap-3">
+    <p class="text-[10px] uppercase tracking-widest text-text-secondary/50 font-semibold px-1">Organization</p>
+    <div class="rounded-xl border border-border bg-bg-card p-4">
+      <div class="flex items-center gap-2 mb-1.5">
+        <i class="fa-regular fa-building text-text-secondary text-[13px]"></i>
+        <p class="text-[12px] font-bold text-text-primary">No organization yet</p>
+      </div>
+      <p class="text-[11px] text-text-secondary leading-snug mb-3">
+        Create your organization to manage teams, members, and advanced settings.
+      </p>
+      <button
+        @click="router.push('/onboarding')"
+        class="w-full py-2 rounded-lg text-white text-[12px] cursor-pointer font-bold hover:opacity-90 active:scale-[0.97] transition-all"
+        style="background: linear-gradient(90deg, #7c3aed, #6c63ff)"
+      >
+        <i class="fa-solid fa-plus text-[10px] mr-1"></i>
+        Create organization
+      </button>
+    </div>
+  </div>
         <div v-if="hasOrgs" class="flex flex-col gap-5">
 
           <!-- Org picker -->

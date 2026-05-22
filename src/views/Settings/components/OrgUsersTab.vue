@@ -28,17 +28,21 @@
         <!-- Add member -->
         <div class="relative group/add">
           <button
-            v-if="canCreateUsers && hasSuperAdmin"
-            @click="hasOrgDomain ? handleAddMember() : undefined"
-            :disabled="!hasOrgDomain || !isUserVerified"
-            class="flex items-center gap-2 px-4 py-2 text-white text-sm font-semibold rounded-lg transition-all shadow-sm whitespace-nowrap cursor-pointer"
-            :class="hasOrgDomain
-              ? 'bg-accent hover:bg-accent/90 active:scale-95 shadow-accent/20'
-              : 'bg-accent/40 cursor-not-allowed shadow-none'"
-          >
-            <i class="fa-solid fa-user-plus text-xs"></i>
-            Add member
-          </button>
+          v-if="canCreateUsers"
+          @click="hasOrgDomain && profile?.active_company?.has_domain_verified 
+            ? handleAddMember() 
+            : !profile?.active_company?.has_domain_verified 
+              ? toast.warning('Please verify your domain first before adding members.') 
+              : undefined"
+          :disabled="!hasOrgDomain || !isUserVerified"
+          class="flex items-center gap-2 px-4 py-2 text-white text-sm font-semibold rounded-lg transition-all shadow-sm whitespace-nowrap cursor-pointer"
+          :class="hasOrgDomain
+            ? 'bg-accent hover:bg-accent/90 active:scale-95 shadow-accent/20'
+            : 'bg-accent/40 cursor-not-allowed shadow-none'"
+        >
+          <i class="fa-solid fa-user-plus text-xs"></i>
+          Add member
+        </button>
           <div
             v-if="!hasOrgDomain"
             class="absolute right-0 top-full mt-2 z-50 w-64 rounded-xl border border-border/60 bg-bg-dropdown shadow-xl p-3 hidden group-hover/add:block pointer-events-none"
@@ -749,7 +753,7 @@ const isSuperAdminOrOwner = computed(() => {
 })
 
 const canCreateUsers = computed(() =>
-  isUserVerified.value && (isSuperAdminOrOwner.value || hasPerm('company_user.create'))
+  isSuperAdminOrOwner.value || hasPerm('company_user.create')
 )
 const canUpdateUsers = computed(() =>
   isUserVerified.value && (isSuperAdminOrOwner.value || hasPerm('company_user.update'))
