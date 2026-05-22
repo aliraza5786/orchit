@@ -73,6 +73,46 @@ export function getActiveCompanyIdFromProfile(
   return activeCompany?._id ?? ''
 }
 
+export function buildCompanyDomainUrl(options: {
+  domainLink: string
+  path?: string
+  theme: string
+  /** Raw JWT — encoded into `_auth` */
+  token?: string
+  /** Pre-encoded `_auth` from router query */
+  encodedAuth?: string
+  companyId?: string
+  encodedCompanyId?: string
+  extraQuery?: Record<string, string>
+}): string {
+  const {
+    domainLink,
+    path = '/dashboard',
+    theme,
+    token,
+    encodedAuth,
+    companyId,
+    encodedCompanyId,
+    extraQuery,
+  } = options
+
+  const params = new URLSearchParams()
+  params.set('theme', theme)
+  if (encodedAuth) params.set('_auth', encodedAuth)
+  else if (token) params.set('_auth', encodeAuthParam(token))
+  if (encodedCompanyId) params.set('_cid', encodedCompanyId)
+  else if (companyId) params.set('_cid', encodeAuthParam(companyId))
+  if (extraQuery) {
+    Object.entries(extraQuery).forEach(([key, value]) => {
+      if (value != null && value !== '') params.set(key, value)
+    })
+  }
+
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`
+  const base = domainLink.replace(/\/$/, '')
+  return `${base}${normalizedPath}?${params.toString()}`
+}
+
 export function buildCompanyDomainDashboardUrl(options: {
   domainLink: string
   token: string
@@ -80,18 +120,14 @@ export function buildCompanyDomainDashboardUrl(options: {
   companyId?: string
   extraQuery?: Record<string, string>
 }): string {
-  const { domainLink, token, theme, companyId, extraQuery } = options
-  const params = new URLSearchParams()
-  params.set('theme', theme)
-  params.set('_auth', encodeAuthParam(token))
-  if (companyId) params.set('_cid', encodeAuthParam(companyId))
-  if (extraQuery) {
-    Object.entries(extraQuery).forEach(([key, value]) => {
-      if (value != null && value !== '') params.set(key, value)
-    })
-  }
-  const base = domainLink.replace(/\/$/, '')
-  return `${base}/dashboard?${params.toString()}`
+  return buildCompanyDomainUrl({
+    domainLink: options.domainLink,
+    path: '/dashboard',
+    theme: options.theme,
+    token: options.token,
+    companyId: options.companyId,
+    extraQuery: options.extraQuery,
+  })
 }
 
 /**

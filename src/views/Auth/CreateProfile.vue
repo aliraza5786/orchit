@@ -1114,7 +1114,7 @@
             <p class="text-sm text-text-secondary leading-relaxed mb-5">{{ companySlugError }}</p>
             <div class="flex gap-2">
               <button v-if="isNameConflictError" type="button" class="flex-1 rounded-lg border border-black/10 bg-bg-dropdown px-3 py-2.5 text-sm font-medium text-text-secondary hover:border-black/20 hover:text-text-primary transition cursor-pointer" @click="handleConflictRedirect">Change name here</button>
-              <button v-else type="button" class="flex-1 rounded-lg border border-black/10 bg-bg-dropdown px-3 py-2.5 text-sm font-medium text-text-secondary hover:border-black/20 hover:text-text-primary transition cursor-pointer" @click="dismissErrorModal">Go to Dashboard</button>
+              <button v-else type="button" class="flex-1 rounded-lg border border-border bg-bg-dropdown px-3 py-2.5 text-sm font-medium text-text-secondary hover:border-accent hover:text-text-primary transition cursor-pointer" @click="dismissErrorModal">Go to Dashboard</button>
             </div>
           </div>
         </div>
