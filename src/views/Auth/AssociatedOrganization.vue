@@ -210,7 +210,8 @@ import { computed } from "vue";
 import { useRouter } from "vue-router";
 import AuthLayout from "../../layout/AuthLayout/AuthLayout.vue";
 import Button from "../../components/ui/Button.vue";
-import { useAuthStore } from "../../stores/auth";  
+import { useAuthStore } from "../../stores/auth";
+import { redirectToLogin } from "../../utilities/authRedirect";  
 
 const router = useRouter();
 const authStore = useAuthStore(); 
@@ -220,7 +221,7 @@ const associatedCompany = computed(() => userData.value?.associated_company);
 
 function logout() {
   authStore.logout();
-  router.push("/login");
+  redirectToLogin();
 }
 
 function goToDashboard() {

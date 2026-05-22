@@ -174,7 +174,12 @@ import lightLogo from "@assets/global/light-logo.png";
  
 import { useTheme } from "../../composables/useTheme";
 import { getPostAuthRedirectPath } from "../../utilities/onboardingRedirect";
-const { isDark } = useTheme();
+import {
+  tryRedirectToCompanyDomainDashboard,
+  normalizeProfileUserData,
+} from "../../utilities/authRedirect";
+import { getProfile } from "../../services/user";
+const { isDark, theme } = useTheme();
 declare const AppleID: any;
 defineProps<{
   isDark: boolean;
@@ -338,11 +343,43 @@ async function handleLoginSuccess(data: any) {
     return;
   }
 
-  const userData = authStore.user?.data ?? authStore.user;
+  let userData = normalizeProfileUserData(
+    (authStore.user?.data ?? authStore.user) as Record<string, unknown> | undefined,
+  );
+  if (!userData) {
+    try {
+      const profileRes = await getProfile();
+      userData = normalizeProfileUserData(
+        (profileRes?.data ?? profileRes) as Record<string, unknown> | undefined,
+      );
+    } catch (e) {
+      console.warn("Profile fetch after login failed:", e);
+    }
+  }
+
+  const activeCompanyId = userData?.active_company_id as string | undefined;
+  if (activeCompanyId) {
+    authStore.setCompany(activeCompanyId);
+  }
+
   const destination = getPostAuthRedirectPath(userData, { isLogin: true });
 
   if (destination !== "/dashboard") {
     router.push(destination);
+    return;
+  }
+
+  const extraQuery = workspaceStore.pricing
+    ? { stripePayment: "true" }
+    : undefined;
+
+  if (
+    tryRedirectToCompanyDomainDashboard(userData, {
+      token,
+      theme: theme.value,
+      extraQuery,
+    })
+  ) {
     return;
   }
 

@@ -198,9 +198,10 @@ api.interceptors.response.use(
 router.beforeEach(async (to, _from, next) => {
   const auth = useAuthStore()
 
-  // Handle cross-subdomain logout synchronization
+  // Cross-subdomain logout: clear session and show login (do not bounce to Home)
   if (to.name === 'Login' && to.query.logout === 'true') {
     auth.logout()
+    return next()
   }
 
   // 1. Bootstrap auth state once per session

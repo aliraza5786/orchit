@@ -200,9 +200,9 @@
         </div>
 
         <div class="space-y-3 " v-show="activeStep === 2 && selected === 'team'">
-          <BaseTextField ref="teamRef" v-model="team" label="Company Name" placeholder="Company name" size="md" :error="!!errors.team" :message="errors.team" />
-          <BaseSelectField :noSearchAble="true" ref="roleRef" v-model="role" label="What role do you perform in your company?" :options="staticRolesList" placeholder="Select Role" size="md" :error="!!errors.role" :message="errors.role" />
-          <BaseSelectField :noSearchAble="true" ref="companySizeRef" v-model="companySize" label="What's your company size?" :options="companySizeOptions" placeholder="Select Company size" size="md" :error="!!errors.companySize" :message="errors.companySize" />
+          <BaseTextField ref="teamRef" v-model="team" placeholder="Company name" size="md" :error="!!errors.team" :message="errors.team" />
+          <BaseSelectField :noSearchAble="true" ref="roleRef" v-model="role" :options="staticRolesList" placeholder="Select your role" size="md" :error="!!errors.role" :message="errors.role" />
+          <BaseSelectField :noSearchAble="true" ref="companySizeRef" v-model="companySize"  :options="companySizeOptions" placeholder="Select Company size" size="md" :error="!!errors.companySize" :message="errors.companySize" />
         </div>
 
         <div class="space-y-3 " v-show="activeStep === 2 && selected === 'personal'">

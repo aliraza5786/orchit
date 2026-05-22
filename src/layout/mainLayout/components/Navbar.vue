@@ -446,11 +446,11 @@ async function handleLogout() {
     authStore.logout();
     await queryClient.cancelQueries();
     queryClient.clear();
-    await new Promise((res) => setTimeout(res, 200));
-    redirectToLogin(router);
+    redirectToLogin();
   } catch (e) {
     console.error('Logout failed', e);
-    redirectToLogin(undefined);
+    authStore.logout();
+    redirectToLogin();
   }
 }
 
