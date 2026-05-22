@@ -264,65 +264,64 @@
           <p class="text-xs text-text-secondary truncate mt-0.5 leading-tight">{{ member.u_email }}</p>
         </div>
 
-        <!-- Role select -->
         <div
-          v-if="canUpdateUsers && !isSuperAdminMember(member)"
-          class="relative shrink-0"
-          @click.stop
-        >
-          <select
-            :value="member.company_role_id"
-            @change.stop="handleInlineRoleUpdate(member, ($event.target as HTMLSelectElement).value)"
-            :disabled="roleUpdatingUserId === member._id || !canUpdateUsers"
-            class="appearance-none cursor-pointer text-[11px] font-semibold uppercase tracking-wide pl-2.5 pr-6 py-1.5 rounded-lg border border-accent/20 bg-accent/8 text-accent hover:border-accent/40 focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:opacity-50 transition-all"
-          >
-            <option v-for="role in allRoles" :key="role._id" :value="role._id">{{ role.title }}</option>
-          </select>
-          <i v-if="roleUpdatingUserId === member._id" class="fa-solid fa-spinner animate-spin absolute right-1.5 top-1/2 -translate-y-1/2 text-[9px] text-accent pointer-events-none"></i>
-          <i v-else class="fa-solid fa-chevron-down absolute right-1.5 top-1/2 -translate-y-1/2 text-[8px] text-accent pointer-events-none"></i>
-        </div>
+  class="flex items-center gap-1.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+  v-if="!isSuperAdminMember(member) && (canUpdateUsers || canDeleteUsers)"
+>
+  <button
+    v-if="canUpdateUsers && (member.membership_status === 'active' || member.membership_status === 'deactivated' || member.membership_status === 'suspended')"
+    @click.stop="openStatusModal(member)"
+    :disabled="togglingUserId === member._id || !isUserVerified"
+    :title="member.membership_status === 'active' ? 'Deactivate member' : 'Activate member'"
+    class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold border transition-all disabled:opacity-40"
+    :class="member.membership_status === 'active'
+      ? 'border-yellow-500/25 bg-yellow-500/8 text-yellow-600 hover:bg-yellow-500/15 hover:border-yellow-500/40'
+      : 'border-green-500/25 bg-green-500/8 text-green-600 hover:bg-green-500/15 hover:border-green-500/40'"
+  >
+    <i v-if="togglingUserId === member._id" class="fa-solid fa-spinner animate-spin text-[10px]"></i>
+    <i v-else-if="member.membership_status === 'active'" class="fa-solid fa-ban text-[10px]"></i>
+    <i v-else class="fa-solid fa-circle-check text-[10px]"></i>
+    <span class="hidden sm:inline">{{ member.membership_status === 'active' ? 'Deactivate' : 'Activate' }}</span>
+  </button>
 
-        <!-- Actions -->
-        <div
-          class="flex items-center gap-1.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
-          v-if="!isSuperAdminMember(member) && (canUpdateUsers || canDeleteUsers)"
-        >
-          <button
-            v-if="canUpdateUsers && (member.membership_status === 'active' || member.membership_status === 'deactivated' || member.membership_status === 'suspended')"
-            @click.stop="openStatusModal(member)"
-            :disabled="togglingUserId === member._id || !isUserVerified"
-            :title="member.membership_status === 'active' ? 'Deactivate member' : 'Activate member'"
-            class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold border transition-all disabled:opacity-40"
-            :class="member.membership_status === 'active'
-              ? 'border-yellow-500/25 bg-yellow-500/8 text-yellow-600 hover:bg-yellow-500/15 hover:border-yellow-500/40'
-              : 'border-green-500/25 bg-green-500/8 text-green-600 hover:bg-green-500/15 hover:border-green-500/40'"
-          >
-            <i v-if="togglingUserId === member._id" class="fa-solid fa-spinner animate-spin text-[10px]"></i>
-            <i v-else-if="member.membership_status === 'active'" class="fa-solid fa-ban text-[10px]"></i>
-            <i v-else class="fa-solid fa-circle-check text-[10px]"></i>
-            <span class="hidden sm:inline">{{ member.membership_status === 'active' ? 'Deactivate' : 'Activate' }}</span>
-          </button>
+  <button
+    v-if="canUpdateUsers"
+    @click.stop="openEditModal(member)"
+    :disabled="!isUserVerified"
+    title="Edit member"
+    class="w-8 h-8 rounded-lg flex items-center justify-center border border-border/50 text-text-secondary hover:text-text-primary hover:border-border hover:bg-bg-card transition-all disabled:opacity-40"
+  >
+    <i class="fa-regular fa-pen-to-square text-xs"></i>
+  </button>
 
-          <button
-            v-if="canUpdateUsers"
-            @click.stop="openEditModal(member)"
-            :disabled="!isUserVerified"
-            title="Edit member"
-            class="w-8 h-8 rounded-lg flex items-center justify-center border border-border/50 text-text-secondary hover:text-text-primary hover:border-border hover:bg-bg-card transition-all disabled:opacity-40"
-          >
-            <i class="fa-regular fa-pen-to-square text-xs"></i>
-          </button>
+  <button
+    v-if="canDeleteUsers"
+    @click.stop="confirmDeactivate(member)"
+    :disabled="!isUserVerified"
+    title="Remove member"
+    class="w-8 h-8 rounded-lg flex items-center justify-center border border-red-500/20 text-red-400 hover:bg-red-500/10 hover:border-red-500/40 transition-all disabled:opacity-40"
+  >
+    <i class="fa-regular fa-trash-can text-xs"></i>
+  </button>
+</div>
 
-          <button
-            v-if="canDeleteUsers"
-            @click.stop="confirmDeactivate(member)"
-            :disabled="!isUserVerified"
-            title="Remove member"
-            class="w-8 h-8 rounded-lg flex items-center justify-center border border-red-500/20 text-red-400 hover:bg-red-500/10 hover:border-red-500/40 transition-all disabled:opacity-40"
-          >
-            <i class="fa-regular fa-trash-can text-xs"></i>
-          </button>
-        </div>
+<!-- Role select -->
+<div
+  v-if="canUpdateUsers && !isSuperAdminMember(member)"
+  class="relative shrink-0"
+  @click.stop
+>
+  <select
+    :value="member.company_role_id"
+    @change.stop="handleInlineRoleUpdate(member, ($event.target as HTMLSelectElement).value)"
+    :disabled="roleUpdatingUserId === member._id || !canUpdateUsers"
+    class="appearance-none cursor-pointer text-[11px] font-semibold uppercase tracking-wide pl-2.5 pr-6 py-1.5 rounded-lg border border-accent/20 bg-accent/8 text-accent hover:border-accent/40 focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:opacity-50 transition-all"
+  >
+    <option v-for="role in allRoles" :key="role._id" :value="role._id">{{ role.title }}</option>
+  </select>
+  <i v-if="roleUpdatingUserId === member._id" class="fa-solid fa-spinner animate-spin absolute right-1.5 top-1/2 -translate-y-1/2 text-[9px] text-accent pointer-events-none"></i>
+  <i v-else class="fa-solid fa-chevron-down absolute right-1.5 top-1/2 -translate-y-1/2 text-[8px] text-accent pointer-events-none"></i>
+</div>
       </div>
     </div>
 

@@ -2,7 +2,8 @@
 import { computed, ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../../../stores/auth'
-
+import { getProfile } from "../../../services/user";
+import { useQuery } from '@tanstack/vue-query';
 const props = defineProps<{
   mobileOpen?: boolean
   profile?: any
@@ -98,7 +99,16 @@ function goBack() { router.push('/dashboard') }
 
 // ─── Company switching ────────────────────────────────────────
 const isSwitching = ref(false)
+const { data: profile } = useQuery({
+  queryKey: ['profile'],
+  queryFn: getProfile,
+  placeholderData: (prev) => prev,
+});
 
+const profileData = computed(() => profile.value?.data ?? null);
+const isPendingOrgMember = computed(() =>
+  !!profileData.value?.associated_company?._id && !profileData.value?.active_company?._id
+)
 async function selectCompany(company: any, navigate = true) {
   if (!company?._id || isSwitching.value) return
   isSwitching.value = true
@@ -287,7 +297,7 @@ function orgInitials(title: string) {
 
       <!-- ── ORGANIZATION ── -->
       <template v-if="isCompanyEmail || mode === 'org'">
-        <div v-if="!hasOrgs" class="flex flex-col gap-3">
+        <div v-if="!hasOrgs && !isPendingOrgMember" class="flex flex-col gap-3">
     <p class="text-[10px] uppercase tracking-widest text-text-secondary/50 font-semibold px-1">Organization</p>
     <div class="rounded-xl border border-border bg-bg-card p-4">
       <div class="flex items-center gap-2 mb-1.5">
