@@ -490,10 +490,23 @@
               <div>
                 <label class="text-[11px] font-semibold text-text-primary uppercase tracking-wider block mb-1.5">Workspace email <span class="text-red-500">*</span></label>
                 <div v-if="hasOrgDomain" class="flex items-center border rounded-lg overflow-hidden transition-all" :class="createErrors.emailPrefix ? 'border-red-500/60' : 'border-border/60 focus-within:border-accent/60 focus-within:ring-2 focus-within:ring-accent/10'">
-                  <input v-model="createForm.emailPrefix" placeholder="jane.doe" class="flex-1 px-3.5 py-2.5 text-sm bg-transparent outline-none placeholder:text-text-tertiary" @blur="validateCreateForm" />
-                  <span class="px-3 py-2.5 text-sm text-text-secondary bg-bg-card/60 border-l border-border/40 shrink-0 font-mono whitespace-nowrap">@{{ orgDomainSuffix }}</span>
-                </div>
-                <input v-else v-model="createForm.emailPrefix" type="email" placeholder="jane@example.com" class="w-full px-3.5 py-2.5 text-sm bg-transparent border border-border/60 rounded-lg outline-none placeholder:text-text-tertiary focus-within:border-accent/60 focus-within:ring-2 focus-within:ring-accent/10" @blur="validateCreateForm" />
+                <input
+                :value="createForm.emailPrefix"
+                placeholder="jane.doe"
+                class="flex-1 px-3.5 py-2.5 text-sm bg-transparent outline-none placeholder:text-text-tertiary"
+                @blur="validateCreateForm"
+                @input="createForm.emailPrefix = ($event.target as HTMLInputElement).value"
+              />
+                <span class="px-3 py-2.5 text-sm text-text-secondary bg-bg-card/60 border-l border-border/40 shrink-0 font-mono whitespace-nowrap">@{{ orgDomainSuffix }}</span>
+              </div>
+                <input
+                v-else
+                :value="createForm.emailPrefix"
+                placeholder="jane.doe"
+                class="flex-1 px-3.5 py-2.5 text-sm bg-transparent outline-none placeholder:text-text-tertiary"
+                @blur="validateCreateForm"
+                @input="createForm.emailPrefix = ($event.target as HTMLInputElement).value"
+              />
                 <p v-if="createErrors.emailPrefix" class="text-[11px] text-red-500 mt-1">{{ createErrors.emailPrefix }}</p>
                 <p v-else class="text-[11px] text-text-secondary mt-1">Full email: <span class="font-mono text-accent">{{ fullEmail }}</span></p>
               </div>
@@ -1049,16 +1062,19 @@ const fullEmail = computed(() =>
 )
 
 function nameToEmailPrefix(name: string): string {
-  return name.trim().toLowerCase().replace(/\s+/g, '.').replace(/[^a-z0-9.]/g, '')
+  return name.trim().toLowerCase()
+    .replace(/\s+/g, '.')
+    .replace(/[@+]/g, '')  
+    .replace(/[^a-z0-9._-]/g, '') 
 }
 
+const lastAutoPrefix = ref('')
 function onNameInput() {
   if (!createForm.value.emailPrefix || createForm.value.emailPrefix === nameToEmailPrefix(createForm.value.u_full_name.slice(0, -1))) {
     createForm.value.emailPrefix = nameToEmailPrefix(createForm.value.u_full_name)
   }
   createErrors.value.u_full_name = ''
 }
-
 const passwordStrength = computed(() => {
   const p = createForm.value.u_password
   if (!p) return 0
@@ -1078,23 +1094,21 @@ function validateCreateForm(): boolean {
   createErrors.value = { u_full_name: '', emailPrefix: '', u_password: '' }
   if (!createForm.value.u_full_name.trim())  { createErrors.value.u_full_name  = 'Full name is required'; valid = false }
   if (!createForm.value.emailPrefix.trim())  { createErrors.value.emailPrefix  = 'Email is required'; valid = false }
-  else if (!/^[a-z0-9._-]+$/.test(createForm.value.emailPrefix)) { createErrors.value.emailPrefix = 'Only lowercase letters, numbers, dots, hyphens'; valid = false }
   if (!createForm.value.u_password)          { createErrors.value.u_password   = 'Password is required'; valid = false }
   else if (createForm.value.u_password.length < 6) { createErrors.value.u_password = 'Minimum 6 characters'; valid = false }
   return valid
 }
-
 const isCreateFormValid = computed(() =>
   !!createForm.value.u_full_name.trim() && !!createForm.value.emailPrefix.trim() &&
   createForm.value.u_password.length >= 6 &&
   !createErrors.value.u_full_name && !createErrors.value.emailPrefix && !createErrors.value.u_password
 )
-
 function openCreateModal() {
   createForm.value        = { u_full_name: '', emailPrefix: '', u_password: '', u_job_title: '' }
   createErrors.value      = { u_full_name: '', emailPrefix: '', u_password: '' }
   createServerError.value = ''
   showPassword.value      = false
+  lastAutoPrefix.value    = ''  // ✅ reset tracking ref
   showCreateModal.value   = true
 }
 function closeCreateModal() { showCreateModal.value = false }
