@@ -1,13 +1,13 @@
 <template>
-  <div class="rounded-lg">
+  <div class="rounded-[6px]">
     <!-- Header -->
     <div
-      class="flex items-center justify-between mb-6 flex-wrap gap-3 bg-bg-body px-5 py-2 rounded-md border border-border"
+      class="flex items-center justify-between mb-6 flex-wrap gap-3 bg-bg-surface px-5 py-2 rounded-[6px] border border-border"
     >
       <div class="text-lg font-semibold text-text-primary">Peak Widgets</div>
       <div class="flex items-center gap-2">
         <button
-          class="inline-flex items-center gap-1.5 px-3.5 py-[7px] bg-[var(--bg-body)] text-[var(--text-primary)] border border-[var(--border)] rounded-[7px] text-[13px] cursor-pointer transition-colors hover:bg-[var(--bg-surface)] disabled:opacity-50 disabled:cursor-not-allowed"
+          class="inline-flex items-center gap-1.5 px-3.5 py-[7px] bg-[var(--bg-body)] text-[var(--text-primary)] border border-[var(--border)] rounded-[6px] text-[13px] cursor-pointer transition-colors hover:bg-[var(--bg-surface)] disabled:opacity-50 disabled:cursor-not-allowed"
           @click="fetchAllPinnedWidgetData"
           :disabled="store.isLoadingWidgets"
           title="Refresh all"
@@ -18,7 +18,7 @@
           ></i>
         </button>
         <button
-          class="inline-flex items-center gap-1.5 px-3.5 py-[7px] bg-primary-color text-white border-none rounded-[7px] text-[13px] font-semibold cursor-pointer transition-colors hover:bg-primary-color disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+          class="inline-flex items-center gap-1.5 px-3.5 py-[7px] bg-primary-color text-white border-none rounded-[6px] text-[13px] font-semibold cursor-pointer transition-colors hover:bg-primary-color disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
           @click="openAddModal"
         >
           <i class="fa-solid fa-plus"></i>
@@ -34,7 +34,7 @@
         store.pinnedWidgets.length === 0 &&
         !store.pendingProposal
       "
-      class="flex flex-col items-center justify-center py-16 px-6 text-center gap-3 bg-bg-body rounded-md border border-border"
+      class="flex flex-col items-center justify-center py-16 px-6 text-center gap-3 bg-bg-surface rounded-[6px] border border-border"
     >
       <div
         class="w-14 h-14 bg-[var(--bg-lavender)] rounded-2xl flex items-center justify-center text-[22px] text-[var(--primary-color)] mb-1"
@@ -48,7 +48,7 @@
         Add widgets to track your workspace metrics in real time.
       </p>
       <button
-        class="inline-flex items-center gap-1.5 px-3.5 py-[7px] bg-[var(--primary-color)] text-white border-none rounded-[7px] text-[13px] font-semibold cursor-pointer transition-colors hover:bg-[var(--primary-color)]"
+        class="inline-flex items-center gap-1.5 px-3.5 py-[7px] bg-[var(--primary-color)] text-white border-none rounded-[6px] text-[13px] font-semibold cursor-pointer transition-colors hover:bg-[var(--primary-color)]"
         @click="openAddModal"
       >
         <i class="fa-solid fa-plus"></i> Add your first widget
@@ -62,7 +62,7 @@
     >
       <div class="flex items-center gap-3">
         <div
-          class="w-[34px] h-[34px] rounded-lg bg-[var(--primary-color)] text-white flex items-center justify-center text-sm flex-shrink-0"
+          class="w-[34px] h-[34px] rounded-[6px] bg-[var(--primary-color)] text-white flex items-center justify-center text-sm flex-shrink-0"
         >
           <i class="fa-solid fa-robot"></i>
         </div>
@@ -77,13 +77,13 @@
       </div>
       <div class="flex gap-2 items-center">
         <button
-          class="px-2.5 py-[5px] bg-transparent text-[var(--text-secondary)] border border-[var(--border)] rounded-md text-xs cursor-pointer transition-colors hover:bg-[var(--bg-surface)]"
+          class="px-2.5 py-[5px] bg-transparent text-[var(--text-secondary)] border border-[var(--border)] rounded-[6px] text-xs cursor-pointer transition-colors hover:bg-[var(--bg-surface)]"
           @click="store.clearPendingProposal()"
         >
           Dismiss
         </button>
         <button
-          class="inline-flex items-center gap-1.5 px-3 py-[5px] bg-[var(--primary-color)] text-white border-none rounded-md text-xs font-semibold cursor-pointer transition-colors hover:bg-[var(--primary-color)] disabled:opacity-50 disabled:cursor-not-allowed"
+          class="inline-flex items-center gap-1.5 px-3 py-[5px] bg-[var(--primary-color)] text-white border-none rounded-[6px] text-xs font-semibold cursor-pointer transition-colors hover:bg-[var(--primary-color)] disabled:opacity-50 disabled:cursor-not-allowed"
           @click="acceptProposal"
           :disabled="store.isSaving"
         >
@@ -101,16 +101,16 @@
       <div
         v-for="i in 4"
         :key="i"
-        class="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-3.5 flex flex-col gap-2.5 pointer-events-none"
+        class="bg-[var(--bg-card)] border border-[var(--border)] rounded-[6px] p-3.5 flex flex-col gap-2.5 pointer-events-none"
       >
         <div
-          class="h-3 bg-[var(--bg-surface)] rounded-md w-2/5 animate-pulse"
+          class="h-3 bg-[var(--bg-surface)] rounded-[6px] w-2/5 animate-pulse"
         ></div>
         <div
-          class="h-3 bg-[var(--bg-surface)] rounded-md w-4/5 animate-pulse"
+          class="h-3 bg-[var(--bg-surface)] rounded-[6px] w-4/5 animate-pulse"
         ></div>
         <div
-          class="h-12 bg-[var(--bg-surface)] rounded-lg mt-1 animate-pulse"
+          class="h-12 bg-[var(--bg-surface)] rounded-[6px] mt-1 animate-pulse"
         ></div>
       </div>
     </div>
@@ -123,7 +123,7 @@
       <div
         v-for="(widget, widgetIndex) in store.pinnedWidgets"
         :key="widget._id"
-        class="bg-card border border-border rounded-lg flex flex-col overflow-hidden transition-all duration-200 relative group"
+        class="bg-card border border-border rounded-[6px] flex flex-col overflow-hidden transition-all duration-200 relative group"
         :class="[
           widgetIndex === 0
             ? 'flex-[1_1_30%] min-w-[240px]'
@@ -145,7 +145,7 @@
           class="flex items-start gap-3 px-4 pt-4 pb-3 border-b border-[var(--border)]"
         >
           <div
-            class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform duration-150 group-hover:scale-105"
+            class="w-10 h-10 rounded-[6px] flex items-center justify-center flex-shrink-0 transition-transform duration-150 group-hover:scale-105"
             :style="{
               background: widget.color
                 ? widget.color + '15'
@@ -203,7 +203,7 @@
           </div>
           <div class="flex gap-0.5 flex-shrink-0">
             <button
-              class="w-7 h-7 flex items-center justify-center bg-transparent border-none rounded-lg text-[11px] text-[var(--text-secondary)] cursor-pointer transition-all hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)] disabled:opacity-30 disabled:cursor-not-allowed"
+              class="w-7 h-7 flex items-center justify-center bg-transparent border-none rounded-[6px] text-[11px] text-[var(--text-secondary)] cursor-pointer transition-all hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)] disabled:opacity-30 disabled:cursor-not-allowed"
               @click="refreshWidget(widget._id)"
               title="Refresh"
               :disabled="store.isWidgetDataLoading(widget._id)"
@@ -214,14 +214,14 @@
               ></i>
             </button>
             <button
-              class="w-7 h-7 flex items-center justify-center bg-transparent border-none rounded-lg text-[11px] text-[var(--text-secondary)] cursor-pointer transition-all hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]"
+              class="w-7 h-7 flex items-center justify-center bg-transparent border-none rounded-[6px] text-[11px] text-[var(--text-secondary)] cursor-pointer transition-all hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]"
               @click="openEditModal(widget)"
               title="Edit"
             >
               <i class="fa-solid fa-pen"></i>
             </button>
             <button
-              class="w-7 h-7 flex items-center justify-center bg-transparent border-none rounded-lg text-[11px] text-[var(--text-secondary)] cursor-pointer transition-all hover:bg-red-50 hover:text-red-500 disabled:opacity-30 disabled:cursor-not-allowed"
+              class="w-7 h-7 flex items-center justify-center bg-transparent border-none rounded-[6px] text-[11px] text-[var(--text-secondary)] cursor-pointer transition-all hover:bg-red-50 hover:text-red-500 disabled:opacity-30 disabled:cursor-not-allowed"
               @click="confirmDelete(widget)"
               title="Delete"
               :disabled="store.isWidgetDeleting(widget._id)"
@@ -236,9 +236,9 @@
           <!-- Loading state -->
           <template v-if="store.isWidgetDataLoading(widget._id)">
             <div class="flex-1 flex flex-col gap-3 animate-pulse">
-              <div class="h-3 bg-[var(--bg-surface)] rounded-md w-1/3"></div>
+              <div class="h-3 bg-[var(--bg-surface)] rounded-[6px] w-1/3"></div>
               <div
-                class="flex-1 bg-[var(--bg-surface)] rounded-xl min-h-[120px]"
+                class="flex-1 bg-[var(--bg-surface)] rounded-[6px] min-h-[120px]"
               ></div>
             </div>
           </template>
@@ -263,7 +263,7 @@
 
                 <!-- Table -->
                 <div
-                  class="overflow-auto flex-1 rounded-lg border border-[var(--border)]"
+                  class="overflow-auto flex-1 rounded-[6px] border border-[var(--border)]"
                 >
                   <table class="w-full border-collapse text-[12px]">
                     <thead>
@@ -1055,7 +1055,7 @@
               class="flex-1 flex flex-col items-center justify-center gap-2 py-8 text-center"
             >
               <div
-                class="w-10 h-10 rounded-xl bg-[var(--bg-surface)] flex items-center justify-center text-[var(--text-secondary)] mb-1"
+                class="w-10 h-10 rounded-[6px] bg-[var(--bg-surface)] flex items-center justify-center text-[var(--text-secondary)] mb-1"
               >
                 <i class="fa-solid fa-circle-info text-sm"></i>
               </div>
@@ -1127,7 +1127,7 @@
                 {{ editingWidget ? "Edit Widget" : "Add Widget" }}
               </h2>
               <button
-                class="w-7 h-7 flex items-center justify-center bg-transparent border-none rounded-md text-[11px] text-[var(--text-secondary)] cursor-pointer transition-all hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]"
+                class="w-7 h-7 flex items-center justify-center bg-transparent border-none rounded-[6px] text-[11px] text-[var(--text-secondary)] cursor-pointer transition-all hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]"
                 @click="closeModal"
               >
                 <i class="fa-solid fa-xmark"></i>
@@ -1138,7 +1138,7 @@
             <template v-if="modalMode === 'create'">
               <div class="flex-1 overflow-y-auto px-6 py-6 flex flex-col gap-5">
                 <div
-                  class="bg-bg-surface border border-[var(--border)] rounded-xl p-4 shadow-sm relative"
+                  class="bg-bg-surface border border-[var(--border)] rounded-[6px] p-4 shadow-sm relative"
                 >
                   <textarea
                     v-model="aiPrompt"
@@ -1151,7 +1151,7 @@
                   />
                   <div class="flex justify-end mt-2">
                     <button
-                      class="w-9 h-9 rounded-lg bg-[var(--primary-color)] text-white flex items-center justify-center cursor-pointer border-none transition-colors hover:bg-[var(--primary-color)] disabled:opacity-50 disabled:cursor-not-allowed"
+                      class="w-9 h-9 rounded-[6px] bg-[var(--primary-color)] text-white flex items-center justify-center cursor-pointer border-none transition-colors hover:bg-[var(--primary-color)] disabled:opacity-50 disabled:cursor-not-allowed"
                       @click="generateWithAi"
                       title="Generate with AI"
                       :disabled="isAiGenerating || !aiPrompt.trim()"
@@ -1170,7 +1170,7 @@
                 <!-- recent messages -->
                    <div
   v-if="chatHistory.length"
-  class="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-3"
+  class="bg-[var(--bg-card)] border border-[var(--border)] rounded-[6px] p-3"
 >
   <p class="text-[12px] font-semibold text-[var(--text-secondary)] mb-3">
     Recent  Messages
@@ -1217,7 +1217,7 @@
                       v-for="suggestion in aiSuggestions"
                       :key="suggestion"
                       @click="aiPrompt = suggestion"
-                      class="text-left px-3 py-3 rounded-xl border border-[var(--border)] text-[12px] text-[var(--text-secondary)] bg-[var(--bg-card)] 
+                      class="text-left px-3 py-3 rounded-[6px] border border-[var(--border)] text-[12px] text-[var(--text-secondary)] bg-[var(--bg-card)] 
                       hover:border-[var(--primary-color)] hover:text-[var(--primary-color)] hover:bg-[var(--bg-surface)]
                       transition-all duration-200 ease-out 
                       hover:scale-[1.03] hover:-translate-y-0.5
@@ -1242,7 +1242,7 @@
                   showManualForm = true;
                   modalMode = 'manual';
                 "
-                class="w-full py-3 rounded-xl bg-[var(--primary-color)] text-white text-[14px] font-semibold border-none cursor-pointer transition-colors hover:bg-[var(--primary-color)] disabled:opacity-50 disabled:cursor-not-allowed"
+                class="w-full py-3 rounded-[6px] bg-[var(--primary-color)] text-white text-[14px] font-semibold border-none cursor-pointer transition-colors hover:bg-[var(--primary-color)] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Create Widget Manually
               </button>
@@ -1267,7 +1267,7 @@
                       <div
                         v-for="item in previewData[0].result.items"
                         :key="item.id || item._id"
-                        class="p-3 border rounded-lg"
+                        class="p-3 border rounded-[6px]"
                       >
                         {{ item.title || item["card-title"] }}
                       </div>
@@ -1284,7 +1284,7 @@
                     <div
                       v-for="(w, i) in previewData"
                       :key="i"
-                      class="border border-border rounded-lg p-4"
+                      class="border border-border rounded-[6px] p-4"
                     >
                       <p class="font-semibold">{{ w.payload?.title }}</p>
                       <iframe
@@ -1300,7 +1300,7 @@
                     <div
                       v-for="(item, i) in previewData"
                       :key="i"
-                      class="p-3 border rounded-lg"
+                      class="p-3 border rounded-[6px]"
                     >
                       {{ item.payload?.title || "New Item" }}
                     </div>
@@ -1311,13 +1311,13 @@
                 <div class="px-5 py-4 border-t flex justify-end gap-2">
                   <button
                     @click="declinePreview"
-                    class="px-4 py-2 text-sm rounded-md cursor-pointer border border-border text-text-primary hover:bg-bg-body transition"
+                    class="px-4 py-2 text-sm rounded-[6px] cursor-pointer border border-border text-text-primary hover:bg-bg-body transition"
                   >
                     Cancel
                   </button>
 
                   <button
-                    class="px-4 py-2 text-sm rounded-md bg-primary-color cursor-pointer text-white hover:bg-primary-color transition disabled:opacity-50 flex items-center gap-2 justify-cente"
+                    class="px-4 py-2 text-sm rounded-[6px] bg-primary-color cursor-pointer text-white hover:bg-primary-color transition disabled:opacity-50 flex items-center gap-2 justify-cente"
                     @click="acceptPreview"
                     :disabled="agentStore.isAcceptingEntities"
                   >
@@ -1354,7 +1354,7 @@
                     v-model="form.title"
                     type="text"
                     placeholder="e.g. My Today Tasks"
-                    class="px-2.5 py-[7px] bg-[var(--bg-input,#fff)] border border-[var(--border-input,#d9d9d9)] rounded-[7px] text-[13px] text-[var(--text-primary)] outline-none transition-all w-full box-border focus:border-[var(--primary-color)] focus:shadow-[0_0_0_2px_rgba(125,104,200,0.15)]"
+                    class="px-2.5 py-[7px] bg-[var(--bg-input,#fff)] border border-[var(--border-input,#d9d9d9)] rounded-[6px] text-[13px] text-[var(--text-primary)] outline-none transition-all w-full box-border focus:border-[var(--primary-color)] focus:shadow-[0_0_0_2px_rgba(125,104,200,0.15)]"
                   />
                 </div>
                 <div class="flex flex-col gap-[5px]">
@@ -1366,7 +1366,7 @@
                     v-model="form.description"
                     type="text"
                     placeholder="Optional description"
-                    class="px-2.5 py-[7px] bg-[var(--bg-input,#fff)] border border-[var(--border-input,#d9d9d9)] rounded-[7px] text-[13px] text-[var(--text-primary)] outline-none transition-all w-full box-border focus:border-[var(--primary-color)] focus:shadow-[0_0_0_2px_rgba(125,104,200,0.15)]"
+                    class="px-2.5 py-[7px] bg-[var(--bg-input,#fff)] border border-[var(--border-input,#d9d9d9)] rounded-[6px] text-[13px] text-[var(--text-primary)] outline-none transition-all w-full box-border focus:border-[var(--primary-color)] focus:shadow-[0_0_0_2px_rgba(125,104,200,0.15)]"
                   />
                 </div>
                 <div class="flex gap-3 flex-wrap">
@@ -1379,7 +1379,7 @@
                       v-model="form.icon"
                       type="text"
                       placeholder="📋 or calendar-alt"
-                      class="px-2.5 py-[7px] bg-[var(--bg-input,#fff)] border border-[var(--border-input,#d9d9d9)] rounded-[7px] text-[13px] text-[var(--text-primary)] outline-none transition-all w-full box-border focus:border-[var(--primary-color)]"
+                      class="px-2.5 py-[7px] bg-[var(--bg-input,#fff)] border border-[var(--border-input,#d9d9d9)] rounded-[6px] text-[13px] text-[var(--text-primary)] outline-none transition-all w-full box-border focus:border-[var(--primary-color)]"
                     />
                   </div>
                   <div class="flex flex-col gap-[5px] flex-1 min-w-[140px]">
@@ -1391,13 +1391,13 @@
                       <input
                         v-model="form.color"
                         type="color"
-                        class="w-9 h-9 border border-[var(--border)] rounded-[7px] cursor-pointer p-0.5 bg-[var(--bg-input,#fff)] flex-shrink-0"
+                        class="w-9 h-9 border border-[var(--border)] rounded-[6px] cursor-pointer p-0.5 bg-[var(--bg-input,#fff)] flex-shrink-0"
                       />
                       <input
                         v-model="form.color"
                         type="text"
                         placeholder="#7D68C8"
-                        class="px-2.5 py-[7px] bg-[var(--bg-input,#fff)] border border-[var(--border-input,#d9d9d9)] rounded-[7px] text-[13px] text-[var(--text-primary)] outline-none transition-all flex-1 box-border focus:border-[var(--primary-color)]"
+                        class="px-2.5 py-[7px] bg-[var(--bg-input,#fff)] border border-[var(--border-input,#d9d9d9)] rounded-[6px] text-[13px] text-[var(--text-primary)] outline-none transition-all flex-1 box-border focus:border-[var(--primary-color)]"
                       />
                     </div>
                   </div>
@@ -1415,7 +1415,7 @@
                     >
                     <select
                       v-model="form.query.entity"
-                      class="px-2.5 py-[7px] bg-[var(--bg-input,#fff)] border border-[var(--border-input,#d9d9d9)] rounded-[7px] text-[13px] text-[var(--text-primary)] outline-none transition-all w-full cursor-pointer focus:border-[var(--primary-color)]"
+                      class="px-2.5 py-[7px] bg-[var(--bg-input,#fff)] border border-[var(--border-input,#d9d9d9)] rounded-[6px] text-[13px] text-[var(--text-primary)] outline-none transition-all w-full cursor-pointer focus:border-[var(--primary-color)]"
                     >
                       <option value="cards">Cards</option>
                       <option value="sprints">Sprints</option>
@@ -1430,7 +1430,7 @@
                     >
                     <select
                       v-model="form.query.result_type"
-                      class="px-2.5 py-[7px] bg-[var(--bg-input,#fff)] border border-[var(--border-input,#d9d9d9)] rounded-[7px] text-[13px] text-[var(--text-primary)] outline-none transition-all w-full cursor-pointer focus:border-[var(--primary-color)]"
+                      class="px-2.5 py-[7px] bg-[var(--bg-input,#fff)] border border-[var(--border-input,#d9d9d9)] rounded-[6px] text-[13px] text-[var(--text-primary)] outline-none transition-all w-full cursor-pointer focus:border-[var(--primary-color)]"
                     >
                       <option value="list">List</option>
                       <option value="count">Count</option>
@@ -1450,7 +1450,7 @@
                     >
                     <select
                       v-model="form.query.chart_type"
-                      class="px-2.5 py-[7px] bg-[var(--bg-input,#fff)] border border-[var(--border-input,#d9d9d9)] rounded-[7px] text-[13px] text-[var(--text-primary)] outline-none transition-all w-full cursor-pointer focus:border-[var(--primary-color)]"
+                      class="px-2.5 py-[7px] bg-[var(--bg-input,#fff)] border border-[var(--border-input,#d9d9d9)] rounded-[6px] text-[13px] text-[var(--text-primary)] outline-none transition-all w-full cursor-pointer focus:border-[var(--primary-color)]"
                     >
                       <option value="bar">Bar</option>
                       <option value="pie">Pie</option>
@@ -1467,7 +1467,7 @@
                       v-model="form.query.group_by"
                       type="text"
                       placeholder="variables.card-status"
-                      class="px-2.5 py-[7px] bg-[var(--bg-input,#fff)] border border-[var(--border-input,#d9d9d9)] rounded-[7px] text-[13px] text-[var(--text-primary)] outline-none transition-all w-full box-border focus:border-[var(--primary-color)]"
+                      class="px-2.5 py-[7px] bg-[var(--bg-input,#fff)] border border-[var(--border-input,#d9d9d9)] rounded-[6px] text-[13px] text-[var(--text-primary)] outline-none transition-all w-full box-border focus:border-[var(--primary-color)]"
                     />
                   </div>
                 </div>
@@ -1484,7 +1484,7 @@
                   >
                   <select
                     v-model="form.query.formula"
-                    class="px-2.5 py-[7px] bg-[var(--bg-input,#fff)] border border-[var(--border-input,#d9d9d9)] rounded-[7px] text-[13px] text-[var(--text-primary)] outline-none transition-all w-full cursor-pointer focus:border-[var(--primary-color)]"
+                    class="px-2.5 py-[7px] bg-[var(--bg-input,#fff)] border border-[var(--border-input,#d9d9d9)] rounded-[6px] text-[13px] text-[var(--text-primary)] outline-none transition-all w-full cursor-pointer focus:border-[var(--primary-color)]"
                   >
                     <option value="days_until_end">Days until end</option>
                     <option value="days_since_start">Days since start</option>
@@ -1504,7 +1504,7 @@
                     >
                     <select
                       v-model="form.query.filters.assigned_to"
-                      class="px-2.5 py-[7px] bg-[var(--bg-input,#fff)] border border-[var(--border-input,#d9d9d9)] rounded-[7px] text-[13px] text-[var(--text-primary)] outline-none transition-all w-full cursor-pointer focus:border-[var(--primary-color)]"
+                      class="px-2.5 py-[7px] bg-[var(--bg-input,#fff)] border border-[var(--border-input,#d9d9d9)] rounded-[6px] text-[13px] text-[var(--text-primary)] outline-none transition-all w-full cursor-pointer focus:border-[var(--primary-color)]"
                     >
                       <option value="">Anyone</option>
                       <option value="$ME">Me ($ME)</option>
@@ -1517,7 +1517,7 @@
                     >
                     <select
                       v-model="form.query.filters.date_filter.value"
-                      class="px-2.5 py-[7px] bg-[var(--bg-input,#fff)] border border-[var(--border-input,#d9d9d9)] rounded-[7px] text-[13px] text-[var(--text-primary)] outline-none transition-all w-full cursor-pointer focus:border-[var(--primary-color)]"
+                      class="px-2.5 py-[7px] bg-[var(--bg-input,#fff)] border border-[var(--border-input,#d9d9d9)] rounded-[6px] text-[13px] text-[var(--text-primary)] outline-none transition-all w-full cursor-pointer focus:border-[var(--primary-color)]"
                     >
                       <option value="">None</option>
                       <option value="today">Today</option>
@@ -1541,7 +1541,7 @@
                       v-model="form.query.filters.status"
                       type="text"
                       placeholder="In Progress"
-                      class="px-2.5 py-[7px] bg-[var(--bg-input,#fff)] border border-[var(--border-input,#d9d9d9)] rounded-[7px] text-[13px] text-[var(--text-primary)] outline-none transition-all w-full box-border focus:border-[var(--primary-color)]"
+                      class="px-2.5 py-[7px] bg-[var(--bg-input,#fff)] border border-[var(--border-input,#d9d9d9)] rounded-[6px] text-[13px] text-[var(--text-primary)] outline-none transition-all w-full box-border focus:border-[var(--primary-color)]"
                     />
                   </div>
                   <div class="flex flex-col gap-[5px] flex-1 min-w-[140px]">
@@ -1551,7 +1551,7 @@
                     >
                     <select
                       v-model="form.query.filters.priority"
-                      class="px-2.5 py-[7px] bg-[var(--bg-input,#fff)] border border-[var(--border-input,#d9d9d9)] rounded-[7px] text-[13px] text-[var(--text-primary)] outline-none transition-all w-full cursor-pointer focus:border-[var(--primary-color)]"
+                      class="px-2.5 py-[7px] bg-[var(--bg-input,#fff)] border border-[var(--border-input,#d9d9d9)] rounded-[6px] text-[13px] text-[var(--text-primary)] outline-none transition-all w-full cursor-pointer focus:border-[var(--primary-color)]"
                     >
                       <option value="">Any</option>
                       <option value="highest">Highest</option>
@@ -1576,7 +1576,7 @@
                     >
                     <select
                       v-model="form.query.filters.sprint_status"
-                      class="px-2.5 py-[7px] bg-[var(--bg-input,#fff)] border border-[var(--border-input,#d9d9d9)] rounded-[7px] text-[13px] text-[var(--text-primary)] outline-none transition-all w-full cursor-pointer focus:border-[var(--primary-color)]"
+                      class="px-2.5 py-[7px] bg-[var(--bg-input,#fff)] border border-[var(--border-input,#d9d9d9)] rounded-[6px] text-[13px] text-[var(--text-primary)] outline-none transition-all w-full cursor-pointer focus:border-[var(--primary-color)]"
                     >
                       <option value="">Any</option>
                       <option value="planning">Planning</option>
@@ -1603,7 +1603,7 @@
                       min="1"
                       max="100"
                       placeholder="20"
-                      class="px-2.5 py-[7px] bg-[var(--bg-input,#fff)] border border-[var(--border-input,#d9d9d9)] rounded-[7px] text-[13px] text-[var(--text-primary)] outline-none transition-all w-full box-border focus:border-[var(--primary-color)]"
+                      class="px-2.5 py-[7px] bg-[var(--bg-input,#fff)] border border-[var(--border-input,#d9d9d9)] rounded-[6px] text-[13px] text-[var(--text-primary)] outline-none transition-all w-full box-border focus:border-[var(--primary-color)]"
                     />
                   </div>
                   <div class="flex flex-col gap-[5px] flex-1 min-w-[140px]">
@@ -1616,7 +1616,7 @@
                       type="number"
                       min="0"
                       placeholder="300"
-                      class="px-2.5 py-[7px] bg-[var(--bg-input,#fff)] border border-[var(--border-input,#d9d9d9)] rounded-[7px] text-[13px] text-[var(--text-primary)] outline-none transition-all w-full box-border focus:border-[var(--primary-color)]"
+                      class="px-2.5 py-[7px] bg-[var(--bg-input,#fff)] border border-[var(--border-input,#d9d9d9)] rounded-[6px] text-[13px] text-[var(--text-primary)] outline-none transition-all w-full box-border focus:border-[var(--primary-color)]"
                     />
                   </div>
                 </div>
@@ -1630,7 +1630,7 @@
                       v-model="form.query.sort_by"
                       type="text"
                       placeholder="created_at"
-                      class="px-2.5 py-[7px] bg-[var(--bg-input,#fff)] border border-[var(--border-input,#d9d9d9)] rounded-[7px] text-[13px] text-[var(--text-primary)] outline-none transition-all w-full box-border focus:border-[var(--primary-color)]"
+                      class="px-2.5 py-[7px] bg-[var(--bg-input,#fff)] border border-[var(--border-input,#d9d9d9)] rounded-[6px] text-[13px] text-[var(--text-primary)] outline-none transition-all w-full box-border focus:border-[var(--primary-color)]"
                     />
                   </div>
                   <div class="flex flex-col gap-[5px] flex-1 min-w-[140px]">
@@ -1640,7 +1640,7 @@
                     >
                     <select
                       v-model="form.query.sort_order"
-                      class="px-2.5 py-[7px] bg-[var(--bg-input,#fff)] border border-[var(--border-input,#d9d9d9)] rounded-[7px] text-[13px] text-[var(--text-primary)] outline-none transition-all w-full cursor-pointer focus:border-[var(--primary-color)]"
+                      class="px-2.5 py-[7px] bg-[var(--bg-input,#fff)] border border-[var(--border-input,#d9d9d9)] rounded-[6px] text-[13px] text-[var(--text-primary)] outline-none transition-all w-full cursor-pointer focus:border-[var(--primary-color)]"
                     >
                       <option value="desc">Descending</option>
                       <option value="asc">Ascending</option>
@@ -1664,13 +1664,13 @@
                 class="flex justify-end gap-2 px-5 py-3.5 border-t border-[var(--border)] flex-shrink-0"
               >
                 <button
-                  class="inline-flex items-center gap-1.5 px-3.5 py-[7px] bg-[var(--bg-card)] text-[var(--text-primary)] border border-[var(--border)] rounded-[7px] text-[13px] cursor-pointer transition-colors hover:bg-[var(--bg-surface)]"
+                  class="inline-flex items-center gap-1.5 px-3.5 py-[7px] bg-[var(--bg-card)] text-[var(--text-primary)] border border-[var(--border)] rounded-[6px] text-[13px] cursor-pointer transition-colors hover:bg-[var(--bg-surface)]"
                   @click="closeModal"
                 >
                   Cancel
                 </button>
                 <button
-                  class="inline-flex items-center gap-1.5 px-3.5 py-[7px] bg-[var(--primary-color)] text-white border-none rounded-[7px] text-[13px] font-semibold cursor-pointer transition-colors hover:bg-[var(--primary-color)] disabled:opacity-50 disabled:cursor-not-allowed"
+                  class="inline-flex items-center gap-1.5 px-3.5 py-[7px] bg-[var(--primary-color)] text-white border-none rounded-[6px] text-[13px] font-semibold cursor-pointer transition-colors hover:bg-[var(--primary-color)] disabled:opacity-50 disabled:cursor-not-allowed"
                   @click="saveWidget"
                   :disabled="store.isSaving || !form.title.trim()"
                 >
@@ -1707,7 +1707,7 @@
                 Delete widget
               </h2>
               <button
-                class="w-7 h-7 flex items-center justify-center bg-transparent border-none rounded-md text-[11px] text-[var(--text-secondary)] cursor-pointer transition-all hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]"
+                class="w-7 h-7 flex items-center justify-center bg-transparent border-none rounded-[6px] text-[11px] text-[var(--text-secondary)] cursor-pointer transition-all hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]"
                 @click="showDeleteModal = false"
               >
                 <i class="fa-solid fa-xmark"></i>
@@ -1726,13 +1726,13 @@
               class="flex justify-end gap-2 px-5 py-3.5 border-t border-[var(--border)] flex-shrink-0"
             >
               <button
-                class="inline-flex items-center gap-1.5 px-3.5 py-[7px] bg-[var(--bg-card)] text-[var(--text-primary)] border border-[var(--border)] rounded-[7px] text-[13px] cursor-pointer transition-colors hover:bg-[var(--bg-surface)]"
+                class="inline-flex items-center gap-1.5 px-3.5 py-[7px] bg-[var(--bg-card)] text-[var(--text-primary)] border border-[var(--border)] rounded-[6px] text-[13px] cursor-pointer transition-colors hover:bg-[var(--bg-surface)]"
                 @click="showDeleteModal = false"
               >
                 Cancel
               </button>
               <button
-                class="inline-flex items-center gap-1.5 px-3.5 py-[7px] bg-red-500 text-white border-none rounded-[7px] text-[13px] font-semibold cursor-pointer transition-colors hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                class="inline-flex items-center gap-1.5 px-3.5 py-[7px] bg-red-500 text-white border-none rounded-[6px] text-[13px] font-semibold cursor-pointer transition-colors hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
                 @click="deleteWidget"
                 :disabled="
                   !!widgetToDelete && store.isWidgetDeleting(widgetToDelete._id)

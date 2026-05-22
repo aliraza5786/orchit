@@ -31,6 +31,24 @@ if (cookieToken && localStorage.getItem('token') !== cookieToken) {
   return config
 })
 
+/** Auth endpoints where errors must be shown on the form (no session redirect/reload). */
+const PUBLIC_AUTH_PATHS = [
+  '/auth/login',
+  '/auth/signup',
+  '/auth/social-login',
+  '/auth/verify-otp',
+  '/auth/resend-otp',
+  '/auth/verify-email-pre-login',
+  '/auth/forget-password',
+  '/auth/reset-password',
+  '/auth/verify-reset-token',
+] as const
+
+export function isPublicAuthRequest(config?: AxiosRequestConfig): boolean {
+  const url = String(config?.url ?? '')
+  return PUBLIC_AUTH_PATHS.some((path) => url.includes(path))
+}
+
 /** Response / error interceptor */
 api.interceptors.response.use(
   (r) => r,
@@ -41,8 +59,9 @@ api.interceptors.response.use(
 
     const isUnauthorized = err.response?.status === 401;
     const isNetworkOrCorsError = !err.response || err.message === 'Network Error' || err.code === 'ERR_NETWORK';
+    const skipSessionRedirect = isPublicAuthRequest(err.config);
 
-    if (isUnauthorized || isNetworkOrCorsError) {
+    if ((isUnauthorized || isNetworkOrCorsError) && !skipSessionRedirect) {
       console.warn(isUnauthorized ? "User not authorized." : "Backend down or CORS error.", "Clearing session and redirecting.");
       
       const logoutKeys = [

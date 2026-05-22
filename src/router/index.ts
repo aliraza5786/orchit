@@ -11,7 +11,7 @@ import {
 } from "../utilities/onboardingRedirect";
 import Task from "../views/Workspaces/Task.vue";
 import Users from "../views/Workspaces/Users.vue";
-import api from "../libs/api";
+import api, { isPublicAuthRequest } from "../libs/api";
 import type { AxiosError, AxiosResponse } from "axios";
 import ReleaseNote from "../views/ReleaseNote.vue";
 
@@ -186,7 +186,7 @@ const router = createRouter({
 api.interceptors.response.use(
   (response: AxiosResponse) => response,
   (error: AxiosError) => {
-    if (error.response?.status === 401) {
+    if (error.response?.status === 401 && !isPublicAuthRequest(error.config)) {
       const auth = useAuthStore()
       auth.logout()
       redirectToLogin(router, window.location.pathname)

@@ -34,10 +34,10 @@
 
   <!-- Empty State -->
   <template v-else-if="deadlines.length === 0">
-    <div class="flex flex-col items-center justify-center py-10 text-text-secondary">
+    <div class="flex flex-col items-center justify-center py-10 text-text-secondary h-[300px]">
       <i class="fa-regular fa-calendar-xmark text-4xl mb-3"></i>
       <h4 class="text-lg font-semibold mb-1">No Upcoming Deadlines</h4>
-      <p class="text-sm text-text-secondary/80">
+      <p class="text-sm text-text-secondary/80 text-center">
         There are no upcoming milestones or due dates at the moment.
       </p>
     </div>

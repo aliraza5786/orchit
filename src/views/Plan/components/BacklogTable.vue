@@ -137,6 +137,7 @@
       <!-- Pagination -->
        <div class="overflow-x-auto overflow-y-hidden">
         <Pagination
+           :inSpace="true"
            v-if="backlogResp?.pagination?.pages > 1"
            :current-page="page"
            :last-page="backlogResp?.pagination?.pages"

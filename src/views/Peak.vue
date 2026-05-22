@@ -120,9 +120,9 @@
             <!-- Loading State -->
             <template v-if="isLoadingActivities">
               <div
-                v-for="n in 5"
+                v-for="n in 8"
                 :key="`skeleton-${n}`"
-                class="flex gap-3 pb-2 border-b border-border last:border-0 animate-pulse"
+                class="flex gap-3 pb-2 border-b border-border last:border-0 animate-pulse" 
               >
                 <div class="w-8 h-8 rounded-full bg-bg-body flex-shrink-0"></div>
                 <div class="flex-1 min-w-0 space-y-2">
@@ -149,7 +149,7 @@
                 </Motion>
 
                 <Motion
-                  v-for="(activity, index) in previewActivities.today"
+                  v-for="(activity, index) in groupedActivities.today"
                   :key="activity._id"
                   :initial="{ opacity: 0, x: -12 }"
                   :animate="{ opacity: 1, x: 0 }"
@@ -190,7 +190,7 @@
                 </Motion>
 
                 <Motion
-                  v-for="(activity, index) in previewActivities.yesterday"
+                  v-for="(activity, index) in groupedActivities.yesterday"
                   :key="activity._id"
                   :initial="{ opacity: 0, x: -12 }"
                   :animate="{ opacity: 1, x: 0 }"
@@ -231,7 +231,7 @@
                 </Motion>
 
                 <Motion
-                  v-for="(activity, index) in previewActivities.older"
+                  v-for="(activity, index) in groupedActivities.older"
                   :key="activity._id"
                   :initial="{ opacity: 0, x: -12 }"
                   :animate="{ opacity: 1, x: 0 }"
@@ -263,20 +263,14 @@
             </template>
 
             <!-- Empty State -->
-            <template v-else>
-              <Motion
-                :initial="{ opacity: 0, scale: 0.95 }"
-                :animate="{ opacity: 1, scale: 1 }"
-                :transition="{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }"
-              >
+            <template v-else> 
                 <div class="flex flex-col items-center justify-center py-10 text-center text-text-secondary h-full">
                   <i class="fas fa-clock text-4xl mb-3"></i>
                   <h4 class="text-lg text-text-primary font-semibold mb-1">No recent activity</h4>
                   <p class="text-sm text-text-secondary/80">
                     Activities will appear here once your team starts making updates.
                   </p>
-                </div>
-              </Motion>
+                </div> 
             </template>
           </div>
 
@@ -493,7 +487,7 @@
             <!-- Scrollable content -->
             <div class="flex-1 overflow-y-auto p-5 space-y-4">
               <template v-if="isLoadingActivities">
-                <div v-for="n in 5" :key="`skeleton-${n}`" class="flex gap-3 pb-2 border-b border-border last:border-0 animate-pulse">
+                <div v-for="n in 10" :key="`skeleton-${n}`" class="flex gap-3 pb-2 border-b border-border last:border-0 animate-pulse">
                   <div class="w-8 h-8 rounded-full bg-bg-body flex-shrink-0"></div>
                   <div class="flex-1 min-w-0 space-y-2">
                     <div class="space-y-1.5">
@@ -841,21 +835,6 @@ const groupedActivities = computed<GroupedActivities>(() => {
   })
 
   return groups
-})
-
-const TOTAL_PREVIEW = 6
-
-const previewActivities = computed<{ today: Activity[]; yesterday: Activity[]; older: Activity[] }>(() => {
-  const today = groupedActivities.value?.today ?? []
-  const yesterday = groupedActivities.value?.yesterday ?? []
-  const older = groupedActivities.value?.older ?? []
-  let remaining = TOTAL_PREVIEW
-  const result = { today: [] as Activity[], yesterday: [] as Activity[], older: [] as Activity[] }
-  result.today = today.slice(0, remaining)
-  remaining -= result.today.length
-  if (remaining > 0) { result.yesterday = yesterday.slice(0, remaining); remaining -= result.yesterday.length }
-  if (remaining > 0) { result.older = older.slice(0, remaining) }
-  return result
 })
 
 const formatTime = (dateString: string): string => {

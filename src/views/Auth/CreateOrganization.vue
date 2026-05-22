@@ -59,7 +59,7 @@
               What's your contact info?
             </h3>
             <p class="text-sm text-text-secondary mt-3">
-              Use your work email to create your organization account
+              Enter your email to create your organization account
             </p>
           </div>
           <form class="space-y-3 w-full" @submit.prevent="handleRegister">
@@ -138,7 +138,6 @@ import Button from '../../components/ui/Button.vue'
 import { register, login } from '../../services/auth'
 import { useAuthStore } from '../../stores/auth'
 import { saveOrgDraft, getOrgDraft } from '../../utilities/createOrganizationDraft'
-import { isCompanyEmail, getEmailDomain } from '../../utilities/onboardingRedirect'
 import { useTheme } from '../../composables/useTheme'
 import darkLogo from '@assets/global/dark-logo.png'
 import lightLogo from '@assets/global/light-logo.png'
@@ -211,21 +210,11 @@ const nameError = computed(() => {
   return ''
 })
 
-const PERSONAL_EMAIL_MESSAGE =
-  'Please use your company work email. Personal email providers (Gmail, Yahoo, Outlook, etc.) are not allowed when creating an organization.'
-
 const emailError = computed(() => {
   if (!touchedEmail.value) return ''
   const trimmed = email.value.trim()
-  if (!trimmed) return 'Work email is required'
+  if (!trimmed) return 'Email is required'
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) return 'Invalid email format'
-  if (!isCompanyEmail(trimmed)) {
-    const domain = getEmailDomain(trimmed)
-    if (domain) {
-      return `Personal email domains (@${domain}) cannot be used. Please sign up with your company work email.`
-    }
-    return PERSONAL_EMAIL_MESSAGE
-  }
   return ''
 })
 
