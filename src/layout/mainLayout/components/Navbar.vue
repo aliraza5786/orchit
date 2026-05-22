@@ -163,6 +163,7 @@
               <!-- ── Primary action (settings or org) ── -->
               <div class="border-b border-border/40 p-2">
                 <button
+                
   type="button"
   class="group flex w-full cursor-pointer items-center gap-2.5 rounded-[10px] px-2.5 py-2 text-left transition-colors hover:bg-bg-dropdown-menu-hover"
   @click="handlePrimaryAction"
@@ -185,6 +186,22 @@
   <i class="fa-solid fa-chevron-right text-[10px] text-text-secondary opacity-0 transition-opacity group-hover:opacity-100"></i>
 </button>
               </div>
+              <!-- ── Pending org membership notice ── -->
+<div v-if="isPendingOrgMember" class="border-b border-border/40 p-2">
+  <div class="rounded-[10px] bg-amber-500/[0.07] border border-amber-500/20 px-3 py-3 flex gap-3 items-start">
+    <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-[7px] bg-amber-500/10 border border-amber-500/20 mt-0.5">
+      <i class="fa-regular fa-clock text-amber-500 text-[11px]"></i>
+    </div>
+    <div class="flex flex-col gap-1 min-w-0">
+      <p class="text-[12px] font-semibold text-text-primary leading-tight">
+        Organization access pending
+      </p>
+      <p class="text-[11px] text-text-secondary leading-relaxed">
+        We've notified your organization admin. If they don't approve, you'll be added automatically within <span class="font-medium text-text-primary">48 hours</span>.
+      </p>
+    </div>
+  </div>
+</div>
                 <!-- ── Appearance ── -->
 <div class="border-b border-border/40 p-2">
   <div
@@ -472,7 +489,9 @@ const visibleLinks = computed(() => {
     !(isOrgContext && link.to === "/dashboard/users")
   )
 })
-
+const isPendingOrgMember = computed(() =>
+  !!profileData.value?.associated_company?._id && !profileData.value?.active_company?._id
+)
 // ── Sliding underline indicator ────────────────────────────────
 const linksContainerRef = ref<HTMLElement | null>(null);
 const linkRefs = new Map<string, HTMLElement>();
