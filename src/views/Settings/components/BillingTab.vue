@@ -474,12 +474,21 @@ onMounted(() => {
 });
 
 const { mutate: upgradePackage, isPending: isUpgrading } = useUpgradePackage({
-  onSuccess: async (data: any) => {
-    window.location.href = data?.checkoutUrl;
+  onSuccess: async (data: any) => { 
+    if (!data?.checkoutUrl) {
+      upgradingPackageId.value = null;
+      return;
+    }
+    
+    window.location.href = data.checkoutUrl;
   },
+  onError: (error: any) => {
+    console.error("Payment intent error", error);
+    upgradingPackageId.value = null;
+  }
 });
 const upgradingPackageId = ref<string | null>(null);
-function pay(p: any) { 
+function pay(p: any) {   
   const id = p?._id || p?.id
   if (!id) return
   upgradingPackageId.value = id;
