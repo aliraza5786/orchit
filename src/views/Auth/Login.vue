@@ -173,7 +173,11 @@ import darkLogo from "@assets/global/dark-logo.png";
 import lightLogo from "@assets/global/light-logo.png";
  
 import { useTheme } from "../../composables/useTheme";
-import { getPostAuthRedirectPath } from "../../utilities/onboardingRedirect";
+import {
+  getPostAuthRedirectPath,
+  isExistingAccountFromPreLogin,
+  primeOnboardingTypeForEmail,
+} from "../../utilities/onboardingRedirect";
 import {
   tryRedirectToCompanyDomainDashboard,
   normalizeProfileUserData,
@@ -233,10 +237,47 @@ const { mutateAsync: preLoginMutate, isPending: isPreLoginPending } = useMutatio
   mutationFn: verifyEmailPreLogin,
 });
 
-const isAnyPending = computed(() => isPreLoginPending.value || isPending.value);
+const isSocialPending = ref(false);
+const isAnyPending = computed(
+  () => isPreLoginPending.value || isPending.value || isSocialPending.value,
+);
 
 function onFieldInput() {
   if (errorMessage.value) errorMessage.value = "";
+}
+
+async function completeSocialAuth(payload: {
+  u_email: string;
+  u_social_id: string;
+  u_social_type: "google" | "apple";
+  u_full_name: string;
+}) {
+  if (!payload.u_email?.trim()) {
+    errorMessage.value = "Could not read your email from the provider. Please use email sign-in.";
+    return;
+  }
+
+  isSocialPending.value = true;
+  errorMessage.value = "";
+
+  try {
+    const preCheck = await preLoginMutate({ email: payload.u_email });
+    const isExisting = isExistingAccountFromPreLogin(preCheck);
+    const data = await socialLoginMutate(payload);
+
+    if (isExisting) {
+      await handleLoginSuccess(data);
+    } else {
+      await handleSocialSignupSuccess(data, payload.u_email);
+    }
+  } catch (err: any) {
+    errorMessage.value =
+      err?.response?.data?.message ||
+      err?.message ||
+      "Social sign-in failed. Please try again.";
+  } finally {
+    isSocialPending.value = false;
+  }
 }
 
 async function loginWithGoogle() {
@@ -249,14 +290,12 @@ async function loginWithGoogle() {
       },
     );
 
-    const data = await socialLoginMutate({
+    await completeSocialAuth({
       u_email: userInfo.data.email,
       u_social_id: userInfo.data.sub,
       u_social_type: "google",
       u_full_name: userInfo.data.name,
     });
-
-    handleLoginSuccess(data);
   } catch (err: any) {
     if (err?.message !== "Popup closed") {
       errorMessage.value =
@@ -289,7 +328,7 @@ async function loginWithApple() {
     );
     const decodedToken = JSON.parse(jsonPayload);
 
-    const data = await socialLoginMutate({
+    await completeSocialAuth({
       u_email: decodedToken.email,
       u_social_id: decodedToken.sub,
       u_social_type: "apple",
@@ -297,8 +336,6 @@ async function loginWithApple() {
         ? `${response.user.name.firstName} ${response.user.name.lastName}`
         : decodedToken.email?.split("@")[0] || "",
     });
-
-    handleLoginSuccess(data);
   } catch (err: any) {
     if (err?.error !== "popup_closed_by_user") {
       errorMessage.value =
@@ -306,6 +343,71 @@ async function loginWithApple() {
     }
   }
 }
+/** New account via Google/Apple on login page — same routing as manual signup (Register/OTP). */
+async function handleSocialSignupSuccess(data: any, email: string) {
+  const token = data?.data?.token;
+
+  localStorage.setItem("token", token);
+  primeOnboardingTypeForEmail(email);
+
+  authStore.initialized = false;
+  await authStore.bootstrap(true);
+  localStorage.setItem("token", token);
+
+  const redirectPath = router.currentRoute.value.query.redirect as string;
+  if (redirectPath) {
+    router.push(redirectPath);
+    return;
+  }
+
+  const intentStr = localStorage.getItem("post_auth_intent");
+  if (intentStr) {
+    try {
+      const intent = JSON.parse(intentStr);
+      localStorage.removeItem("post_auth_intent");
+      if (intent.aiResponse) workspaceStore.setWorkspace(intent.aiResponse);
+      router.push(intent.path || "/dashboard");
+      return;
+    } catch (e) {
+      console.error("Failed to parse post_auth_intent", e);
+      localStorage.removeItem("post_auth_intent");
+    }
+  }
+
+  const pendingToken = localStorage.getItem("pending_invite_token");
+  if (pendingToken) {
+    router.push(`/company-join/${pendingToken}`);
+    return;
+  }
+
+  let userData = normalizeProfileUserData(
+    (authStore.user?.data ?? authStore.user) as Record<string, unknown> | undefined,
+  );
+  if (!userData) {
+    try {
+      const profileRes = await getProfile();
+      userData = normalizeProfileUserData(
+        (profileRes?.data ?? profileRes) as Record<string, unknown> | undefined,
+      );
+    } catch (e) {
+      console.warn("Profile fetch after social signup failed:", e);
+    }
+  }
+
+  const destination = getPostAuthRedirectPath(userData);
+
+  if (destination !== "/dashboard") {
+    router.push(destination);
+    return;
+  }
+
+  if (workspaceStore.pricing) {
+    router.push(`/dashboard?stripePayment=true`);
+  } else {
+    router.push("/dashboard");
+  }
+}
+
 async function handleLoginSuccess(data: any) {
   const token = data?.data?.token;
 

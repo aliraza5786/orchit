@@ -1,7 +1,7 @@
 <template>
   <div class="w-full bg-bg-surface/40 text-text-primary">
     <div
-      class="mx-auto w-full max-w-[1400px] pt-8 pb-10 px-[15px] md:pt-10"
+      class="mx-auto w-full max-w-[1400px] pt-8 pb-10 px-[15px] md:pt-10 min-h-screen"
     >
       <!-- Sophisticated Workspace Header -->
       <div

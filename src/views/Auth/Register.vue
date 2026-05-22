@@ -39,8 +39,7 @@
           />
           <BaseTextField
             v-if="route.query.verified !== 'true'"
-            v-model="email"
-            label="Email"
+            v-model="email" 
             placeholder="john@example.com"
             size="md"
             autocomplete="email"

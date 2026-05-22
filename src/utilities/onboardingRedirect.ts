@@ -67,6 +67,26 @@ export type PostAuthRedirectOptions = {
   isLogin?: boolean
 }
 
+/** After verify-email-pre-login: `verified === true` means account already exists (login). */
+export function isExistingAccountFromPreLogin(
+  preLoginResponse: Record<string, unknown> | null | undefined,
+): boolean {
+  if (!preLoginResponse) return false
+  const verified =
+    (preLoginResponse.data as { verified?: boolean } | undefined)?.verified ??
+    preLoginResponse.verified
+  return verified === true
+}
+
+/** Prime CreateProfile personal vs company paths (same rules as manual signup). */
+export function primeOnboardingTypeForEmail(email: string): void {
+  if (isCompanyEmail(email)) {
+    localStorage.setItem('onboarding_selected_type', 'team')
+  } else {
+    localStorage.setItem('onboarding_selected_type', 'personal')
+  }
+}
+
 /** Post-auth path after bootstrap (excludes invite/intent/query overrides). */
 export function getPostAuthRedirectPath(
   userData: Record<string, unknown> | null | undefined,
