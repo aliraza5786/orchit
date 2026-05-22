@@ -21,8 +21,12 @@ const initials = computed(() => {
   return name.split(/\s+/).slice(0, 2).map((n: any) => n[0]).join('').toUpperCase()
 })
 
-const personalPlan   = computed(() => props.profile?.package?.name || 'Free')
-const isPersonalFree = computed(() => !personalPlan.value || personalPlan.value === 'Free')
+const personalPlan   = computed(() => props.profile?.individual_subscription?.package?.name || 'Free')
+const isPersonalFree = computed(() =>
+  !props.profile?.individual_subscription?.package?.packageType ||
+  props.profile?.individual_subscription?.package?.packageType === 'free'
+)
+
 
 const isCompanyEmail = computed(() => {
   const email  = props.profile?.u_email || ''
@@ -64,13 +68,15 @@ function hasPerm(p: string): boolean {
 
 const membershipRole  = computed(() => activeCompany.value?.membership_role ?? '')
 const isOwnerOfActive = computed(() => membershipRole.value === 'owner')
-
+const canSeeUpgradeBanner = computed(() => 
+  ['owner', 'super_admin', 'admin', 'editor'].includes(membershipRole.value)
+)
 // ✅ isMember: ONLY plain members/viewers with no elevated role
 const isMember = computed(() => membershipRole.value === 'viewer')
-const isOrgFree = computed(() => {
-  const plan = activeCompany.value?.package?.name
-  return !plan || plan === 'Free'
-})
+const isOrgFree = computed(() =>
+  !props.profile?.active_company?.company_subscription?.package?.packageType ||
+  props.profile?.active_company?.company_subscription?.package?.packageType === 'free'
+)
 
 // ─── Tabs ────────────────────────────────────────────────────
 const ORG_TABS = new Set([
@@ -334,24 +340,41 @@ function orgInitials(title: string) {
           </div>
 
           <!-- Upgrade banner — org owners on free plan -->
-          <div v-if="isOrgFree && isOwnerOfActive">
-            <div class="rounded-xl border border-purple-500/25 bg-gradient-to-b from-purple-500/10 to-purple-500/5 p-4">
-              <div class="flex items-center gap-2 mb-1.5">
-                <i class="fa-solid fa-crown text-purple-400 text-[11px]"></i>
-                <p class="text-[12px] font-bold text-text-primary">Free organization</p>
-              </div>
-              <p class="text-[11px] text-text-secondary leading-snug mb-3">
-                Unlock team features, more members &amp; advanced controls.
-              </p>
-              <button
-                @click="selectTab('org-packages')"
-                class="w-full py-2 rounded-lg text-white text-[12px] cursor-pointer font-bold hover:opacity-90 active:scale-[0.97] transition-all"
-                style="background: linear-gradient(90deg, #7c3aed, #6c63ff)"
-              >
-                Upgrade organization →
-              </button>
-            </div>
-          </div>
+          <div v-if="isOrgFree && canSeeUpgradeBanner">
+  <div class="rounded-xl border border-purple-500/25 bg-gradient-to-b from-purple-500/10 to-purple-500/5 p-4">
+    <div class="flex items-center gap-2 mb-2">
+      <i class="fa-solid fa-crown text-purple-400 text-[11px]"></i>
+      <p class="text-[12px] font-bold text-text-primary">You're on the Free plan</p>
+    </div>
+
+    <p class="text-[11px] text-text-secondary leading-snug mb-3">
+      Upgrade to unlock the full power of your organization.
+    </p>
+
+    <ul class="mb-3 space-y-1.5">
+      <li class="flex items-start gap-2 text-[11px] text-text-secondary">
+        <i class="fa-solid fa-circle-check text-purple-400 text-[10px] mt-0.5 shrink-0"></i>
+        <span>Unlimited workspaces &amp; team members</span>
+      </li>
+      <li class="flex items-start gap-2 text-[11px] text-text-secondary">
+        <i class="fa-solid fa-circle-check text-purple-400 text-[10px] mt-0.5 shrink-0"></i>
+        <span>Org AI Token Pool — up to 25M tokens/month</span>
+      </li>
+      <li class="flex items-start gap-2 text-[11px] text-text-secondary">
+        <i class="fa-solid fa-circle-check text-purple-400 text-[10px] mt-0.5 shrink-0"></i>
+        <span>Advanced controls, roles &amp; integrations</span>
+      </li>
+    </ul>
+
+    <button
+      @click="selectTab('org-packages')"
+      class="w-full py-2 rounded-lg text-white text-[12px] cursor-pointer font-bold hover:opacity-90 active:scale-[0.97] transition-all"
+      style="background: linear-gradient(90deg, #7c3aed, #6c63ff)"
+    >
+      Upgrade organization →
+    </button>
+  </div>
+</div>
 
         </div>
       </template>

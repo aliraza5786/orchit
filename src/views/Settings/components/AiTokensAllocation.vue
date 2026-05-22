@@ -20,7 +20,7 @@
         <button
           @click="allocationMode = 'percentage'"
           :class="[
-            'inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold border transition-all duration-200 hover:scale-105 active:scale-95',
+            'inline-flex items-center gap-1.5 px-3 cursor-pointer py-2 rounded-lg text-xs font-semibold border transition-all duration-200 hover:scale-105 active:scale-95',
             allocationMode === 'percentage'
               ? 'bg-accent/10 border-accent/30 text-accent shadow-sm shadow-accent/10'
               : 'bg-transparent border-border text-text-secondary hover:border-accent/30 hover:text-accent hover:bg-accent/5'
@@ -34,7 +34,7 @@
         <button
           @click="allocationMode = 'custom'"
           :class="[
-            'inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold border transition-all duration-200 hover:scale-105 active:scale-95',
+            'inline-flex items-center gap-1.5 px-3 py-2 cursor-pointer rounded-lg text-xs font-semibold border transition-all duration-200 hover:scale-105 active:scale-95',
             allocationMode === 'custom'
               ? 'bg-accent/10 border-accent/30 text-accent shadow-sm shadow-accent/10'
               : 'bg-transparent border-border text-text-secondary hover:border-accent/30 hover:text-accent hover:bg-accent/5'

@@ -197,25 +197,25 @@
 
         </div>
       </section>
-
+     <!-- {{ organizationOwner }} -->
       <!-- Owner Card -->
-      <section v-if="owner" class="rounded-2xl border border-border/50 bg-bg-card overflow-hidden">
+      <section v-if="organizationOwner" class="rounded-2xl border border-border/50 bg-bg-card overflow-hidden">
         <div class="px-6 py-4 border-b border-border/40 bg-bg-surface/50 flex items-center gap-3">
           <div class="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/15 flex items-center justify-center">
             <i class="fa-solid fa-crown text-amber-500 text-[13px]"></i>
           </div>
           <div>
-            <h3 class="text-[14px] font-bold text-text-primary leading-tight">Workspace Owner</h3>
+            <h3 class="text-[14px] font-bold text-text-primary leading-tight">Organization Owner</h3>
             <p class="text-[11px] text-text-secondary mt-0.5">Primary administrator of this organization.</p>
           </div>
         </div>
-
+          
         <div class="p-6">
           <div class="flex items-center gap-4 p-4 rounded-xl border border-border/50 bg-bg-body/50 transition-colors hover:border-border">
             <div class="relative shrink-0">
               <img
-                v-if="owner.u_profile_image"
-                :src="owner.u_profile_image"
+                v-if="organizationOwner.u_profile_image"
+                :src="organizationOwner.u_profile_image"
                 class="w-12 h-12 rounded-full object-cover ring-2 ring-accent/15"
                 alt="Owner"
               />
@@ -223,10 +223,10 @@
                 v-else
                 class="w-12 h-12 rounded-full bg-gradient-to-br from-accent to-accent-hover flex items-center justify-center text-white font-bold text-base"
               >
-                {{ getInitials(owner.u_full_name) }}
+                {{ getInitials(organizationOwner.u_full_name) }}
               </div>
               <div
-                v-if="owner.u_is_verfied"
+                v-if="organizationOwner.u_is_verfied"
                 class="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-500 border-2 border-bg-card rounded-full flex items-center justify-center"
               >
                 <i class="fa-solid fa-check text-[8px] text-white"></i>
@@ -234,17 +234,17 @@
             </div>
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2 flex-wrap">
-                <h4 class="text-[13px] font-bold text-text-primary truncate">{{ owner.u_full_name }}</h4>
+                <h4 class="text-[13px] font-bold text-text-primary truncate">{{ organizationOwner?.u_full_name }}</h4>
                 <span class="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 text-[10px] font-bold uppercase tracking-wider border border-amber-500/20">Owner</span>
               </div>
-              <p class="text-[12px] text-text-secondary mt-0.5 truncate">{{ owner.u_email }}</p>
-              <p v-if="owner.u_job_title || owner.u_department" class="text-[11px] text-text-secondary/60 mt-1">
-                {{ owner.u_job_title }}{{ owner.u_job_title && owner.u_department ? ' · ' : '' }}{{ owner.u_department }}
+              <p class="text-[12px] text-text-secondary mt-0.5 truncate">{{ organizationOwner?.u_email }}</p>
+              <p v-if="organizationOwner?.u_job_title || organizationOwner?.u_department" class="text-[11px] text-text-secondary/60 mt-1">
+                {{ organizationOwner?.u_job_title }}{{ organizationOwner?.u_job_title && organizationOwner?.u_department ? ' · ' : '' }}{{ organizationOwner?.u_department }}
               </p>
             </div>
             <div class="hidden sm:block shrink-0">
               <div class="px-3 py-1.5 rounded-lg bg-bg-body border border-border/60 text-[11px] text-text-secondary">
-                Joined {{ new Date(owner.created_at).toLocaleDateString() }}
+                Created {{ new Date(profile?.active_company?.created_at).toLocaleDateString() }}
               </div>
             </div>
           </div>
@@ -562,13 +562,7 @@ watch(() => props.profile?.active_company_id, (id) => {
   if (id && !selectedCompanyId.value) selectedCompanyId.value = id
 }, { immediate: true })
 
-const ownerParams = reactive({ company_id: selectedCompanyId, membership_role: 'owner' })
-const { data: usersData } = useCompanyUsers(ownerParams as any)
-const owner = computed(() => {
-  const raw = usersData.value?.data?.users ?? usersData.value?.users ?? []
-  return Array.isArray(raw) ? raw[0] : null
-})
-
+const organizationOwner = props.profile?.active_company?.owner;
 function handleCompanyChange(e: any) { selectedCompanyId.value = e.detail }
 onMounted(() => window.addEventListener('company-changed', handleCompanyChange))
 onBeforeUnmount(() => window.removeEventListener('company-changed', handleCompanyChange))
