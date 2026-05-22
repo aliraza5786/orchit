@@ -152,18 +152,17 @@
 
                 <!-- Managed badge — only for company emails -->
                 <div
-                  v-if="isCompanyEmail"
-                  class="mt-1 inline-flex cursor-default items-center gap-1.5 rounded-full border border-accent/22 bg-accent/[0.08] px-2.5 py-1 text-[11px] font-medium text-accent"
-                >
-                  <i class="fa-solid fa-shield-check text-[10px]"></i>
-                  Managed by {{ companyNameFromEmail }}
-                </div>
+                v-if="isOrgUser"
+                class="mt-1 inline-flex cursor-default items-center gap-1.5 rounded-full border border-accent/22 bg-accent/[0.08] px-2.5 py-1 text-[11px] font-medium text-accent"
+              >
+                <i class="fa-solid fa-shield-check text-[10px]"></i>
+                Managed by {{ companyNameFromEmail }}
+              </div>
               </div>
 
               <!-- ── Primary action (settings or org) ── -->
               <div class="border-b border-border/40 p-2">
                 <button
-  v-if="!isCompanyEmail || profileData?.active_company"
   type="button"
   class="group flex w-full cursor-pointer items-center gap-2.5 rounded-[10px] px-2.5 py-2 text-left transition-colors hover:bg-bg-dropdown-menu-hover"
   @click="handlePrimaryAction"
@@ -171,16 +170,15 @@
   <div
     class="flex h-7 w-7 shrink-0 items-center justify-center rounded-[7px] border border-accent/20 bg-accent/[0.09] text-[13px] text-accent transition-colors group-hover:bg-accent/[0.15]"
   >
-    <i :class="isCompanyEmail ? 'fa-regular fa-building' : 'fa-regular fa-gear'" class="text-[12px]"></i>
+    <i :class="isOrgUser ? 'fa-regular fa-building' : 'fa-regular fa-gear'" class="text-[12px]"></i>
   </div>
 
   <div class="flex min-w-0 flex-1 flex-col">
     <span class="text-[13px] text-text-primary">
-      {{ isCompanyEmail ? 'Manage organization' : 'Account settings' }}
+      {{ isOrgUser ? 'Manage organization' : 'Account settings' }}
     </span>
-
     <span class="text-[11px] text-text-secondary">
-      {{ isCompanyEmail ? 'Team, roles & org settings' : 'Profile, Ai Tokens, Billings' }}
+      {{ isOrgUser ? 'Team, roles & org settings' : 'Profile, Ai Tokens, Billings' }}
     </span>
   </div>
 
@@ -385,13 +383,13 @@ const currentThemeLabel = computed(() =>
   themeOptions.find(o => o.value === activeTheme.value)?.label ?? (isDark.value ? 'Dark' : 'Light')
 )
 
-// ── Primary action ─────────────────────────────────────────────
+// handlePrimaryAction
 function handlePrimaryAction() {
-  closeMenu();
-  if (isCompanyEmail.value) {
-    router.push('/settings?tab=org-setup');
+  closeMenu()
+  if (isOrgUser.value) {
+    router.push('/settings?tab=org-setup')
   } else {
-    router.push('/settings?tab=profile');
+    router.push('/settings?tab=profile')
   }
 }
 
@@ -460,16 +458,20 @@ const links = [
   { label: "My Tasks",   to: "/dashboard/task" },
   { label: "Users",      to: "/dashboard/users" },
 ];
+// ── Treat as personal if company email but no org attached ────
+const hasActiveOrg = computed(() =>
+  !!(profileData.value?.active_company?._id || profileData.value?.associated_company?._id)
+)
 
+const isOrgUser = computed(() => isCompanyEmail.value && hasActiveOrg.value)
+// visibleLinks
 const visibleLinks = computed(() => {
-  const activeCompany = profile.value?.data?.active_company;
-
-  const isOrgContext = isCompanyEmail && !!activeCompany;
-
+  const activeCompany = profile.value?.data?.active_company
+  const isOrgContext = isOrgUser.value && !!activeCompany
   return links.filter(link =>
     !(isOrgContext && link.to === "/dashboard/users")
-  );
-});
+  )
+})
 
 // ── Sliding underline indicator ────────────────────────────────
 const linksContainerRef = ref<HTMLElement | null>(null);
