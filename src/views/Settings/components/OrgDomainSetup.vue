@@ -1272,7 +1272,8 @@ async function handleConfirmTransfer() {
   try {
     const companyId = localStorage.getItem('company_id') ?? ''
     const ids = domainSelectedIds.value[transferDomainId.value] ?? []
-    await workspaceStore.enrolDomainUsers(companyId, ids)
+    const domain = activeCompany.value?.custom_domain ?? ''  // ← get domain
+    await workspaceStore.enrolDomainUsers(companyId, ids, domain)  // ← pass it
     toast.success(`${ids.length} user${ids.length !== 1 ? 's' : ''} enrolled successfully.`)
     domainSelectedIds.value = { ...domainSelectedIds.value, [transferDomainId.value]: [] }
     showTransferModal.value = false

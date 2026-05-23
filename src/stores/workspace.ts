@@ -385,7 +385,7 @@ export const useWorkspaceStore = defineStore("workspace", {
     },
 
     /**
-     * POST /api/v1/company-domains/:id/recheck
+     * POST /api/v1:id/recheck
      * Re-runs verification check. Handles 429 by returning retryAfter seconds.
      */
     async recheckDomain(
@@ -490,15 +490,17 @@ export const useWorkspaceStore = defineStore("workspace", {
       this.domainUsers = users;
       return users;
     },
-    async enrolDomainUsers(
-      companyId: string,
-      userIds: string[]
-    ): Promise<EnrolUsersResult> {
-      const res = await api.post(`company-domains/${companyId}/enrol-users`, {
-        user_ids: userIds,
-      });
-      return res.data?.data;
-    },
+   async enrolDomainUsers(
+  companyId: string,
+  userIds: string[],
+  domain: string        // ← add param
+): Promise<EnrolUsersResult> {
+  const res = await api.post(`company-domains/${companyId}/enrol-users`, {
+    user_ids: userIds,
+    domain: domain,     // ← forward it
+  });
+  return res.data?.data;
+},
 
     /**
      * Clears the local domain verification state.

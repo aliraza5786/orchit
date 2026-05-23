@@ -53,7 +53,7 @@
             </p>
             <div class="mt-4 flex flex-wrap justify-center sm:justify-start gap-2">
                <span className="px-3 py-1 bg-accent/10 text-accent text-xs font-bold rounded-full border border-accent/20">
-                {{profileData?.u_work_to_do }}
+                {{profileData?.u_work_to_do || 'User' }}
               </span>
             </div>
           </div>

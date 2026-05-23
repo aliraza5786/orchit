@@ -152,7 +152,7 @@
 
                 <!-- Managed badge — only for company emails -->
                 <div
-                v-if="isOrgUser"
+                v-if="isOrgUser && !isPendingOrgMember"
                 class="mt-1 inline-flex cursor-default items-center gap-1.5 rounded-full border border-accent/22 bg-accent/[0.08] px-2.5 py-1 text-[11px] font-medium text-accent"
               >
                 <i class="fa-solid fa-shield-check text-[10px]"></i>
@@ -171,16 +171,16 @@
   <div
     class="flex h-7 w-7 shrink-0 items-center justify-center rounded-[7px] border border-accent/20 bg-accent/[0.09] text-[13px] text-accent transition-colors group-hover:bg-accent/[0.15]"
   >
-    <i :class="isOrgUser ? 'fa-regular fa-building' : 'fa-regular fa-gear'" class="text-[12px]"></i>
+    <i :class="isOrgUser && !isPendingOrgMember ? 'fa-regular fa-building' : 'fa-regular fa-gear'" class="text-[12px]"></i>
   </div>
 
   <div class="flex min-w-0 flex-1 flex-col">
     <span class="text-[13px] text-text-primary">
-      {{ isOrgUser ? 'Manage organization' : 'Account settings' }}
-    </span>
-    <span class="text-[11px] text-text-secondary">
-      {{ isOrgUser ? 'Team, roles & org settings' : 'Profile, Ai Tokens, Billings' }}
-    </span>
+  {{ isOrgUser && !isPendingOrgMember ? 'Manage organization' : 'Account settings' }}
+</span>
+<span class="text-[11px] text-text-secondary">
+  {{ isOrgUser && !isPendingOrgMember ? 'Team, roles & org settings' : 'Profile, Ai Tokens, Billings' }}
+</span>
   </div>
 
   <i class="fa-solid fa-chevron-right text-[10px] text-text-secondary opacity-0 transition-opacity group-hover:opacity-100"></i>
@@ -394,19 +394,19 @@ const companyNameFromEmail = computed(() => {
 });
 
 // ── Theme label & active state ─────────────────────────────────
-const activeTheme = computed<string>(() => localStorage.getItem('theme') ?? 'system')
+const activeTheme = computed<string>(() => localStorage.getItem('theme') ?? 'system');
 
 const currentThemeLabel = computed(() =>
   themeOptions.find(o => o.value === activeTheme.value)?.label ?? (isDark.value ? 'Dark' : 'Light')
-)
+);
 
-// handlePrimaryAction
+// ── handlePrimaryAction ────────────────────────────────────────
 function handlePrimaryAction() {
-  closeMenu()
-  if (isOrgUser.value) {
-    router.push('/settings?tab=org-setup')
+  closeMenu();
+  if (isOrgUser.value && !isPendingOrgMember.value) {
+    router.push('/settings?tab=org-setup');
   } else {
-    router.push('/settings?tab=profile')
+    router.push('/settings?tab=profile');
   }
 }
 
@@ -475,23 +475,140 @@ const links = [
   { label: "My Tasks",   to: "/dashboard/task" },
   { label: "Users",      to: "/dashboard/users" },
 ];
-// ── Treat as personal if company email but no org attached ────
+
+// ── Org / membership state ─────────────────────────────────────
 const hasActiveOrg = computed(() =>
   !!(profileData.value?.active_company?._id || profileData.value?.associated_company?._id)
-)
+);
 
-const isOrgUser = computed(() => isCompanyEmail.value && hasActiveOrg.value)
-// visibleLinks
+const isOrgUser = computed(() => isCompanyEmail.value && hasActiveOrg.value);
+
 const visibleLinks = computed(() => {
-  const activeCompany = profile.value?.data?.active_company
-  const isOrgContext = isOrgUser.value && !!activeCompany
+  const activeCompany = profile.value?.data?.active_company;
+  const isOrgContext = isOrgUser.value && !!activeCompany;
   return links.filter(link =>
     !(isOrgContext && link.to === "/dashboard/users")
-  )
-})
+  );
+});
+
 const isPendingOrgMember = computed(() =>
   !!profileData.value?.associated_company?._id && !profileData.value?.active_company?._id
-)
+);
+
+// ── Domain redirect logic ──────────────────────────────────────
+
+// Prevents re-entry if the watcher fires multiple times before the
+// browser actually navigates away.
+const domainRedirectAttempted = ref(false);
+
+/** Skip redirect entirely when running on local dev. */
+function isLocalhost(): boolean {
+  const host = window.location.hostname;
+  return host === 'localhost' || host === '127.0.0.1' || host === '::1';
+}
+
+/**
+ * Returns true when the current window origin differs from the org's
+ * domain_link host — meaning we're on the primary app domain and
+ * should redirect the user over to their org domain.
+ */
+function isOnPrimaryDomain(orgDomainLink: string): boolean {
+  try {
+    const orgHost = new URL(orgDomainLink).hostname;
+    return window.location.hostname !== orgHost;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Builds the full redirect URL on the org domain, carrying over:
+ *  - current route path  (e.g. /dashboard/task)
+ *  - any existing query params already on the URL
+ *  - token, theme, companyId  (our params always win on collision)
+ */
+function buildOrgRedirectUrl(domainLink: string, companyId: string): string {
+  const base    = domainLink.replace(/\/$/, '');
+  const token   = localStorage.getItem('token') ?? '';
+  const theme   = localStorage.getItem('theme') ?? 'system';
+
+  // Carry over any existing query params from the current route
+  const existingQuery = { ...router.currentRoute.value.query };
+
+  const params = new URLSearchParams({
+    ...Object.fromEntries(
+      Object.entries(existingQuery).map(([k, v]) => [k, String(v ?? '')])
+    ),
+    token,
+    theme,
+    companyId,
+  });
+
+  const pathOnly = router.currentRoute.value.path;
+  return `${base}${pathOnly}?${params.toString()}`;
+}
+
+/**
+ * Called on mount on the org domain page.
+ * If ?token / ?theme / ?companyId are in the URL (placed there by
+ * buildOrgRedirectUrl), persist them to localStorage then strip them
+ * from the URL cleanly via router.replace so they never linger in
+ * the address bar, browser history, or copy-paste.
+ */
+function consumeHandoffParams(): void {
+  const q = route.query;
+
+  const token     = q.token     as string | undefined;
+  const theme     = q.theme     as string | undefined;
+  const companyId = q.companyId as string | undefined;
+
+  // Nothing to consume — bail early so we don't touch localStorage
+  if (!token && !theme && !companyId) return;
+
+  if (token)     localStorage.setItem('token', token);
+  if (theme)     localStorage.setItem('theme', theme);
+  if (companyId) localStorage.setItem('companyId', companyId);
+
+  // Remove handoff params from the URL without a page reload or new
+  // history entry, so the user sees a clean address bar immediately.
+  const cleanQuery = { ...route.query };
+  delete cleanQuery.token;
+  delete cleanQuery.theme;
+  delete cleanQuery.companyId;
+
+  router.replace({ path: route.path, query: cleanQuery });
+}
+
+// Watch active_company on the profile response. When a previously
+// pending user gets approved, active_company will go from undefined
+// to a full object — this watcher catches that transition and also
+// handles users who land on the primary domain while already active.
+watch(
+  () => profileData.value?.active_company,
+  (activeCompany) => {
+    if (domainRedirectAttempted.value) return;
+    if (!activeCompany?._id) return;
+    if (isLocalhost()) return;
+
+    const domainLink: string | undefined       = activeCompany.domain_link;
+    const hasDomainVerified: boolean           = !!activeCompany.has_domain_verified;
+
+    // Only redirect when the org has a live, verified domain
+    if (!domainLink || !hasDomainVerified) return;
+
+    // Already on the org domain — nothing to do
+    if (!isOnPrimaryDomain(domainLink)) return;
+
+    // Lock immediately to prevent any reactive re-entry
+    domainRedirectAttempted.value = true;
+
+    window.location.href = buildOrgRedirectUrl(domainLink, activeCompany._id);
+  },
+  { immediate: true }
+);
+
+// ── END domain redirect logic ──────────────────────────────────
+
 // ── Sliding underline indicator ────────────────────────────────
 const linksContainerRef = ref<HTMLElement | null>(null);
 const linkRefs = new Map<string, HTMLElement>();
@@ -541,9 +658,14 @@ function onResizeIndicator() {
 }
 
 onMounted(() => {
+  // Must run first — writes token/theme/companyId to localStorage
+  // before authStore.seedFromStorage() reads them.
+  consumeHandoffParams();
+
   if (route.query.stripePayment) {
     router.push({ path: '/settings', query: { ...route.query, tab: 'billing' } });
   }
+
   authStore.seedFromStorage();
   document.addEventListener('click', onClickOutside);
   window.addEventListener('resize', onResize);
@@ -558,7 +680,6 @@ onBeforeUnmount(() => {
   if (rAF) cancelAnimationFrame(rAF);
   if (rAF2) cancelAnimationFrame(rAF2);
 });
-
 </script>
 
 <style scoped>
