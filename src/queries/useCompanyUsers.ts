@@ -68,24 +68,23 @@ export const companyUserKeys = {
 
 // ─── List Users ───────────────────────────────────────────────────────────────
 
-export function useCompanyUsers(params: any) {
+import { computed, toValue, type MaybeRefOrGetter } from 'vue'
+
+export function useCompanyUsers(params: MaybeRefOrGetter<ListCompanyUsersParams>) {
   return useQuery({
-    queryKey: companyUserKeys.list(
-      params.company_id,
-      {
-        membership_role: params.membership_role,
-      }
-    ),
-    queryFn: () =>
-      request({
+    queryKey: computed(() => companyUserKeys.list(
+      toValue(params).company_id,
+      toValue(params)
+    )),
+    queryFn: () => {
+      const p = toValue(params)
+      return request({
         url: 'workspace/company/users',
         method: 'GET',
-        params: {
-          company_id: params.company_id,
-          membership_role: params.membership_role,
-        },
-      }),
-    enabled: !!params.company_id,
+        params: p,
+      })
+    },
+    enabled: computed(() => !!toValue(params).company_id),
   })
 }
 // ─── Get Single User ──────────────────────────────────────────────────────────

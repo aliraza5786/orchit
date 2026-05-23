@@ -28,21 +28,21 @@
         <!-- Add member -->
         <div class="relative group/add">
           <button
-          v-if="canCreateUsers"
-          @click="hasOrgDomain && profile?.active_company?.has_domain_verified 
-            ? handleAddMember() 
-            : !profile?.active_company?.has_domain_verified 
-              ? toast.warning('Please verify your domain first before adding members.') 
-              : undefined"
-          :disabled="!hasOrgDomain || !isUserVerified"
-          class="flex items-center gap-2 px-4 py-2 text-white text-sm font-semibold rounded-lg transition-all shadow-sm whitespace-nowrap cursor-pointer"
-          :class="hasOrgDomain
-            ? 'bg-accent hover:bg-accent/90 active:scale-95 shadow-accent/20'
-            : 'bg-accent/40 cursor-not-allowed shadow-none'"
-        >
-          <i class="fa-solid fa-user-plus text-xs"></i>
-          Add member
-        </button>
+            v-if="canCreateUsers"
+            @click="hasOrgDomain && profile?.active_company?.has_domain_verified
+              ? handleAddMember()
+              : !profile?.active_company?.has_domain_verified
+                ? toast.warning('Please verify your domain first before adding members.')
+                : undefined"
+            :disabled="!hasOrgDomain || !isUserVerified"
+            class="flex items-center gap-2 px-4 py-2 text-white text-sm font-semibold rounded-lg transition-all shadow-sm whitespace-nowrap cursor-pointer"
+            :class="hasOrgDomain
+              ? 'bg-accent hover:bg-accent/90 active:scale-95 shadow-accent/20'
+              : 'bg-accent/40 cursor-not-allowed shadow-none'"
+          >
+            <i class="fa-solid fa-user-plus text-xs"></i>
+            Add member
+          </button>
           <div
             v-if="!hasOrgDomain"
             class="absolute right-0 top-full mt-2 z-50 w-64 rounded-xl border border-border/60 bg-bg-dropdown shadow-xl p-3 hidden group-hover/add:block pointer-events-none"
@@ -264,88 +264,104 @@
           <p class="text-xs text-text-secondary truncate mt-0.5 leading-tight">{{ member.u_email }}</p>
         </div>
 
+        <!-- Action buttons -->
         <div
-  class="flex items-center gap-1.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
-  v-if="!isSuperAdminMember(member) && (canUpdateUsers || canDeleteUsers)"
->
-  <button
-    v-if="canUpdateUsers && (member.membership_status === 'active' || member.membership_status === 'deactivated' || member.membership_status === 'suspended')"
-    @click.stop="openStatusModal(member)"
-    :disabled="togglingUserId === member._id || !isUserVerified"
-    :title="member.membership_status === 'active' ? 'Deactivate member' : 'Activate member'"
-    class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold border transition-all disabled:opacity-40"
-    :class="member.membership_status === 'active'
-      ? 'border-yellow-500/25 bg-yellow-500/8 text-yellow-600 hover:bg-yellow-500/15 hover:border-yellow-500/40'
-      : 'border-green-500/25 bg-green-500/8 text-green-600 hover:bg-green-500/15 hover:border-green-500/40'"
-  >
-    <i v-if="togglingUserId === member._id" class="fa-solid fa-spinner animate-spin text-[10px]"></i>
-    <i v-else-if="member.membership_status === 'active'" class="fa-solid fa-ban text-[10px]"></i>
-    <i v-else class="fa-solid fa-circle-check text-[10px]"></i>
-    <span class="hidden sm:inline">{{ member.membership_status === 'active' ? 'Deactivate' : 'Activate' }}</span>
-  </button>
+          class="flex items-center gap-1.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+          v-if="!isSuperAdminMember(member) && (canUpdateUsers || canDeleteUsers)"
+        >
+          <button
+            v-if="canUpdateUsers && (member.membership_status === 'active' || member.membership_status === 'deactivated' || member.membership_status === 'suspended')"
+            @click.stop="openStatusModal(member)"
+            :disabled="togglingUserId === member._id || !isUserVerified"
+            :title="member.membership_status === 'active' ? 'Deactivate member' : 'Activate member'"
+            class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold border transition-all disabled:opacity-40"
+            :class="member.membership_status === 'active'
+              ? 'border-yellow-500/25 bg-yellow-500/8 text-yellow-600 hover:bg-yellow-500/15 hover:border-yellow-500/40'
+              : 'border-green-500/25 bg-green-500/8 text-green-600 hover:bg-green-500/15 hover:border-green-500/40'"
+          >
+            <i v-if="togglingUserId === member._id" class="fa-solid fa-spinner animate-spin text-[10px]"></i>
+            <i v-else-if="member.membership_status === 'active'" class="fa-solid fa-ban text-[10px]"></i>
+            <i v-else class="fa-solid fa-circle-check text-[10px]"></i>
+            <span class="hidden sm:inline">{{ member.membership_status === 'active' ? 'Deactivate' : 'Activate' }}</span>
+          </button>
 
-  <button
-    v-if="canUpdateUsers"
-    @click.stop="openEditModal(member)"
-    :disabled="!isUserVerified"
-    title="Edit member"
-    class="w-8 h-8 rounded-lg flex items-center justify-center border border-border/50 text-text-secondary hover:text-text-primary hover:border-border hover:bg-bg-card transition-all disabled:opacity-40"
-  >
-    <i class="fa-regular fa-pen-to-square text-xs"></i>
-  </button>
+          <button
+            v-if="canUpdateUsers"
+            @click.stop="openEditModal(member)"
+            :disabled="!isUserVerified"
+            title="Edit member"
+            class="w-8 h-8 rounded-lg flex items-center justify-center border border-border/50 text-text-secondary hover:text-text-primary hover:border-border hover:bg-bg-card transition-all disabled:opacity-40"
+          >
+            <i class="fa-regular fa-pen-to-square text-xs"></i>
+          </button>
 
-  <button
-    v-if="canDeleteUsers"
-    @click.stop="confirmDeactivate(member)"
-    :disabled="!isUserVerified"
-    title="Remove member"
-    class="w-8 h-8 rounded-lg flex items-center justify-center border border-red-500/20 text-red-400 hover:bg-red-500/10 hover:border-red-500/40 transition-all disabled:opacity-40"
-  >
-    <i class="fa-regular fa-trash-can text-xs"></i>
-  </button>
-</div>
+          <button
+            v-if="canDeleteUsers && member.membership_status !== 'deactivated'"
+            @click.stop="confirmDeactivate(member)"
+            :disabled="!isUserVerified"
+            title="Remove member"
+            class="w-8 h-8 rounded-lg flex items-center justify-center border border-red-500/20 text-red-400 hover:bg-red-500/10 hover:border-red-500/40 transition-all disabled:opacity-40"
+          >
+            <i class="fa-regular fa-trash-can text-xs"></i>
+          </button>
+        </div>
 
-<!-- Role select -->
-<div
-  v-if="canUpdateUsers && !isSuperAdminMember(member)"
-  class="relative shrink-0"
-  @click.stop
->
-  <select
-    :value="member.company_role_id"
-    @change.stop="handleInlineRoleUpdate(member, ($event.target as HTMLSelectElement).value)"
-    :disabled="roleUpdatingUserId === member._id || !canUpdateUsers"
-    class="appearance-none cursor-pointer text-[11px] font-semibold uppercase tracking-wide pl-2.5 pr-6 py-1.5 rounded-lg border border-accent/20 bg-accent/8 text-accent hover:border-accent/40 focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:opacity-50 transition-all"
-  >
-    <option v-for="role in allRoles" :key="role._id" :value="role._id">{{ role.title }}</option>
-  </select>
-  <i v-if="roleUpdatingUserId === member._id" class="fa-solid fa-spinner animate-spin absolute right-1.5 top-1/2 -translate-y-1/2 text-[9px] text-accent pointer-events-none"></i>
-  <i v-else class="fa-solid fa-chevron-down absolute right-1.5 top-1/2 -translate-y-1/2 text-[8px] text-accent pointer-events-none"></i>
-</div>
+        <!-- Role select -->
+        <div
+          v-if="canUpdateUsers && !isSuperAdminMember(member)"
+          class="relative shrink-0"
+          @click.stop
+        >
+          <select
+            :value="member.company_role_id"
+            @change.stop="handleInlineRoleUpdate(member, ($event.target as HTMLSelectElement).value)"
+            :disabled="roleUpdatingUserId === member._id || !canUpdateUsers"
+            class="appearance-none cursor-pointer text-[11px] font-semibold uppercase tracking-wide pl-2.5 pr-6 py-1.5 rounded-lg border border-border bg-card text-accent hover:border-accent/40 focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:opacity-50 transition-all"
+          >
+            <option v-for="role in allRoles" :key="role._id" :value="role._id">{{ role.title }}</option>
+          </select>
+          <i v-if="roleUpdatingUserId === member._id" class="fa-solid fa-spinner animate-spin absolute right-1.5 top-1/2 -translate-y-1/2 text-[9px] text-accent pointer-events-none"></i>
+          <i v-else class="fa-solid fa-chevron-down absolute right-1.5 top-1/2 -translate-y-1/2 text-[8px] text-accent pointer-events-none"></i>
+        </div>
       </div>
     </div>
 
-    <!-- ── Pagination ── -->
-    <div v-if="totalPages > 1" class="flex items-center justify-between pt-2">
-      <p class="text-xs text-text-secondary">
-        Showing <span class="font-medium text-text-primary">{{ (page - 1) * pageSize + 1 }}</span>–<span class="font-medium text-text-primary">{{ Math.min(page * pageSize, filteredMembers.length) }}</span> of <span class="font-medium text-text-primary">{{ filteredMembers.length }}</span>
-      </p>
-      <div class="flex items-center gap-1">
-        <button @click="goToPage(page - 1)" :disabled="page === 1" class="w-8 h-8 rounded-lg flex items-center justify-center border border-border/50 text-text-secondary hover:text-text-primary hover:border-border transition-all disabled:opacity-30 disabled:cursor-not-allowed">
-          <i class="fa-solid fa-chevron-left text-[10px]"></i>
-        </button>
-        <template v-for="p in totalPages" :key="p">
-          <template v-if="p === 1 || p === totalPages || (p >= page - 1 && p <= page + 1)">
-            <button @click="goToPage(p)" class="w-8 h-8 rounded-lg text-xs font-medium transition-all" :class="p === page ? 'bg-accent text-white border border-accent' : 'border border-border/50 text-text-secondary hover:text-text-primary hover:border-border'">{{ p }}</button>
-          </template>
-          <span v-else-if="p === page - 2 || p === page + 2" class="w-8 h-8 flex items-center justify-center text-xs text-text-secondary">…</span>
-        </template>
-        <button @click="goToPage(page + 1)" :disabled="page === totalPages" class="w-8 h-8 rounded-lg flex items-center justify-center border border-border/50 text-text-secondary hover:text-text-primary hover:border-border transition-all disabled:opacity-30 disabled:cursor-not-allowed">
-          <i class="fa-solid fa-chevron-right text-[10px]"></i>
-        </button>
-      </div>
-    </div>
-
+   <!-- ── Pagination ── -->
+<div v-if="totalPages > 1" class="flex items-center justify-between pt-2">
+  <p class="text-xs text-text-secondary">
+    Showing
+    <span class="font-medium text-text-primary">{{ rangeStart }}</span>–<span
+      class="font-medium text-text-primary">{{ rangeEnd }}</span>
+    of
+    <span class="font-medium text-text-primary">{{ totalMembers }}</span>
+  </p>
+  <div class="flex items-center gap-1">
+    <button
+      @click="goToPage(page - 1)"
+      :disabled="page === 1"
+      class="w-8 h-8 rounded-lg flex items-center justify-center border border-border/50 text-text-secondary hover:text-text-primary hover:border-border transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+    >
+      <i class="fa-solid fa-chevron-left text-[10px]"></i>
+    </button>
+    <template v-for="p in totalPages" :key="p">
+      <template v-if="p === 1 || p === totalPages || (p >= page - 1 && p <= page + 1)">
+        <button
+          @click="goToPage(p)"
+          class="w-8 h-8 rounded-lg text-xs font-medium transition-all"
+          :class="p === page ? 'bg-accent text-white border border-accent' : 'border border-border/50 text-text-secondary hover:text-text-primary hover:border-border'"
+        >{{ p }}</button>
+      </template>
+      <span v-else-if="p === page - 2 || p === page + 2" class="w-8 h-8 flex items-center justify-center text-xs text-text-secondary">…</span>
+    </template>
+    <button
+      @click="goToPage(page + 1)"
+      :disabled="page === totalPages"
+      class="w-8 h-8 rounded-lg flex items-center justify-center border border-border/50 text-text-secondary hover:text-text-primary hover:border-border transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+    >
+      <i class="fa-solid fa-chevron-right text-[10px]"></i>
+    </button>
+  </div>
+</div>
     <!-- ── Info card ── -->
     <div class="rounded-xl border border-blue-500/20 bg-blue-500/5 px-4 py-3">
       <p class="text-xs text-blue-500 flex items-start gap-2">
@@ -469,7 +485,7 @@
   <!-- ══ CREATE MEMBER MODAL ══ -->
   <Teleport to="body">
     <Transition enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="transition duration-150 ease-in" leave-from-class="opacity-100" leave-to-class="opacity-0">
-      <div v-if="showCreateModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" @click.self="closeCreateModal">
+      <div v-if="showCreateModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
         <Transition enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0 scale-95 translate-y-2" enter-to-class="opacity-100 scale-100 translate-y-0">
           <div v-if="showCreateModal" class="w-full max-w-md bg-bg-body rounded-2xl border border-border shadow-2xl overflow-hidden">
             <div class="px-6 py-5 border-b border-border/50 flex items-center justify-between">
@@ -490,23 +506,23 @@
               <div>
                 <label class="text-[11px] font-semibold text-text-primary uppercase tracking-wider block mb-1.5">Workspace email <span class="text-red-500">*</span></label>
                 <div v-if="hasOrgDomain" class="flex items-center border rounded-lg overflow-hidden transition-all" :class="createErrors.emailPrefix ? 'border-red-500/60' : 'border-border/60 focus-within:border-accent/60 focus-within:ring-2 focus-within:ring-accent/10'">
+                  <input
+                    :value="createForm.emailPrefix"
+                    placeholder="jane.doe"
+                    class="flex-1 px-3.5 py-2.5 text-sm bg-transparent outline-none placeholder:text-text-tertiary"
+                    @blur="validateCreateForm"
+                    @input="createForm.emailPrefix = ($event.target as HTMLInputElement).value"
+                  />
+                  <span class="px-3 py-2.5 text-sm text-text-secondary bg-bg-card/60 border-l border-border/40 shrink-0 font-mono whitespace-nowrap">@{{ orgDomainSuffix }}</span>
+                </div>
                 <input
-                :value="createForm.emailPrefix"
-                placeholder="jane.doe"
-                class="flex-1 px-3.5 py-2.5 text-sm bg-transparent outline-none placeholder:text-text-tertiary"
-                @blur="validateCreateForm"
-                @input="createForm.emailPrefix = ($event.target as HTMLInputElement).value"
-              />
-                <span class="px-3 py-2.5 text-sm text-text-secondary bg-bg-card/60 border-l border-border/40 shrink-0 font-mono whitespace-nowrap">@{{ orgDomainSuffix }}</span>
-              </div>
-                <input
-                v-else
-                :value="createForm.emailPrefix"
-                placeholder="jane.doe"
-                class="flex-1 px-3.5 py-2.5 text-sm bg-transparent outline-none placeholder:text-text-tertiary"
-                @blur="validateCreateForm"
-                @input="createForm.emailPrefix = ($event.target as HTMLInputElement).value"
-              />
+                  v-else
+                  :value="createForm.emailPrefix"
+                  placeholder="jane.doe"
+                  class="flex-1 px-3.5 py-2.5 text-sm bg-transparent outline-none placeholder:text-text-tertiary"
+                  @blur="validateCreateForm"
+                  @input="createForm.emailPrefix = ($event.target as HTMLInputElement).value"
+                />
                 <p v-if="createErrors.emailPrefix" class="text-[11px] text-red-500 mt-1">{{ createErrors.emailPrefix }}</p>
                 <p v-else class="text-[11px] text-text-secondary mt-1">Full email: <span class="font-mono text-accent">{{ fullEmail }}</span></p>
               </div>
@@ -530,10 +546,24 @@
                 <label class="text-[11px] font-semibold text-text-primary uppercase tracking-wider block mb-1.5">Job title <span class="text-text-secondary font-normal normal-case">(optional)</span></label>
                 <input v-model="createForm.u_job_title" placeholder="e.g. Software Engineer" class="w-full border border-border/60 bg-bg-body/80 rounded-lg px-3.5 py-2.5 text-sm focus:border-accent/60 focus:ring-2 focus:ring-accent/10 outline-none transition-all placeholder:text-text-tertiary" />
               </div>
-              <div class="flex items-start gap-2.5 p-3 rounded-xl border border-accent/20 bg-accent/5">
-                <i class="fa-solid fa-shield-halved text-accent text-xs mt-0.5 shrink-0"></i>
-                <p class="text-[11px] text-text-secondary leading-relaxed">
-                  New members are assigned the <strong class="text-text-primary">{{ defaultRoleName }}</strong> role by default. You can change this after creation.
+              <div>
+                <label class="text-[11px] font-semibold text-text-primary uppercase tracking-wider block mb-1.5">
+                  Role <span class="text-text-secondary font-normal normal-case">(default: {{ defaultRoleName }})</span>
+                </label>
+                <div class="relative">
+                  <select
+                    v-model="createForm.company_role_id"
+                    class="w-full appearance-none border border-border/60 bg-bg-body/80 rounded-lg pl-3.5 pr-8 py-2.5 text-sm focus:border-accent/60 focus:ring-2 focus:ring-accent/10 outline-none transition-all cursor-pointer text-text-primary"
+                  >
+                    <option v-for="role in allRoles" :key="role._id" :value="role._id">
+                      {{ role.title }}
+                    </option>
+                  </select>
+                  <i class="fa-solid fa-chevron-down absolute right-2.5 top-1/2 -translate-y-1/2 text-text-secondary/60 text-[10px] pointer-events-none"></i>
+                </div>
+                <p class="text-[11px] text-text-secondary mt-1.5 flex items-center gap-1.5">
+                  <i class="fa-solid fa-shield-halved text-accent text-[10px]"></i>
+                  Manage role permissions in <strong class="text-text-primary">Role Management</strong>.
                 </p>
               </div>
               <div v-if="createServerError" class="flex items-start gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20">
@@ -621,24 +651,73 @@
 
   <!-- ══ REMOVE CONFIRM MODAL ══ -->
   <Teleport to="body">
-    <Transition enter-active-class="transition duration-150 ease-out" enter-from-class="opacity-0" enter-to-class="opacity-100">
-      <div v-if="showDeactivateConfirm && deactivatingMember" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" @click.self="showDeactivateConfirm = false">
-        <div class="w-full max-w-sm bg-bg-body rounded-2xl border border-border shadow-2xl p-6">
-          <div class="w-12 h-12 rounded-full bg-red-500/15 flex items-center justify-center mx-auto mb-4">
-            <i class="fa-solid fa-triangle-exclamation text-red-500"></i>
+    <Transition
+      enter-active-class="transition duration-200 ease-out"
+      enter-from-class="opacity-0"
+      enter-to-class="opacity-100"
+      leave-active-class="transition duration-150 ease-in"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
+    >
+      <div
+        v-if="showDeactivateConfirm && deactivatingMember"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+        @click.self="showDeactivateConfirm = false"
+      >
+        <Transition
+          enter-active-class="transition duration-200 ease-out"
+          enter-from-class="opacity-0 scale-95 translate-y-2"
+          enter-to-class="opacity-100 scale-100 translate-y-0"
+          appear
+        >
+          <div class="w-full max-w-sm bg-bg-body rounded-2xl border border-border shadow-2xl overflow-hidden">
+            <!-- Top section with gradient -->
+            <div class="px-6 pt-6 pb-5 bg-gradient-to-br from-red-500/8 to-bg-body">
+              <div class="w-14 h-14 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mb-4">
+                <i class="fa-solid fa-trash-can text-red-500 text-xl"></i>
+              </div>
+              <h3 class="text-base font-bold text-text-primary">Remove member?</h3>
+              <p class="text-sm text-text-secondary mt-1 leading-relaxed">
+                <strong class="text-text-primary">{{ deactivatingMember.u_full_name }}</strong>
+                will be removed from the organization and lose access to all resources.
+              </p>
+            </div>
+            <!-- Member preview card -->
+            <div class="px-6 pb-5">
+              <div class="flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-bg-card/50">
+                <div class="w-9 h-9 rounded-full bg-gradient-to-br from-accent/30 to-accent/10 flex items-center justify-center text-xs font-bold text-accent shrink-0 overflow-hidden">
+                  <img v-if="deactivatingMember.u_profile_image" :src="deactivatingMember.u_profile_image" class="w-full h-full object-cover" />
+                  <span v-else>{{ getInitials(deactivatingMember.u_full_name) }}</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-semibold text-text-primary truncate">{{ deactivatingMember.u_full_name }}</p>
+                  <p class="text-xs text-text-secondary truncate">{{ deactivatingMember.u_email }}</p>
+                </div>
+                <span class="text-[10px] font-semibold px-2 py-1 rounded-full shrink-0" :class="getStatusBadgeClass(deactivatingMember.membership_status)">
+                  {{ deactivatingMember.membership_status }}
+                </span>
+              </div>
+            </div>
+            <!-- Actions -->
+            <div class="px-6 pb-5 flex gap-3">
+              <button
+                @click="showDeactivateConfirm = false"
+                class="flex-1 px-4 py-2.5 text-sm font-medium rounded-xl border border-border hover:bg-bg-card transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                @click="handleDeactivate"
+                :disabled="isDeactivating"
+                class="flex-1 px-4 py-2.5 bg-red-600 text-white text-sm font-bold rounded-xl hover:bg-red-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                <i v-if="isDeactivating" class="fa-solid fa-spinner animate-spin text-xs"></i>
+                <i v-else class="fa-solid fa-trash-can text-xs"></i>
+                {{ isDeactivating ? 'Removing…' : 'Yes, remove' }}
+              </button>
+            </div>
           </div>
-          <h3 class="text-base font-bold text-text-primary text-center mb-1">Remove member?</h3>
-          <p class="text-xs text-text-secondary text-center mb-5">
-            <strong>{{ deactivatingMember.u_full_name }}</strong> will be removed from the organization. This can be reversed.
-          </p>
-          <div class="flex gap-3">
-            <button @click="showDeactivateConfirm = false" class="flex-1 px-4 py-2.5 text-sm font-medium rounded-lg border border-border hover:bg-bg-card transition-all">Cancel</button>
-            <button @click="handleDeactivate" :disabled="isDeactivating" class="flex-1 px-4 py-2.5 bg-red-600 text-white text-sm font-semibold rounded-lg hover:bg-red-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
-              <i v-if="isDeactivating" class="fa-solid fa-spinner animate-spin text-xs"></i>
-              <span>{{ isDeactivating ? 'Removing…' : 'Remove' }}</span>
-            </button>
-          </div>
-        </div>
+        </Transition>
       </div>
     </Transition>
   </Teleport>
@@ -668,6 +747,7 @@ type MembershipStatus =
 interface Permission {
   _id: string; slug: string; title: string; description: string; action: string; category: string; scope: string;
 }
+
 interface CompanyRole {
   _id: string; title: string; slug: string; description: string; company_id: string | null;
   is_admin: boolean; is_editor: boolean; is_viewer: boolean; is_system: boolean; is_trash: boolean;
@@ -693,23 +773,15 @@ const defaultRole = computed(() =>
 const defaultRoleName = computed(() => defaultRole.value?.title ?? 'Viewer')
 
 // ─── Company context ──────────────────────────────────────────
-// BUG FIX #1: Properly resolve company_id from all possible profile shapes.
-// The API may return profile.data.active_company or profile.active_company.
 const companyId = computed<string>(() => {
   const profileVal = props.profile
-  // Try direct active_company_id fields first (most reliable)
   if (profileVal?.data?.active_company_id) return profileVal.data.active_company_id
   if (profileVal?.active_company_id) return profileVal.active_company_id
-  // Fall back to nested active_company._id
   if (profileVal?.data?.active_company?._id) return profileVal.data.active_company._id
   if (profileVal?.active_company?._id) return profileVal.active_company._id
-  // Last resort: localStorage
   return localStorage.getItem('company_id') || ''
 })
 
-// BUG FIX #2: Resolve active_company from all possible profile shapes.
-// Previously only checked profile.active_company and profile.data.active_company
-// but the actual API wraps data under profile.data
 const activeCompany = computed(() =>
   props.profile?.data?.active_company
   ?? props.profile?.active_company
@@ -729,8 +801,6 @@ const orgDomainSuffix = computed<string>(() => {
 const inviteLink = computed<string>(() => activeCompany.value?.join_link ?? '')
 const hasOrgDomain = computed(() => !!activeCompany.value?.custom_domain)
 
-// BUG FIX #3: membership_role resolution — must handle all casing and nesting variants.
-// The profile JSON shows membership_role lives on active_company, not on the root profile.
 const membershipRole = computed<string>(() => {
   const role =
     activeCompany.value?.membership_role
@@ -740,25 +810,19 @@ const membershipRole = computed<string>(() => {
   return role.toString().toLowerCase().replace(/-/g, '_').trim()
 })
 
-const permissions = computed<string[]>(() =>
-  activeCompany.value?.permissions ?? []
-)
+const permissions = computed<string[]>(() => activeCompany.value?.permissions ?? [])
 
 function hasPerm(p: string): boolean {
   return permissions.value.includes(p)
 }
 
-// BUG FIX #4: isSuperAdminOrOwner now correctly identifies super_admin role.
-// Previously membershipRole was always '' so this was always false.
 const isSuperAdminOrOwner = computed(() => {
   const role = membershipRole.value
-
   return (
     role === 'owner' ||
     role === 'super_admin' ||
     role === 'admin' ||
     role === 'editor' ||
-    // Also check the role object for is_admin flag as a fallback
     activeCompany.value?.role?.is_admin === true ||
     activeCompany.value?.user_role?.is_admin === true
   )
@@ -777,16 +841,15 @@ const canDeleteUsers = computed(() =>
 const owner = computed(() => members.value.find((m) => m.is_owner))
 const isSuperAdminActive = computed(() => owner.value?.membership_status === 'active')
 
-// BUG FIX #5: isUserVerified — check membership_status on activeCompany as well.
 const isUserVerified = computed(() => {
   const profileVal = props.profile
-  const raw = profileVal?.data ?? profileVal  // unwrap API envelope if present
+  const raw = profileVal?.data ?? profileVal
 
-  // Super admin active = effectively verified context
-  if (owner.value?.membership_status === 'active' &&
-      activeCompany.value?.membership_status !== 'pending_super_admin_otp') return true
+  if (
+    owner.value?.membership_status === 'active' &&
+    activeCompany.value?.membership_status !== 'pending_super_admin_otp'
+  ) return true
 
-  // Check every common verified flag across both shapes
   const checks = [
     raw?.isUserVerified, raw?.is_verified, raw?.u_verified, raw?.u_is_verfied,
     profileVal?.isUserVerified, profileVal?.is_verified, profileVal?.u_verified, profileVal?.u_is_verfied,
@@ -794,15 +857,14 @@ const isUserVerified = computed(() => {
   ]
   if (checks.some(v => v === true || v === 'true')) return true
 
-  // If the current user is a super_admin or admin, treat them as verified
   if (isSuperAdminOrOwner.value) return true
 
   return false
 })
 
-function isSuperAdminMember(member: any): boolean {
+function isSuperAdminMember(member: CompanyUser): boolean {
   if (member.is_owner) return true
-  const role = allRoles.value.find((r: any) => r._id === member.company_role_id)
+  const role = allRoles.value.find((r: CompanyRole) => r._id === member.company_role_id)
   if (!role) return false
   const slug  = role.slug?.toLowerCase()  || ''
   const title = role.title?.toLowerCase() || ''
@@ -818,16 +880,14 @@ function isBulkSelectable(member: CompanyUser): boolean {
   )
 }
 
-// ─── Members data ─────────────────────────────────────────────
-// BUG FIX #6: Pass a reactive computed ref to useCompanyUsers instead of a
-// plain object snapshot. When companyId resolves after mount the query was
-// never re-triggered because the params object was evaluated once at setup time.
+// ─── Members data (unchanged) ─────────────────────────────────
 const companyUsersParams = computed(() => ({
-  company_id: companyId.value,
-  membership_role: "",
+  company_id:      companyId.value,
+  membership_role: '',
+  per_page:        1000, // fetch all — API doesn't support search
 }))
 
-const { data: usersData, isLoading } = useCompanyUsers(companyUsersParams.value)
+const { data: usersData, isLoading } = useCompanyUsers(companyUsersParams)
 
 const members = computed<CompanyUser[]>(() => {
   const raw = usersData.value?.data?.users ?? usersData.value?.users ?? []
@@ -842,6 +902,7 @@ const searchQuery  = ref('')
 const statusFilter = ref('')
 const roleFilter   = ref('')
 
+// Runs over ALL members (full dataset), not just current page
 const filteredMembers = computed(() =>
   members.value.filter((m) => {
     const q           = searchQuery.value.toLowerCase()
@@ -852,17 +913,34 @@ const filteredMembers = computed(() =>
   })
 )
 
-// ─── Pagination ───────────────────────────────────────────────
+// ─── Pagination (API-meta aware) ──────────────────────────────
 const page     = ref(1)
-const pageSize = ref(10)
+const pageSize = ref(20) // must match your API's per_page default
 watch([searchQuery, statusFilter, roleFilter], () => { page.value = 1 })
 
-const totalMembers     = computed<number>(() => filteredMembers.value.length)
-const totalPages       = computed(() => Math.max(1, Math.ceil(totalMembers.value / pageSize.value)))
+// Read total from API response meta; fall back to filtered count
+// for when the API doesn't return pagination meta
+const apiTotal   = computed<number>(() =>
+  usersData.value?.data?.total   ??
+  usersData.value?.total         ??
+  filteredMembers.value.length
+)
+const apiPerPage = computed<number>(() =>
+  usersData.value?.data?.per_page ??
+  usersData.value?.per_page       ??
+  pageSize.value
+)
+const totalMembers = computed<number>(() => filteredMembers.value.length)
+const totalPages   = computed(() => Math.max(1, Math.ceil(totalMembers.value / pageSize.value)))
+
+// Slice filtered results for current page
 const paginatedMembers = computed(() => {
   const start = (page.value - 1) * pageSize.value
   return filteredMembers.value.slice(start, start + pageSize.value)
 })
+
+const rangeStart = computed(() => totalMembers.value === 0 ? 0 : (page.value - 1) * pageSize.value + 1)
+const rangeEnd   = computed(() => Math.min(page.value * pageSize.value, totalMembers.value))
 
 function goToPage(p: number) {
   if (p < 1 || p > totalPages.value) return
@@ -909,8 +987,6 @@ watch([page, searchQuery, statusFilter, roleFilter], () => { bulkSelectedIds.val
 // ─── Mutations ────────────────────────────────────────────────
 const togglingUserId = ref<string | null>(null)
 
-// BUG FIX #7: Pass companyId.value inside the mutation — previously this was
-// called with companyId (the computed ref) which became stale if resolved late.
 const { mutate: toggleActive } = useToggleCompanyUserActive(companyId.value, {
   onSuccess: (data: any) => { toast.success((data?.data ?? data)?.message || 'Status updated'); togglingUserId.value = null },
   onError:   (error: any) => { toast.error(error?.response?.data?.message || 'Failed to update status'); togglingUserId.value = null },
@@ -922,6 +998,10 @@ const { mutate: deactivateUser } = useDeactivateCompanyUser(companyId.value, {
     showDeactivateConfirm.value = false
     deactivatingMember.value    = null
     isDeactivating.value        = false
+    // Step back if we just emptied the last page
+    if (paginatedMembers.value.length === 1 && page.value > 1) {
+      page.value--
+    }
   },
   onError: (error: any) => {
     toast.error(error?.response?.data?.message || 'Failed to remove member')
@@ -940,7 +1020,7 @@ async function handleBulkActivate() {
   selectedBulkAction.value = 'activate'
   bulkActionLoading.value  = true
   try {
-    await Promise.all(eligibleIds.map(id => new Promise((res, rej) => toggleActive(id, { onSuccess: res, onError: rej }))))
+    await Promise.all(eligibleIds.map(id => new Promise<void>((res, rej) => toggleActive(id, { onSuccess: () => res(), onError: rej }))))
     toast.success(`${eligibleIds.length} member(s) activated.`)
     clearBulkSelection()
   } catch (err: any) {
@@ -962,7 +1042,7 @@ async function handleBulkDeactivate() {
   selectedBulkAction.value = 'deactivate'
   bulkActionLoading.value  = true
   try {
-    await Promise.all(eligibleIds.map(id => new Promise((res, rej) => deactivateUser(id, { onSuccess: res, onError: rej }))))
+    await Promise.all(eligibleIds.map(id => new Promise<void>((res, rej) => deactivateUser(id, { onSuccess: () => res(), onError: rej }))))
     toast.success(`${eligibleIds.length} member(s) deactivated.`)
     clearBulkSelection()
   } catch (err: any) {
@@ -1054,8 +1134,20 @@ const showCreateModal   = ref(false)
 const showPassword      = ref(false)
 const createServerError = ref('')
 const isCreating        = ref(false)
-const createForm   = ref({ u_full_name: '', emailPrefix: '', u_password: '', u_job_title: '' })
-const createErrors = ref({ u_full_name: '', emailPrefix: '', u_password: '' })
+
+const createForm = ref({
+  u_full_name:     '',
+  emailPrefix:     '',
+  u_password:      '',
+  u_job_title:     '',
+  company_role_id: '',
+})
+
+const createErrors = ref({
+  u_full_name: '',
+  emailPrefix: '',
+  u_password:  '',
+})
 
 const fullEmail = computed(() =>
   createForm.value.emailPrefix ? `${createForm.value.emailPrefix}@${orgDomainSuffix.value}` : ''
@@ -1064,17 +1156,19 @@ const fullEmail = computed(() =>
 function nameToEmailPrefix(name: string): string {
   return name.trim().toLowerCase()
     .replace(/\s+/g, '.')
-    .replace(/[@+]/g, '')  
-    .replace(/[^a-z0-9._-]/g, '') 
+    .replace(/[@+]/g, '')
+    .replace(/[^a-z0-9._-]/g, '')
 }
 
-const lastAutoPrefix = ref('')
 function onNameInput() {
-  if (!createForm.value.emailPrefix || createForm.value.emailPrefix === nameToEmailPrefix(createForm.value.u_full_name.slice(0, -1))) {
+  const currentPrefix   = createForm.value.emailPrefix
+  const expectedPrefix  = nameToEmailPrefix(createForm.value.u_full_name.slice(0, -1))
+  if (!currentPrefix || currentPrefix === expectedPrefix) {
     createForm.value.emailPrefix = nameToEmailPrefix(createForm.value.u_full_name)
   }
   createErrors.value.u_full_name = ''
 }
+
 const passwordStrength = computed(() => {
   const p = createForm.value.u_password
   if (!p) return 0
@@ -1085,38 +1179,54 @@ const passwordStrength = computed(() => {
   if (/[^A-Za-z0-9]/.test(p)) score++
   return score
 })
-const passwordStrengthColor     = computed(() => ['bg-red-500','bg-orange-500','bg-yellow-500','bg-green-500'][passwordStrength.value - 1] ?? 'bg-red-500')
-const passwordStrengthTextColor = computed(() => ['text-red-500','text-orange-500','text-yellow-500','text-green-500'][passwordStrength.value - 1] ?? 'text-red-500')
-const passwordStrengthLabel     = computed(() => ['Weak','Fair','Good','Strong'][passwordStrength.value - 1] ?? 'Weak')
+
+const passwordStrengthColor     = computed(() => ['bg-red-500', 'bg-orange-500', 'bg-yellow-500', 'bg-green-500'][passwordStrength.value - 1] ?? 'bg-red-500')
+const passwordStrengthTextColor = computed(() => ['text-red-500', 'text-orange-500', 'text-yellow-500', 'text-green-500'][passwordStrength.value - 1] ?? 'text-red-500')
+const passwordStrengthLabel     = computed(() => ['Weak', 'Fair', 'Good', 'Strong'][passwordStrength.value - 1] ?? 'Weak')
 
 function validateCreateForm(): boolean {
   let valid = true
   createErrors.value = { u_full_name: '', emailPrefix: '', u_password: '' }
-  if (!createForm.value.u_full_name.trim())  { createErrors.value.u_full_name  = 'Full name is required'; valid = false }
-  if (!createForm.value.emailPrefix.trim())  { createErrors.value.emailPrefix  = 'Email is required'; valid = false }
-  if (!createForm.value.u_password)          { createErrors.value.u_password   = 'Password is required'; valid = false }
+  if (!createForm.value.u_full_name.trim()) { createErrors.value.u_full_name = 'Full name is required'; valid = false }
+  if (!createForm.value.emailPrefix.trim()) { createErrors.value.emailPrefix  = 'Email is required';     valid = false }
+  if (!createForm.value.u_password)         { createErrors.value.u_password   = 'Password is required';  valid = false }
   else if (createForm.value.u_password.length < 6) { createErrors.value.u_password = 'Minimum 6 characters'; valid = false }
   return valid
 }
+
 const isCreateFormValid = computed(() =>
-  !!createForm.value.u_full_name.trim() && !!createForm.value.emailPrefix.trim() &&
+  !!createForm.value.u_full_name.trim() &&
+  !!createForm.value.emailPrefix.trim() &&
   createForm.value.u_password.length >= 6 &&
-  !createErrors.value.u_full_name && !createErrors.value.emailPrefix && !createErrors.value.u_password
+  !createErrors.value.u_full_name &&
+  !createErrors.value.emailPrefix &&
+  !createErrors.value.u_password
 )
+
 function openCreateModal() {
-  createForm.value        = { u_full_name: '', emailPrefix: '', u_password: '', u_job_title: '' }
+  createForm.value = {
+    u_full_name:     '',
+    emailPrefix:     '',
+    u_password:      '',
+    u_job_title:     '',
+    company_role_id: defaultRole.value?._id ?? '',
+  }
   createErrors.value      = { u_full_name: '', emailPrefix: '', u_password: '' }
   createServerError.value = ''
   showPassword.value      = false
-  lastAutoPrefix.value    = ''  // ✅ reset tracking ref
   showCreateModal.value   = true
 }
+
 function closeCreateModal() { showCreateModal.value = false }
 
 const { mutate: createUser } = useCreateCompanyUser({
   onSuccess: (data: any) => {
     const payload = data?.data ?? data
-    if (!payload || payload?.status === false) { createServerError.value = payload?.message || 'Something went wrong.'; isCreating.value = false; return }
+    if (!payload || payload?.status === false) {
+      createServerError.value = payload?.message || 'Something went wrong.'
+      isCreating.value = false
+      return
+    }
     toast.success(payload?.message || 'Member created successfully')
     closeCreateModal()
     isCreating.value = false
@@ -1136,7 +1246,7 @@ function handleCreate() {
     u_full_name:     createForm.value.u_full_name.trim(),
     u_email:         fullEmail.value,
     u_password:      createForm.value.u_password,
-    company_role_id: defaultRole.value?._id,
+    company_role_id: createForm.value.company_role_id || defaultRole.value?._id,
     ...(createForm.value.u_job_title ? { u_job_title: createForm.value.u_job_title } : {}),
   })
 }
@@ -1165,12 +1275,17 @@ function openEditModal(member: CompanyUser) {
   showEditPassword.value  = false
   showEditModal.value     = true
 }
+
 function closeEditModal() { showEditModal.value = false; editingMember.value = null }
 
 const { mutate: updateMember } = useUpdateCompanyUser(companyId.value, {
   onSuccess: (data: any) => {
     const payload = data?.data ?? data
-    if (!payload || payload?.status === false) { editServerError.value = payload?.message || 'Something went wrong.'; isEditing.value = false; return }
+    if (!payload || payload?.status === false) {
+      editServerError.value = payload?.message || 'Something went wrong.'
+      isEditing.value = false
+      return
+    }
     toast.success('Member updated successfully')
     closeEditModal()
     isEditing.value = false
@@ -1184,7 +1299,8 @@ const { mutate: updateMember } = useUpdateCompanyUser(companyId.value, {
 function handleEdit() {
   if (!editingMember.value) return
   if (showResetPassword.value && editForm.value.u_password && editForm.value.u_password.length < 6) {
-    editErrors.value.u_password = 'Minimum 6 characters'; return
+    editErrors.value.u_password = 'Minimum 6 characters'
+    return
   }
   editServerError.value = ''
   isEditing.value = true
@@ -1207,6 +1323,7 @@ function confirmDeactivate(member: CompanyUser) {
   deactivatingMember.value    = member
   showDeactivateConfirm.value = true
 }
+
 function handleDeactivate() {
   if (!deactivatingMember.value) return
   isDeactivating.value = true
