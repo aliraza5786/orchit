@@ -8,7 +8,7 @@ const stats = [
   { value: '29%', label: 'Failed startups ran out of cash' }
 ]
 function goToRegister(){
-    router.push('/register')
+    router.push('/login')
 }
 const scrollToTemplates = () => {
   const el = document.getElementById('templates')

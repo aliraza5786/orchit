@@ -25,7 +25,7 @@ const steps = [
   }
 ]
 function goToRegister(){
-    router.push('/register')
+    router.push('/login')
 }
 </script>
 

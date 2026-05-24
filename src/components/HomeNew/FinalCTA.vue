@@ -12,7 +12,7 @@ function goToContactUs(){
     router.push('/contact-us')
 }
 function goToRegister(){
-    router.push('/register')
+    router.push('/login')
 }
 const scrollTo = async (id: string) => {
   if (route.path !== "/") {
