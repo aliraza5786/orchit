@@ -54,34 +54,33 @@
     <ul
       v-show="open && filteredOptions.length > 0"
       ref="menuRef"
-      class="absolute left-0 z-10 text-sm p-2 border rounded-md shadow max-h-40 overflow-auto w-full"
+      class="absolute left-0 z-10 rounded-md max-h-64 overflow-auto shadow border w-full"
       :class="[
-        isDarkTheme ? 'bg-[#131318] text-white border-border' : 'bg-bg-dropdown text-text-primary border-border',
-        dropUp ? 'bottom-[76%] ' : 'top-full '
+        isDarkTheme ? 'bg-bg-body text-text-primary border-border' : 'bg-bg-body text-text-primary border-border',
+        dropUp ? 'bottom-full mb-2' : 'top-full mt-2'
       ]"
     >
       <li
         v-for="item in filteredOptions"
         :key="item._id"
-        class="px-3 py-2 rounded-lg cursor-pointer"
-        :class="isDarkTheme ? 'hover:bg-[#000000de]' : 'hover:bg-bg-dropdown-menu-hover'"
+        class="px-4 py-2 text-sm flex items-center gap-2 cursor-pointer hover:bg-bg-dropdown-menu-hover transition-all duration-150"
         @mousedown.prevent
         @click.stop="select(item)"
       >
-        <span v-html="item.title"></span>
+        <span class="capitalize" v-html="item.title"></span>
       </li>
     </ul>
 
     <!-- No Options Found -->
     <ul
       v-show="open && filteredOptions.length === 0"
-      class="absolute left-0 z-10 p-2 border rounded shadow w-full"
+      class="absolute left-0 z-10 rounded-md max-h-64 overflow-auto shadow border w-full"
       :class="[
-        isDarkTheme ? 'bg-bg-dropdown text-text-primary border-border' : 'bg-bg-dropdown border-border',
+        isDarkTheme ? 'bg-bg-body text-text-primary border-border' : 'bg-bg-body text-text-primary border-border',
         dropUp ? 'bottom-full mb-2' : 'top-full mt-2'
       ]"
     >
-      <li class="px-3 py-2 text-sm text-text-secondary ">No options found</li>
+      <li class="px-4 py-2 text-sm text-text-secondary text-center">No options found</li>
     </ul>
 
     <!-- Help/Error Text -->

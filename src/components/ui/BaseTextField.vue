@@ -19,9 +19,9 @@
     <div class="relative">
       <div
         :class="[
-          'flex items-center border rounded-md px-3 py-2 w-full text-sm focus-within:ring-2',
+          'flex items-center border rounded-md px-3 py-2 w-full text-sm',
           size === 'md' ? 'h-10' : 'h-12',
-          error ? 'border-red-500 focus-within:ring-red-500' : ' focus-within:ring-black',
+          error ? 'border-red-500 focus-within:ring-2 focus-within:ring-red-500' : 'k',
           isDarkTheme ? 'bg-bg-input border-border  ' : 'bg-bg-input border-border'
         ]"
       >

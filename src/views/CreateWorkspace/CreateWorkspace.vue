@@ -1,7 +1,11 @@
 <template>
   <div :key="isStartOver"
-    class="px-2 pt-[100px] md:pt-[110px] lg:pt-[120px] pb-[40px] md:pb-[50px] lg:pb-[70px] w-full justify-start items-center flex flex-col relative">
-    <div class="flex justify-between items-center fixed top-0 z-[1] w-full flex-row px-5 bg-bg-surface border-b border-border h-[60px] lg:h-[70px]"
+    class="create-workspace-page px-[15px] pt-[100px] md:pt-[110px] lg:pt-[120px] pb-[40px] md:pb-[50px] lg:pb-[70px] w-full justify-start items-center flex flex-col relative overflow-hidden">
+    <div v-if="currentStep === 0" class="create-workspace-ambient pointer-events-none" aria-hidden="true">
+      <div class="ambient-orb ambient-orb--1"></div>
+      <div class="ambient-orb ambient-orb--2"></div>
+    </div>
+    <div class="flex justify-between items-center fixed top-0 z-[2] w-full flex-row px-[15px] bg-bg-surface border-b border-border h-[60px] lg:h-[70px]"
       v-show="isStepperVisible">
       <div class="flex items-center py-5 justify-start gap-2 md:gap-4 overflow-x-auto no-scrollbar max-w-[calc(100%-40px)]"
         v-memo="[currentStep]">
@@ -44,7 +48,7 @@
       </div>
     </div>
     <div
-      class="z-0 overflow-y-auto px-3 h-auto flex-grow relative flex flex-col gap-10 max-w-[800px] mx-auto w-full items-center">
+      class="z-[1] overflow-y-auto h-auto flex-grow relative flex flex-col gap-10 max-w-[800px] mx-auto w-full items-center">
       <template v-if="currentStep === 0">
         <IdealStep @manual="onManualStart" />
       </template>
@@ -62,7 +66,7 @@
   
   <Button variant="secondary" size="md" @click="goBack" v-if="currentStep !== 4">
     <div class="flex items-center gap-2">
-      <i class="text-base fa-solid fa-arrow-left"></i> Back
+      <i class="text-sm fa-solid fa-arrow-left"></i> Back
     </div>
   </Button>
 
@@ -74,7 +78,7 @@
     <Button :disabled="continueDisabled" :loading="isLoading" size="md" variant="primary" @click="goNext">
       <div class="flex items-center w-full justify-between gap-2">
         {{ continueLabel }}
-        <i v-if="!isLoading" class="text-base fa-solid fa-arrow-right"></i>
+        <i v-if="!isLoading" class="text-sm fa-solid fa-arrow-right"></i>
       </div>
     </Button>
   </div>
@@ -256,6 +260,44 @@ function startOver() {
 </script>
 
 <style scoped>
+.create-workspace-ambient {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+.ambient-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(72px);
+  opacity: 0.35;
+}
+.ambient-orb--1 {
+  width: 320px;
+  height: 320px;
+  top: -80px;
+  right: -60px;
+  background: color-mix(in srgb, var(--accent) 28%, transparent);
+  animation: ambientDrift 14s ease-in-out infinite;
+}
+.ambient-orb--2 {
+  width: 260px;
+  height: 260px;
+  bottom: 10%;
+  left: -40px;
+  background: color-mix(in srgb, var(--accent-hover) 22%, transparent);
+  animation: ambientDrift 18s ease-in-out infinite reverse;
+}
+@keyframes ambientDrift {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(12px, 18px) scale(1.06);
+  }
+}
+
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.4s ease, transform 0.4s ease;

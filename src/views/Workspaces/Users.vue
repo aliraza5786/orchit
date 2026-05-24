@@ -1,5 +1,5 @@
 <template>
-  <div class="w-full text-text-primary bg-bg-surface/40">
+  <div class="w-full text-text-primary bg-bg-surface/40 min-h-screen">
     <div
       class="mx-auto w-full max-w-[1400px] pt-8 pb-10 px-[15px] md:pt-10"
     >
