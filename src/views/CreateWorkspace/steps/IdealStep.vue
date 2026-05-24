@@ -97,7 +97,7 @@
           <div
             v-for="(suggestion, idx) in suggestions"
             :key="idx"
-            :style="{ animationDelay: `${0.08 * idx}s` }"
+            :style="{ animationDelay: `${0.08 * Number(idx)}s` }"
             @click="handleSuggestionClick(suggestion)"
             class="suggestion-card group flex min-w-[160px] h-[100px] items-center flex-[1_0_0] cursor-pointer bg-bg-card/40 border border-border/40 backdrop-blur-md p-[15px] rounded-2xl hover:bg-bg-surface hover:border-accent/40 hover:shadow-sm hover:shadow-accent/15 hover:-translate-y-0.5  transition-all duration-400"
           >

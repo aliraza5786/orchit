@@ -920,16 +920,16 @@ watch([searchQuery, statusFilter, roleFilter], () => { page.value = 1 })
 
 // Read total from API response meta; fall back to filtered count
 // for when the API doesn't return pagination meta
-const apiTotal   = computed<number>(() =>
-  usersData.value?.data?.total   ??
-  usersData.value?.total         ??
-  filteredMembers.value.length
-)
-const apiPerPage = computed<number>(() =>
-  usersData.value?.data?.per_page ??
-  usersData.value?.per_page       ??
-  pageSize.value
-)
+// const apiTotal   = computed<number>(() =>
+//   usersData.value?.data?.total   ??
+//   usersData.value?.total         ??
+//   filteredMembers.value.length
+// )
+// const apiPerPage = computed<number>(() =>
+//   usersData.value?.data?.per_page ??
+//   usersData.value?.per_page       ??
+//   pageSize.value
+// )
 const totalMembers = computed<number>(() => filteredMembers.value.length)
 const totalPages   = computed(() => Math.max(1, Math.ceil(totalMembers.value / pageSize.value)))
 
