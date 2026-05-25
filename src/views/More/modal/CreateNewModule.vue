@@ -1,5 +1,5 @@
 <template>
-    <BaseModal v-model="model" size="lg" title=" Add New Module">
+    <BaseModal :inSpace="true" v-model="model" size="lg" title=" Add New Module">
        
 
         <!-- Tabs -->
@@ -8,7 +8,7 @@
                 :class="currentTab === t.value ? 'text-text-primary' : 'text-text-secondary'">
                 {{ t.label }}
 
-                <div v-if="currentTab === t.value" class="absolute bottom-0 left-0 w-full h-0.5 bg-accent"></div>
+                <div v-if="currentTab === t.value" class="absolute bottom-0 left-0 w-full h-0.5 bg-primary-color"></div>
             </button>
         </div> -->
 
@@ -17,7 +17,7 @@
 
             <!-- MANUAL TAB -->
             <section v-if="currentTab === 'manual'" class="space-y-4">
-                <IconPicker v-model="form.icon" />
+                <IconPicker :inSpace="true" v-model="form.icon" />
 
                 <BaseTextField v-model="form.title" label="Module name" size="lg" placeholder="Module name"
                     :error="!!errors.title" :message="errors.title" />
@@ -28,7 +28,7 @@
                 <div class="flex justify-end gap-2 pt-2">
                     <button class="px-4 py-2 rounded-md text-sm text-text-secondary border"
                         @click="close">Cancel</button>
-                    <Button class="px-4" @click="submitManual" :loading="creatingModule">
+                    <Button :inSpace="true" class="px-4" @click="submitManual" :loading="creatingModule">
                         {{ creatingModule ? 'Saving' : 'Save' }}
                     </Button>
                 </div>
@@ -48,7 +48,7 @@
                         <!-- Record Button -->
                         <transition v-if="!description" name="fade-slide" appear>
                             <div class="absolute bottom-4 right-4">
-                                <AudioRecorder v-model="description" v-model:isRecording="isRecording"
+                                <AudioRecorder :inSpace="true" v-model="description" v-model:isRecording="isRecording"
                                     v-model:hasAudio="audioURL" />
                             </div>
                         </transition>
@@ -56,7 +56,7 @@
                         <!-- Generate Button -->
                         <transition v-else name="rotate-fade" appear>
                             <div @click="handleGenerateSheet()"
-                                class="absolute bottom-4 right-4 w-9 h-9 bg-accent rounded-md flex items-center justify-center shadow"
+                                class="absolute bottom-4 right-4 w-9 h-9 bg-primary-color rounded-md flex items-center justify-center shadow"
                                 :class="isAiPending || isPending ? 'animate-pulse-ring cursor-not-allowed' : ' cursor-pointer'"
                                 :disabled="isAiPending || isPending"
                                 >
@@ -71,7 +71,7 @@
                     <hr class="flex-auto text-border">
                 </div>
                 <div class=" mt-5">
-                    <Button variant="secondary" color="dark" :block="true" @click=" currentTab = 'manual'">
+                    <Button :inSpace="true" variant="secondary" color="dark" :block="true" @click=" currentTab = 'manual'">
                         Create Manually
                     </Button>
                 </div>
@@ -88,7 +88,7 @@
                 v-for="s in suggestionData"
                 :key="s.description"
                 @click="() => typeEffect(s.description)"
-                class="cursor-pointer border border-border/30 px-3 py-2 rounded-lg text-xs hover:border-accent transition"
+                class="cursor-pointer border border-border/30 px-3 py-2 rounded-lg text-xs hover:border-primary-color transition"
               >
                 {{ s.description }}
               </div>
@@ -122,8 +122,8 @@
                 </div>
 
                 <div class="flex justify-end gap-2 pt-2">
-                    <Button variant="secondary" @click="close">Cancel</Button>
-                    <Button :disabled="!chosenTemplate" @click="submitTemplate">
+                    <Button :inSpace="true" variant="secondary" @click="close">Cancel</Button>
+                    <Button :inSpace="true" :disabled="!chosenTemplate" @click="submitTemplate">
                         {{ creatingModule ? 'Adding...' : 'Add board' }}
                     </Button>
                 </div>
@@ -163,7 +163,7 @@ const errors = ref<{ title?: string; description?: string }>({})
 
 function validateManual() {
     const next: any = {}
-    if (!form.value.title.trim()) next.title = 'Please enter a sheet name.'
+    if (!form.value.title.trim()) next.title = 'Please enter a module name.'
     if (!form.value.description.trim()) next.description = 'Please enter a description.'
     errors.value = next
     return Object.keys(next).length === 0

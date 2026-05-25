@@ -1,11 +1,17 @@
 <template>
     <AuthLayout>
       <template #form>
-        <div class="max-w-[500px] mx-auto w-full min-h-full py-5 flex flex-col justify-center">
-          <div class="mb-12 space-y-2">
-            <h2 class="text-[24px] md:text-[32px] font-medium text-text-primary text-center" v-once>Enter Verification Code</h2>
-            <p class="text-base sm:text-nowrap font-medium text-text-secondary text-center" v-once>
-              We sent a five-digit code to your email <span class="font-bold">({{ email }})</span>.
+        <div class="max-w-[400px] mx-auto w-full">
+          <div class="mb-8 space-y-3">
+            <h2 class="text-[24px] font-medium text-text-primary text-center" v-once>Enter Verification Code</h2>
+            <p
+              class="text-sm font-normal text-text-secondary text-center"
+              v-once
+            >
+              We sent a five-digit code to your email
+              <span class="block sm:inline font-medium text-text-primary break-all">
+                ({{ email }})
+              </span>
             </p>
           </div>
   
@@ -22,7 +28,7 @@
                 maxlength="1"
                 autocomplete="one-time-code"
                 enterkeyhint="done"
-                class="w-full aspect-square text-3xl sm:text-5xl p-1 md:p-2 font-bold text-center border rounded-lg focus:outline-none"
+                class="w-full aspect-square text-3xl p-1 md:p-2 font-bold text-center border rounded-lg focus:outline-none"
                 :class="[
                   'border-accent',
                   otpError ? 'border-red-500' : '',
@@ -36,14 +42,14 @@
               />
             </div>
   
-            <Button :disabled="isVerifying" size="lg" :block="true" @click="verifyCode">
+            <Button :disabled="isVerifying" size="md" :block="true" @click="verifyCode">
               {{ isVerifying ? 'Verifying...' : 'Verify' }}
             </Button>
   
             <p v-if="otpError" class="text-red-500 text-sm text-center mt-2">{{ otpError }}</p>
   
             <!-- Resend -->
-            <p class="text-sm font-medium text-text-secondary text-center">
+            <p class="text-sm font-normal text-text-secondary text-center">
               Didn't receive an email? Try checking your junk folder.
               <span
                 class="text-text-primary font-medium underline"
@@ -72,6 +78,8 @@
   import Button from '../../components/ui/Button.vue'
   import { verifyOtp, resendOtp } from '../../services/auth'
   import { useAuthStore } from '../../stores/auth'
+  import { getPostAuthRedirectPath } from '../../utilities/onboardingRedirect'
+  import { hasCreateOrgPendingOnboarding, saveOrgSignupToken } from '../../utilities/createOrganizationDraft'
   import type { ComponentPublicInstance } from 'vue'
 
   defineOptions({ name: 'OtpVerify' })
@@ -122,9 +130,30 @@ async function verifyCode() {
 
   try {
     const fullCode = code.value.join('')
+
+    // Pre-login flow: OTP is just for identity verification before registration
+    if (route.query.preLogin === 'true') {
+      await verifyAsync({ u_email: email.value, otp: fullCode })
+      router.push({ path: '/register', query: { email: email.value, verified: 'true' } })
+      return
+    }
+
+    // Standard post-register OTP flow
     const data = await verifyAsync({ u_email: email.value, otp: fullCode })
-    localStorage.setItem('token', data?.data?.token)
-    await authStore.bootstrap()
+    const token =
+      data?.data?.token ??
+      data?.token ??
+      data?.data?.access_token ??
+      data?.access_token ??
+      null
+    if (token) {
+      authStore.setSessionToken(token)
+      if (hasCreateOrgPendingOnboarding()) saveOrgSignupToken(token)
+    } else if (hasCreateOrgPendingOnboarding()) {
+      otpError.value = 'Verification succeeded but no session token was returned.'
+      return
+    }
+    await authStore.bootstrap(true)
 
     // ✅ Check post_auth_intent first
     const intentStr = localStorage.getItem('post_auth_intent')
@@ -151,8 +180,13 @@ async function verifyCode() {
       return
     }
 
-    // Default → onboarding
-    router.push('/create-profile')
+    if (hasCreateOrgPendingOnboarding()) {
+      router.replace({ path: '/onboarding-organization', query: { step: '5', otpVerified: '1' } })
+      return
+    }
+
+    const userData = authStore.user?.data ?? authStore.user;
+    router.replace(getPostAuthRedirectPath(userData))
 
   } catch (err: any) {
     otpError.value = err?.response?.data?.message || 'Invalid code, please try again.'
@@ -276,7 +310,14 @@ function handlePaste(index: number, e: ClipboardEvent) {
   }
   
   // ---- Mount / Unmount ----
-  onMounted(() => {
+  onMounted(async () => {
+    // If already authenticated and verified, redirect away from this page
+    if (authStore.isAuthenticated) {
+      const userData = authStore.user?.data ?? authStore.user;
+      router.replace(getPostAuthRedirectPath(userData))
+      return
+    }
+
     // autofocus first input once the DOM is ready
     setTimeout(() => focusIdx(0), 0)
     startCooldown()

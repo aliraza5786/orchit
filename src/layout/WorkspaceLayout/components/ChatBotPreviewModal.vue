@@ -348,6 +348,7 @@
 
         <div @click.stop>
           <DatePicker
+            :inSpace="true"
             placeholder="end date"
             :model-value="card['end-date']"
             theme="dark"

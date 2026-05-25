@@ -2,21 +2,25 @@
 
 
 <template>
-  <div class="w-full">
-    <h2 class="text-2xl md:text-4xl font-semibold text-text-primary text-left m-0 ">
+  <div class="w-full text-center space-y-3">
+    <h2 class="text-[24px] font-medium text-text-primary tracking-tight m-0">
       {{ ai ? ' Choose Your Tabs' : 'Create Your Tabs' }}
     </h2>
-    <p class="text-sm md:text-base text-text-secondary text-left mt-3 sm:mt-5.5 mb-0">
-      {{ ai ? ' Select the components you want to include in your project' : ' Create the components you want to include in your project'}}
-
+    <p class="text-sm text-text-secondary mb-0 max-w-[520px] mx-auto leading-relaxed">
+      {{ ai ? ' Select the components you want to include in your workspace' : ' Create the components you want to include in your workspace'}}
     </p>
   </div>
 
-  <div class="flex flex-col items-start gap-4 w-full pb-[60px]">
+  <div class="flex flex-col items-start gap-4 w-full  pb-[90px] sm:pb-[60px]">
     <!-- Display Lanes (adapted to workspace.lanes structure) -->
-    <label v-for="lane in form.lanes" :key="lane.variables.id" :for="`lane-${lane.variables.id}`"
-      class="rounded-lg relative flex justify-between gap-4 lg:gap-5 items-center w-full p-4 cursor-pointer transition-all bg-bg-surface border border-border">
-      <div class="flex gap-3 flex-1 min-w-0">
+    <div v-for="lane in form.lanes" :key="lane.variables.id"
+      class="rounded-lg relative flex justify-between gap-4 lg:gap-5 items-center w-full p-4 cursor-pointer transition-all bg-bg-surface border border-border"
+      @click="() => {
+        const idx = selectedLanes.indexOf(lane.variables.id);
+        if (idx > -1) selectedLanes.splice(idx, 1);
+        else selectedLanes.push(lane.variables.id);
+      }">
+      <div class="flex gap-3 flex-1 min-w-0 pointer-events-none">
         <div class="w-9 h-9 shrink-0 text-text-primary rounded-lg" :style="{ background: lane.variables['lane-color'] }"></div>
         <div class="flex flex-col gap-1 min-w-0">
           <h3 class="font-medium capitalize text-sm text-text-primary">{{ lane.variables['lane-title'] }}</h3>
@@ -25,20 +29,20 @@
         </div>
       </div>
 
-      <div class="flex gap-3 items-center">
+      <div class="flex gap-4 items-center">
         <button
-          class="w-5 h-5 text-base aspect-square flex justify-center items-center rounded cursor-pointer text-accent"
+          type="button"
+          class="w-5 h-5 text-base aspect-square flex justify-center items-center rounded cursor-pointer text-text-secondary hover:text-accent transition-colors"
           @click.stop="editLane(lane)">
-          <i class="fa-solid fa-edit text-text-primary text-[20px]"></i>
+          <i class="fa-solid fa-edit text-[16px]"></i>
         </button>
-        <input type="checkbox" class="sr-only peer" :name="`lane-${lane.variables.id}`"
-          :id="`lane-${lane.variables.id}`" v-model="selectedLanes" :value="lane.variables.id" />
-        <div
-          class="w-[20px] h-[20px] flex justify-center items-center border border-border bg-bg-card p-0.5 rounded cursor-pointer peer-checked:bg-accent peer-checked:border-none transition-all">
-          <i class="w-4 text-bg-card fa-solid fa-check  peer-checked:text-white"></i>
+        <div class="pointer-events-none">
+          <Checkbox 
+            :checked="selectedLanes.includes(lane.variables.id)"
+          />
         </div>
       </div>
-    </label>
+    </div>
 
     <!-- Add Custom Lane Button -->
     <label v-if="!showCustomForm"
@@ -101,6 +105,7 @@ import { ref, computed, reactive, watch } from 'vue'
 import BaseTextField from '../../../components/ui/BaseTextField.vue'
 import Button from '../../../components/ui/Button.vue'
 import BaseTextAreaField from '../../../components/ui/BaseTextAreaField.vue'
+import Checkbox from '../../../components/ui/Checkbox.vue'
 import { useWorkspaceStore } from '../../../stores/workspace';
 const workspaceStore = useWorkspaceStore();
 defineProps<{ ai: boolean }>()

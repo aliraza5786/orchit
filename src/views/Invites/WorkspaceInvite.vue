@@ -83,7 +83,30 @@
         <div v-else class="p-6">
           <!-- Workspace + Inviter -->
           <div class="flex items-start gap-4">
-            <img :src="data.workspace_logo" alt="" class="h-12 w-12 rounded-xl object-contain border border-border">
+          <div
+             v-if="
+               !data.workspace_logo ||
+               data.workspace_logo === 'Unknown Workspace logo'
+             "
+             class="h-12 w-12 rounded-xl flex items-center justify-center text-white font-bold text-sm shrink-0"
+             :style="{
+               backgroundColor:
+                 data.workspace?.variables?.['workspace-color'] ||
+                 'var(--primary-color)',
+             }"
+           >
+             {{
+               data?.workspace_title
+                 ?.substring(0, 2)
+                 .toUpperCase() || 'WS'
+             }}
+           </div>
+            <img
+              v-else
+              :src="data.workspace_logo"
+              alt=""
+              class="h-12 w-12 rounded-xl object-contain"
+            />
             <div>
               <h2 class="text-lg font-medium text-text-primary ">
                 {{ data?.workspace_title }}

@@ -12,24 +12,111 @@ export const api: AxiosInstance = axios.create({
   headers: { "Content-Type": "application/json" },
   withCredentials: true, // ✅ CRITICAL: Allow cookies to be sent/received with requests
 });
-
-/** Auth token injector */
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
-  if (token) config.headers.Authorization = `Bearer ${token}`;
-  return config;
-});
+  const localToken = localStorage.getItem('token')
+  const cookieToken = document.cookie
+    .split('; ')
+    .find(row => row.startsWith('auth_token='))
+    ?.split('=')[1] ?? null
+
+  const token = localToken || cookieToken
+
+  if (token) {
+if (cookieToken && localStorage.getItem('token') !== cookieToken) {
+  localStorage.setItem('token', cookieToken)
+}
+    config.headers.Authorization = `Bearer ${token}`
+  }
+
+  return config
+})
+
+/** Auth endpoints where errors must be shown on the form (no session redirect/reload). */
+const PUBLIC_AUTH_PATHS = [
+  '/auth/login',
+  '/auth/signup',
+  '/auth/social-login',
+  '/auth/verify-otp',
+  '/auth/resend-otp',
+  '/auth/verify-email-pre-login',
+  '/auth/forget-password',
+  '/auth/reset-password',
+  '/auth/verify-reset-token',
+] as const
+
+export function isPublicAuthRequest(config?: AxiosRequestConfig): boolean {
+  const url = String(config?.url ?? '')
+  return PUBLIC_AUTH_PATHS.some((path) => url.includes(path))
+}
 
 /** Response / error interceptor */
 api.interceptors.response.use(
   (r) => r,
   (err: AxiosError) => {
-    if (err.response?.status === 401) {
-      console.warn("User not authorized. Redirecting to login.");
-      localStorage.removeItem("token");
-      // Important: still reject so callers don't get an undefined "success"
+    if (axios.isCancel(err) || err.name === 'CanceledError') {
       return Promise.reject(err);
     }
+
+    const isUnauthorized = err.response?.status === 401;
+    const isNetworkOrCorsError = !err.response || err.message === 'Network Error' || err.code === 'ERR_NETWORK';
+    const skipSessionRedirect = isPublicAuthRequest(err.config);
+    const isOrgOnboardingRoute =
+      typeof window !== 'undefined' &&
+      window.location.pathname.includes('/onboarding-organization');
+
+    if ((isUnauthorized || isNetworkOrCorsError) && !skipSessionRedirect && !isOrgOnboardingRoute) {
+      console.warn(isUnauthorized ? "User not authorized." : "Backend down or CORS error.", "Clearing session and redirecting.");
+      
+      const logoutKeys = [
+        'token', 'user_id', 'company_id', 'personal_mode', 'currentName',
+        'jobId', 'mannualWorkspace', 'selectedAgentModule', 'selectedModuleId',
+        'sprintType', 'activeMilestoneId', 'activeSprintId', 'showActiveSprint',
+        'activeSprintKey', 'selectedSprintTitle', 'selected_sheet_title',
+        'activeSessionId', 'activeSessionTitle', 'selected_sheet_id', 'sidebar_mode', 'company_name'
+      ];
+      logoutKeys.forEach(k => localStorage.removeItem(k));
+      
+      const COOKIE_KEY = 'auth_session';
+      const keys = [COOKIE_KEY, 'auth_token', 'space_auth', 'auth_session', 'token', '_cid', '_uid', 'user_id', 'company_id'];
+      try {
+        document.cookie.split(';').forEach(cookie => {
+          const name = cookie.split('=')[0].trim();
+          if (name && !keys.includes(name)) {
+            keys.push(name);
+          }
+        });
+      } catch (e) {}
+
+      const hostname = window.location.hostname;
+      const parts = hostname.split('.');
+      const domains: string[] = ['', hostname, `.${hostname}`];
+      if (parts.length >= 2) {
+        for (let i = 0; i < parts.length - 1; i++) {
+          const parentDomain = '.' + parts.slice(i).join('.');
+          if (!domains.includes(parentDomain)) domains.push(parentDomain);
+        }
+      }
+      const extraDomains = ['.streamed.space', '.orchit.ai', '.localhost'];
+      extraDomains.forEach(d => {
+        if (!domains.includes(d)) domains.push(d);
+      });
+
+      keys.forEach(key => {
+        domains.forEach(domain => {
+          const domainString = domain ? `; domain=${domain}` : '';
+          document.cookie = `${key}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT${domainString}`;
+          document.cookie = `${key}=; path=/; max-age=0${domainString}`;
+          document.cookie = `${key}=; expires=Thu, 01 Jan 1970 00:00:00 GMT${domainString}`;
+          document.cookie = `${key}=; max-age=0${domainString}`;
+        });
+      });
+
+      const currentPath = window.location.pathname;
+      if (currentPath !== '/' && currentPath !== '/login') {
+        window.location.href = '/';
+      }
+    }
+    
     return Promise.reject(err);
   }
 );

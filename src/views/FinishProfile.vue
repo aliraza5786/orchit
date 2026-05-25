@@ -1,103 +1,173 @@
 <template>
-    <AuthLayout>
-        <template #form>
-            <div class="max-w-125 mx-auto w-full min-h-full py-5 flex flex-col justify-center">
-                <!-- Success badge -->
-                <div class="inline-flex items-center gap-2 bg-green-50 border border-green-200 rounded-full px-3 py-1.5 mb-6 w-fit">
-                    <span class="w-2 h-2 rounded-full bg-green-500"></span>
-                    <span class="text-xs font-medium text-green-700">Account verified</span>
-                </div>
+  <AuthLayout>
+    <template #form>
+      <div class="max-w-[400px] mx-auto w-full min-h-full py-10 flex flex-col justify-center items-center text-center">
+        <!-- Success icon -->
+        <div
+          class="w-[72px] h-[72px] rounded-full flex items-center justify-center mb-7 shadow-sm"
+          :style="iconBgStyle"
+        >
+          <svg
+            class="w-9 h-9"
+            :style="{ color: isPersonal ? '#0d9488' : 'var(--accent)' }"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2.5"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
 
-                <div class="mb-6 space-y-2">
-                    <h2 class="text-[24px] md:text-[32px] font-medium text-text-primary">Great! Your Account is All Set</h2>
-                    <p class="text-base font-medium text-text-secondary">Get started with Orchit AI. Create a project or explore your dashboard.</p>
-                </div>
+        <h2 class="text-[26px] font-semibold text-text-primary tracking-tight mb-2.5">
+          {{ isPersonal ? 'Personal Space Ready!' : 'Organization Set Up!' }}
+        </h2>
 
-                <!-- Progress steps -->
-                <div class="flex items-center gap-1 mb-8">
-                    <div v-for="(step, i) in steps" :key="i" class="flex items-center gap-1">
-                        <div class="flex items-center gap-1.5">
-                            <div class="w-5 h-5 rounded-full bg-accent-hover flex items-center justify-center">
-                                <svg class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                                </svg>
-                            </div>
-                            <span class="text-xs font-medium text-accent-hover">{{ step }}</span>
-                        </div>
-                        <div v-if="i < steps.length - 1" class="w-6 h-px bg-purple-300 mx-1"></div>
-                    </div>
-                </div>
+        <p class="text-sm text-text-secondary leading-relaxed mb-8 max-w-[320px]">
+          {{
+            isPersonal
+              ? 'Your account is ready. Get started with Orchit AI to organize your thoughts and manage your tasks.'
+              : "Your team's digital workspace has been successfully provisioned. Start collaborating efficiently."
+          }}
+        </p>
 
-                <!-- Feature cards -->
-                <div class="grid grid-cols-3 gap-2.5 mb-6">
-                    <div v-for="feature in features" :key="feature.title"
-                        class="bg-bg-card border border-border rounded-xl p-3.5 cursor-pointer hover:border-accent-hover transition-all hover:-translate-y-0.5">
-                        <div class="w-8 h-8 rounded-lg flex items-center justify-center mb-2.5" :class="feature.iconBg">
-                            <i :class="[feature.icon, feature.iconColor, 'text-md']"></i>
-                        </div>
-                        <p class="text-sm font-semibold text-primary mb-1">{{ feature.title }}</p>
-                        <p class="text-xs text-secondary leading-relaxed">{{ feature.desc }}</p>
-                    </div>
-                </div>
+        <!-- Workspace URL (organization with tenant domain) -->
+        <div
+          v-if="!isPersonal && workspaceLabel"
+          class="w-full rounded-2xl border border-border bg-bg-card/80 backdrop-blur-sm p-4 text-left mb-8 shadow-sm"
+        >
+          <span class="text-[10px] font-bold uppercase tracking-[0.12em] text-text-secondary">
+            Workspace URL
+          </span>
+          <div
+            class="mt-2.5 flex items-center gap-2 rounded-xl border border-border bg-bg-surface px-3 py-2.5"
+          >
+            <a
+              v-if="workspaceOpenUrl"
+              :href="workspaceOpenUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="flex-1 min-w-0 text-sm font-semibold text-accent hover:underline truncate text-left"
+              :title="workspaceOpenUrl"
+            >
+              {{ workspaceLabel }}
+            </a>
+            <span v-else class="flex-1 min-w-0 text-sm font-semibold text-text-primary truncate text-left">
+              {{ workspaceLabel }}
+            </span>
+            <a
+              v-if="workspaceOpenUrl"
+              :href="workspaceOpenUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="shrink-0 p-1.5 rounded-lg text-text-secondary hover:text-accent hover:bg-bg-muted transition-colors"
+              aria-label="Open workspace in new tab"
+            >
+              <svg class="w-4 h-4" viewBox="0 0 12 12" fill="none">
+                <path
+                  d="M3.5 8.5l5-5M8.5 3.5H5M8.5 3.5V7"
+                  stroke="currentColor"
+                  stroke-width="1.2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </a>
+          </div>
+        </div>
 
-                <Button size="lg" :block="true" @click="register">Explore Home</Button>
+        <div class="w-full space-y-4">
+          <Button size="md" :block="true" @click="goToDashboard">
+            Explore Dashboard
+          </Button>
 
-                <div class="flex items-center gap-2.5 my-3">
-                    <div class="flex-1 h-px bg-gray-200"></div>
-                    <span class="text-xs text-secondary font-medium">OR</span>
-                    <div class="flex-1 h-px bg-gray-200"></div>
-                </div>
+          <div class="flex items-center gap-3 px-1">
+            <div class="flex-1 h-px bg-border" />
+            <span class="text-[10px] text-text-tertiary font-bold tracking-wider uppercase">or</span>
+            <div class="flex-1 h-px bg-border" />
+          </div>
 
-                <Button size="lg" :block="true" @click="createWS" variant="secondary">Let's Start Creating Your First WorkSpace</Button>
-            </div>
-        </template>
-    </AuthLayout>
+          <Button size="md" :block="true" variant="secondary" @click="goToCreateWorkspace">
+            Let's Start Creating Your First Workspace
+          </Button>
+        </div>
+      </div>
+    </template>
+  </AuthLayout>
 </template>
 
 <script setup lang="ts">
-import AuthLayout from '../layout/AuthLayout/AuthLayout.vue';
-import Button from '../components/ui/Button.vue';
+import AuthLayout from '../layout/AuthLayout/AuthLayout.vue'
+import Button from '../components/ui/Button.vue'
+import { computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-const steps = ['Sign up', 'Verify email', 'Account ready']
-const features = [
-  { 
-    title: 'Dashboard', 
-    desc: 'Overview of all your projects', 
-    icon: 'fa-regular fa-chart-bar',
-    iconBg: 'bg-purple-50', 
-    iconColor: 'text-purple-500' 
-  },
-  { 
-    title: 'Workspace', 
-    desc: 'Organize your team and flows', 
-    icon: 'fa-regular fa-folder',
-    iconBg: 'bg-teal-50', 
-    iconColor: 'text-teal-600' 
-  },
-  { 
-    title: 'AI Tools', 
-    desc: "Explore Orchit's AI features", 
-    icon: 'fa-regular fa-lightbulb',
-    iconBg: 'bg-amber-50', 
-    iconColor: 'text-amber-600' 
-  },
-]
+import { useTheme } from '../composables/useTheme'
+import { buildCompanyDomainUrl } from '../utilities/authRedirect'
 
+const { theme } = useTheme()
 const router = useRouter()
 const route = useRoute()
 
+const isPersonal = computed(() => route.query.type === 'personal')
+const domainLink = computed(() => String(route.query.domainLink ?? '').trim())
+const encodedToken = computed(() => String(route.query._auth ?? ''))
+const encodedCompanyId = computed(() => String(route.query._cid ?? ''))
+const hasTenantDomain = computed(() => !!domainLink.value && !!encodedToken.value)
+
+const iconBgStyle = computed(() => {
+  if (isPersonal.value) {
+    return {
+      background: 'color-mix(in srgb, var(--teal-500, #14b8a6) 12%, transparent)',
+      border: '1.5px solid color-mix(in srgb, var(--teal-500, #14b8a6) 28%, transparent)',
+    }
+  }
+  return {
+    background: 'color-mix(in srgb, var(--accent) 14%, transparent)',
+    border: '1.5px solid color-mix(in srgb, var(--accent) 30%, transparent)',
+  }
+})
+
+const workspaceLabel = computed(() => {
+  if (domainLink.value) {
+    try {
+      return new URL(domainLink.value).hostname
+    } catch {
+      return domainLink.value.replace(/^https?:\/\//, '').replace(/\/$/, '')
+    }
+  }
+  const customDomain = String(route.query.customDomain ?? '').trim()
+  if (customDomain) return customDomain.replace(/^https?:\/\//, '')
+  const slug = String(route.query.siteSlug ?? '').trim()
+  if (slug) return `${slug}.streamed.space`
+  return ''
+})
+
+/** Tenant dashboard URL with auth + theme (active company). */
+const workspaceOpenUrl = computed(() => {
+  if (isPersonal.value || !hasTenantDomain.value) return ''
+  return buildCompanyDomainUrl({
+    domainLink: domainLink.value,
+    path: '/dashboard',
+    theme: theme.value,
+    encodedAuth: encodedToken.value,
+    encodedCompanyId: encodedCompanyId.value || undefined,
+    extraQuery: { welcome: '1' },
+  })
+})
+
 const COOKIE_KEY = 'auth_session'
 
-function setAuthCookie(data: { token?: string, company_id?: string }) {
-  // Read existing cookie
+function setAuthCookie(data: { token?: string; company_id?: string }) {
   let existing: Record<string, string> = {}
   try {
     const raw = document.cookie
       .split('; ')
-      .find(row => row.startsWith(COOKIE_KEY + '='))
+      .find((row) => row.startsWith(COOKIE_KEY + '='))
       ?.split('=')[1]
     if (raw) existing = JSON.parse(decodeURIComponent(raw))
-  } catch {}
+  } catch {
+    /* ignore */
+  }
 
   const merged = { ...existing, ...data }
   const value = encodeURIComponent(JSON.stringify(merged))
@@ -106,95 +176,123 @@ function setAuthCookie(data: { token?: string, company_id?: string }) {
 
   if (hostname === 'localhost' || hostname.endsWith('.localhost')) {
     document.cookie = `${COOKIE_KEY}=${value}; path=/; max-age=${maxAge}; SameSite=Lax`
+  } else if (hostname.endsWith('.streamed.space')) {
+    document.cookie = `${COOKIE_KEY}=${value}; domain=.streamed.space; path=/; max-age=${maxAge}; Secure; SameSite=Lax`
   } else if (hostname === 'orchit.ai' || hostname.endsWith('.orchit.ai')) {
-    // ✅ Use SameSite=None for cross-site cookie sending on production
     document.cookie = `${COOKIE_KEY}=${value}; domain=.orchit.ai; path=/; max-age=${maxAge}; Secure; SameSite=None`
   }
-
-  console.log('🍪 auth_session cookie set:', merged)
 }
 
-function register() {
-  const type = route.query.type as string
+function persistSessionFromQuery() {
+  if (!encodedToken.value || !encodedCompanyId.value) return
 
-  if (type === 'personal') {
-    const encodedUserId = route.query._uid as string
-    if (encodedUserId) {
-      const userId = atob(encodedUserId.replace(/-/g, '+').replace(/_/g, '/').replace(/\./g, '='))
-      localStorage.setItem('user_id', userId)
-    }
-    router.push({ path: '/dashboard', query: { welcome: '1' } })
-    return
-  }
-
-  const encodedToken = route.query._auth as string
-  const encodedCompanyId = route.query._cid as string
-  const domainLink = route.query.domainLink as string
-
-  if (!encodedToken) {
-    console.error('❌ No _auth token in URL')
-    return
-  }
-
-  if (!encodedCompanyId) {
-    console.error('❌ No _cid in URL')
-    return
-  }
-
-  // ✅ Decode token
-  let token = encodedToken
+  let token = encodedToken.value
   try {
-    if (!encodedToken.startsWith('eyJ')) {
-      token = atob(encodedToken.replace(/-/g, '+').replace(/_/g, '/').replace(/\./g, '='))
+    if (!encodedToken.value.startsWith('eyJ')) {
+      token = atob(
+        encodedToken.value.replace(/-/g, '+').replace(/_/g, '/').replace(/\./g, '='),
+      )
     }
   } catch (e) {
-    console.error('❌ Token decode failed:', e)
+    console.error('Token decode failed:', e)
     return
   }
 
-  // ✅ Decode company_id
-  let companyId = encodedCompanyId
+  let companyId = encodedCompanyId.value
   try {
-    companyId = atob(encodedCompanyId.replace(/-/g, '+').replace(/_/g, '/').replace(/\./g, '='))
+    companyId = atob(
+      encodedCompanyId.value.replace(/-/g, '+').replace(/_/g, '/').replace(/\./g, '='),
+    )
   } catch (e) {
-    console.error('❌ company_id decode failed:', e)
+    console.error('company_id decode failed:', e)
     return
   }
 
-  console.log('✅ Token decoded:', !!token)
-  console.log('✅ company_id decoded:', companyId)
-
-  // ✅ Save both in shared cookie — accessible on ALL subdomains
+  localStorage.setItem('token', token)
+  localStorage.setItem('company_id', companyId)
   setAuthCookie({ token, company_id: companyId })
+}
 
+function navigateToTenant(path: string, extraQuery?: Record<string, string>) {
   const isLocalhost = window.location.hostname === 'localhost'
-
-  const buildUrl = (base: string) => {
-    const cleanBase = base.endsWith('/') ? base.slice(0, -1) : base
-    // ✅ Only pass _auth in URL — company_id comes from cookie
-    return `${cleanBase}/dashboard?welcome=1&_auth=${encodedToken}`
-  }
 
   if (isLocalhost) {
     const port = window.location.port ? `:${window.location.port}` : ''
-    window.location.href = `http://custom.localhost${port}/dashboard?welcome=1&_auth=${encodedToken}`
-  } else if (domainLink) {
-    window.location.href = buildUrl(domainLink)
-  } else {
-    router.push({ path: '/dashboard', query: { welcome: '1' } })
+    const host = path.includes('create-workspace') ? 'custom.localhost' : 'localhost'
+    const params = new URLSearchParams({ theme: theme.value, welcome: '1' })
+    if (encodedToken.value) params.set('_auth', encodedToken.value)
+    if (encodedCompanyId.value) params.set('_cid', encodedCompanyId.value)
+    if (extraQuery) {
+      Object.entries(extraQuery).forEach(([k, v]) => params.set(k, v))
+    }
+    window.location.href = `http://${host}${port}${path}?${params.toString()}`
+    return
   }
+
+  if (hasTenantDomain.value) {
+    window.location.href = buildCompanyDomainUrl({
+      domainLink: domainLink.value,
+      path,
+      theme: theme.value,
+      encodedAuth: encodedToken.value,
+      encodedCompanyId: encodedCompanyId.value || undefined,
+      extraQuery: { welcome: '1', ...extraQuery },
+    })
+    return
+  }
+
+  const query: Record<string, string> = { welcome: '1', theme: theme.value }
+  if (encodedToken.value) query._auth = encodedToken.value
+  if (encodedCompanyId.value) query._cid = encodedCompanyId.value
+  router.push({ path, query })
 }
 
-function createWS() {
-  const encodedToken = route.query._auth as string
-  const domainLink = route.query.domainLink as string
-  const encodedCompanyId = route.query._cid as string
-  const encodedUserId = route.query._uid as string
-  const type = route.query.type as string
+function goToDashboard() {
+  if (isPersonal.value) {
+    const encodedUserId = route.query._uid as string
+    if (encodedUserId) {
+      try {
+        const userId = atob(
+          encodedUserId.replace(/-/g, '+').replace(/_/g, '/').replace(/\./g, '='),
+        )
+        localStorage.setItem('user_id', userId)
+      } catch {
+        /* ignore */
+      }
+    }
+    router.push({ path: '/dashboard', query: { welcome: '1', theme: theme.value } })
+    return
+  }
 
-  router.push({
-    path: '/create-workspace',
-    query: { _auth: encodedToken, domainLink, _cid: encodedCompanyId, _uid: encodedUserId, type }
-  })
+  if (!encodedToken.value) {
+    console.error('No _auth token for dashboard redirect')
+    router.push({ path: '/dashboard', query: { welcome: '1', theme: theme.value } })
+    return
+  }
+
+  persistSessionFromQuery()
+  navigateToTenant('/dashboard')
+}
+
+function goToCreateWorkspace() {
+  if (isPersonal.value) {
+    router.push({
+      path: '/create-workspace',
+      query: {
+        type: 'personal',
+        theme: theme.value,
+        ...(route.query._uid ? { _uid: route.query._uid as string } : {}),
+      },
+    })
+    return
+  }
+
+  if (!encodedToken.value) {
+    router.push({ path: '/create-workspace', query: { welcome: '1', theme: theme.value } })
+    return
+  }
+
+  persistSessionFromQuery()
+  navigateToTenant('/create-workspace')
 }
 </script>

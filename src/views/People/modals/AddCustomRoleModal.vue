@@ -2,6 +2,7 @@
 <template>
   <Teleport to="body">
     <BaseModal
+      :inSpace="true"
       :modelValue="show"
       @update:modelValue="(val) => !val && $emit('close')"
       class=""
@@ -79,7 +80,8 @@
                         :id="perm._id"
                         :value="perm._id"
                         v-model="selectedPermissionIds"
-                        class="h-4 w-4 rounded border-border accent-accent cursor-pointer"
+                        class="h-4 w-4 rounded border-border  cursor-pointer"
+                        :class="inSpace? 'accent-primary-color': 'accent-accent'" 
                         />
                     </div>
                     <div class="ml-2 text-sm">
@@ -100,8 +102,9 @@
 
         <!-- Footer -->
         <div class="bg-bg-body px-6 py-6 border-t border-border flex justify-end gap-2 text-right">
-          <Button variant="secondary" @click="$emit('close')">Cancel</Button>
+          <Button :inSpace="inSpace? props.inSpace : false" variant="secondary" @click="$emit('close')">Cancel</Button>
           <Button 
+             :inSpace="inSpace ? props.inSpace : false"
               @click="handleSubmit" 
               :disabled="isPending || !form.title"
               :loading="isPending"
@@ -130,6 +133,7 @@ const props = defineProps<{
   show: boolean;
   workspaceId: string;
   companyId: string;
+  inSpace?: boolean;
 }>();
 
 const emit = defineEmits(['close']);

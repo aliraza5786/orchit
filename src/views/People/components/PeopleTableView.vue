@@ -7,14 +7,14 @@
       class="kanban-table flex-1 overflow-y-auto overflow-x-auto rounded-[6px]"
     >
       <table
-        class="w-full table-fixed border-collapse shadow-sm bg-bg-body/20 text-sm"
+        class="w-full table-fixed border-collapse shadow-sm bg-bg-body text-sm"
       >
         <!-- HEADER -->
         <thead
-          class="bg-bg-surface border-b border-border sticky top-[-1px] z-[999]"
+          class="bg-bg-body border-b border-border sticky top-[-1px] z-[999]"
         >
           <tr class="text-text-secondary">
-            <th class="w-8 p-0 sticky left-0 z-20 bg-bg-surface"></th>
+            <th class="w-8 p-0 sticky left-0 z-20 bg-bg-body"></th>
             <th
               v-for="col in visibleColumns"
               :key="col.key"
@@ -28,14 +28,14 @@
               <span>{{ col.label }}</span>
               <!-- Column Resize Handle -->
               <div
-                class="absolute right-0 top-0 h-full w-2 cursor-col-resize z-30 hover:bg-accent/20 active:bg-accent/40 transition"
+                class="absolute right-0 top-0 h-full w-2 cursor-col-resize z-30 hover:bg-primary-color/20 active:bg-primary-color/40 transition"
                 @mousedown="(e) => startResize(e, col.key)"
               ></div>
             </th>
 
             <!-- Toggle Columns Button -->
             <th
-              class="w-10 p-2 text-center sticky right-0 z-20 bg-bg-surface border-l border-border/40"
+              class="w-10 p-2 text-center sticky right-0 z-20 bg-bg-body border-l border-border/40"
             >
               <div class="relative inline-block">
                 <button
@@ -59,7 +59,7 @@
                       type="checkbox"
                       :checked="visibleColumnKeys.includes(col.key)"
                       @change="toggleColumn(col.key)"
-                      class="h-4 w-4 mt-0.5 rounded border-border accent-accent cursor-pointer flex-shrink-0"
+                      class="h-4 w-4 mt-0.5 rounded border-border accent-primary-color cursor-pointer flex-shrink-0"
                     />
                     <span>{{ col.label }}</span>
                   </div>
@@ -82,7 +82,7 @@
         </thead>
 
         <!-- BODY -->
-        <tbody class="bg-bg-surface/20">
+        <tbody class="bg-bg-surface">
           <!-- SKELETON LOADING -->
           <template v-if="isPending">
             <tr
@@ -113,7 +113,7 @@
           >
             <!-- GROUP HEADER -->
             <tr
-              class="bg-bg-body/50 border-y border-border cursor-pointer hover:bg-bg-surface/60 transition-colors group/header"
+              class="bg-bg-body border-y border-border cursor-pointer hover:bg-bg-body/40 transition-colors group/header"
               @click="toggleGroup(group.title)"
             >
               <td
@@ -140,7 +140,7 @@
                     v-if="
                       (isTalent && isTeamView && canInviteUser) || !isTalent
                     "
-                    class="ml-2 w-5 h-5 flex items-center justify-center rounded-md border border-border bg-bg-surface hover:border-accent hover:text-accent opacity-0 group-hover/header:opacity-100 transition-all text-[10px]"
+                    class="ml-2 w-5 h-5 flex items-center justify-center rounded-md border border-border bg-bg-surface hover:border-primary-color hover:text-primary-color opacity-0 group-hover/header:opacity-100 transition-all text-[10px]"
                     @click.stop="$emit('add-seat', group)"
                     :title="isTalent ? 'Add Seat' : 'Add Agent'"
                   >
@@ -156,11 +156,13 @@
                 v-for="(person, index) in group.cards || group.agents || []"
                 :key="person._id || index"
                 class="border-b border-border transition-colors relative group/row hover:bg-bg-surface/40 cursor-pointer"
+                :class="{ 'z-[100]': activeMenuId === (person._id || index) }"
                 @click="emit('select:ticket', person)"
               >
                 <td
                   @click.stop
-                  class="w-8 group text-center align-middle border-r border-border/40 sticky left-0 z-20 bg-bg-surface"
+                  class="w-8 group text-center align-middle border-r border-border/40 sticky left-0 bg-bg-surface"
+                  :class="activeMenuId === (person._id || index) ? 'z-[100]' : 'z-20'"
                 >
                   <div
                     class="flex justify-center items-center h-full w-full relative"

@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { request } from '../libs/api'
-
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface CompanyUser {
@@ -12,12 +11,12 @@ export interface CompanyUser {
   u_department: string | null
   u_location: string | null
   is_active: boolean
-  is_owner: boolean 
+  is_owner: boolean
   company_role_id: string | null
   u_is_verfied: boolean
   created_at: string
   membership_role: 'owner' | 'admin' | 'member' | 'viewer'
-  membership_status: 'active' | 'suspended' | 'deactivated' | 'pending'
+  membership_status: 'active' | 'suspended' | 'deactivated' | 'pending' | 'pending_super_admin_otp' |'invited'
   accepted_at: string | null
 }
 
@@ -36,6 +35,10 @@ export interface CreateCompanyUserPayload {
   u_email: string
   u_password: string
   company_role_id?: string
+  role?: string
+  u_job_title?: string
+  u_department?: string
+  u_location?: string
 }
 
 export interface UpdateCompanyUserPayload {
@@ -46,6 +49,7 @@ export interface UpdateCompanyUserPayload {
   company_role_id?: string | 'null'
   is_active?: boolean
   u_password?: string
+  membership_role?: string
 }
 
 export interface ChangePasswordPayload {
@@ -64,33 +68,25 @@ export const companyUserKeys = {
 
 // ─── List Users ───────────────────────────────────────────────────────────────
 
-export function useCompanyUsers(params: ListCompanyUsersParams) {
+import { computed, toValue, type MaybeRefOrGetter } from 'vue'
+
+export function useCompanyUsers(params: MaybeRefOrGetter<ListCompanyUsersParams>) {
   return useQuery({
-    queryKey: companyUserKeys.list(params.company_id, {
-      page: params.page,
-      per_page: params.per_page,
-      search: params.search,
-      is_active: params.is_active,
-      membership_role: params.membership_role,
-    }),
-    queryFn: () =>
-      request({
+    queryKey: computed(() => companyUserKeys.list(
+      toValue(params).company_id,
+      toValue(params)
+    )),
+    queryFn: () => {
+      const p = toValue(params)
+      return request({
         url: 'workspace/company/users',
         method: 'GET',
-        params: {
-          company_id: params.company_id,
-          page: params.page ?? 1,
-          per_page: params.per_page ?? 50,
-          search: params.search || undefined,
-          is_active: params.is_active,
-          membership_role: params.membership_role || undefined,
-        },
-      }),
-    enabled: !!params.company_id,
-    staleTime: 1000 * 30,
+        params: p,
+      })
+    },
+    enabled: computed(() => !!toValue(params).company_id),
   })
 }
-
 // ─── Get Single User ──────────────────────────────────────────────────────────
 
 export function useCompanyUser(companyId: string, userId: string) {
@@ -239,3 +235,101 @@ export function useChangeCompanyUserPassword(
     onError: options?.onError,
   })
 }
+
+// organization delete
+// ─── Domain Deletion (Password + OTP) ────────────────────────────────────────
+
+export interface VerifyPasswordForDeletionPayload {
+  password: string
+}
+
+export interface VerifyPasswordForDeletionData {
+  message: string
+}
+
+export interface ConfirmDomainDeletionPayload {
+  otp: string
+}
+
+export interface ConfirmDomainDeletionData {
+  message: string
+}
+
+export const useVerifyPasswordForDeletion = (
+  companyId: string,
+  options: Record<string, unknown> = {}
+) => {
+  return useMutation<any, Error, VerifyPasswordForDeletionPayload>({
+    mutationKey: ['verify-password-for-deletion', companyId],
+    mutationFn: (payload) =>
+      request({
+        url: `profile/company/${companyId}/verify-password`,
+        method: 'POST',
+        data: payload,
+      }),
+    ...options,
+  })
+}
+
+export const useConfirmDomainDeletion = (
+  companyId: string,
+  options: Record<string, unknown> = {}
+) => {
+  const queryClient = useQueryClient()
+  return useMutation<any, Error, ConfirmDomainDeletionPayload>({
+    mutationKey: ['confirm-company-deletion', companyId],
+    mutationFn: (payload) =>
+      request({
+        url: `profile/company/${companyId}/confirm-delete`,
+        method: 'POST',
+        data: payload,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['profile'] })
+      queryClient.invalidateQueries({ queryKey: ['me'] })
+    },
+    ...options,
+  })
+}
+export function useSendSuperAdminOtp() {
+  return useMutation({
+    mutationFn: ({
+      user_id,
+      company_id,
+    }: {
+      user_id: string
+      company_id: string
+    }) =>
+      request({
+        url: `/workspace/company/users/${user_id}/send-super-admin-otp`,
+        method: 'POST',
+        data: {
+          company_id,
+        },
+      }),
+  })
+}
+
+export function useVerifySuperAdminOtp() {
+  return useMutation({
+    mutationFn: ({
+      user_id,
+      otp,
+      company_id,
+    }: {
+      user_id: string
+      otp: string
+      company_id: string
+    }) =>
+      request({
+        url: `/workspace/company/users/${user_id}/verify-super-admin-otp`,
+        method: 'POST',
+        data: {
+          otp,
+          company_id,
+        },
+      }),
+  })
+}
+
+

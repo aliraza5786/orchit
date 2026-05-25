@@ -44,8 +44,8 @@
         <!-- Footer -->
         <div class="flex items-center justify-between gap-3 p-6 mt-3 pb-2 border-t border-border bg-bg-body">
             <div class="flex gap-2 justify-between w-full">
-                <Button variant="secondary" @click="close">Cancel</Button>
-                <Button variant="primary" :disabled="((!selectedEmail || isSubmitting) ? true : false)" @click="submit">
+                <Button :inSpace="true" variant="secondary" @click="close">Cancel</Button>
+                <Button :inSpace="true" variant="primary" :disabled="((!selectedEmail || isSubmitting) ? true : false)" @click="submit">
                     {{ isSubmitting ? 'Assigning…' : 'Assign' }}
                 </Button>
             </div>

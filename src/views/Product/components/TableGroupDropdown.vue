@@ -22,7 +22,7 @@
               v-model="searchQuery"
               type="text" 
               placeholder="Search grouping options"
-              class="w-full bg-bg-input border border-border rounded-md pl-9 pr-4 py-1.5 text-xs focus:ring-1 focus:ring-accent outline-none transition-all placeholder:text-text-secondary/50"
+              class="w-full bg-bg-input border border-border rounded-md pl-9 pr-4 py-1.5 text-xs focus:ring-1 focus:ring-primary-color outline-none transition-all placeholder:text-text-secondary/50"
               ref="searchInput"
             />
           </div>
@@ -38,7 +38,7 @@
             <div 
               @click="selectOption(lastSelectedOption.id)"
               class="px-3 py-2 flex items-center justify-between cursor-pointer transition-colors group"
-              :class="modelValue === lastSelectedOption.id ? 'bg-accent/10 text-accent font-semibold' : 'hover:bg-bg-body text-text-primary'"
+              :class="modelValue === lastSelectedOption.id ? 'bg-primary-color/10 text-primary-color font-semibold' : 'hover:bg-bg-card text-text-primary'"
             >
               <div class="flex items-center gap-2">
                  <span class="text-xs">{{ lastSelectedOption.label }}</span>
@@ -57,7 +57,7 @@
             :key="option._id"
             @click="selectOption(option._id)"
             class="px-3 py-2 flex items-center justify-between cursor-pointer transition-colors group"
-            :class="modelValue === option._id ? 'bg-accent/10 text-accent font-semibold' : 'hover:bg-bg-body text-text-primary'"
+            :class="modelValue === option._id ? 'bg-primary-color/10 text-primary-color font-semibold' : 'hover:bg-bg-body text-text-primary'"
           >
             <span class="text-xs">{{ option.title }}</span>
             <i v-if="modelValue === option._id" class="fa-solid fa-check text-[10px]"></i>
@@ -107,15 +107,16 @@ const dropdownStyles = ref<CSSProperties>({
 let cleanupFloating: (() => void) | null = null;
 
 const allOptions = computed(() => {
+  const staticOptions = [
+    { _id: 'priority', title: 'Priority' },
+    { _id: 'status', title: 'Status' },
+    { _id: 'assignee', title: 'Assignee' },
+    { _id: 'owner', title: 'Owner/Reporter' },
+    { _id: 'card_type', title: 'Card Type' },
+  ];
   return props.pin
-    ? pinOptions.value
-    : [
-        { _id: 'priority', title: 'Priority' },
-        { _id: 'status', title: 'Status' },
-        { _id: 'assignee', title: 'Assignee' },
-        { _id: 'owner', title: 'Owner/Reporter' },
-        { _id: 'card_type', title: 'Card Type' },
-      ];
+    ? [...staticOptions.filter(o => o._id === 'owner'), ...pinOptions.value]
+    : staticOptions;
 });
 
 const lastSelectedGroup = ref(localStorage.getItem('last_selected_group') || '');

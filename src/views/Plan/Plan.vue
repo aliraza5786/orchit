@@ -24,7 +24,7 @@
                 class="flex gap-1 min-h-0 overflow-x-auto group h-full"
               >
                 <section
-                    class="px-2 rounded-md relative flex flex-col min-h-0 bg-bg-card h-full border border-border shrink-0"
+                    class="px-2 rounded-md relative flex flex-col min-h-0 bg-bg-surface h-full border border-border shrink-0"
                     :style="{ width: leftWidth + 'px', minWidth: '400px', maxWidth: '50%' }"
                   >
                   <div class="flex items-center justify-between mt-2">
@@ -45,7 +45,7 @@
                         v-if="backlogResp?.cards?.length"
                         v-model="backlogSearchQuery"
                         placeholder="Search ticket by title...." 
-                        buttonClass="w-8.5 h-8.5 bg-transparent rounded-[6px] border border-border hover:border-accent hover:opacity-90"
+                        buttonClass="w-8.5 h-8.5 rounded-[6px] cursor-pointer text-sm flex items-center justify-center border border-border bg-bg-input hover:border-primary-color text-text-primary transition-colors"
 
                       >
                         <template #icon>
@@ -55,7 +55,7 @@
                       <!-- Add Card Button -->
                       <button
                         v-if="canCreateCard"
-                        class="w-8.5 h-8.5 rounded cursor-pointer text-sm flex items-center justify-center border border-border hover:border-accent-hover"
+                        class="w-8.5 h-8.5 rounded-[6px] cursor-pointer text-sm flex items-center justify-center border border-border bg-bg-input hover:border-primary-color text-text-primary transition-colors"
                         @click="openCreateBacklogTicket"
                       >
                         <i class="text-text-primary fa-regular fa-plus"></i>
@@ -87,7 +87,7 @@
                     <div
                       role="status"
                       aria-label="Loading"
-                      class="h-10 w-10 rounded-full border-4 border-accent border-t-transparent animate-spin"
+                      class="h-10 w-10 rounded-full border-4 border-primary-color border-t-transparent animate-spin"
                     ></div>
                   </div>
                     <div class="flex-1 min-h-0 overflow-y-hidden mt-2" v-else>
@@ -130,10 +130,10 @@
                 </div>
 
                 <section
-                  class="rounded-md relative flex flex-col flex-1 min-w-0 bg-bg-card min-h-0 border border-border"
+                  class="rounded-md relative flex flex-col flex-1 min-w-0 bg-bg-surface min-h-0 border border-border"
                 >
                   <div
-                    class="flex py-1 justify-between gap-4 px-2 border-b border-border-input"
+                    class="flex py-1 justify-between gap-4 px-2 border-b border-border"
                   >
                     <!-- Left Section: Sprint Tabs -->
                     <div class="overflow-x-auto">
@@ -147,12 +147,11 @@
                           @click.stop="openElipseDropDown = !openElipseDropDown"
                           type="button"
                           class="text-nowrap inline-flex justify-between items-center gap-1.5 border rounded-[6px] font-medium cursor-pointer transition bg-transparent px-3 py-1.5 text-sm"
-                          :class="openElipseDropDown ? 'border-accent ring-1 ring-accent/20' : 'border-border hover:border-accent-hover'"
+                          :class="openElipseDropDown ? 'border-primary-color ring-1 ring-primary-color/20' : 'border-border hover:border-primary-color'"
                         >
                           <div class="flex items-center gap-2">
                             <span
-                              class="w-2 h-2 rounded-full"
-                              :style="{ backgroundColor: selectedType.dot }"
+                              class="w-2 h-2 rounded-full bg-primary-color" 
                             ></span>
                             <span>{{ selectedType.label }}</span>
                           </div>
@@ -182,10 +181,9 @@
                                 class="flex items-center gap-3 px-4 py-2 cursor-pointer hover:bg-bg-dropdown-menu-hover transition-colors"
                               >
                                 <span
-                                  class="w-2 h-2 rounded-full flex-shrink-0"
-                                  :style="{ backgroundColor: item.dot }"
+                                  class="w-2 h-2 rounded-full flex-shrink-0 bg-primary-color" 
                                 ></span>
-                                <span :class="item.value === selectedType.value ? 'font-semibold text-accent' : ''">{{ item.label }}</span>
+                                <span :class="item.value === selectedType.value ? 'font-semibold text-primary-color' : ''">{{ item.label }}</span>
                               </li>
                             </ul>
                           </transition>
@@ -201,13 +199,12 @@
                           @click="isSprintDropdownOpen = !isSprintDropdownOpen"
                           type="button"
                           class="text-nowrap inline-flex justify-between items-center gap-1.5 border rounded-[6px] font-medium cursor-pointer transition bg-transparent px-3 py-1.5 text-sm"
-                          :class="isSprintDropdownOpen ? 'border-accent ring-1 ring-accent/20' : 'border-border hover:border-accent-hover'"
+                          :class="isSprintDropdownOpen ? 'border-primary-color ring-1 ring-primary-color/20' : 'border-border hover:border-primary-color'"
                         >
                           <div class="flex items-center gap-2">
                             <span
                               v-if="selectedSprintId"
-                              class="w-2 h-2 rounded-full flex-shrink-0"
-                              :style="{ backgroundColor: selectedType.dot }"
+                              class="w-2 h-2 rounded-full flex-shrink-0 bg-primary-color" 
                             ></span>
                             <span class="truncate max-w-[160px]">{{ selectedSprintTitle || 'Select ' + selectedType.label }}</span>
                           </div>
@@ -241,17 +238,16 @@
                                     @click="selectSprint(sprint)"
                                   >
                                     <span
-                                      class="w-2 h-2 rounded-full flex-shrink-0"
-                                      :style="{ backgroundColor: selectedType.dot }"
+                                      class="w-2 h-2 rounded-full flex-shrink-0 bg-primary-color"
                                     ></span>
-                                    <span class="truncate" :class="sprint._id === selectedSprintId ? 'font-semibold text-accent' : ''">{{ sprint.title }}</span>
+                                    <span class="truncate" :class="sprint._id === selectedSprintId ? 'font-semibold text-primary-color' : ''">{{ sprint.title }}</span>
                                   </button>
                                 </div>
 
                                 <!-- Actions -->
                                 <div class="ml-2 flex items-center gap-1.5 flex-shrink-0">
                                   <button
-                                    class="w-6 h-6 flex items-center justify-center rounded text-text-secondary hover:text-accent hover:bg-bg-body transition-colors"
+                                    class="w-6 h-6 flex items-center justify-center rounded-[6px] text-text-secondary hover:text-primary-color hover:bg-bg-body transition-colors"
                                     @click.stop="openModalEditSprint(sprint)"
                                     title="Edit"
                                   >
@@ -260,7 +256,7 @@
                                   <button
                                     v-if="sprintsList?.sprints.length"
                                     @click.stop="handleDeleteSprint(sprint)"
-                                    class="w-6 h-6 flex items-center justify-center rounded text-text-secondary hover:text-red-500 hover:bg-red-50 transition-colors"
+                                    class="w-6 h-6 flex items-center justify-center rounded-[6px] text-text-secondary hover:text-red-500 hover:bg-red-50 transition-colors"
                                     title="Delete"
                                   >
                                     <i class="fas fa-times text-[10px]"></i>
@@ -275,7 +271,7 @@
                       <!-- Add Sprint Button --> 
                        <button
                         v-if="canCreateCard"
-                        class="w-8.5 h-8.5 rounded cursor-pointer text-sm flex items-center justify-center border border-border hover:border-accent-hover"
+                        class="w-8.5 h-8.5 rounded-[6px] cursor-pointer text-sm flex items-center justify-center border border-border bg-bg-input hover:border-primary-color text-text-primary transition-colors"
                         @click="openSprintModal(sprintsList?.sprints)"
                         title="Add new"
                       >
@@ -290,11 +286,11 @@
                           v-if="sprintDetailData?.cards?.length && sprintDetailData?.status !== 'completed'"
                           v-model="searchQuery"
                           placeholder="Search ticket by title...."
-                          buttonClass="w-8.5 h-8.5 bg-transparent rounded-[6px] border border-border hover:border-accent hover:opacity-90"
+                          buttonClass="w-8.5 h-8.5 rounded-[6px] cursor-pointer text-sm flex items-center justify-center border border-border bg-bg-input hover:border-primary-color text-text-primary transition-colors"
             
                         >
                           <template #icon>
-                            <i class="fa-solid fa-magnifying-glass text-[13px text-primary"></i>
+                            <i class="fa-solid fa-magnifying-glass text-primary"></i>
                           </template>
                         </ExpandableSearch>
                         <div
@@ -313,7 +309,7 @@
                         <!-- Tooltip -->
                         <div
                           v-show="showTooltip"
-                          class="absolute z-50 top-10 mb-2 -translate-x-2/3 bg-card border border-accent text-accent text-xs px-2 py-1 rounded whitespace-nowrap"
+                          class="absolute z-50 top-10 mb-2 -translate-x-2/3 bg-card border border-primary-color text-primary-color text-xs px-2 py-1 rounded-[6px] whitespace-nowrap"
                         >
                           {{ sprintDetailData?.title }} is completed
                         </div>
@@ -325,34 +321,33 @@
                           v-if="sprintDetailData?.status === 'active'"
                           class="flex gap-2"
                         >
-                          <Button
-                          @click="handleCompleteSprint" 
-                           size="sm"
-                            class="bg-red-400 hover:bg-red-500 !text-white transition-colors"
-                            title="End Sprint"
-                             
-                          >
-                            {{ completingSprintId === 'parent' ? "Ending..." : "End" }}
-                          </Button>
+                         <button
+                           class="w-8.5 h-8.5 rounded-[6px] cursor-pointer text-sm flex items-center justify-center border border-border bg-bg-input hover:border-primary-color text-text-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          :title="completingSprintId === 'parent' ? 'Ending...' : `End ${selectedType.label}`"
+                          :disabled="completingSprintId === 'parent'"
+                           @click="() => handleCompleteSprint('parent')"
+                           >
+                             <i class="fa-solid fa-pause text-sm"></i>
+                          </button>
                           <button
-                            class="cursor-pointer bg-cyan-500 hover:bg-cyan-600 text-white flex items-center justify-end gap-1 px-2 py-1 rounded-md text-sm font-medium transition-colors"
+                            class="w-8.5 h-8.5 rounded-[6px] cursor-pointer text-sm flex items-center justify-center border border-border bg-bg-input hover:border-primary-color text-text-primary transition-colors"
+                            :title="`Preview ${selectedType.label}`"
                             @click="handlePreviewClick"
                           >
-                            <i class="fa-regular fa-eye text-sm"></i> Preview
+                            <i class="fa-regular fa-eye text-sm"></i>
                           </button>
-                          
                         </div>
                         <!-- Start Sprint Button -->
                         <div v-else>
-                          <Button
+                          <button
                             v-if="sprintDetailData?.status !== 'completed'"
-                            size="sm"
-                            class="  !text-white bg-emerald-500 hover:bg-emerald-600 transition-colors"
-                            @click="openStartSprintModal"
+                            class="w-8.5 h-8.5 rounded-[6px] cursor-pointer text-sm flex items-center justify-center border border-border bg-bg-input hover:border-primary-color text-text-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            :title="`Start ${selectedType.label}`"
                             :disabled="isStartButtonDisabled"
-                          > 
-                            Start {{ selectedType.label }} 
-                          </Button> 
+                            @click="openStartSprintModal"
+                          >
+                            <i class="fa-solid fa-play text-sm"></i>
+                          </button>
                         </div>
                       </div>  
                     </div>
@@ -366,14 +361,14 @@
                     <div
                       role="status"
                       aria-label="Loading"
-                      class="h-10 w-10 rounded-full border-4 border-accent border-t-transparent animate-spin"
+                      class="h-10 w-10 rounded-full border-4 border-primary-color border-t-transparent animate-spin"
                     ></div>
                   </div>
 
                   <div class="flex-1 min-h-0 overflow-y-auto mt-2 px-2" v-else ref="subSprintsContainer">
                     <template v-if="hasSubSprints && ['planning', 'active'].includes(sprintDetailData?.status?.toLowerCase())">
                       <!-- Milestone Global Tickets -->
-                      <div class="mb-2 border border-border rounded-lg overflow-hidden bg-bg-card">
+                      <div class="mb-2 border border-border rounded-lg overflow-hidden bg-bg-body">
                         <div 
                           @click="toggleSprintCollapse('parent-global')"
                           class="flex items-center justify-between p-3 cursor-pointer hover:bg-bg-body transition-colors border-b border-border"
@@ -406,7 +401,7 @@
 
                       <!-- Sub Items (Sprints/Huddles) -->
                       <div v-for="sprint in allSubItems" :key="sprint._id" 
-                           class="mb-2 border border-border rounded-lg bg-bg-card transition-all"
+                           class="mb-2 border border-border rounded-lg bg-bg-body transition-all"
                            :class="{ 'relative z-50': activeSubSprintMenuId === sprint._id }">
                         <!-- Sprint Header -->
                         <div 
@@ -428,32 +423,33 @@
                           <!-- Action Buttons -->
                           <div class="flex items-center gap-2">
                             <!-- Start Sprint Button -->
-                            <Button
+                            <button
                               v-if="sprint.status === 'planning'"
-                              size="sm"
-                              @click.stop="openStartSprintModal(sprint)"
-                              class="bg-emerald-500 hover:bg-emerald-600   !text-white    text-[11px] h-7 px-3 transition-colors"
+                              class="w-7 h-7 rounded-[6px] cursor-pointer text-sm flex items-center justify-center border border-border bg-bg-input hover:border-primary-color text-text-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                              :title="`Start ${sprint.sprintType || 'Sprint'}`"
                               :disabled="!sprint.cards?.length"
+                              @click.stop="openStartSprintModal(sprint)"
                             >
-                              Start
-                            </Button>
+                              <i class="fa-solid fa-play text-[11px]"></i>
+                            </button>
 
                             <!-- Active Sprint Buttons -->
                             <template v-if="sprint.status === 'active'">
-                               <button
-                                class="cursor-pointer bg-cyan-500 hover:bg-cyan-600  text-white  flex items-center justify-center gap-1 px-2 py-0.5 rounded-md text-[11px] h-8.5 font-medium transition-colors"
+                              <button
+                                class="w-7 h-7 rounded-[6px] cursor-pointer text-sm flex items-center justify-center border border-border bg-bg-input hover:border-primary-color text-text-primary transition-colors"
+                                :title="`Preview ${sprint.title}`"
                                 @click.stop="handlePreviewClick(sprint._id, sprint.title)"
                               >
-                                <i class="fa-regular fa-eye text-[11px]"></i> Preview
+                                <i class="fa-regular fa-eye text-[11px]"></i>
                               </button>
-                               <Button
-                                size="sm"
-                                @click.stop="handleCompleteSprint(sprint._id)"   
-                                class="bg-red-400 hover:bg-red-500 !text-white text-[11px] h-8.5 px-3 transition-colors"
-                                title="End Sprint"
+                              <button
+                                class="w-7 h-7 rounded-[6px] cursor-pointer text-sm flex items-center justify-center border border-border bg-bg-input hover:border-primary-color text-text-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                :title="completingSprintId === sprint._id ? 'Ending...' : `End ${sprint.sprintType || 'Sprint'}`"
+                                :disabled="completingSprintId === sprint._id"
+                                @click.stop="handleCompleteSprint(sprint._id)"
                               >
-                                 {{ completingSprintId === sprint._id ? "Ending..." : "End" }}
-                              </Button>
+                                <i class="fa-solid fa-pause text-[11px]"></i>
+                              </button>
                             </template>
 
                             <!-- Completed Badge -->
@@ -468,18 +464,18 @@
                             <div class="relative flex items-center">
                               <button 
                                 @click.stop="toggleSubSprintMenu(sprint._id)"
-                                class="w-7 h-7 flex items-center justify-center rounded-md hover:bg-bg-body text-text-secondary transition-colors"
+                                class="w-7 h-7 flex items-center justify-center rounded-[6px] hover:bg-bg-input text-text-secondary transition-colors"
                               >
-                                <i class="fas fa-ellipsis-v text-[10px]"></i>
+                                <i class="fas fa-ellipsis-v text-[12px]"></i>
                               </button>
                               
                               <div 
                                 v-if="activeSubSprintMenuId === sprint._id"
-                                class="absolute right-0 top-full mt-1 w-48 bg-bg-card border border-border shadow-xl rounded-lg z-50 py-1 overflow-hidden"
+                                class="absolute right-0 top-full mt-1 w-48 bg-bg-body border border-border shadow-xl rounded-lg z-50 py-1 overflow-hidden"
                               >
                                 <button 
                                   @click.stop="openModalEditSprint(sprint); activeSubSprintMenuId = null"
-                                  class="w-full text-left px-4 py-2 text-[12px] text-text-primary hover:bg-bg-body flex items-center gap-2 transition-colors font-medium border-b border-border/50"
+                                  class="w-full text-left px-4 py-2 text-[12px] text-text-primary hover:bg-bg-card flex items-center gap-2 transition-colors font-medium border-b border-border/50"
                                   :class="sprint.status === 'completed'? 'cursor-not-allowed': 'cursor-pointer'"
                                 >
                                   <i class="fa-light fa-pen-to-square text-sm"></i> Edit {{ sprint.sprintType || 'Sprint' }}
@@ -541,7 +537,7 @@
 
                             <!-- Nested Sub-Items Loop -->
                             <div v-for="huddle in [...(sprint.hurdles || []), ...(sprint.sprints || [])]" :key="huddle._id" 
-                                 class="mb-2 border border-border rounded-lg bg-bg-card transition-all">
+                                 class="mb-2 border border-border rounded-lg bg-bg-body transition-all">
                               <div 
                                 @click="huddle.status !== 'completed' && toggleSprintCollapse(huddle._id)"
                                 class="flex items-center justify-between p-3 hover:bg-bg-body transition-colors border-b rounded-[6px] border-border"
@@ -558,10 +554,31 @@
                                   </span>
                                 </div>
                                 <div class="flex items-center gap-2">
-                                  <Button v-if="huddle.status === 'planning'" size="sm" @click.stop="openStartSprintModal(huddle)" class="!border-blue-500 !bg-blue-500 !text-white hover:!bg-blue-600 hover:!border-blue-600 text-[11px] h-7 px-3 transition-colors" :disabled="!huddle.cards?.length">Start</Button>
+                                  <button
+                                    v-if="huddle.status === 'planning'"
+                                    class="w-7 h-7 rounded-[6px] cursor-pointer text-sm flex items-center justify-center border border-border bg-bg-input hover:border-primary-color text-text-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    :title="`Start ${huddle.sprintType || 'Huddle'}`"
+                                    :disabled="!huddle.cards?.length"
+                                    @click.stop="openStartSprintModal(huddle)"
+                                  >
+                                    <i class="fa-solid fa-play text-[11px]"></i>
+                                  </button>
                                   <template v-if="huddle.status === 'active'">
-                                     <button class="cursor-pointer bg-cyan-500 hover:bg-cyan-600 text-white  flex items-center justify-center gap-1 px-2 py-0.5 rounded-md text-[11px] h-8.5 font-medium transition-colors" @click.stop="handlePreviewClick(huddle._id, huddle.title)"><i class="fa-regular fa-eye text-[11px]"></i> Preview</button>
-                                     <Button size="sm" @click.stop="handleCompleteSprint(huddle._id)" class="bg-red-400 hover:bg-red-500 !text-white  text-[11px] h-8.5 px-3 transition-colors">{{ completingSprintId === huddle._id ? "Ending..." : "End" }}</Button>
+                                    <button
+                                      class="w-7 h-7 rounded-[6px] cursor-pointer text-sm flex items-center justify-center border border-border bg-bg-input hover:border-primary-color text-text-primary transition-colors"
+                                      :title="`Preview ${huddle.title}`"
+                                      @click.stop="handlePreviewClick(huddle._id, huddle.title)"
+                                    >
+                                      <i class="fa-regular fa-eye text-[11px]"></i>
+                                    </button>
+                                    <button
+                                      class="w-7 h-7 rounded-[6px] cursor-pointer text-sm flex items-center justify-center border border-border bg-bg-input hover:border-primary-color text-text-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                      :title="completingSprintId === huddle._id ? 'Ending...' : `End ${huddle.sprintType || 'Huddle'}`"
+                                      :disabled="completingSprintId === huddle._id"
+                                      @click.stop="handleCompleteSprint(huddle._id)"
+                                    >
+                                      <i class="fa-solid fa-pause text-[11px]"></i>
+                                    </button>
                                   </template>
                                   <span v-if="huddle.status === 'completed'" class="text-[10px] font-semibold  bg-green-600/10 text-green-600 px-2.5 py-1.5 rounded-full">Completed</span>
                                 </div>
@@ -694,7 +711,7 @@
                     >
                       <!-- Icon -->
                       <div
-                        class="w-16 h-16 flex items-center justify-center rounded-full bg-muted/10 text-accent"
+                        class="w-16 h-16 flex items-center justify-center rounded-full bg-muted/10 text-primary-color"
                       >
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
@@ -823,7 +840,7 @@ import PlanSelectDropdown from "./components/PlanSelectDropdown.vue";
 import ExpandableSearch from "../../components/ui/ExpandableSearch.vue";
 import { computed, ref, watch, onMounted, onUnmounted, nextTick, defineAsyncComponent } from "vue";
 import { useBacklogStore, type Ticket } from "./composables/useBacklogStore";
-import Button from "../../components/ui/Button.vue";
+ 
 import { useSidePanelStore } from "../../stores/sidePanelStore";
 import {
   useBacklogList,

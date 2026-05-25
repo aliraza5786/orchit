@@ -1,13 +1,10 @@
 <template>
   <div class="flex flex-col sm:flex-row shadow-none flex-nowrap items-center justify-between gap-3 mt-auto py-2.5 bg-transparent w-full">
-    <!-- Page Info -->
     <p class="text-xs text-text-secondary order-2 sm:order-1 text-nowrap">
       Page {{ currentPage }} of {{ lastPage }}
     </p>
 
-    <!-- Pagination Controls -->
     <div class="flex flex-none items-center gap-1 sm:gap-2 flex-wrap justify-center order-1 sm:order-2">
-      <!-- Previous Button -->
       <button
         class="px-2 sm:px-3 py-1.5 cursor-pointer sm:py-1 text-xs sm:text-sm rounded border border-border text-text-secondary hover:bg-bg-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors touch-manipulation shadow-none"
         :disabled="currentPage === 1"
@@ -17,67 +14,49 @@
         <span class="sm:hidden"><i class="fa-regular fa-chevron-left"></i></span>
       </button>
 
-      <!-- First Page (always visible) -->
       <button
         v-if="lastPage > 0"
         class="px-2 sm:px-3 py-1.5 sm:py-1 cursor-pointer text-xs sm:text-sm rounded border transition-colors touch-manipulation min-w-[32px] sm:min-w-[36px] shadow-none"
-        :class="
-          1 === currentPage
-            ? 'bg-accent text-white border-accent'
-            : 'border-border text-text-secondary hover:bg-bg-hover'
-        "
+        :class="1 === currentPage ? activePageClass : inactivePageClass"
         @click="$emit('update:page', 1)"
       >
         1
       </button>
 
-      <!-- Left Ellipsis -->
-      <span 
+      <span
         v-if="currentPage > 3"
         class="px-1 sm:px-2 text-text-secondary text-xs sm:text-sm"
       >
         ...
       </span>
 
-      <!-- Middle Pages (dynamic based on current page) -->
       <template v-for="page in getPaginationRange()" :key="page">
         <button
           v-if="page !== 1 && page !== lastPage"
           class="px-2 sm:px-3 py-1.5 sm:py-1 cursor-pointer text-xs sm:text-sm rounded border transition-colors touch-manipulation min-w-[32px] sm:min-w-[36px] shadow-none"
-          :class="
-            page === currentPage
-              ? 'bg-accent text-white border-accent'
-              : 'border-border text-text-secondary hover:bg-bg-hover'
-          "
+          :class="page === currentPage ? activePageClass : inactivePageClass"
           @click="$emit('update:page', page)"
         >
           {{ page }}
         </button>
       </template>
 
-      <!-- Right Ellipsis -->
-      <span 
+      <span
         v-if="currentPage < lastPage - 2"
         class="px-1 sm:px-2 text-text-secondary text-xs sm:text-sm"
       >
         ...
       </span>
 
-      <!-- Last Page (always visible if more than 1 page) -->
       <button
         v-if="lastPage > 1"
         class="px-2 sm:px-3 py-1.5 sm:py-1 cursor-pointer text-xs sm:text-sm rounded border transition-colors touch-manipulation min-w-[32px] sm:min-w-[36px] shadow-none"
-        :class="
-          lastPage === currentPage
-            ? 'bg-accent text-white border-accent'
-            : 'border-border text-text-secondary hover:bg-bg-hover'
-        "
+        :class="lastPage === currentPage ? activePageClass : inactivePageClass"
         @click="$emit('update:page', lastPage)"
       >
         {{ lastPage }}
       </button>
 
-      <!-- Next Button -->
       <button
         class="px-2 sm:px-3 py-1.5 sm:py-1 cursor-pointer text-xs sm:text-sm rounded border border-border text-text-secondary hover:bg-bg-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors touch-manipulation shadow-none"
         :disabled="currentPage === lastPage"
@@ -90,14 +69,25 @@
   </div>
 </template>
 
-<script setup lang="ts"> 
+<script setup lang="ts">
+import { computed } from 'vue'
 
 const props = defineProps<{
-    currentPage: number
-    lastPage: number
+  currentPage: number
+  lastPage: number
+  inSpace?: boolean
 }>()
 
 defineEmits(['update:page'])
+
+const activePageClass = computed(() =>
+  props.inSpace
+    ? 'bg-primary-color text-white border-primary-color'
+    : 'bg-accent text-white border-accent'
+)
+
+const inactivePageClass =
+  'border-border text-text-secondary hover:bg-bg-hover'
 
 const getPaginationRange = (): number[] => {
   const total = props.lastPage
@@ -107,7 +97,6 @@ const getPaginationRange = (): number[] => {
     return Array.from({ length: total }, (_, i) => i + 1)
   }
 
-  // Always include first & last
   if (current <= 2) {
     return [1, 2, total]
   }

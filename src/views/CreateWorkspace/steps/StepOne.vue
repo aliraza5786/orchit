@@ -1,89 +1,97 @@
 <template>
-  <div class="w-full">
+  <div class="step-enter step-enter-1 w-full text-center space-y-3">
     <h2
       v-once
-      class="text-2xl md:text-4xl font-semibold text-text-primary text-left m-0"
+      class="text-[24px] font-medium text-transparent bg-clip-text bg-gradient-to-r from-text-primary to-text-secondary tracking-tight"
     >
-      Project Details
+      Workspace Details
     </h2>
     <p
       v-once
-      class="text-sm md:text-base text-text-secondary text-left mt-3 sm:mt-5 mb-0"
+      class="text-sm text-text-secondary mb-0 max-w-[520px] mx-auto leading-relaxed"
     >
-      Let's refine your project details
+      Let's refine your workspace details
     </p>
   </div>
 
-  <div class="space-y-6 pb-[60px] w-full">
+  <div class="space-y-3 sm:space-y-6 pb-[90px] sm:pb-[60px] w-full max-w-[800px] mx-auto">
     <!-- File Upload with Memoization (Optional) -->
-    <FileUploader
-      v-model="logo"
-      label="Upload your project logo (Optional)"
-      tooltip="You can upload your logo image here"
-      message="Supports .png, .jpg, .jpeg file formats"
-      placeholder="Choose a logo"
-      accept=".png,.jpg,.jpeg"
-    />
+    <div class="step-enter step-enter-2">
+      <FileUploader
+        v-model="logo"
+        label="Upload your workspace logo (Optional)"
+        tooltip="You can upload your logo image here"
+        message="Supports .png, .jpg, .jpeg file formats"
+        placeholder="Choose a logo"
+        accept=".png,.jpg,.jpeg"
+      />
+    </div>
 
     <!-- Color Picker for Workspace -->
-    <div class="flex flex-col items-start gap-2 w-full text-left">
-      <label class="text-sm font-medium text-text-primary"
-        >Workspace Color</label
-      >
+    <div class="step-enter step-enter-3 flex flex-col items-start gap-2 w-full text-left">
+      <label class="text-sm font-medium text-text-primary">Workspace Color</label>
       <div
-        class="flex items-center gap-3 w-full bg-bg-input border border-border rounded-lg px-3 py-2 transition-all"
+        class="group flex items-center gap-4 w-full bg-bg-card/50 backdrop-blur-sm border border-border/60 rounded-2xl px-4 py-3 transition-all duration-300 hover:bg-bg-surface hover:border-accent/40 hover:shadow-[0_4px_20px_color-mix(in_srgb,var(--accent)_12%,transparent)]"
       >
-        <input
-          type="color"
-          v-model="form['workspace-color']"
-          class="w-8 h-8 p-0 border-0 rounded cursor-pointer shrink-0 bg-bg-input"
-        />
-        <span class="text-sm text-text-secondary flex-1"
+        <div class="relative overflow-hidden rounded-full shadow-sm border border-border/80 transition-transform duration-300 group-hover:scale-110 group-hover:shadow-accent/30 flex items-center justify-center w-10 h-10 shrink-0 bg-bg-input">
+          <input
+            type="color"
+            v-model="form['workspace-color']"
+            class="w-16 h-16 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 cursor-pointer border-0 bg-transparent p-0"
+          />
+        </div>
+        <span class="text-sm text-text-secondary flex-1 transition-colors group-hover:text-text-primary"
           >This color will be used for your workspace icon and accents</span
         >
       </div>
     </div>
 
-    <BaseTextField
-      label="Give your workspace a name"
-      placeholder="Workspace name"
-      size="lg"
-      v-model="form.title"
-      :message="ai ? 'AI suggested this name based on your description' : ''"
-    >
-      <template #msgIcon>
-        <img src="../../../assets/icons/stars.svg" alt="" />
-      </template>
-    </BaseTextField>
+    <div class="step-enter step-enter-4">
+      <BaseTextField
+        label="Give your workspace a name"
+        placeholder="Workspace name"
+        size="lg"
+        v-model="form.title"
+        :message="ai ? 'AI suggested this name based on your description' : ''"
+      >
+        <template #msgIcon>
+          <img src="../../../assets/icons/stars.svg" alt="" />
+        </template>
+      </BaseTextField>
+    </div>
 
-    <BaseSelectField
-      class=""
-      v-model="form['workspace-type']"
-      :options="workspaceTypeOptions"
-      label="Workspace Type"
-      size="lg"
-      :allowCustom="true"
-      :message="ai ? 'AI suggested this name based on your description' : ''"
-      placeholder="e.g. For Team"
-    >
-      <template #msgIcon>
-        <img src="../../../assets/icons/stars.svg" alt="" />
-      </template>
-    </BaseSelectField>
+    <div class="step-enter step-enter-5">
+      <BaseSelectField
+        class=""
+        v-model="form['workspace-type']"
+        :options="workspaceTypeOptions"
+        label="Workspace Type"
+        size="lg"
+        :allowCustom="true"
+        :message="ai ? 'AI suggested this name based on your description' : ''"
+        placeholder="e.g. For Team"
+      >
+        <template #msgIcon>
+          <img src="../../../assets/icons/stars.svg" alt="" />
+        </template>
+      </BaseSelectField>
+    </div>
 
-    <BaseMultiSelect
-      v-model="form['workspace-industries']"
-      :options="industryData || []"
-      label="Industry"
-      size="lg"
-      :allowCustom="true"
-      :message="ai ? 'AI suggested this name based on your description' : ''"
-      placeholder="e.g. Ecommerce, Health, EdTech"
-    >
-      <template #msgIcon>
-        <img src="../../../assets/icons/stars.svg" alt="" />
-      </template>
-    </BaseMultiSelect>
+    <div class="step-enter step-enter-6">
+      <BaseMultiSelect
+        v-model="form['workspace-industries']"
+        :options="industryData || []"
+        label="Industry"
+        size="lg"
+        :allowCustom="true"
+        :message="ai ? 'AI suggested this name based on your description' : ''"
+        placeholder="e.g. Ecommerce, Health, EdTech"
+      >
+        <template #msgIcon>
+          <img src="../../../assets/icons/stars.svg" alt="" />
+        </template>
+      </BaseMultiSelect>
+    </div>
   </div>
 </template>
 
@@ -371,5 +379,27 @@ input[type="radio"].peer {
   position: absolute;
   opacity: 0;
   pointer-events: none;
+}
+
+.step-enter {
+  opacity: 0;
+  animation: slideUpFade 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.step-enter-1 { animation-delay: 0.05s; }
+.step-enter-2 { animation-delay: 0.15s; }
+.step-enter-3 { animation-delay: 0.25s; }
+.step-enter-4 { animation-delay: 0.35s; }
+.step-enter-5 { animation-delay: 0.45s; }
+.step-enter-6 { animation-delay: 0.55s; }
+
+@keyframes slideUpFade {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>

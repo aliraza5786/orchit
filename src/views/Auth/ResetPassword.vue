@@ -1,92 +1,343 @@
 <template>
   <AuthLayout>
     <template #form>
-      <div class="max-w-[500px] mx-auto w-full min-h-full py-5 flex flex-col justify-center">
-        <div v-if="verifying" class="text-center py-12">
-          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mx-auto mb-4"></div>
-          <p class="text-sm text-text-secondary">Verifying your reset link...</p>
-        </div>
+      <div
+        class="max-w-[400px] mx-auto w-full"
+      >
+        <!-- Logo -->
+        <router-link to="/">
+          <img
+            :src="isDark ? darkLogo : lightLogo"
+            class="w-[130px] mb-6 d-block mx-auto"
+            alt="logo"
+          />
+        </router-link>
 
-        <div v-else-if="tokenExpired" class="text-center">
-          <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <i class="fa-solid fa-times text-red-600 text-2xl"></i>
-          </div>
-          <h2 class="text-2xl font-medium mb-4 text-text-primary">Reset link expired</h2>
-          <p class="text-sm text-text-secondary mb-8">
-            This password reset link has expired or is invalid.<br />
-            Please request a new one.
+        <div v-if="verifying" class="text-center py-12 space-y-4">
+          <div
+            class="animate-spin rounded-full h-10 w-10 border-2 border-accent border-t-transparent mx-auto"
+          ></div>
+          <p class="text-sm text-text-secondary">
+            Verifying your reset link...
           </p>
-          <router-link to="/forgot-password">
-            <Button size="md" variant="primary">Request new reset link</Button>
-          </router-link>
-          <div class="mt-6">
-            <router-link to="/login" class="text-sm text-text-secondary hover:text-text-primary">
-              <i class="fa-solid fa-arrow-left mr-2"></i>Back to login
-            </router-link>
+        </div>
+
+        <div v-else-if="tokenExpired" class="text-center space-y-6">
+          <div
+            class="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto relative icon-container shadow-inner"
+            style="
+              background: color-mix(in srgb, #ef4444 12%, transparent);
+              border: 1.5px solid color-mix(in srgb, #ef4444 25%, transparent);
+            "
+          >
+            <svg
+              class="w-8 h-8 text-red-500"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              />
+            </svg>
+          </div>
+          <div class="space-y-3">
+            <h3 class="text-[24px] leading-7 font-medium text-text-primary">
+              Reset link expired
+            </h3>
+            <p class="text-sm text-text-secondary mt-1">
+              This password reset link has expired or is invalid.<br />
+              Please request a new one.
+            </p>
+          </div>
+          <div class="space-y-3 pt-2">
+            <Button
+              size="md"
+              variant="primary"
+              :block="true"
+              @click="router.push('/forgot-password')"
+            >
+              Request new reset link
+            </Button>
+            <Button
+              size="md"
+              appearance="outlined"
+              variant="ghost"
+              :block="true"
+              @click="router.push('/login')"
+            >
+              Back to login
+            </Button>
           </div>
         </div>
 
-        <div v-else-if="resetSuccess" class="text-center">
-          <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <i class="fa-solid fa-check text-green-600 text-2xl"></i>
+        <div v-else-if="resetSuccess" class="text-center space-y-6">
+          <div class="space-y-3">
+            <h3 class="text-[24px] leading-7 font-medium text-text-primary">
+              Password reset successful
+            </h3>
+            <p class="text-sm text-text-secondary mt-1">
+              Your password has been successfully reset.<br />
+              You can now sign in with your new password.
+            </p>
           </div>
-          <h2 class="text-2xl font-medium mb-4 text-text-primary">Password reset successful</h2>
-          <p class="text-sm text-text-secondary mb-8">
-            Your password has been successfully reset.<br />
-            You can now sign in with your new password.
-          </p>
-          <router-link to="/login">
-            <Button size="md" variant="primary">Go to login</Button>
-          </router-link>
+          <div class="space-y-3 pt-2">
+            <Button
+              size="md"
+              variant="primary"
+              :block="true"
+              @click="router.push('/login')"
+            >
+              Go to login
+            </Button>
+          </div>
         </div>
 
-        <div v-else>
-          <h2 class="text-[32px] font-medium mb-4 text-center text-text-primary">Reset your password</h2>
-          <p class="text-sm text-text-secondary text-center mb-8">Enter your new password below....</p>
+        <div v-else class="space-y-6">
+          <div class="mb-6 text-center animate-slide-up-step-1">
+            <h3 class="text-[24px] leading-7 font-medium text-text-primary">
+              Reset your password
+            </h3>
+            <p class="text-sm text-text-secondary mt-3">
+              Enter your new password below
+            </p>
+          </div>
 
-          <form @submit.prevent="handleResetPassword" class="space-y-4 w-full">
-            <BaseTextField v-model="newPassword" label="New Password" type="password" placeholder="Enter new password"
-              size="lg" :error="newPasswordHasError" :message="newPasswordError" @blur="touched.newPassword = true" />
-            <BaseTextField v-model="confirmPassword" label="Confirm Password" type="password"
-              placeholder="Confirm new password" size="lg" :error="confirmPasswordHasError"
-              :message="confirmPasswordError" @blur="touched.confirmPassword = true" />
+          <form @submit.prevent="handleResetPassword" class="space-y-3 w-full">
+            <BaseTextField
+              v-model="newPassword"
+              type="password"
+              placeholder="Enter new password"
+              size="md"
+              :error="newPasswordHasError"
+              :message="newPasswordError"
+              @blur="touched.newPassword = true"
+            />
+            <BaseTextField
+              v-model="confirmPassword"
+              type="password"
+              placeholder="Confirm new password"
+              size="md"
+              :error="confirmPasswordHasError"
+              :message="confirmPasswordError"
+              @blur="touched.confirmPassword = true"
+            />
 
-            <div class="bg-bg-card border border-border rounded-lg p-4">
-              <p class="text-xs text-text-secondary mb-2">Password requirements:</p>
-              <ul class="text-xs text-text-secondary space-y-1">
-                <li :class="{ 'text-green-600': hasMinLength }">
-                  <i class="fa-solid fa-check mr-1" v-if="hasMinLength"></i>
-                  <i class="fa-solid fa-circle text-[4px] mr-1" v-else></i>
+            <!-- Premium Requirement Cards -->
+            <div
+              class="bg-bg-card border border-border rounded-[6px] p-4.5 space-y-3"
+            >
+              <p class="text-xs font-medium text-text-secondary">
+                Password must satisfy:
+              </p>
+              <ul class="space-y-2.5">
+                <li
+                  class="flex items-center gap-2.5 text-xs transition-colors duration-200"
+                  :class="
+                    hasMinLength
+                      ? 'text-accent font-medium'
+                      : 'text-text-secondary'
+                  "
+                >
+                  <span
+                    class="w-[18px] h-[18px] rounded-full flex items-center justify-center border transition-all duration-300"
+                    :class="
+                      hasMinLength
+                        ? 'bg-accent/10 border-accent/30 text-accent shadow-sm'
+                        : 'bg-surface/50 border-border text-text-secondary/30'
+                    "
+                  >
+                    <svg
+                      v-if="hasMinLength"
+                      class="w-2.5 h-2.5"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="3.5"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                    <span
+                      v-else
+                      class="w-1.5 h-1.5 rounded-full bg-text-secondary/30"
+                    ></span>
+                  </span>
                   At least 8 characters
                 </li>
-                <li :class="{ 'text-green-600': hasNumber }">
-                  <i class="fa-solid fa-check mr-1" v-if="hasNumber"></i>
-                  <i class="fa-solid fa-circle text-[4px] mr-1" v-else></i>
+                <li
+                  class="flex items-center gap-2.5 text-xs transition-colors duration-200"
+                  :class="
+                    hasNumber
+                      ? 'text-accent font-medium'
+                      : 'text-text-secondary'
+                  "
+                >
+                  <span
+                    class="w-[18px] h-[18px] rounded-full flex items-center justify-center border transition-all duration-300"
+                    :class="
+                      hasNumber
+                        ? 'bg-accent/10 border-accent/30 text-accent shadow-sm'
+                        : 'bg-surface/50 border-border text-text-secondary/30'
+                    "
+                  >
+                    <svg
+                      v-if="hasNumber"
+                      class="w-2.5 h-2.5"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="3.5"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                    <span
+                      v-else
+                      class="w-1.5 h-1.5 rounded-full bg-text-secondary/30"
+                    ></span>
+                  </span>
                   Contains a number
                 </li>
-                <li :class="{ 'text-green-600': hasSpecialChar }">
-                  <i class="fa-solid fa-check mr-1" v-if="hasSpecialChar"></i>
-                  <i class="fa-solid fa-circle text-[4px] mr-1" v-else></i>
+                <li
+                  class="flex items-center gap-2.5 text-xs transition-colors duration-200"
+                  :class="
+                    hasSpecialChar
+                      ? 'text-accent font-medium'
+                      : 'text-text-secondary'
+                  "
+                >
+                  <span
+                    class="w-[18px] h-[18px] rounded-full flex items-center justify-center border transition-all duration-300"
+                    :class="
+                      hasSpecialChar
+                        ? 'bg-accent/10 border-accent/30 text-accent shadow-sm'
+                        : 'bg-surface/50 border-border text-text-secondary/30'
+                    "
+                  >
+                    <svg
+                      v-if="hasSpecialChar"
+                      class="w-2.5 h-2.5"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="3.5"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                    <span
+                      v-else
+                      class="w-1.5 h-1.5 rounded-full bg-text-secondary/30"
+                    ></span>
+                  </span>
                   Contains a special character
                 </li>
-                <li :class="{ 'text-green-600': hasUpperCase }">
-                  <i class="fa-solid fa-check mr-1" v-if="hasUpperCase"></i>
-                  <i class="fa-solid fa-circle text-[4px] mr-1" v-else></i>
+                <li
+                  class="flex items-center gap-2.5 text-xs transition-colors duration-200"
+                  :class="
+                    hasUpperCase
+                      ? 'text-accent font-medium'
+                      : 'text-text-secondary'
+                  "
+                >
+                  <span
+                    class="w-[18px] h-[18px] rounded-full flex items-center justify-center border transition-all duration-300"
+                    :class="
+                      hasUpperCase
+                        ? 'bg-accent/10 border-accent/30 text-accent shadow-sm'
+                        : 'bg-surface/50 border-border text-text-secondary/30'
+                    "
+                  >
+                    <svg
+                      v-if="hasUpperCase"
+                      class="w-2.5 h-2.5"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="3.5"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                    <span
+                      v-else
+                      class="w-1.5 h-1.5 rounded-full bg-text-secondary/30"
+                    ></span>
+                  </span>
                   Contains an uppercase letter
                 </li>
-                <li :class="{ 'text-green-600': hasLowerCase }">
-                  <i class="fa-solid fa-check mr-1" v-if="hasLowerCase"></i>
-                  <i class="fa-solid fa-circle text-[4px] mr-1" v-else></i>
+                <li
+                  class="flex items-center gap-2.5 text-xs transition-colors duration-200"
+                  :class="
+                    hasLowerCase
+                      ? 'text-accent font-medium'
+                      : 'text-text-secondary'
+                  "
+                >
+                  <span
+                    class="w-[18px] h-[18px] rounded-full flex items-center justify-center border transition-all duration-300"
+                    :class="
+                      hasLowerCase
+                        ? 'bg-accent/10 border-accent/30 text-accent shadow-sm'
+                        : 'bg-surface/50 border-border text-text-secondary/30'
+                    "
+                  >
+                    <svg
+                      v-if="hasLowerCase"
+                      class="w-2.5 h-2.5"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="3.5"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                    <span
+                      v-else
+                      class="w-1.5 h-1.5 rounded-full bg-text-secondary/30"
+                    ></span>
+                  </span>
                   Contains a lowercase letter
                 </li>
               </ul>
             </div>
 
-            <Button :disabled="submitDisabled" size="lg" :block="true" type="submit">
-              {{ submitLabel }}
+            <Button
+              :loading="isPending"
+              :disabled="submitDisabled"
+              size="md"
+              :block="true"
+              type="submit"
+            >
+              Reset password
             </Button>
 
-            <p v-if="errorMessage" class="text-red-500 text-sm text-center mt-2">{{ errorMessage }}</p>
+            <p
+              v-if="errorMessage"
+              class="text-red-500 text-sm text-center mt-2"
+            >
+              {{ errorMessage }}
+            </p>
           </form>
         </div>
       </div>
@@ -95,135 +346,195 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useMutation } from '@tanstack/vue-query'
-import AuthLayout from '../../layout/AuthLayout/AuthLayout.vue'
-import BaseTextField from '../../components/ui/BaseTextField.vue'
-import Button from '../../components/ui/Button.vue'
-import { verifyResetToken, resetPassword } from '../../services/auth'
+import { ref, computed, onMounted, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { useMutation } from "@tanstack/vue-query";
+import AuthLayout from "../../layout/AuthLayout/AuthLayout.vue";
+import BaseTextField from "../../components/ui/BaseTextField.vue";
+import Button from "../../components/ui/Button.vue";
+import { verifyResetToken, resetPassword } from "../../services/auth";
+import darkLogo from "@assets/global/dark-logo.png";
+import lightLogo from "@assets/global/light-logo.png";
+import { useTheme } from "../../composables/useTheme";
 
-defineOptions({ name: 'ResetPasswordPage' })
+defineOptions({ name: "ResetPasswordPage" });
 
-const route = useRoute()
-const router = useRouter()
+const route = useRoute();
+const router = useRouter();
+const { isDark } = useTheme();
 
-const token = computed(() => route.query.token as string)
-const newPassword = ref('')
-const confirmPassword = ref('')
-const errorMessage = ref('')
-const verifying = ref(true)
-const tokenExpired = ref(false)
-const resetSuccess = ref(false)
+const token = computed(() => route.query.token as string);
+const newPassword = ref("");
+const confirmPassword = ref("");
+const errorMessage = ref("");
+const verifying = ref(true);
+const tokenExpired = ref(false);
+const resetSuccess = ref(false);
 
 const touched = ref({
   newPassword: false,
   confirmPassword: false,
-})
+});
 
-const hasMinLength = computed(() => newPassword.value.length >= 8)
-const hasNumber = computed(() => /\d/.test(newPassword.value))
-const hasSpecialChar = computed(() => /[!@#$%^&*(),.?":{}|<>]/.test(newPassword.value))
-const hasUpperCase = computed(() => /[A-Z]/.test(newPassword.value))
-const hasLowerCase = computed(() => /[a-z]/.test(newPassword.value))
+const hasMinLength = computed(() => newPassword.value.length >= 8);
+const hasNumber = computed(() => /\d/.test(newPassword.value));
+const hasSpecialChar = computed(() =>
+  /[!@#$%^&*(),.?":{}|<>]/.test(newPassword.value),
+);
+const hasUpperCase = computed(() => /[A-Z]/.test(newPassword.value));
+const hasLowerCase = computed(() => /[a-z]/.test(newPassword.value));
 
 const newPasswordError = computed(() => {
-  console.log(touched.value, '>>>');
-
-  if (!touched.value.newPassword) return ''
-  const pwd = newPassword.value.trim()
-  if (!pwd) return 'Password is required'
-  if (!hasMinLength.value) return 'Password must be at least 8 characters long'
-  if (!hasNumber.value) return 'Password must contain at least one number'
-  if (!hasSpecialChar.value) return 'Password must contain at least one special character'
-  if (!hasUpperCase.value) return 'Password must contain at least one uppercase letter'
-  if (!hasLowerCase.value) return 'Password must contain at least one lowercase letter'
-  return ''
-})
+  if (!touched.value.newPassword) return "";
+  const pwd = newPassword.value.trim();
+  if (!pwd) return "Password is required";
+  if (!hasMinLength.value) return "Password must be at least 8 characters long";
+  if (!hasNumber.value) return "Password must contain at least one number";
+  if (!hasSpecialChar.value)
+    return "Password must contain at least one special character";
+  if (!hasUpperCase.value)
+    return "Password must contain at least one uppercase letter";
+  if (!hasLowerCase.value)
+    return "Password must contain at least one lowercase letter";
+  return "";
+});
 
 const confirmPasswordError = computed(() => {
-  if (!touched.value.confirmPassword) return ''
-  if (!confirmPassword.value.trim()) return 'Please confirm your password'
-  if (confirmPassword.value.trim() !== newPassword.value.trim()) return 'Passwords do not match'
-  return ''
-})
+  if (!touched.value.confirmPassword) return "";
+  if (!confirmPassword.value.trim()) return "Please confirm your password";
+  if (confirmPassword.value.trim() !== newPassword.value.trim())
+    return "Passwords do not match";
+  return "";
+});
 
-const newPasswordHasError = computed(() => !!newPasswordError.value)
-const confirmPasswordHasError = computed(() => !!confirmPasswordError.value)
+const newPasswordHasError = computed(() => !!newPasswordError.value);
+const confirmPasswordHasError = computed(() => !!confirmPasswordError.value);
 
-const isFormValid = computed(() => !newPasswordError.value && !confirmPasswordError.value)
+const isFormValid = computed(
+  () =>
+    !newPasswordError.value &&
+    !confirmPasswordError.value &&
+    hasMinLength.value &&
+    hasNumber.value &&
+    hasSpecialChar.value &&
+    hasUpperCase.value &&
+    hasLowerCase.value,
+);
 
-const { mutateAsync: verifyToken } = useMutation({ mutationFn: verifyResetToken })
-const { mutateAsync: resetPass, isPending } = useMutation({ mutationFn: resetPassword })
-
-const submitLabel = computed(() => (isPending.value ? 'Resetting...' : 'Reset password'))
-
-// function onFieldInput() {
-//   if (errorMessage.value) errorMessage.value = ''
-//   if (touched.value.newPassword && newPassword.value) touched.value.newPassword = false
-//   if (touched.value.confirmPassword && confirmPassword.value) touched.value.confirmPassword = false
-// }
+const { mutateAsync: verifyToken } = useMutation({
+  mutationFn: verifyResetToken,
+});
+const { mutateAsync: resetPass, isPending } = useMutation({
+  mutationFn: resetPassword,
+});
+ 
 
 onMounted(async () => {
   if (!token.value) {
-    tokenExpired.value = true
-    verifying.value = false
-    return
+    tokenExpired.value = true;
+    verifying.value = false;
+    return;
   }
 
   try {
-    await verifyToken({ token: token.value })
-    verifying.value = false
+    await verifyToken({ token: token.value });
+    verifying.value = false;
   } catch (err: any) {
-    verifying.value = false
-    tokenExpired.value = true
+    verifying.value = false;
+    tokenExpired.value = true;
   }
-})
+});
 
 function validateForm() {
-  touched.value.newPassword = true
-  touched.value.confirmPassword = true
+  touched.value.newPassword = true;
+  touched.value.confirmPassword = true;
 
-  if (!newPassword.value.trim() || !confirmPassword.value.trim()) return false
-  if (newPasswordError.value || confirmPasswordError.value) return false
-  return true
+  if (!newPassword.value.trim() || !confirmPassword.value.trim()) return false;
+  if (newPasswordError.value || confirmPasswordError.value) return false;
+  return true;
 }
 
 async function handleResetPassword() {
-  errorMessage.value = ''
+  errorMessage.value = "";
 
-  // Mark all fields as touched
-  touched.value.newPassword = true
-  touched.value.confirmPassword = true
+  touched.value.newPassword = true;
+  touched.value.confirmPassword = true;
 
-  // Check for validation
   if (!validateForm()) {
-    return
+    return;
   }
 
-  // Proceed with password reset
   try {
     await resetPass({
       token: token.value,
       new_password: newPassword.value.trim(),
       confirm_password: confirmPassword.value.trim(),
-    })
-    resetSuccess.value = true
-    setTimeout(() => router.push('/login'), 3000)
+    });
+    resetSuccess.value = true;
   } catch (err: any) {
-    errorMessage.value = err?.message || 'Failed to reset password. Please try again.'
+    errorMessage.value =
+      err?.message || "Failed to reset password. Please try again.";
   }
 }
 
-const submitDisabled = computed(() => isPending.value || !isFormValid.value)
+const submitDisabled = computed(() => isPending.value || !isFormValid.value);
 
 watch(newPassword, () => {
-  console.log('wating');
-
-  touched.value.newPassword = true;  // Mark as touched when user types
-})
+  touched.value.newPassword = true;
+});
 
 watch(confirmPassword, () => {
-  touched.value.confirmPassword = true;  // Mark as touched when user types
-})
+  touched.value.confirmPassword = true;
+});
 </script>
+
+<style scoped>
+.icon-container {
+  animation: float 4s ease-in-out infinite;
+}
+
+.lock-icon {
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.icon-container:hover .lock-icon {
+  transform: scale(1.1) rotate(5deg);
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.2;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 0.35;
+  }
+}
+
+.animate-slide-up-step-1 {
+  animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideUpFade {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+</style>

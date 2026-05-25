@@ -640,7 +640,7 @@ function triggerAddStatus() {
       <!-- Custom Add Icon Node -->
       <template #node-custom-add-icon>
         <div 
-          class="w-10 h-10 rounded-full bg-accent hover:bg-accent-hover text-white flex items-center justify-center cursor-pointer shadow-md transition-transform hover:scale-110 nopan nodrag nowheel"
+          class="w-10 h-10 rounded-full bg-primary-color hover:bg-primary-color-hover text-white flex items-center justify-center cursor-pointer shadow-md transition-transform hover:scale-110 nopan nodrag nowheel"
           @click.stop="triggerAddStatus"
           title="Add Status"
           style="pointer-events: all !important; z-index: 1000 !important; cursor: pointer !important;"
@@ -657,8 +657,8 @@ function triggerAddStatus() {
         <BaseTextField v-model="transitionName" placeholder="e.g., Start work, Complete"
           @keyup.enter="confirmTransition" autofocus />
         <div class="modal-actions mt-4">
-          <Button size="sm" @click="confirmTransition">Add Transition</Button>
-          <Button variant="secondary" size="sm" @click="cancelTransition">Cancel</Button>
+          <Button :inSpace="true" size="sm" @click="confirmTransition">Add Transition</Button>
+          <Button :inSpace="true" variant="secondary" size="sm" @click="cancelTransition">Cancel</Button>
         </div>
       </div>
     </div>
@@ -685,9 +685,10 @@ function triggerAddStatus() {
       autofocus
     />
     <div class="modal-actions mt-4">
-      <Button size="sm" @click="confirmEditEdge">Save</Button>
+      <Button :inSpace="true" size="sm" @click="confirmEditEdge">Save</Button>
        <!-- DELETE BUTTON -->
       <Button
+        :inSpace="true"
         size="sm"
         variant="danger"
         @click="deleteSelectedEdge"
@@ -695,6 +696,7 @@ function triggerAddStatus() {
         Delete
       </Button>
       <Button
+        :inSpace="true"
         size="sm"
         variant="secondary"
         @click="reverseSelectedEdge"

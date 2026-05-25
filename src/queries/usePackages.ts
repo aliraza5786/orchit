@@ -4,7 +4,6 @@ import { useApiMutation, useApiQuery } from "../libs/vq";
 import { useQuery } from "@tanstack/vue-query";
 import { unref, computed, ref } from "vue";
 import api from "../libs/api";
-
 // ---------------------------------------------
 // Company state (localStorage only)
 // ---------------------------------------------

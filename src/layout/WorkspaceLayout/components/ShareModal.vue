@@ -1,5 +1,5 @@
 <template>
-  <BaseModal v-model="isOpen" size="md" modalClass="!py-0" :title="title">
+  <BaseModal :inSpace="inSpace" v-model="isOpen" size="md" modalClass="!py-0" :title="title">
     <p class="text-sm text-text-secondary p-6">
       Share this {{ resourceLabel }} with other users.
     </p>
@@ -12,7 +12,7 @@
           v-if="isModulesAndUsersPending"
           class="flex justify-center items-center py-4"
         >
-          <i class="fa-solid fa-spinner animate-spin text-xl text-accent"></i>
+          <i class="fa-solid fa-spinner animate-spin text-xl" :class="inSpace ? 'text-primary-color' : 'text-accent'"></i>
         </div>
         <template v-else-if="modules.length || companyUsers.length">
           <div class="flex items-center justify-between mb-3">
@@ -185,7 +185,8 @@
               v-model="emailInput"
               type="email"
               placeholder="Enter email address and press Enter or Add..."
-              class="w-full h-9 px-3 text-sm border border-border rounded-lg bg-bg-input text-text-primary outline-none focus:border-accent transition-all"
+              class="w-full h-9 px-3 text-sm border border-border rounded-lg bg-bg-input text-text-primary outline-none transition-all"
+              :class="inSpace? 'focus:border-primary-color' : 'focus:border-accent '"
               @keydown.enter.prevent="addEmail"
             />
             <p v-if="emailInputError" class="text-xs text-red-500 mt-1">
@@ -195,7 +196,11 @@
           <button
             type="button"
             class="h-9 px-4 rounded-lg text-sm font-medium text-white transition-opacity disabled:opacity-50"
-            style="background: var(--accent)"
+            :style="{
+              background: inSpace
+              ? 'var(--primary-color)'
+              : 'var(--accent)'
+            }"
             @click="addEmail"
           >
             Add
@@ -307,7 +312,7 @@
         v-if="isLoadingSharedUsers"
         class="flex justify-center items-center py-6"
       >
-        <i class="fa-solid fa-spinner animate-spin text-2xl text-accent"></i>
+        <i class="fa-solid fa-spinner animate-spin text-2xl" :class="inSpace ? 'text-primary-color' : 'text-accent'"></i>
       </div>
       <div
         v-else-if="sharedUsers?.length && emailEntries.length < 1"
@@ -394,8 +399,9 @@
     <div
       class="flex justify-end gap-2 p-6 mt-6 sticky bottom-0 bg-bg-body border-t border-border"
     >
-      <Button variant="secondary" @click="cancel">Cancel</Button>
+      <Button :inSpace="true" variant="secondary" @click="cancel">Cancel</Button>
       <Button
+        :inSpace="true"
         variant="primary"
         :disabled="!canSubmit || isSharing"
         @click="submit"
@@ -450,10 +456,12 @@ const props = withDefaults(
     resourceId?: string;
     resourceType?: "module" | "workspace" | "sheet";
     title?: string;
+    inSpace?: boolean;
   }>(),
   {
     modelValue: false,
     resourceType: "module",
+    inSpace: false,
   },
 );
 
@@ -827,7 +835,8 @@ function submit() {
         })),
       }),
 
-      ...(props.resourceType === "module" && {
+      ...((props.resourceType === "module" ||
+        props.resourceType === "sheet") && {
         workspace_role_id: form.workspace_role_id,
       }),
 

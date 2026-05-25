@@ -1,8 +1,8 @@
 <template>
-  <BaseModal v-model="isOpen" modalClass="!py-0" size="md" :title="`Start ${formattedSprintType}`">
+  <BaseModal :inSpace="true" v-model="isOpen" modalClass="!py-0" size="md" :title="`Start ${formattedSprintType}`">
     
     <!-- Body: Read-only Preview -->
-    <div class="px-6 py-5 bg-bg-input space-y-4">
+    <div class="px-6 py-5 space-y-4">
       <div class="flex flex-col">
         <label class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Name</label>
         <p class="text-sm font-medium text-text-primary">{{ updateData?.sprint_name || 'Untitled' }}</p>
@@ -38,10 +38,11 @@
     </div>
 
     <!-- Footer -->
-    <div class="flex justify-end items-center gap-3 p-6 sticky bottom-0 bg-bg-input border-t border-border">
-      <Button variant="secondary" @click="cancel" class="min-w-[80px]">Cancel</Button>
+    <div class="flex justify-end items-center gap-3 p-6 sticky bottom-0 bg-bg-body border-t border-border">
+      <Button :inSpace="true" variant="secondary" @click="cancel" class="min-w-[80px]">Cancel</Button>
       
       <Button
+        :inSpace="true"
         @click="editSprint" 
         variant="primary" 
       >
@@ -49,7 +50,7 @@
         Edit {{ formattedSprintType }}
       </Button>
 
-      <Button variant="primary" @click="startNow" :disabled="creatingSprint" class="px-6">
+      <Button :inSpace="true" variant="primary" @click="startNow" :disabled="creatingSprint" class="px-6">
         {{ creatingSprint ? "Starting..." : "Start Now" }}
       </Button>
     </div>

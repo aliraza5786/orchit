@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/vue-query";
 import api, { request } from "../libs/api";
 import { isRef, type Ref, type ComputedRef, computed } from 'vue'
 import { useAuthStore } from "../stores/auth";
+import type { VerificationMethod } from "../stores/workspace";
 export const uploadFile = (formData: FormData) => {
   return api
     .post("/upload/file-common", formData, {
@@ -37,7 +38,7 @@ export const usePrivateUploadFile = (options = {}) => {
     ...options,
   });
 };
-export const useRolesList = ( options = {}) => {
+export const useRolesList = (options = {}) => {
   return useQuery({
     queryKey: ["roles"],
     queryFn: ({ signal }) =>
@@ -58,14 +59,13 @@ const getCookie = (name: string) => {
 
 // Get company roles without permission
 export const useCompanyRolesWithoutPermission = (options = {}) => {
-  const authStore = useAuthStore()
 
   const companyId = computed(() => {
     // 1. Prefer store (runtime state)
-    const storeCompany = authStore.company_id
+    const storeCompany = localStorage.getItem('company_id')
 
     // 2. Fallback to cookies (persistent state after refresh)
-    const cookieCompany = getCookie('company_id')
+    const cookieCompany = localStorage.getItem('company_id')
     const personalMode = getCookie('personal_mode')
 
     // If personal mode → force null
@@ -126,7 +126,16 @@ export const useCompanyRoleById = (
     ...options,
   });
 };
-
+export const useDeleteCompanyRoleById = (options = {}) => {
+  return useMutation({
+    mutationFn: (id: string | number) =>
+      request<any>({
+        url: `roles/company-roles/${id}`,
+        method: "DELETE",
+      }),
+    ...options,
+  })
+}
 //domain setup apis
 export interface DnsCheckResult {
   ok: boolean
@@ -134,22 +143,43 @@ export interface DnsCheckResult {
   error: string | null
   checked_at: string
 }
- 
-export interface DnsInstructions {
-  method: 'cname' | 'txt'
-  record_type: 'CNAME' | 'TXT'
+export interface CnameInstructions {
+  method: 'cname'
+  record_type: 'CNAME'
   record_host: string
   record_value: string
   ttl_recommended: number
   note: string
 }
- 
+
+export interface TxtInstructions {
+  method: 'txt'
+  record_type: 'TXT'
+  record_host: string
+  record_value: string
+  ttl_recommended: number
+  note: string
+}
+
+export interface HttpInstructions {
+  method: 'http'
+  record_type: null
+  file_url: string
+  file_content: string
+  ttl_recommended: null
+  note: string
+}
+
+export type DnsInstructions =
+  | CnameInstructions
+  | TxtInstructions
+  | HttpInstructions
 export interface CompanyDomain {
   _id: string
   company_id: string
   domain: string
   status: 'pending' | 'verifying' | 'verified' | 'failed' | 'disabled'
-  verification_method: 'cname' | 'txt'
+  verification_method: VerificationMethod
   verification_token: string
   expected_target: string
   is_primary: boolean
@@ -162,61 +192,60 @@ export interface CompanyDomain {
   created_at: string
   instructions?: DnsInstructions
 }
- 
+
 export interface ApiResponse<T> {
   status: boolean
   message: string
   data: T
 }
- 
 // ── API Response Shapes ────────────────────────────────────────────────────────
- 
+
 export interface PublicLookupData {
-  domain: Pick<CompanyDomain, '_id' | 'company_id' | 'domain' | 'is_primary' | 'verified_at'>
+  domain: Pick<
+    CompanyDomain,
+    '_id' | 'company_id' | 'domain' | 'is_primary' | 'verified_at'
+  > | null
 }
- 
+
 export interface VerifyDomainData {
   verified: boolean
-  domain: Partial<CompanyDomain>
+  domain: CompanyDomain
   result: DnsCheckResult
   instructions: DnsInstructions
+  methodSwitched?: boolean
 }
- 
+
 export interface ListDomainsData {
   domains: CompanyDomain[]
+  status?: boolean
+  message?: string
 }
- 
+
 export interface GetDomainData {
   domain: CompanyDomain
-  instructions: DnsInstructions
+  instructions: DnsInstructions | null
 }
- 
+
 export interface SetPrimaryDomainData {
   domain: Pick<CompanyDomain, '_id' | 'domain' | 'is_primary' | 'status'>
 }
- 
+
 export interface RemoveDomainData {
   domain: Pick<CompanyDomain, '_id' | 'domain' | 'is_trash' | 'is_primary'> & { deleted_at: string }
 }
- 
+
 // ── Request Payloads ───────────────────────────────────────────────────────────
- 
+
 export interface VerifyDomainPayload {
   domain: string
-  verification_method?: 'cname' | 'txt'
+  verification_method?: 'cname' | 'txt' | 'http'
 }
- 
- const getCompanyId = () => {
+
+const getCompanyId = () => {
   const cookieCompanyId = getCookie('company_id')
   const localCompanyId = localStorage.getItem('company_id')
 
-  const companyId = cookieCompanyId || localCompanyId
-
-  if (!companyId) {
-    throw new Error('company_id is required but not found in cookies or localStorage')
-  }
-
-  return companyId
+  return cookieCompanyId || localCompanyId || null
 }
 
 export const usePublicDomainLookup = (
@@ -225,15 +254,17 @@ export const usePublicDomainLookup = (
 ) => {
   const companyId = getCompanyId()
 
-  return useQuery<ApiResponse<PublicLookupData>>({
+  return useQuery<PublicLookupData>({
     queryKey: ['domain-lookup', host, companyId],
-    queryFn: ({ signal }) =>
-      request<ApiResponse<PublicLookupData>>({
+    queryFn: ({ signal }) => {
+      if (!companyId) return Promise.reject(new Error('No company ID'))
+      return request<PublicLookupData>({
         url: `company-domains/lookup?host=${encodeURIComponent(host)}&company_id=${companyId}`,
         method: 'GET',
         signal,
-      }),
-    enabled: !!host,
+      })
+    },
+    enabled: !!host && !!companyId,
     ...options,
   })
 }
@@ -241,12 +272,12 @@ export const usePublicDomainLookup = (
 export const useVerifyDomain = (options: Record<string, unknown> = {}) => {
   const queryClient = useQueryClient()
 
-  return useMutation<ApiResponse<VerifyDomainData>, Error, VerifyDomainPayload>({
+  return useMutation<VerifyDomainData, Error, VerifyDomainPayload>({
     mutationKey: ['verify-domain'],
     mutationFn: (payload) => {
       const companyId = getCompanyId()
 
-      return request<ApiResponse<VerifyDomainData>>({
+      return request<VerifyDomainData>({
         url: 'company-domains/verify',
         method: 'POST',
         data: {
@@ -262,17 +293,34 @@ export const useVerifyDomain = (options: Record<string, unknown> = {}) => {
   })
 }
 
-export const useListDomains = (options: Record<string, unknown> = {}) => {
-  const companyId = getCompanyId()
+export const useListDomains = (
+  companyIdOrOptions?: string | Ref<any> | ComputedRef<any> | Record<string, any>,
+  maybeOptions: Record<string, any> = {}
+) => {
+  const isId = typeof companyIdOrOptions === 'string' || isRef(companyIdOrOptions) || (typeof companyIdOrOptions === 'object' && companyIdOrOptions !== null && 'effect' in companyIdOrOptions) // duck typing for computed
 
-  return useQuery<ApiResponse<ListDomainsData>>({
+  const companyId = computed(() => {
+    if (isId) {
+      return isRef(companyIdOrOptions) ? companyIdOrOptions.value : companyIdOrOptions
+    }
+    const options = companyIdOrOptions as Record<string, any>
+    return options?.company_id || getCompanyId()
+  })
+
+  const options = (isId ? maybeOptions : (companyIdOrOptions as Record<string, any>)) || {}
+
+  return useQuery<ListDomainsData>({
     queryKey: ['company-domains', companyId],
-    queryFn: ({ signal }) =>
-      request<ApiResponse<ListDomainsData>>({
-        url: `company-domains?company_id=${companyId}`,
+    queryFn: ({ signal }) => {
+      const id = companyId.value
+      if (!id) return Promise.reject(new Error('No company ID'))
+      return request<ListDomainsData>({
+        url: `company-domains?company_id=${id}`,
         method: 'GET',
         signal,
-      }),
+      })
+    },
+    enabled: computed(() => !!companyId.value),
     ...options,
   })
 }
@@ -283,15 +331,17 @@ export const useGetDomain = (
 ) => {
   const companyId = getCompanyId()
 
-  return useQuery<ApiResponse<GetDomainData>>({
+  return useQuery<GetDomainData>({
     queryKey: ['company-domains', id, companyId],
-    queryFn: ({ signal }) =>
-      request<ApiResponse<GetDomainData>>({
+    queryFn: ({ signal }) => {
+      if (!companyId) return Promise.reject(new Error('No company ID'))
+      return request<GetDomainData>({
         url: `company-domains/${id}?company_id=${companyId}`,
         method: 'GET',
         signal,
-      }),
-    enabled: !!id,
+      })
+    },
+    enabled: !!id && !!companyId,
     ...options,
   })
 }
@@ -299,12 +349,12 @@ export const useGetDomain = (
 export const useSetPrimaryDomain = (options: Record<string, unknown> = {}) => {
   const queryClient = useQueryClient()
 
-  return useMutation<ApiResponse<SetPrimaryDomainData>, Error, string>({
+  return useMutation<SetPrimaryDomainData, Error, string>({
     mutationKey: ['set-primary-domain'],
     mutationFn: (id) => {
       const companyId = getCompanyId()
 
-      return request<ApiResponse<SetPrimaryDomainData>>({
+      return request<SetPrimaryDomainData>({
         url: `company-domains/${id}/primary?company_id=${companyId}`,
         method: 'PUT',
       })
@@ -319,12 +369,12 @@ export const useSetPrimaryDomain = (options: Record<string, unknown> = {}) => {
 export const useRemoveDomain = (options: Record<string, unknown> = {}) => {
   const queryClient = useQueryClient()
 
-  return useMutation<ApiResponse<RemoveDomainData>, Error, string>({
+  return useMutation<RemoveDomainData, Error, string>({
     mutationKey: ['remove-domain'],
     mutationFn: (id) => {
       const companyId = getCompanyId()
 
-      return request<ApiResponse<RemoveDomainData>>({
+      return request<RemoveDomainData>({
         url: `company-domains/${id}?company_id=${companyId}`,
         method: 'DELETE',
       })
@@ -443,24 +493,39 @@ export interface TokenApiResponse<T> {
 }
 
 const TOKEN_ALLOC_KEY = 'token-allocation'
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 2.1 – Get my allocation
-// ─────────────────────────────────────────────────────────────────────────────
-export const useMyTokenAllocation = (options: Record<string, unknown> = {}) => {
-  const companyId = getCompanyId()
-
-  return useQuery<TokenApiResponse<MyAllocationData>>({
-    queryKey: [TOKEN_ALLOC_KEY, 'me', companyId],
+export const useMyPersonalTokenAllocation = (options: Record<string, unknown> = {}) => {
+  return useQuery<MyAllocationData>({
+    queryKey: [TOKEN_ALLOC_KEY, 'me'],
     queryFn: ({ signal }) =>
-      request<TokenApiResponse<MyAllocationData>>({
-        url: `billing/token-allocation/me?company_id=${companyId}`,
+      request<MyAllocationData>({  // ← match the query generic
+        url: `billing/token-allocation/me`,
         method: 'GET',
         signal,
       }),
     staleTime: 0,
     refetchOnMount: 'always',
     refetchOnWindowFocus: true,
+    ...options,
+  })
+}
+
+export const useMyTokenAllocation = (options: Record<string, unknown> = {}) => {
+  const companyId = getCompanyId()
+
+  return useQuery<MyAllocationData>({
+    queryKey: [TOKEN_ALLOC_KEY, 'me', companyId],
+    queryFn: ({ signal }) => {
+      if (!companyId) return Promise.reject(new Error('No company ID'))
+      return request<MyAllocationData>({
+        url: `billing/token-allocation/me?company_id=${companyId}`,
+        method: 'GET',
+        signal,
+      })
+    },
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+    enabled: !!companyId,
     ...options,
   })
 }
@@ -621,14 +686,17 @@ const TRANSFER_KEY = 'ownership-transfer'
 // ─────────────────────────────────────────────────────────────────────────────
 export const usePendingTransfer = (options: Record<string, unknown> = {}) => {
   const companyId = getCompanyId()
-return useQuery<PendingTransferData>({
+  return useQuery<PendingTransferData>({
     queryKey: [TRANSFER_KEY, 'pending', companyId],
-    queryFn: ({ signal }) =>
-      request<PendingTransferData>({
+    queryFn: ({ signal }) => {
+      if (!companyId) return Promise.reject(new Error('No company ID'))
+      return request<PendingTransferData>({
         url: `workspace/company/transfer-ownership/pending?company_id=${companyId}`,
         method: 'GET',
         signal,
-      }),
+      })
+    },
+    enabled: !!companyId,
     staleTime: 0,
     refetchOnMount: 'always',
     refetchOnWindowFocus: true,
@@ -722,6 +790,84 @@ export const useRejectTransfer = (options: Record<string, unknown> = {}) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [TRANSFER_KEY] })
+    },
+    ...options,
+  })
+}
+
+type CompanyJoinRegisterPayload = {
+  u_full_name: string
+  u_email: string
+  u_password: string
+}
+
+export const useCompanyJoinRegister = (
+  token: string,
+  options: Record<string, unknown> = {},
+) => {
+  return useMutation<
+    TransferApiResponse<null>,
+    Error,
+    CompanyJoinRegisterPayload
+  >({
+    mutationKey: ['company-join-register'],
+    mutationFn: (data) => {
+      return request<TransferApiResponse<null>>({
+        url: `common/company-join/${token}/register`,
+        method: 'POST',
+        data,
+      })
+    },
+    ...options,
+  })
+}
+
+type CompanyJoinSendOtpPayload = {
+  u_email: string
+}
+
+export const useCompanyJoinSendOtp = (
+  token: string,
+  options: Record<string, unknown> = {},
+) => {
+  return useMutation<
+    TransferApiResponse<null>,
+    Error,
+    CompanyJoinSendOtpPayload
+  >({
+    mutationKey: ['company-join-send-otp'],
+    mutationFn: (data) => {
+      return request<TransferApiResponse<null>>({
+        url: `common/company-join/${token}/send-otp`,
+        method: 'POST',
+        data,
+      })
+    },
+    ...options,
+  })
+}
+
+type CompanyJoinVerifyOtpPayload = {
+  u_email: string
+  otp: string
+}
+
+export const useCompanyJoinVerifyOtp = (
+  token: string,
+  options: Record<string, unknown> = {},
+) => {
+  return useMutation<
+    TransferApiResponse<null>,
+    Error,
+    CompanyJoinVerifyOtpPayload
+  >({
+    mutationKey: ['company-join-verify-otp'],
+    mutationFn: (data) => {
+      return request<TransferApiResponse<null>>({
+        url: `common/company-join/${token}/verify-otp`,
+        method: 'POST',
+        data,
+      })
     },
     ...options,
   })

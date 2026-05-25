@@ -1,9 +1,9 @@
 <template>
   <div
-    class="flex-auto flex-grow h-full bg-bg-card rounded-[6px] border border-border overflow-x-auto flex-col flex"
+    class="flex-auto flex-grow h-full bg-bg-surface rounded-[6px] border border-border overflow-x-auto flex-col flex"
   >
-    <div class="overflow-x-auto shrink-0 border-b border-border mx-2">
-      <div class="header py-2 flex items-center justify-between gap-2">
+    <div class="overflow-x-auto shrink-0 border-b border-border">
+      <div class="header py-2 flex items-center justify-between gap-2 mx-2">
         <div
           class="flex border-b border-border bg-bg-surface/50 gap-2 rounded-md py-1 px-1"
         >
@@ -11,7 +11,7 @@
             @click="currentTab = 'talent'"
             :class="
               currentTab === 'talent'
-                ? 'bg-accent text-white rounded-md'
+                ? 'bg-primary-color text-white rounded-md'
                 : 'text-text-primary'
             "
             class="px-4 py-1 text-sm transition-colors text-nowrap"
@@ -22,7 +22,7 @@
             @click="currentTab = 'agents'"
             :class="
               currentTab === 'agents'
-                ? 'bg-accent text-white rounded-md '
+                ? 'bg-primary-color text-white rounded-md '
                 : 'text-text-secondary'
             "
             class="px-4 py-1 text-sm transition-colors text-nowrap"
@@ -33,6 +33,7 @@
 
         <div class="flex gap-2">
           <Dropdown
+            :inSpace="true"
             v-if="currentTab === 'talent'"
             :actions="false"
             v-model="selected_view_id"
@@ -41,6 +42,7 @@
             customClasses="fixed w-[135px]"
           />
           <Dropdown
+            :inSpace="true"
             v-if="currentTab === 'agents'"
             :actions="false"
             v-model="selected_view_agent"
@@ -59,44 +61,45 @@
               placeholder="Search in Orchit AI space"
             />
             <div
-              class="flex items-center gap-3 bg-bg-surface/50 h-[32px] px-2 rounded-md"
+              class="flex items-center gap-1 bg-bg-surface/50 h-[36px] px-1.5 border-border border rounded-[6px]"
             >
               <button
-                class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
+                class="aspect-square cursor-pointer rounded-sm h-[28px] flex items-center justify-center border border-border outline-0"
                 :class="
                   currentView === 'kanban'
-                    ? 'text-accent bg-accent-text'
-                    : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
+                    ? 'text-white bg-primary-color'
+                    : 'backdrop-blur-2xl transition-all duration-75 hover:text-primary-color'
                 "
                 title="Kanban view"
                 @click="currentView = 'kanban'"
               >
-                <i class="fa-solid fa-chart-kanban"></i>
+                <i class="fa-solid fa-chart-kanban text-[14px]"></i>
               </button>
 
               <button
                 @click="currentView = 'table'"
-                class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
+                class="aspect-square cursor-pointer rounded-sm h-[28px] flex items-center justify-center border border-border outline-0"
                 :class="
                   currentView === 'table'
-                    ? 'text-accent bg-accent-text'
-                    : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
+                    ? 'text-white bg-primary-color'
+                    : 'backdrop-blur-2xl transition-all duration-75 hover:text-primary-color'
                 "
                 title="List view"
               >
-                <i class="fa-solid fa-align-left"></i>
+                <i class="fa-solid fa-align-left text-[14px]"></i>
               </button>
+
               <button
                 @click="currentView = 'mindmap'"
-                class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
+                class="aspect-square cursor-pointer rounded-sm h-[28px] flex items-center justify-center border border-border outline-0"
                 :class="
                   currentView === 'mindmap'
-                    ? 'text-accent bg-accent-text'
-                    : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
+                    ? 'text-white bg-primary-color'
+                    : 'backdrop-blur-2xl transition-all duration-75 hover:text-primary-color'
                 "
                 title="MindMap view"
               >
-                <i class="fa-solid fa-chart-diagram"></i>
+                <i class="fa-solid fa-chart-diagram text-[14px]"></i>
               </button>
             </div>
           </div>
@@ -110,7 +113,7 @@
   class="flex flex-1 items-center justify-center"
 >
   <div class="flex flex-col items-center gap-3 text-text-secondary">
-    <i class="fa-solid fa-chart-diagram text-2xl animate-pulse text-accent"></i>
+    <i class="fa-solid fa-chart-diagram text-2xl animate-pulse text-primary-color"></i>
     <span class="text-sm animate-pulse">Loading mindmap...</span>
   </div>
 </div>
@@ -118,20 +121,20 @@
       <template v-if="currentView === 'kanban'">
         <!-- AGENTS KANBAN -->
         <template v-if="currentTab === 'agents'">
-          <div class="custom_scroll_bar h-full flex flex-col">
+          <div class="scrollbar-visible h-full flex flex-col">
             <Draggable
               v-model="filteredAgentGroups"
               item-key="title"
               group="agent-groups"
               :animation="180"
-              class="flex gap-2 mt-2 overflow-x-auto custom_scroll_bar flex-1 cursor-grab"
+              class="flex gap-2 mt-2 overflow-x-auto scrollbar-visible flex-1 cursor-grab"
               direction="horizontal"
               @end="onAgentGroupsEnd"
               :disabled="isMobile"
             >
               <template #item="{ element: group }">
                 <div
-                  class="flex flex-col bg-bg-body rounded-md mb-1"
+                  class="flex flex-col bg-bg-body rounded-md mb-2"
                   :class="{
                     'snap-center min-w-[270px] max-w-[270px]': isMobile,
                     'min-w-[270px] max-w-[270px]': !isMobile,
@@ -215,7 +218,7 @@
                       <!-- Footer Action -->
                       <div class="border-t border-border pt-3 mt-1">
                           <button
-                            class="w-full bg-accent/5 hover:bg-accent text-accent hover:text-white text-[10px] font-bold rounded-md px-3 py-1.5 transition-all duration-300 flex items-center justify-center gap-2 border border-accent/20 hover:border-accent"
+                            class="w-full bg-primary-color/5 hover:bg-primary-color text-primary-color hover:text-white text-[10px] font-bold rounded-md px-3 py-1.5 transition-all duration-300 flex items-center justify-center gap-2 border border-primary-color/20 hover:border-primary-color"
                             @click.stop="handleChatWithAgent(agent, group.module_id, group?.title)"
                           >
                             <i class="fa-solid fa-comments text-[10px]"></i>
@@ -239,7 +242,7 @@
 
         <!-- TALENT KANBAN -->
         <template v-else>
-          <div class="flex flex-1 overflow-x-auto gap-2 custom_scroll_bar pt-2 pb-1 overflow-y-hidden">
+          <div class="flex flex-1 overflow-x-auto gap-2 scrollbar-visible pt-2 overflow-y-hidden">
             <KanbanBoard
               :plusIcon="selected_view_id === 'team' && canCreateCard"
               v-if="filteredBoard?.length > 0"
@@ -291,7 +294,7 @@
                   <p class="text-sm text-text-secondary">
                     You can assign user later 
                   </p>
-                  <Button size="md" @click="addSeatToColumn(column)" :disabled="isPending">{{
+                  <Button :inSpace="true" size="md" @click="addSeatToColumn(column)" :disabled="isPending">{{
                     isPending ? "Adding..." : "Add Seat"
                   }}</Button>
                   <i
@@ -318,6 +321,7 @@
                 <p class="text-xs mt-1.5">You can add details while editing</p>
                 <div class="flex items-center mt-3 gap-3">
                   <Button
+                    :inSpace="true"
                     :disabled="!canCreateVariable"
                     :class="
                       canCreateVariable
@@ -327,7 +331,7 @@
                     @click="emitAddColumn"
                     type="submit"
                     variant="primary"
-                    class="px-3 py-1 bg-accent text-white rounded"
+                    class="px-3 py-1 bg-primary-color text-white rounded"
                   >
                     {{ addingList ? "Adding..." : "Add Team" }}
                   </Button>
@@ -465,7 +469,7 @@
     v-if="showAgentPanel"
   />
 
-  <BaseModal v-model="showModal" size="md" title="Add Seat">
+  <BaseModal :inSpace="true" v-model="showModal" size="md" title="Add Seat">
     <div class="px-6 py-4 space-y-4">
       <p class="text-sm text-text-secondary">
         {{ modalColumn.title }} &middot; Seat {{ (modalColumn.cards?.length ?? 0) + 1 }}
@@ -480,8 +484,8 @@
       </p>
     </div>
     <div class="flex justify-end gap-3 px-6 py-4 border-t border-border">
-      <Button variant="secondary" @click="closeModal">Cancel</Button>
-      <Button variant="primary" @click="addSeatToColumn(modalColumn)" :disabled="isPending">
+      <Button :inSpace="true" variant="secondary" @click="closeModal">Cancel</Button>
+      <Button :inSpace="true" variant="primary" @click="addSeatToColumn(modalColumn)" :disabled="isPending">
         {{ isPending ? "Adding..." : "Add Seat" }}
       </Button>
     </div>
@@ -497,6 +501,7 @@
 
 <script setup lang="ts">
 import { h, defineAsyncComponent, ref, watch, onMounted, computed} from "vue";
+import { useRoute, useRouter } from "vue-router";
 import { useRouteIds } from "../../composables/useQueryParams";
 import Draggable from "vuedraggable";
 import { useWorkspaceRoles, usePeopleVar } from "../../queries/usePeople";
@@ -580,6 +585,8 @@ const { canCreateVariable, canInviteUser, canCreateCard } = usePermissions();
 const sidePanelStore = useSidePanelStore();
 const peopleStore = usePeopleStore();
 const agentStore = useAgentStore();
+const route = useRoute();
+const router = useRouter();
 const { workspaceId } = useRouteIds(); 
 const workspaceStore = useWorkspaceStore();
 const currentTab = ref("talent"); 
@@ -957,7 +964,7 @@ function handleDeletePerson() {
 }
 
 function unassignHandler(person: any) {
-  unassignSeatAction({ id: person._id });
+  unassignSeatAction({ id: person._id, payload: {} });
 }
 
 function getStatusClass(status: string) {
@@ -1469,6 +1476,28 @@ watch(currentTab, (tab) => {
     selectAgentHandler(null); // or showAgentPanel.value = false
   }
 });
+
+// Handle deep link to user profile via query param
+watch(
+  [() => route.query.user_id, () => localList.value],
+  ([userId, list]) => {
+    if (userId && list && list.length > 0) {
+      const allCards = list.flatMap((col: any) => col.cards || []);
+      const card = allCards.find((c: any) => c._id === userId);
+
+      if (card) {
+        currentTab.value = "talent";
+        handleClickTicket(card);
+        
+        // Clean up URL
+        const query = { ...route.query };
+        delete query.user_id;
+        router.replace({ query });
+      }
+    }
+  },
+  { immediate: true }
+);
 </script>
 
 <style scoped>

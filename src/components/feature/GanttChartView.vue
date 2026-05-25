@@ -1,5 +1,5 @@
 <template>
-  <div class="mobile-scroll-visible overflow-x-auto h-full mx-2 snap-x snap-mandatory">
+  <div class="scrollbar-visible overflow-x-auto h-full mx-2 snap-x snap-mandatory">
       <div ref="ganttContainer" class="gantt-container max-h-[calc(100vh-100px)] my-2"></div>
   </div>
 </template>

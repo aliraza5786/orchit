@@ -17,8 +17,8 @@
                     <li v-for="(opt, idx) in data" :key="idx">
                         <button role="menuitemradio" :aria-checked="type === opt ? 'true' : 'false'"
                             class="flex !text-text-primary  w-full items-center justify-between cursor-pointer rounded px-1 py-1 text-[10px] gap-1 focus:outline-none focus:ring-2 hover:bg-bg-dropdown-menu-hover"
-                            @click="select(opt)" @keydown.down.prevent="focusNext(idx + 1)"
-                            @keydown.up.prevent="focusNext(idx - 1)">
+                            @click="select(opt)" @keydown.down.prevent="focusNext(Number(idx) + 1)"
+                            @keydown.up.prevent="focusNext(Number(idx) - 1)">
                             <span class="rounded-full hover:bg-bg-dropdown-menu-hover  px-1   text-text-primary">{{
                                 opt
                             }}</span>

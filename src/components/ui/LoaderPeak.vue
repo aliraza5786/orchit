@@ -51,10 +51,11 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 
 const MODULES = [
-  { name: 'Tasks',     color: '#7F77DD' },
-  { name: 'Sprints',   color: '#1D9E75' },
-  { name: 'Plans',     color: '#BA7517' },
   { name: 'Peak',      color: '#D4537E' },
+  { name: 'Talent',   color: '#1D9E75' },
+  { name: 'Process',   color: '#7d68c8' },
+  { name: 'Plans',     color: '#BA7517' },
+  { name: 'Tasks',     color: '#7F77DD' },
   { name: 'Pin',       color: '#185FA5' },
   { name: 'AI agents', color: '#3B6D11' },
 ]

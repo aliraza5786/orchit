@@ -1,13 +1,13 @@
 <template>
   <div class="flex flex-col h-[calc(100vh-125px)] relative rounded-[6px] mt-2 overflow-hidden border border-border/60">
     <div ref="tableViewport" class="kanban-table flex-1 overflow-y-auto overflow-x-auto rounded-[6px]">
-      <table class="w-full table-fixed border-collapse shadow-sm bg-bg-body/20 text-sm"
+      <table class="w-full table-fixed border-collapse shadow-sm bg-bg-surface text-sm"
       :class="{'h-[calc(100vh-175px)]':(!isGrouped && tickets.length === 0) || (isGrouped && groups.length === 0)}"
       >
         <!-- HEADER -->
-        <thead class="bg-bg-surface border-b border-border sticky top-[-1px] z-[999]">
+        <thead class="bg-bg-body border-b border-border sticky top-[-1px] z-[999]">
           <tr class="text-text-secondary">
-            <th class="w-8 p-0 sticky left-0 z-20 bg-bg-surface"></th>
+            <th class="w-8 p-0 sticky left-0 z-20 bg-bg-body"></th>
             <th 
               v-for="col in visibleColumns" 
               :key="col?.key" 
@@ -18,13 +18,13 @@
 
               <!-- Column Resize Handle -->
               <div 
-                class="absolute right-0 top-0 h-full w-2 cursor-col-resize z-30 hover:bg-accent/20 active:bg-accent/40 transition" 
+                class="absolute right-0 top-0 h-full w-2 cursor-col-resize z-30 hover:bg-primary-color/20 active:bg-primary-color/40 transition" 
                 @mousedown="(e) => startResize(e, col.key)"
               ></div>
             </th>
 
             <!-- Toggle Columns Button -->
-            <th class="w-10 p-2 text-center sticky right-0 z-20 bg-bg-surface border-l border-border/40">
+            <th class="w-10 p-2 text-center sticky right-0 z-20 bg-bg-body border-l border-border/40">
               <div class="relative inline-block">
                 <button 
                   @click.stop="showColumnMenu = !showColumnMenu" 
@@ -47,7 +47,7 @@
                       type="checkbox"
                       :checked="visibleColumnKeys.includes(col.key)"
                       @change="toggleColumn(col.key)"
-                      class="h-4 w-4 mt-0.5 rounded border-border accent-accent cursor-pointer flex-shrink-0"
+                      class="h-4 w-4 mt-0.5 rounded border-border accent-primary-color cursor-pointer flex-shrink-0"
                     />
                     <span>{{ col.label }}</span>
                   </div>
@@ -100,16 +100,31 @@
             </td>
           </tr>
 
+          <!-- IF NO VISIBLE COLUMN -->
+           <tr v-else-if="visibleColumns.length === 0">
+            <td :colspan="visibleColumns.length + 2" class="text-center py-20">
+              <div class="flex flex-col items-center justify-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-bg-body/60 flex items-center justify-center border border-border/40 shadow-sm">
+                  <i class="fa-regular fa-folder-open text-xl text-text-secondary/60"></i>
+                </div>
+                <div class="text-sm font-medium text-text-primary">Configure your columns</div>
+                <div class="text-[12px] text-text-secondary max-w-xs text-center">
+                   You haven't configured any columns yet. Add fields as columns to see search results and their information.
+                </div>
+              </div>
+            </td>
+          </tr>
+
           <!-- GROUPED VIEW -->
           <template v-else-if="isGrouped">
             <template v-for="(group, gIndex) in groups" :key="group.title || gIndex">
               <!-- GROUP HEADER -->
               <tr 
-                class="bg-bg-body/50 border-y border-border cursor-pointer hover:bg-bg-surface/60 transition-colors group/header"
+                class="bg-bg-body border-y border-border cursor-pointer hover:bg-bg-body/50 transition-colors group/header"
                 @click="toggleGroup(group.title)"
               >
                 <td :colspan="visibleColumns.length + 2" class="p-2 text-sm font-semibold text-text-primary border-r-0">
-                  <div class="flex items-center gap-2">
+                  <div class="flex items-center gap-2 ps-2">
                     <i 
                       class="fa-solid fa-chevron-right text-xs transition-transform"
                       :class="{ 'rotate-90': expandedGroups[group.title] }"
@@ -120,7 +135,7 @@
                     <!-- Group Header Quick Create '+' -->
                     <button 
                       v-if="selectedGroup !== 'owner'"
-                      class="ml-2 w-5 h-5 flex items-center justify-center rounded-md border border-border bg-bg-surface hover:border-accent hover:text-accent opacity-0 group-hover/header:opacity-100 transition-all text-[10px]"
+                      class="ml-2 w-5 h-5 flex items-center justify-center rounded-md border border-border bg-bg-surface hover:border-primary-color hover:text-primary-color opacity-0 group-hover/header:opacity-100 transition-all text-[10px]"
                       @click.stop="startInlineQuickCreate(0, group.title, group)"
                       title="Quick create in this group"
                     >
@@ -139,9 +154,9 @@
                 >
                   <td class="p-0 border-none sticky left-0 z-50 overflow-visible" colspan="0">
                     <div class="py-2.5" :style="{ width: viewportWidth + 'px' }">
-                      <div class="mx-2 flex flex-col border border-accent/60 rounded-md bg-bg-surface shadow-[0_4px_12px_rgba(var(--accent-rgb),0.15)] overflow-hidden">
+                      <div class="mx-2 flex flex-col border border-primary-color/60 rounded-md bg-bg-surface shadow-[0_4px_12px_rgba(var(--primary-color-rgb),0.15)] overflow-hidden">
                         <div class="flex items-center px-3 py-1 gap-2">
-                          <div class="flex items-center gap-1 text-accent/80 cursor-pointer hover:text-accent transition-colors">
+                          <div class="flex items-center gap-1 text-primary-color/80 cursor-pointer hover:text-primary-color transition-colors">
                             <i class="fa-solid fa-sparkles text-sm"></i>
                             <i class="fa-solid fa-chevron-down text-[10px]"></i>
                           </div>
@@ -157,7 +172,7 @@
                           />
                           <div class="flex items-center gap-3">
                             <button 
-                              class="bg-accent hover:bg-accent/90 disabled:bg-accent/40 disabled:cursor-not-allowed text-white px-3 py-0.5 rounded text-[12px] font-medium flex items-center gap-1.5 transition-all h-7 min-w-[70px] justify-center"
+                              class="bg-primary-color hover:bg-primary-color/90 disabled:bg-primary-color/40 disabled:cursor-not-allowed text-white px-3 py-0.5 rounded text-[12px] font-medium flex items-center gap-1.5 transition-all h-7 min-w-[70px] justify-center"
                               :disabled="!inlineQuickCreate.title.trim() || isCreating"
                               @click="handleQuickCreateSubmit"
                             >
@@ -186,9 +201,9 @@
                   >
                     <td class="p-0 border-none sticky left-0 z-50 overflow-visible" colspan="0">
                       <div class="py-2.5" :style="{ width: viewportWidth + 'px' }">
-                        <div class="mx-2 flex flex-col border border-accent/60 rounded-md bg-bg-surface shadow-[0_4px_12px_rgba(var(--accent-rgb),0.15)] overflow-hidden">
+                        <div class="mx-2 flex flex-col border border-primary-color/60 rounded-md bg-bg-surface shadow-[0_4px_12px_rgba(var(--primary-color-rgb),0.15)] overflow-hidden">
                           <div class="flex items-center px-3 py-1 gap-2">
-                            <div class="flex items-center gap-1 text-accent/80 cursor-pointer hover:text-accent transition-colors">
+                            <div class="flex items-center gap-1 text-primary-color/80 cursor-pointer hover:text-primary-color transition-colors">
                               <i class="fa-solid fa-sparkles text-sm"></i>
                               <i class="fa-solid fa-chevron-down text-[10px]"></i>
                             </div>
@@ -204,7 +219,7 @@
                             />
                             <div class="flex items-center gap-3">
                               <button 
-                                class="bg-accent hover:bg-accent/90 disabled:bg-accent/40 disabled:cursor-not-allowed text-white px-3 py-0.5 rounded text-[12px] font-medium flex items-center gap-1.5 transition-all h-7 min-w-[70px] justify-center"
+                                class="bg-primary-color hover:bg-primary-color/90 disabled:bg-primary-color/40 disabled:cursor-not-allowed text-white px-3 py-0.5 rounded text-[12px] font-medium flex items-center gap-1.5 transition-all h-7 min-w-[70px] justify-center"
                                 :disabled="!inlineQuickCreate.title.trim() || isCreating"
                                 @click="handleQuickCreateSubmit"
                               >
@@ -273,7 +288,7 @@
                         v-if="editing?.id === ticket?.id && editing?.field === col?.key"
                         v-model="ticket[col?.key]"
                         @blur="finishEdit(ticket)"
-                        class="min-w-[200px] w-full p-1 border border-accent/60 rounded-sm focus:outline-none focus:ring-1 focus:ring-accent bg-bg-body text-[12px] h-8"
+                        class="min-w-[200px] w-full p-1 border border-primary-color/60 rounded-sm focus:outline-none focus:ring-1 focus:ring-primary-color bg-bg-body text-[12px] h-8"
                         :ref="(el: any) => el && editing?.id === ticket?.id && editing?.field === col?.key && (titleInput = el)"
                       />
 
@@ -308,9 +323,9 @@
             >
               <td class="p-0 border-none sticky left-0 z-50 overflow-visible" colspan="0">
                 <div class="py-2.5" :style="{ width: viewportWidth + 'px' }">
-                  <div class="mx-2 flex flex-col border border-accent/60 rounded-md bg-bg-surface shadow-[0_4px_12px_rgba(var(--accent-rgb),0.15)] overflow-hidden">
+                  <div class="mx-2 flex flex-col border border-primary-color/60 rounded-md bg-bg-surface shadow-[0_4px_12px_rgba(var(--primary-color-rgb),0.15)] overflow-hidden">
                     <div class="flex items-center px-3 py-1 gap-2">
-                      <div class="flex items-center gap-1 text-accent/80 cursor-pointer hover:text-accent transition-colors">
+                      <div class="flex items-center gap-1 text-primary-color/80 cursor-pointer hover:text-primary-color transition-colors">
                         <i class="fa-solid fa-sparkles text-sm"></i>
                         <i class="fa-solid fa-chevron-down text-[10px]"></i>
                       </div>
@@ -326,7 +341,7 @@
                       />
                       <div class="flex items-center gap-3"> 
                         <button 
-                          class="bg-accent hover:bg-accent/90 disabled:bg-accent/40 disabled:cursor-not-allowed text-white px-3 py-0.5 rounded text-[12px] font-medium flex items-center gap-1.5 transition-all h-7 min-w-[70px] justify-center"
+                          class="bg-primary-color hover:bg-primary-color/90 disabled:bg-primary-color/40 disabled:cursor-not-allowed text-white px-3 py-0.5 rounded text-[12px] font-medium flex items-center gap-1.5 transition-all h-7 min-w-[70px] justify-center"
                           :disabled="!inlineQuickCreate.title.trim() || isCreating"
                           @click="handleQuickCreateSubmit"
                         >
@@ -391,7 +406,7 @@
                   v-if="editing?.id === ticket?.id && editing?.field === col?.key"
                   v-model="ticket[col?.key]"
                   @blur="finishEdit(ticket)"
-                  class="min-w-[200px] w-full p-1 border border-accent/60 rounded-sm focus:outline-none focus:ring-1 focus:ring-accent bg-bg-body text-[12px] h-8"
+                  class="min-w-[200px] w-full p-1 border border-primary-color/60 rounded-sm focus:outline-none focus:ring-1 focus:ring-primary-color bg-bg-body text-[12px] h-8"
                   :ref="(el: any) => el && editing?.id === ticket?.id && editing?.field === col?.key && (titleInput = el)"
                 />
 
@@ -421,7 +436,7 @@
       <div 
         v-if="canCreate && !isTalent && !isGrouped" 
         ref="quickCreateContainerRef"
-        class="sticky left-0 bg-bg-surface border-t border-border/60 px-4 py-2"
+        class="sticky left-0 bg-bg-body border-t border-border/60 px-4 py-2"
         :style="{ width: viewportWidth + 'px' }"
       >
         <!-- IDLE STATE -->
@@ -433,16 +448,16 @@
             class="flex items-center gap-2 cursor-pointer hover:text-text-primary transition-colors group"
             @click.stop="toggleQuickCreate"
           >
-            <div class="w-5 h-5 flex items-center justify-center rounded-full border border-border group-hover:border-accent transition-colors text-xs group-hover:text-accent">
+            <div class="w-5 h-5 flex items-center justify-center rounded-full border border-border group-hover:border-primary-color transition-colors text-xs group-hover:text-primary-color">
               <i class="fa-solid fa-plus font-bold"></i>
             </div>
-            <span class="text-[13px] font-medium group-hover:text-accent">Create</span>
+            <span class="text-[13px] font-medium group-hover:text-primary-color">Create</span>
           </div>
 
           <div class="flex items-center gap-4 text-[12px] text-text-secondary/80">
             <span class="font-medium">{{ totalCount }} of {{ totalTotal }}</span>
             <button 
-              class="hover:text-accent transition-colors p-1" 
+              class="hover:text-primary-color transition-colors p-1" 
               @click.stop="emit('refresh')"
               title="Refresh table"
             >
@@ -454,10 +469,10 @@
         <!-- ACTIVE QUICK CREATE STATE -->
         <div 
           v-else 
-          class="flex flex-col w-full border border-accent/60 rounded-md bg-bg-surface shadow-[0_0_0_1px_rgba(var(--accent-rgb),0.2)] overflow-hidden transition-all duration-200"
+          class="flex flex-col w-full border border-primary-color/60 rounded-md bg-bg-surface shadow-[0_0_0_1px_rgba(var(--primary-color-rgb),0.2)] overflow-hidden transition-all duration-200"
         >
           <div class="flex items-center px-3 py-1 gap-2">
-            <div class="flex items-center gap-1 text-accent/80 cursor-pointer hover:text-accent transition-colors">
+            <div class="flex items-center gap-1 text-primary-color/80 cursor-pointer hover:text-primary-color transition-colors">
               <i class="fa-solid fa-sparkles text-sm"></i>
             </div>
             <input
@@ -472,7 +487,7 @@
             />
             <div class="flex items-center gap-3"> 
               <button 
-                class="bg-accent hover:bg-accent/90 disabled:bg-accent/40 disabled:cursor-not-allowed text-white px-3 py-0.5 rounded text-[12px] font-medium flex items-center gap-1.5 transition-all h-7 min-w-[70px] justify-center"
+                class="bg-primary-color hover:bg-primary-color/90 disabled:bg-primary-color/40 disabled:cursor-not-allowed text-white px-3 py-0.5 rounded text-[12px] font-medium flex items-center gap-1.5 transition-all h-7 min-w-[70px] justify-center"
                 :disabled="!quickCreateTitle.trim() || isCreating"
                 @click="handleQuickCreateSubmit"
               >
@@ -514,7 +529,7 @@
     >
       <span
         @click.stop="startInlineQuickCreate(hoverIndex, hoverGroupTitle, hoverGroup)"
-        class="bg-bg-surface border border-border w-6 h-6 text-sm rounded-md flex justify-center items-center shadow-sm hover:border-accent hover:text-accent cursor-pointer transition-colors"
+        class="bg-bg-surface border border-border w-6 h-6 text-sm rounded-md flex justify-center items-center shadow-sm hover:border-primary-color hover:text-primary-color cursor-pointer transition-colors"
       >
         <i class="fa-solid fa-plus text-xs"></i>
       </span>
@@ -898,7 +913,7 @@ const cancelLeave = () => {
 
 <style scoped>
 .hover-active-row td {
-  border-top: 0.5px solid var(--accent) !important;
+  border-top: 0.5px solid var(--primary-color) !important;
   position: relative;
   z-index: 40; /* Above sticky columns which are usually 20-30 */
 }

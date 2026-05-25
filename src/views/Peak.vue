@@ -6,14 +6,14 @@
       :animate="{ opacity: 1, y: 0 }"
       :transition="{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }"
     >
-      <div class="p-5 rounded-[6px] bg-bg-card space-y-6 border border-border">
+      <div class="p-5 rounded-[6px] bg-bg-surface space-y-6 border border-border">
         <div class="flex items-center justify-between">
           <div class="flex flex-col w-full">
             <h3 class="text-2xl text-text-primary font-semibold">Project Overview</h3>
             <p class="text-sm text-text-secondary mt-2">Last update on {{ formatDateTime(lastUpdateDate) }}</p>
 
             <!-- Cards Row -->
-            <div class="flex gap-2.5 overflow-x-auto w-full py-8 custom_scroll_bar">
+            <div class="flex gap-2.5 overflow-x-auto w-full py-4 scrollbar-visible" >
               <!-- Loading skeletons -->
               <template v-if="isLoading">
                 <SkeletonCard v-for="n in 3" :key="n" />
@@ -31,7 +31,7 @@
                     :while-hover="{ y: -3, transition: { duration: 0.2 } }"
                   >
                     <button
-                      class="group focus:outline-none border-border border focus-visible:ring-2 focus-visible:ring-primary/50 rounded-xl"
+                      class="group focus:outline-none border-border border focus-visible:ring-2 focus-visible:ring-primary/50 rounded-[6px]"
                       type="button" role="button" aria-label="Open lane details" @click="onLaneClick(lane)"
                     >
                       <ProjectCard
@@ -95,7 +95,7 @@
         <ProjectPortfolio :data="projectPortfolio" :isLoading="isLoadingPortfolio" />
 
         <!-- Recent Activity -->
-        <div class="bg-bg-card w-full p-5 max-h-full rounded-lg overflow-y-auto flex flex-col border border-border">
+        <div class="bg-bg-surface w-full p-5 max-h-full rounded-[6px] overflow-y-auto flex flex-col border border-border">
           <!-- Header -->
           <div class="mb-2 flex items-start justify-between">
             <div>
@@ -120,9 +120,9 @@
             <!-- Loading State -->
             <template v-if="isLoadingActivities">
               <div
-                v-for="n in 5"
+                v-for="n in 8"
                 :key="`skeleton-${n}`"
-                class="flex gap-3 pb-2 border-b border-border last:border-0 animate-pulse"
+                class="flex gap-3 pb-2 border-b border-border last:border-0 animate-pulse" 
               >
                 <div class="w-8 h-8 rounded-full bg-bg-body flex-shrink-0"></div>
                 <div class="flex-1 min-w-0 space-y-2">
@@ -149,7 +149,7 @@
                 </Motion>
 
                 <Motion
-                  v-for="(activity, index) in previewActivities.today"
+                  v-for="(activity, index) in groupedActivities.today"
                   :key="activity._id"
                   :initial="{ opacity: 0, x: -12 }"
                   :animate="{ opacity: 1, x: 0 }"
@@ -170,7 +170,7 @@
                     </div>
                     <div class="flex-1 min-w-0">
                       <div class="text-sm text-text-primary flex justify-between">
-                        <span class="font-semibold text-md text-accent/90 pe-1">{{ activity?.user?.name }}</span>
+                        <span class="font-semibold text-md text-primary-color/90 pe-1">{{ activity?.user?.name }}</span>
                         <div class="text-xs text-text-secondary mt-1">{{ formatTime(activity?.created_at) }}</div>
                       </div>
                       <span class="text-text-secondary text-sm">{{ stripHtml(activity?.message || '') }}</span>
@@ -190,7 +190,7 @@
                 </Motion>
 
                 <Motion
-                  v-for="(activity, index) in previewActivities.yesterday"
+                  v-for="(activity, index) in groupedActivities.yesterday"
                   :key="activity._id"
                   :initial="{ opacity: 0, x: -12 }"
                   :animate="{ opacity: 1, x: 0 }"
@@ -211,7 +211,7 @@
                     </div>
                     <div class="flex-1 min-w-0">
                       <div class="text-sm text-text-primary flex justify-between">
-                        <span class="font-semibold text-md text-accent/90 pe-1">{{ activity?.user?.name }}</span>
+                        <span class="font-semibold text-md text-primary-color/90 pe-1">{{ activity?.user?.name }}</span>
                         <div class="text-xs text-text-secondary font-medium mt-1">{{ formatTime(activity?.created_at) }}</div>
                       </div>
                       <span class="text-text-secondary text-sm">{{ stripHtml(activity?.message || '') }}</span>
@@ -231,7 +231,7 @@
                 </Motion>
 
                 <Motion
-                  v-for="(activity, index) in previewActivities.older"
+                  v-for="(activity, index) in groupedActivities.older"
                   :key="activity._id"
                   :initial="{ opacity: 0, x: -12 }"
                   :animate="{ opacity: 1, x: 0 }"
@@ -252,7 +252,7 @@
                     </div>
                     <div class="flex-1 min-w-0">
                       <div class="text-sm text-text-primary flex justify-between">
-                        <span class="font-semibold text-md text-accent/90 pe-1">{{ activity?.user?.name }}</span>
+                        <span class="font-semibold text-md text-primary-color/90 pe-1">{{ activity?.user?.name }}</span>
                         <div class="text-xs text-text-secondary mt-1">{{ formatTime(activity?.created_at) }}</div>
                       </div>
                       <span class="text-text-secondary text-sm">{{ stripHtml(activity?.message || '') }}</span>
@@ -263,20 +263,14 @@
             </template>
 
             <!-- Empty State -->
-            <template v-else>
-              <Motion
-                :initial="{ opacity: 0, scale: 0.95 }"
-                :animate="{ opacity: 1, scale: 1 }"
-                :transition="{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }"
-              >
+            <template v-else> 
                 <div class="flex flex-col items-center justify-center py-10 text-center text-text-secondary h-full">
                   <i class="fas fa-clock text-4xl mb-3"></i>
                   <h4 class="text-lg text-text-primary font-semibold mb-1">No recent activity</h4>
                   <p class="text-sm text-text-secondary/80">
                     Activities will appear here once your team starts making updates.
                   </p>
-                </div>
-              </Motion>
+                </div> 
             </template>
           </div>
 
@@ -307,7 +301,7 @@
               >
                 <button
                   class="px-2 sm:px-3 py-1.5 sm:py-1 cursor-pointer text-xs sm:text-sm rounded border transition-colors touch-manipulation min-w-[32px] sm:min-w-[36px]"
-                  :class="1 === currentPage ? 'bg-accent text-white border-accent' : 'border-border text-text-secondary hover:bg-bg-hover'"
+                  :class="1 === currentPage ? 'bg-primary-color text-white border-primary-color' : 'border-border text-text-secondary hover:bg-bg-hover'"
                   @click="changePage(1)"
                 >1</button>
               </Motion>
@@ -318,7 +312,7 @@
                 <Motion v-if="page !== 1 && page !== pagination?.totalPages" :while-hover="{ scale: 1.08 }" :while-tap="{ scale: 0.93 }">
                   <button
                     class="px-2 sm:px-3 py-1.5 sm:py-1 cursor-pointer text-xs sm:text-sm rounded border transition-colors touch-manipulation min-w-[32px] sm:min-w-[36px]"
-                    :class="page === currentPage ? 'bg-accent text-white border-accent' : 'border-border text-text-secondary hover:bg-bg-hover'"
+                    :class="page === currentPage ? 'bg-primary-color text-white border-primary-color' : 'border-border text-text-secondary hover:bg-bg-hover'"
                     @click="changePage(page)"
                   >{{ page }}</button>
                 </Motion>
@@ -329,7 +323,7 @@
               <Motion v-if="pagination?.totalPages > 1" :while-hover="{ scale: 1.08 }" :while-tap="{ scale: 0.93 }">
                 <button
                   class="px-2 sm:px-3 py-1.5 sm:py-1 cursor-pointer text-xs sm:text-sm rounded border transition-colors touch-manipulation min-w-[32px] sm:min-w-[36px]"
-                  :class="pagination.totalPages === currentPage ? 'bg-accent text-white border-accent' : 'border-border text-text-secondary hover:bg-bg-hover'"
+                  :class="pagination.totalPages === currentPage ? 'bg-primary-color text-white border-primary-color' : 'border-border text-text-secondary hover:bg-bg-hover'"
                   @click="changePage(pagination.totalPages)"
                 >{{ pagination.totalPages }}</button>
               </Motion>
@@ -358,7 +352,7 @@
     >
       <div class="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4 items-stretch">
         <!-- Team Workload -->
-        <div class="bg-bg-card w-full max-h-full flex-auto p-5 rounded-lg border border-border">
+        <div class="bg-bg-surface w-full max-h-full flex-auto p-5 rounded-[6px] border border-border">
           <div class="mb-4">
             <h3 class="text-lg font-semibold text-text-primary">Team workload</h3>
             <p class="text-sm text-text-secondary mt-1">
@@ -387,7 +381,7 @@
             <!-- Error State -->
             <div v-else-if="teamsError" class="text-center py-8">
               <p class="text-sm text-red-500 mb-2">Failed to load team workload</p>
-              <button @click="() => refetchTeams()" class="text-xs text-accent hover:underline">Try again</button>
+              <button @click="() => refetchTeams()" class="text-xs text-primary-color hover:underline">Try again</button>
             </div>
 
             <!-- Empty State -->
@@ -432,7 +426,7 @@
                       :animate="{ width: member.workload + '%' }"
                       :transition="{ duration: 0.7, delay: 0.1 + (index as number) * 0.06, ease: [0.22, 1, 0.36, 1] }"
                       class="h-full"
-                      :class="isDark ? 'bg-accent' : '!bg-accent-hover/40'"
+                      :class="isDark ? 'bg-primary-color' : '!bg-primary-color/40'"
                     />
                     <span
                       v-if="member.workload > 0"
@@ -475,7 +469,7 @@
             :animate="{ opacity: 1, scale: 1, y: 0 }"
             :exit="{ opacity: 0, scale: 0.96, y: 16 }"
             :transition="{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }"
-            class="relative bg-bg-card w-full max-w-4xl max-h-[85vh] rounded-lg flex flex-col border border-border"
+            class="relative bg-bg-surface w-full max-w-4xl max-h-[85vh] rounded-[6px] flex flex-col border border-border"
           >
             <!-- Modal Header -->
             <div class="p-4 flex items-center justify-between border-b border-border">
@@ -493,7 +487,7 @@
             <!-- Scrollable content -->
             <div class="flex-1 overflow-y-auto p-5 space-y-4">
               <template v-if="isLoadingActivities">
-                <div v-for="n in 5" :key="`skeleton-${n}`" class="flex gap-3 pb-2 border-b border-border last:border-0 animate-pulse">
+                <div v-for="n in 10" :key="`skeleton-${n}`" class="flex gap-3 pb-2 border-b border-border last:border-0 animate-pulse">
                   <div class="w-8 h-8 rounded-full bg-bg-body flex-shrink-0"></div>
                   <div class="flex-1 min-w-0 space-y-2">
                     <div class="space-y-1.5">
@@ -534,7 +528,7 @@
                       </div>
                       <div class="flex-1 min-w-0">
                         <div class="text-sm text-text-primary flex justify-between">
-                          <span class="font-semibold text-md text-accent/90 pe-1">{{ activity?.user?.name }}</span>
+                          <span class="font-semibold text-md text-primary-color/90 pe-1">{{ activity?.user?.name }}</span>
                           <div class="text-xs text-text-secondary mt-1">{{ formatTime(activity?.created_at) }}</div>
                         </div>
                         <span class="text-text-secondary text-sm">{{ stripHtmlModal(activity?.message || '') }}</span>
@@ -570,7 +564,7 @@
                       </div>
                       <div class="flex-1 min-w-0">
                         <div class="text-sm text-text-primary flex justify-between">
-                          <span class="font-semibold text-md text-accent/90 pe-1">{{ activity?.user?.name }}</span>
+                          <span class="font-semibold text-md text-primary-color/90 pe-1">{{ activity?.user?.name }}</span>
                           <div class="text-xs text-text-secondary mt-1">{{ formatTime(activity?.created_at) }}</div>
                         </div>
                         <span class="text-text-secondary text-sm">{{ stripHtmlModal(activity?.message || '') }}</span>
@@ -606,7 +600,7 @@
                       </div>
                       <div class="flex-1 min-w-0">
                         <div class="text-sm text-text-primary flex justify-between">
-                          <span class="font-semibold text-md text-accent/90 pe-1">{{ activity?.user?.name }}</span>
+                          <span class="font-semibold text-md text-primary-color/90 pe-1">{{ activity?.user?.name }}</span>
                           <div class="text-xs text-text-secondary mt-1">{{ formatTime(activity?.created_at) }}</div>
                         </div>
                         <span class="text-text-secondary text-sm">{{ stripHtmlModal(activity?.message || '') }}</span>
@@ -655,7 +649,7 @@
                 <Motion v-if="pagination?.totalPages > 0" :while-hover="{ scale: 1.08 }" :while-tap="{ scale: 0.93 }">
                   <button
                     class="px-2 sm:px-3 py-1.5 sm:py-1 cursor-pointer text-xs sm:text-sm rounded border transition-colors touch-manipulation min-w-[32px] sm:min-w-[36px]"
-                    :class="1 === currentPage ? 'bg-accent text-white border-accent' : 'border-border text-text-secondary hover:bg-bg-hover'"
+                    :class="1 === currentPage ? 'bg-primary-color text-white border-primary-color' : 'border-border text-text-secondary hover:bg-bg-hover'"
                     @click="changePage(1)"
                   >1</button>
                 </Motion>
@@ -666,7 +660,7 @@
                   <Motion v-if="page !== 1 && page !== pagination?.totalPages" :while-hover="{ scale: 1.08 }" :while-tap="{ scale: 0.93 }">
                     <button
                       class="px-2 sm:px-3 py-1.5 sm:py-1 cursor-pointer text-xs sm:text-sm rounded border transition-colors touch-manipulation min-w-[32px] sm:min-w-[36px]"
-                      :class="page === currentPage ? 'bg-accent text-white border-accent' : 'border-border text-text-secondary hover:bg-bg-hover'"
+                      :class="page === currentPage ? 'bg-primary-color text-white border-primary-color' : 'border-border text-text-secondary hover:bg-bg-hover'"
                       @click="changePage(page)"
                     >{{ page }}</button>
                   </Motion>
@@ -677,7 +671,7 @@
                 <Motion v-if="pagination?.totalPages > 1" :while-hover="{ scale: 1.08 }" :while-tap="{ scale: 0.93 }">
                   <button
                     class="px-2 sm:px-3 py-1.5 sm:py-1 cursor-pointer text-xs sm:text-sm rounded border transition-colors touch-manipulation min-w-[32px] sm:min-w-[36px]"
-                    :class="pagination.totalPages === currentPage ? 'bg-accent text-white border-accent' : 'border-border text-text-secondary hover:bg-bg-hover'"
+                    :class="pagination.totalPages === currentPage ? 'bg-primary-color text-white border-primary-color' : 'border-border text-text-secondary hover:bg-bg-hover'"
                     @click="changePage(pagination.totalPages)"
                   >{{ pagination.totalPages }}</button>
                 </Motion>
@@ -841,21 +835,6 @@ const groupedActivities = computed<GroupedActivities>(() => {
   })
 
   return groups
-})
-
-const TOTAL_PREVIEW = 6
-
-const previewActivities = computed<{ today: Activity[]; yesterday: Activity[]; older: Activity[] }>(() => {
-  const today = groupedActivities.value?.today ?? []
-  const yesterday = groupedActivities.value?.yesterday ?? []
-  const older = groupedActivities.value?.older ?? []
-  let remaining = TOTAL_PREVIEW
-  const result = { today: [] as Activity[], yesterday: [] as Activity[], older: [] as Activity[] }
-  result.today = today.slice(0, remaining)
-  remaining -= result.today.length
-  if (remaining > 0) { result.yesterday = yesterday.slice(0, remaining); remaining -= result.yesterday.length }
-  if (remaining > 0) { result.older = older.slice(0, remaining) }
-  return result
 })
 
 const formatTime = (dateString: string): string => {

@@ -243,6 +243,7 @@
                     >
                       <i class="fa-regular fa-calendar"></i>
                       <DatePicker
+                        :inSpace="true"
                         :disabled="!canEditCard"
                         placeholder="Set start date"
                         class="w-full"
@@ -269,6 +270,7 @@
                     >
                       <i class="fa-regular fa-calendar"></i>
                       <DatePicker
+                        :inSpace="true"
                         :disabled="!canEditCard"
                         placeholder="Set end date"
                         class="w-full"
@@ -390,6 +392,7 @@
                     >
                       <i class="fa-regular fa-calendar text-[14px]"></i>
                       <DatePicker
+                        :inSpace="true"
                         :disabled="!canEditCard"
                         placeholder="Set date"
                         class="w-full"

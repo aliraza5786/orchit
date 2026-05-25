@@ -84,7 +84,7 @@ onNodesInitialized(() => {
 
 <template>
   <div 
-    class="relative group h-[200px] w-full rounded-[8px] border border-orchit-white/10 overflow-hidden bg-bg-body/50 transition-all duration-300 hover:border-accent/30"
+    class="relative group h-[200px] w-full rounded-[8px] border border-orchit-white/10 overflow-hidden bg-bg-body/50 transition-all duration-300 hover:border-primary-color/30"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
   >
@@ -127,7 +127,7 @@ onNodesInitialized(() => {
     >
       <button 
         @click="emit('open-builder')"
-        class="px-4 py-2 bg-accent text-white rounded-[6px] shadow-[0_4px_12px_rgba(0,0,0,0.3)] hover:scale-105 active:scale-95 transition-all duration-200 font-medium flex items-center gap-2 text-sm"
+        class="px-4 py-2 bg-primary-color text-white rounded-[6px] shadow-[0_4px_12px_rgba(0,0,0,0.3)] hover:scale-105 active:scale-95 transition-all duration-200 font-medium flex items-center gap-2 text-sm"
       >
         <i class="fa-solid fa-pen-to-square"></i>
         Open to edit

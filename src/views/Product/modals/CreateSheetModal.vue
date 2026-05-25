@@ -1,12 +1,12 @@
 <template>
-    <BaseModal v-model="model" size="lg" :title="sheet?._id ? 'Update Sheet' : 'Add a new Sheet'">
+    <BaseModal :inSpace="true"  v-model="model" size="lg" :title="sheet?._id ? 'Update Sheet' : 'Add a new Sheet'">
         <!-- Tabs -->
         <!-- <div class="px-6 pt-4 border-b border-border flex gap-6 text-sm font-medium">
             <button v-for="t in tabs" :key="t.value" @click="currentTab = t.value" class="pb-3 relative"
                 :class="currentTab === t.value ? 'text-text-primary' : 'text-text-secondary'">
                 {{ t.label }}
 
-                <div v-if="currentTab === t.value" class="absolute bottom-0 left-0 w-full h-0.5 bg-accent"></div>
+                <div v-if="currentTab === t.value" class="absolute bottom-0 left-0 w-full h-0.5 bg-primary-color"></div>
             </button>
         </div> -->
 
@@ -15,7 +15,7 @@
 
             <!-- MANUAL TAB -->
             <section v-if="currentTab === 'manual'" class="space-y-4">
-                <IconPicker v-model="form.icon" />
+                <IconPicker :inSpace="true" v-model="form.icon" />
 
                 <BaseTextField v-model="form.title" label="Sheet name" size="lg" placeholder="Design Ideas"
                     :error="!!errors.title" :message="errors.title" />
@@ -26,7 +26,7 @@
                 <div class="flex justify-end gap-2 pt-2">
                     <button class="px-4 py-2 rounded-md text-sm text-text-secondary border"
                         @click="close">Cancel</button>
-                    <Button class="px-4" @click="submitManual">
+                    <Button :inSpace="true" class="px-4" @click="submitManual">
                         {{ creatingSheet || isUpdating ? 'Saving...' : 'Save' }}
                     </Button>
                 </div>
@@ -46,7 +46,7 @@
                         <!-- Record Button -->
                         <transition v-if="!description" name="fade-slide" appear>
                             <div class="absolute bottom-4 right-4">
-                                <AudioRecorder v-model="description" v-model:isRecording="isRecording"
+                                <AudioRecorder :inSpace="true" v-model="description" v-model:isRecording="isRecording"
                                     v-model:hasAudio="audioURL" />
                             </div>
                         </transition>
@@ -54,7 +54,7 @@
                         <!-- Generate Button -->
                         <transition v-else name="rotate-fade" appear>
                             <div @click="handleGenerateSheet()"
-                                class="absolute bottom-4 right-4 w-9 h-9 bg-accent rounded-md flex items-center justify-center cursor-pointer shadow">
+                                class="absolute bottom-4 right-4 w-9 h-9 bg-primary-color rounded-md flex items-center justify-center cursor-pointer shadow">
                                 <i class="text-white fa-solid fa-arrow-right"></i>
                             </div>
                         </transition>
@@ -66,7 +66,7 @@
                     <hr class="flex-auto text-border">
                 </div>
                 <div class="px-6 mt-5">
-                    <Button variant="secondary" color="dark" :block="true" @click=" currentTab = 'manual'">
+                    <Button :inSpace="true" variant="secondary" color="dark" :block="true" @click=" currentTab = 'manual'">
                        <span v-if="sheet?._id">Update</span> <span v-else>Create</span> Manually
                     </Button>
                 </div>
@@ -83,7 +83,7 @@
                 v-for="s in suggestionData"
                 :key="s.description"
                 @click="() => typeEffect(s.description)"
-                class="cursor-pointer border border-border/30 px-3 py-2 rounded-lg text-xs hover:border-accent transition"
+                class="cursor-pointer border border-border/30 px-3 py-2 rounded-lg text-xs hover:border-primary-color transition"
               >
                 {{ s.description }}
               </div>

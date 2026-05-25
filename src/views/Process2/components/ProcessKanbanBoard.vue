@@ -7,7 +7,7 @@
       :disabled="isMobile || !canEditVariable"
       class="flex gap-2"
       :class="{
-        'overflow-x-auto snap-x snap-mandatory w-full pb-4 mobile-scroll-visible': isMobile,
+        'overflow-x-auto snap-x snap-mandatory w-full pb-4 scrollbar-visible': isMobile,
         'min-w-max': !isMobile
       }"
       direction="horizontal" @end="onColumnsEnd" @start="onStart">
@@ -217,33 +217,5 @@ function cloneBoard(b: Column[]): Board {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
-</style>
+</style> 
 
-<style>
-/* Global override for mobile scrollbar visibility in Kanban */
-.mobile-scroll-visible::-webkit-scrollbar {
-  display: block !important;
-  height: 8px !important; /* Visible height */
-}
-
-.mobile-scroll-visible::-webkit-scrollbar-track {
-  background: var(--bg-body) !important;
-  border-radius: 4px;
-}
-
-.mobile-scroll-visible::-webkit-scrollbar-thumb {
-  background-color: var(--border) !important;
-  border-radius: 4px;
-  border: 2px solid var(--bg-body) !important; /* Creates padding effect */
-}
-
-.mobile-scroll-visible::-webkit-scrollbar-thumb:hover {
-  background-color: var(--text-secondary) !important;
-}
-
-/* Ensure firefox supports it too if possible, though 'scrollbar-width: auto' usually handles it */
-.mobile-scroll-visible {
-  scrollbar-width: auto !important;
-  scrollbar-color: var(--border) var(--bg-body) !important;
-}
-</style>

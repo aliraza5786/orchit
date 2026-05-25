@@ -10,9 +10,11 @@
         <p class="text-sm text-text-secondary mt-1">Define roles and manage permissions for your organization.</p>
       </div>
       <button
-      v-if="canCreateRole"
+      v-if="canCreateRole && hasOrgDomain"
         @click="openCreateModal"
-        class="px-4 py-2.5 bg-accent text-white text-sm font-semibold rounded-lg hover:bg-accent/90 active:scale-95 transition-all shadow-lg shadow-accent/20 whitespace-nowrap self-start sm:self-auto"
+        :disabled="!isOwnerAdmin"
+        :title="!isOwnerAdmin ? 'Verify user first' : ''"
+        class="px-4 py-2.5 bg-accent text-white cursor-pointer text-sm font-semibold rounded-lg hover:bg-accent/90 active:scale-95 transition-all shadow-lg shadow-accent/20 whitespace-nowrap self-start sm:self-auto disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <i class="fa-solid fa-plus mr-2"></i> Create role
       </button>
@@ -132,8 +134,10 @@
             Create custom roles to tailor permissions for different team members.
           </p>
           <button
+          v-if="hasOrgDomain && canCreateRole && hasOrgDomain"
             @click="openCreateModal"
-            class="px-4 py-2 bg-accent text-white text-sm font-semibold rounded-lg hover:bg-accent/90 transition-all"
+            :disabled="!isOwnerAdmin"
+            class="px-4 py-2 bg-accent text-white text-sm cursor-pointer font-semibold rounded-lg hover:bg-accent/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <i class="fa-solid fa-plus mr-2"></i> Create first custom role
           </button>
@@ -152,7 +156,7 @@
               </div>
               <button
                 v-if="canDeleteRole"
-                @click="deleteRole(role._id)"
+                @click="askDeleteRole(role)"
                 class="p-1.5 text-text-secondary hover:text-red-600 hover:bg-red-500/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
                 title="Delete role"
               >
@@ -230,7 +234,39 @@
       </div>
     </div>
   </div>
+<div v-if="showDeleteModal" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+  <div class="bg-bg-card rounded-xl p-5 w-full max-w-md border border-border">
+    
+    <h3 class="text-lg font-semibold text-text-primary">
+      Delete Role
+    </h3>
 
+    <p class="text-sm text-text-secondary mt-2">
+      Are you sure you want to delete
+      <span class="font-semibold text-text-primary">
+        {{ roleToDelete?.title }}
+      </span>
+      ?
+    </p>
+
+    <div class="flex justify-end gap-2 mt-5">
+      <button
+        @click="showDeleteModal = false"
+        class="px-3 py-2 text-sm border rounded-lg"
+      >
+        Cancel
+      </button>
+
+      <button
+        @click="confirmDeleteRole"
+        class="px-3 py-2 text-sm bg-red-600 text-white rounded-lg"
+        :disabled="isDeletingRole"
+      >
+        Delete
+      </button>
+    </div>
+  </div>
+</div>
  <!-- In template — replace both modal usages with this single modal -->
 <EditCompanyRole
   v-model="showModal"
@@ -244,7 +280,8 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { toast } from 'vue-sonner'
-import { useCompanyRolesWithoutPermission } from '../../../queries/useCommon'
+import { useCompanyRolesWithoutPermission,useDeleteCompanyRoleById } from '../../../queries/useCommon'
+// import { useCompanyUsers } from '../../../queries/useCompanyUsers'
 import EditCompanyRole from './EditCompanyRole.vue'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -277,11 +314,13 @@ const props = defineProps<{
 }>()
 
 const activeCompany = computed(() => props.profile?.active_company)
-
+const hasOrgDomain = computed(() => !!activeCompany.value?.custom_domain)
+// const hasSuperAdmin = computed(() => activeCompany.value?.membership_role === 'super_admin')
 const membershipRole = computed(() =>
   activeCompany.value?.membership_role || null
 )
-
+const { mutateAsync: deleteCompanyRole, isPending: isDeletingRole } =
+  useDeleteCompanyRoleById()
 const permissions = computed<string[]>(() =>
   activeCompany.value?.permissions || []
 )
@@ -290,9 +329,9 @@ function can(permission: string) {
   return permissions.value.includes(permission)
 }
 
-const isOwner = computed(() => membershipRole.value === 'owner')
+const isOwner = computed(() => membershipRole.value === 'owner' || membershipRole.value === 'super_admin' || membershipRole.value === 'admin' || membershipRole.value === 'editor')
 const canCreateRole = computed(() =>
-  isOwner.value || can('role.create')
+  isOwner.value || activeCompany.value?.membership_role === 'super_admin' || can('role.create')
 )
 
 const canUpdateRole = computed(() =>
@@ -306,6 +345,17 @@ const canDeleteRole = computed(() =>
 const canViewRole = computed(() =>
   isOwner.value || can('role.read')
 )
+
+// const companyId = computed<string>(() => localStorage.getItem('company_id') || '')
+// const { data: usersData } = useCompanyUsers(
+//   computed(() => ({ company_id: companyId.value })).value
+// )
+// const members = computed(() => {
+//   const raw = usersData.value?.data?.users ?? usersData.value?.users ?? []
+//   return Array.isArray(raw) ? raw : []
+// })
+const isOwnerAdmin = props.profile?.membership_role === 'admin' || 'owner' || 'super_admin' || 'editor';
+
 // ── Fetch all roles ───────────────────────────────────────────────────────────
 const { data: rolesData, isLoading: isRolesLoading, refetch: refetchRoles } = useCompanyRolesWithoutPermission()
 
@@ -336,6 +386,10 @@ const showModal     = ref(false)
 const modalMode  = ref<'view' | 'edit' | 'create'>('create')
 const modalRole  = ref<CompanyRole | null>(null)
 function openCreateModal() {
+  if (!isOwnerAdmin) {
+    toast.error(`You don't have a permission to create a role.`)
+    return
+  }
   modalMode.value = 'create'
   modalRole.value = null
   showModal.value = true
@@ -368,16 +422,26 @@ function formatCategory(category: string): string {
 }
 
 // ── Delete ────────────────────────────────────────────────────────────────────
-async function deleteRole(roleId: string) {
-  console.log(roleId);
-  
-  if (!window.confirm('Are you sure you want to delete this role?')) return
+const showDeleteModal = ref(false)
+const roleToDelete = ref<CompanyRole | null>(null)
+
+function askDeleteRole(role: CompanyRole) {
+  roleToDelete.value = role
+  showDeleteModal.value = true
+}
+
+async function confirmDeleteRole() {
+  if (!roleToDelete.value) return
+
   try {
-    await new Promise(r => setTimeout(r, 600))
+    await deleteCompanyRole(roleToDelete.value._id)
+
     toast.success('Role deleted')
+    showDeleteModal.value = false
+    roleToDelete.value = null
     refetchRoles()
-  } catch {
-    toast.error('Failed to delete role')
+  } catch (e: any) {
+    toast.error(e?.response?.data?.message ?? 'Failed to delete role')
   }
 }
 </script>

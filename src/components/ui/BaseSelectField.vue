@@ -42,7 +42,7 @@
       <div class="flex items-center gap-2 max-w-full overflow-hidden">
         <img v-if="selected?.icon" :src="selected.icon" class="w-4 h-4" />
         <span
-          v-if="!isOpen" 
+          v-if="!isOpen || noSearchAble" 
           :class="
             selected
               ? ' line-clamp-1 overflow-ellipsis '
@@ -84,8 +84,8 @@
         :style="dropdownStyles"
         :class="
           isDarkTheme
-            ? 'bg-bg-input text-text-primary border-border'
-            : 'bg-bg-input text-text-primary border-border'
+            ? 'bg-bg-body text-text-primary border-border'
+            : 'bg-bg-body text-text-primary border-border'
         "
       >
         <div v-if="loading" class="flex justify-center items-center py-4">
@@ -157,6 +157,7 @@ const props = withDefaults(
     theme?: string;
     disabled?: boolean;
     loading?: boolean;
+    noSearchAble?: boolean;
   }>(),
   {
     size: "md",

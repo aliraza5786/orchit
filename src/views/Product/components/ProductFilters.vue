@@ -23,16 +23,16 @@
                 v-for="cat in categories"
                 :key="cat.id"
                 @click="activeCategory = cat.id"
-                class="w-full px-4 py-3 flex items-center justify-between group transition-colors hover:bg-bg-body"
-                :class="activeCategory === cat.id ? 'bg-bg-body text-accent' : 'text-text-secondary'"
+                class="w-full px-4 py-3 flex items-center justify-between group transition-colors hover:bg-bg-card"
+                :class="activeCategory === cat.id ? 'bg-bg-body text-primary-color' : 'text-text-secondary'"
               >
                 <div class="flex items-center gap-3">
-                  <i :class="[cat.icon, 'text-sm', activeCategory === cat.id ? 'text-accent' : 'text-text-secondary group-hover:text-text-primary']"></i>
+                  <i :class="[cat.icon, 'text-sm', activeCategory === cat.id ? 'text-primary-color' : 'text-text-secondary group-hover:text-text-primary']"></i>
                   <span class="text-xs font-medium">{{ cat.label }}</span>
                 </div>
                 <span 
                   v-if="getSelectionCount(cat.id)"
-                  class="bg-accent/10 text-accent text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center"
+                  class="bg-primary-color/10 text-primary-color text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center"
                 >
                   {{ getSelectionCount(cat.id) }}
                 </span>
@@ -50,7 +50,7 @@
                   v-model="searchQuery"
                   type="text" 
                   :placeholder="`Search ${currentCategoryLabel.toLowerCase()}`"
-                  class="w-full bg-bg-input border border-border rounded-lg pl-9 pr-4 py-2 text-xs focus:ring-1 focus:ring-accent outline-none transition-all"
+                  class="w-full bg-bg-input border border-border rounded-lg pl-9 pr-4 py-2 text-xs focus:ring-1 focus:ring-primary-color outline-none transition-all"
                   ref="searchInput"
                 />
               </div>
@@ -61,22 +61,22 @@
               <div v-if="activeCategory === 'dates'" class="p-4 space-y-6">
                 <div v-for="dateType in dateCategories" :key="dateType.id" class="space-y-3">
                   <div class="flex items-center gap-2 px-1">
-                    <div class="w-1.5 h-1.5 rounded-full bg-accent/60"></div>
+                    <div class="w-1.5 h-1.5 rounded-full bg-primary-color/60"></div>
                     <label class="text-[10px] font-bold text-text-secondary uppercase tracking-[0.1em]">{{ dateType.label }}</label>
                   </div>
                   <div class="flex items-center gap-3">
                     <!-- From Wrapper -->
                     <div class="flex-1 h-9 px-2.5 flex items-center gap-2 rounded-[6px] bg-bg-body border border-border group transition-all focus-0">
-                      <i class="fa-regular fa-calendar text-text-secondary/70 text-xs shrink-0 group-hover:text-accent transition-colors"></i>
-                      <DatePicker v-model="localFilters[dateType.from]" placeholder="From" size="sm" class="flex-1" />
+                      <i class="fa-regular fa-calendar text-text-secondary/70 text-xs shrink-0 group-hover:text-primary-color transition-colors"></i>
+                      <DatePicker :inSpace="true" v-model="localFilters[dateType.from]" placeholder="From" size="sm" class="flex-1" />
                     </div>
                     
                     <div class="w-2.5 h-[1px] bg-border shrink-0"></div>
                     
                     <!-- To Wrapper -->
                     <div class="flex-1 h-9 px-2.5 flex items-center gap-2 rounded-[6px] bg-bg-body border border-border group transition-all">
-                      <i class="fa-regular fa-calendar text-text-secondary/70 text-xs shrink-0 group-hover:text-accent transition-colors"></i>
-                      <DatePicker v-model="localFilters[dateType.to]" placeholder="To" size="sm" class="flex-1" />
+                      <i class="fa-regular fa-calendar text-text-secondary/70 text-xs shrink-0 group-hover:text-primary-color transition-colors"></i>
+                      <DatePicker :inSpace="true" v-model="localFilters[dateType.to]" placeholder="To" size="sm" class="flex-1" />
                     </div>
                   </div>
                 </div>
@@ -86,6 +86,7 @@
                 <!-- Type Selection Tabs -->
                 <div class="px-2 pt-1">
                   <SwitchTab 
+                    :inSpace="true"
                     v-model="selectedPlanType"
                     :options="planTypeOptions"
                     size="sm"
@@ -98,11 +99,11 @@
                     v-for="option in currentPlanOptionsFiltered" 
                     :key="option._id"
                     @click="togglePlanOption(option)"
-                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-bg-body transition-colors group"
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-bg-card transition-colors group"
                   >
                     <div 
                       class="w-4 h-4 border rounded flex items-center justify-center transition-colors shrink-0"
-                      :class="isPlanSelected(option) ? 'bg-accent border-accent text-white' : 'border-border group-hover:border-accent/50'"
+                      :class="isPlanSelected(option) ? 'bg-primary-color border-primary-color text-white' : 'border-border group-hover:border-primary-color/50'"
                     >
                       <i v-if="isPlanSelected(option)" class="fa-solid fa-check text-[10px]"></i>
                     </div>
@@ -125,11 +126,11 @@
                   v-for="option in filteredOptions" 
                   :key="option._id"
                   @click="toggleOption(option._id)"
-                  class="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-bg-body transition-colors group"
+                  class="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-bg-card transition-colors group"
                 >
                   <div 
                     class="w-4 h-4 border rounded flex items-center justify-center transition-colors shrink-0"
-                    :class="isSelected(option._id) ? 'bg-accent border-accent text-white' : 'border-border group-hover:border-accent/50'"
+                    :class="isSelected(option._id) ? 'bg-primary-color border-primary-color text-white' : 'border-border group-hover:border-primary-color/50'"
                   >
                     <i v-if="isSelected(option._id)" class="fa-solid fa-check text-[10px]"></i>
                   </div>
@@ -163,7 +164,7 @@
               </span>
               <button 
                 @click="clearCurrentCategory"
-                class="text-[10px] font-medium text-accent hover:underline"
+                class="text-[10px] font-medium text-primary-color hover:underline"
               >
                 Clear current
               </button>
@@ -176,21 +177,21 @@
               <!-- Accordion Header -->
               <button
                 @click="activeCategory = activeCategory === cat.id ? '' : cat.id"
-                class="w-full px-4 py-3 flex items-center justify-between transition-colors hover:bg-bg-body sticky top-0 bg-bg-dropdown z-10"
+                class="w-full px-4 py-3 flex items-center justify-between transition-colors hover:bg-bg-card sticky top-0 bg-bg-dropdown z-10"
               >
                 <div class="flex items-center gap-3">
-                  <i :class="[cat.icon, 'text-sm', activeCategory === cat.id ? 'text-accent' : 'text-text-secondary']"></i>
+                  <i :class="[cat.icon, 'text-sm', activeCategory === cat.id ? 'text-primary-color' : 'text-text-secondary']"></i>
                   <span class="text-xs font-medium">{{ cat.label }}</span>
                 </div>
                 <div class="flex items-center gap-2">
                   <span 
                     v-if="getSelectionCount(cat.id)"
-                    class="bg-accent/10 text-accent text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center"
+                    class="bg-primary-color/10 text-primary-color text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center"
                   >
                     {{ getSelectionCount(cat.id) }}
                   </span>
                   <i class="fa-solid fa-chevron-down text-[10px] transition-transform"
-                     :class="activeCategory === cat.id ? 'rotate-180 text-accent' : 'text-text-secondary'"></i>
+                     :class="activeCategory === cat.id ? 'rotate-180 text-primary-color' : 'text-text-secondary'"></i>
                 </div>
               </button>
 
@@ -204,7 +205,7 @@
                       v-model="searchQuery"
                       type="text" 
                       :placeholder="`Search ${currentCategoryLabel.toLowerCase()}`"
-                      class="w-full bg-bg-input border border-border rounded-lg pl-9 pr-4 py-2 text-xs focus:ring-1 focus:ring-accent outline-none transition-all"
+                      class="w-full bg-bg-input border border-border rounded-lg pl-9 pr-4 py-2 text-xs focus:ring-1 focus:ring-primary-color outline-none transition-all"
                     />
                   </div>
                 </div>
@@ -214,17 +215,17 @@
                   <div v-if="activeCategory === 'dates'" class="p-4 space-y-6">
                     <div v-for="dateType in dateCategories" :key="dateType.id" class="space-y-3">
                       <div class="flex items-center gap-2 px-1">
-                        <div class="w-1.5 h-1.5 rounded-full bg-accent/60"></div>
+                        <div class="w-1.5 h-1.5 rounded-full bg-primary-color/60"></div>
                         <label class="text-[10px] font-bold text-text-secondary uppercase tracking-[0.1em]">{{ dateType.label }}</label>
                       </div>
                       <div class="flex flex-col gap-3">
                         <div class="flex-1 h-9 px-2.5 flex items-center gap-2 rounded-[6px] bg-bg-body border border-border group transition-all focus-0">
-                          <i class="fa-regular fa-calendar text-text-secondary/70 text-xs shrink-0 group-hover:text-accent transition-colors"></i>
-                          <DatePicker v-model="localFilters[dateType.from]" placeholder="From" size="sm" class="flex-1" />
+                          <i class="fa-regular fa-calendar text-text-secondary/70 text-xs shrink-0 group-hover:text-primary-color transition-colors"></i>
+                          <DatePicker :inSpace="true" v-model="localFilters[dateType.from]" placeholder="From" size="sm" class="flex-1" />
                         </div>
                         <div class="flex-1 h-9 px-2.5 flex items-center gap-2 rounded-[6px] bg-bg-body border border-border group transition-all">
-                          <i class="fa-regular fa-calendar text-text-secondary/70 text-xs shrink-0 group-hover:text-accent transition-colors"></i>
-                          <DatePicker v-model="localFilters[dateType.to]" placeholder="To" size="sm" class="flex-1" />
+                          <i class="fa-regular fa-calendar text-text-secondary/70 text-xs shrink-0 group-hover:text-primary-color transition-colors"></i>
+                          <DatePicker :inSpace="true" v-model="localFilters[dateType.to]" placeholder="To" size="sm" class="flex-1" />
                         </div>
                       </div>
                     </div>
@@ -239,11 +240,11 @@
                         v-for="option in currentPlanOptionsFiltered" 
                         :key="option._id"
                         @click="togglePlanOption(option)"
-                        class="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-bg-body transition-colors group"
+                        class="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-bg-card transition-colors group"
                       >
                         <div 
                           class="w-4 h-4 border rounded flex items-center justify-center transition-colors shrink-0"
-                          :class="isPlanSelected(option) ? 'bg-accent border-accent text-white' : 'border-border group-hover:border-accent/50'"
+                          :class="isPlanSelected(option) ? 'bg-primary-color border-primary-color text-white' : 'border-border group-hover:border-primary-color/50'"
                         >
                           <i v-if="isPlanSelected(option)" class="fa-solid fa-check text-[10px]"></i>
                         </div>
@@ -264,11 +265,11 @@
                       v-for="option in filteredOptions" 
                       :key="option._id"
                       @click="toggleOption(option._id)"
-                      class="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-bg-body transition-colors group"
+                      class="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-bg-card transition-colors group"
                     >
                       <div 
                         class="w-4 h-4 border rounded flex items-center justify-center transition-colors shrink-0"
-                        :class="isSelected(option._id) ? 'bg-accent border-accent text-white' : 'border-border group-hover:border-accent/50'"
+                        :class="isSelected(option._id) ? 'bg-primary-color border-primary-color text-white' : 'border-border group-hover:border-primary-color/50'"
                       >
                         <i v-if="isSelected(option._id)" class="fa-solid fa-check text-[10px]"></i>
                       </div>
@@ -298,7 +299,7 @@
                   </span>
                   <button 
                     @click.stop="clearCurrentCategory"
-                    class="text-[10px] font-medium text-accent hover:underline"
+                    class="text-[10px] font-medium text-primary-color hover:underline"
                   >
                     Clear {{ currentCategoryLabel.toLowerCase() }}
                   </button>
@@ -331,7 +332,7 @@
             <Button 
               variant="primary" 
               size="sm" 
-              class="!px-6 !h-8 bg-accent hover:bg-accent/90 text-white text-[11px]" 
+              class="!px-6 !h-8 bg-primary-color hover:bg-primary-color/90 text-white text-[11px]" 
               @click="saveFilters"
             >
               Save Filters
@@ -355,14 +356,19 @@ import { avatarColor } from "../../../utilities/avatarColor";
 import { getInitials } from "../../../utilities";
 import SwitchTab from "../../../components/ui/SwitchTab.vue";
 
-const props = defineProps<{
-  triggerRef: HTMLElement | null;
-  variables: any[];
-  workspaceId: string;
-  moduleId: string;
-  activeFilters: any;
-  hidePlanItems?: boolean;
-}>();
+const props = withDefaults(defineProps<{
+  triggerRef: HTMLElement | null
+  variables: any[]
+  workspaceId: string
+  moduleId?: string
+  activeFilters: any
+
+  hideCategories?: Record<string, boolean>
+  labelOverrides?: Record<string, string>
+}>(), {
+  hideCategories: () => ({}),
+  labelOverrides: () => ({})
+})
 
 const emit = defineEmits(['apply', 'clear', 'close']);
 
@@ -390,16 +396,22 @@ const categories = computed(() => {
     { id: 'type', label: 'Card Type', icon: 'fa-solid fa-briefcase' },
     { id: 'plan', label: 'Plan Items', icon: 'fa-solid fa-map-location-dot' },
     { id: 'dates', label: 'Date Ranges', icon: 'fa-solid fa-calendar-days' },
-  ];
-  return props.hidePlanItems ? base.filter(c => c.id !== 'plan') : base;
-});
+  ]
+
+  return base
+    .filter(c => !props.hideCategories?.[c.id])
+    .map(c => ({
+      ...c,
+      label: props.labelOverrides?.[c.id] ?? c.label,
+    }))
+})
 
 const dateCategories = [
-  { id: 'start', label: 'Start Date', from: 'start_date_from', to: 'start_date_to' },
-  { id: 'end', label: 'End Date', from: 'end_date_from', to: 'end_date_to' },
-  { id: 'created', label: 'Created At', from: 'created_at_from', to: 'created_at_to' },
+  { id: 'start',   label: 'Start Date',  from: 'start_date_from',  to: 'start_date_to'  },
+  { id: 'end',     label: 'End Date',    from: 'end_date_from',    to: 'end_date_to'    },
+  { id: 'created', label: 'Created At',  from: 'created_at_from',  to: 'created_at_to'  },
+  { id: 'updated', label: 'Updated At',  from: 'updated_at_from',  to: 'updated_at_to'  },
 ];
-
 const localFilters = ref<any>({
   seat_ids: [],
   priority: [],
@@ -413,7 +425,9 @@ const localFilters = ref<any>({
   end_date_from: "",
   end_date_to: "",
   created_at_from: "",
-  created_at_to: ""
+  created_at_to: "",
+  updated_at_from: "",   // ← new
+  updated_at_to: "",
 });
 
 const selectedPlanType = ref('milestone');
@@ -590,10 +604,12 @@ const currentPlanOptionsFiltered = computed(() => {
 });
 
 function getVariableOptions(slug: string) {
-  const v = props.variables?.find((varItem: any) => varItem.slug === slug || varItem.title?.toLowerCase() === slug.toLowerCase());
-  return (v?.data || []).map((val: any) => ({ 
-    _id: val.value || val, 
-    title: val.value || val 
+  const v = props.variables?.find(
+    (varItem: any) => varItem.slug === slug || varItem.title?.toLowerCase() === slug.toLowerCase()
+  );
+  return (v?.data || []).map((val: any) => ({
+    _id: val.value ?? val,
+    title: val.title ?? val.value ?? val
   }));
 }
 

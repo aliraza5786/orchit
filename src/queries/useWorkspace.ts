@@ -19,6 +19,7 @@ export const keys = {
   workspaceModules: ["workspaces", "modules"] as const,
   workspaceRoles: (id: string | number) => ["workspaces", "roles", id] as const,
   workspaceVariables: ["workspaces", "variables"] as const,
+  workspaceProcessFlow: (id: string | number) => ["workspaces", "processFlow", id] as const,
 
   invitedWorkspace: (id: string | number) =>
     ["invited", "workspace", id] as const,
@@ -92,16 +93,18 @@ export const useWorkspacesPrompt = () =>
   });
 
 export const useWorkspaces = (
-  page: Ref<number>,
-  limit: Ref<number>,
-  filter?: Ref<string>
+  page?: MaybeRef<number | undefined>,
+  limit?: MaybeRef<number | undefined>,
+  filter?: Ref<string>,
+  isPaginated?: MaybeRef<boolean | undefined>
 ) => {
   const companyId = computed(() => {
     const hostname = window.location.hostname
 
-    // ✅ Detect if we're on a subdomain (both orchit.ai and localhost)
+    // ✅ Detect if we're on a subdomain (both orchit.ai, streamed.space and localhost)
     const isSubdomain =
       (hostname.endsWith('.orchit.ai') && hostname !== 'orchit.ai') ||
+      (hostname.endsWith('.streamed.space') && hostname !== 'streamed.space') ||
       (hostname.endsWith('.localhost') && hostname !== 'localhost')
 
     // ✅ Parse auth_session cookie directly (same source of truth as auth store)
@@ -134,6 +137,7 @@ export const useWorkspaces = (
       unref(limit),
       unref(filter) ?? 'all',
       unref(companyId),
+      unref(isPaginated)
     ]),
 
     queryFn: async () => {
@@ -141,8 +145,23 @@ export const useWorkspaces = (
       const limitVal = unref(limit)
       const filterVal = unref(filter) ?? 'all'
       const company = unref(companyId)
+      const isPaginatedVal = unref(isPaginated)
 
-      let url = `/workspace/all?page=${pageVal}&limit=${limitVal}&filter=${filterVal}`
+      let url = `/workspace/all?filter=${filterVal}`
+
+      if (isPaginatedVal !== undefined) {
+        url += `&is_paginated=${isPaginatedVal}`
+      }
+
+      // Only add page/limit if not explicitly disabled
+      if (isPaginatedVal !== false) {
+        if (pageVal) {
+          url += `&page=${pageVal}`
+        }
+        if (limitVal) {
+          url += `&limit=${limitVal}`
+        }
+      }
 
       if (company) {
         url += `&company_id=${company}`
@@ -472,6 +491,7 @@ function getCompanyId(): string | null {
 
   const isSubdomain =
     (hostname.endsWith('.orchit.ai') && hostname !== 'orchit.ai') ||
+    (hostname.endsWith('.streamed.space') && hostname !== 'streamed.space') ||
     (hostname.endsWith('.localhost') && hostname !== 'localhost')
 
   // ✅ Read from auth_session cookie — single source of truth
@@ -580,3 +600,21 @@ export const useWorkspaceModulesAndUsers = (workspaceId: Ref<string>) => {
     enabled: computed(() => !!unref(workspaceId)),
   })
 }
+
+export function useWorkspaceProcessFlow(workspaceId: Ref<string | undefined> | string | undefined) {
+  return useQuery({
+    queryKey: computed(() => keys.workspaceProcessFlow(unref(workspaceId) || "")),
+    queryFn: async () => {
+      const id = unref(workspaceId)
+      if (!id) return null
+
+      return request({
+        url: `/workspace/${id}/process-flow`,
+        method: "GET",
+      })
+    },
+    staleTime: 1000 * 60 * 5,
+    refetchOnMount: true,
+    enabled: computed(() => !!unref(workspaceId)),
+  })
+}

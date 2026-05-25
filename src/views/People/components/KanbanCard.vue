@@ -8,11 +8,11 @@
                 <img v-if="ticket?.avatar" :src="ticket?.avatar" class="min-w-10 w-10 h-10 rounded-full object-cover"
                     alt="avartar">
                 <div v-else
-                    class="w-10 min-w-10 overflow-hidden overflow-ellipsis aspect-square bg-bg-surface flex justify-center items-center rounded-full text-white text-sm font-semibold"
+                    class="w-10 min-w-10 overflow-hidden overflow-ellipsis aspect-square bg-bg-body flex justify-center items-center rounded-full text-white text-sm font-semibold"
                     :style="{ backgroundColor: (ticket?.name || ticket?.email) ? avatarColor({ email: ticket?.email, name: ticket?.name }) : '' }">
                     <template v-if="ticket?.name">{{ getInitials(ticket.name) }}</template>
                     <template v-else-if="ticket?.email">{{ getEmailInitials(ticket.email) }}</template>
-                    <i v-else class="fa-solid fa-user text-white"></i>
+                    <i v-else class="fa-solid fa-user text-text-primary"></i>
                 </div>
                  <div class=" max-w-[90%]">
                     

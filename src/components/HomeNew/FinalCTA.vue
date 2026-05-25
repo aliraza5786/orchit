@@ -12,7 +12,7 @@ function goToContactUs(){
     router.push('/contact-us')
 }
 function goToRegister(){
-    router.push('/register')
+    router.push('/login')
 }
 const scrollTo = async (id: string) => {
   if (route.path !== "/") {
@@ -89,6 +89,7 @@ const scrollTo = async (id: string) => {
           <div>
             <h4 class="font-semibold mb-3">Product</h4>
             <ul class="space-y-2">
+              <li><a href="/onboarding-organization"  class="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors">Organization</a></li>
               <li><a href="#product" @click.prevent="scrollTo('product')" class="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors">Features</a></li>
               <li><a href="#templates" @click.prevent="scrollTo('templates')" class="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors">Templates</a></li>
               <li><a href="#marketplace" @click.prevent="scrollTo('templates')" class="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors">Marketplace</a></li>

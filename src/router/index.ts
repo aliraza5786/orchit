@@ -3,10 +3,15 @@ import {
   createWebHistory,
   type RouteRecordRaw,
 } from "vue-router";
-import { useAuthStore } from "../stores/auth";
+import { useAuthStore, getToken } from "../stores/auth";
+import { redirectToLogin } from "../utilities/authRedirect";
+import {
+  clearOnboardingStorageKeys,
+  isOnboardingComplete,
+} from "../utilities/onboardingRedirect";
 import Task from "../views/Workspaces/Task.vue";
 import Users from "../views/Workspaces/Users.vue";
-import api from "../libs/api";
+import api, { isPublicAuthRequest } from "../libs/api";
 import type { AxiosError, AxiosResponse } from "axios";
 import ReleaseNote from "../views/ReleaseNote.vue";
 
@@ -14,6 +19,8 @@ const Login = () => import("../views/Auth/Login.vue");
 const Register = () => import("../views/Auth/Register.vue");
 const OtpVerification = () => import("../views/Auth/OtpVerification.vue");
 const CreateProfile = () => import("../views/Auth/CreateProfile.vue");
+const CreateOrganization = () => import("../views/Auth/CreateOrganization.vue");
+const AssociatedOrganization = () => import("../views/Auth/AssociatedOrganization.vue");
 const ForgotPassword = () => import("../views/Auth/ForgotPassword.vue");
 const ResetPassword = () => import("../views/Auth/ResetPassword.vue");
 const FinishProfile = () => import("../views/FinishProfile.vue");
@@ -46,6 +53,29 @@ const BlogDetail = () => import("../views/blog/BlogDetail.vue");
 const KnowledgeCenterView = () => import("../views/KnowledgeCenter/KnowledgeCenterView.vue");
 const SettingsView = () => import("../views/Settings/SettingsView.vue");
 
+const ONBOARDING_ROUTE_NAMES = new Set([
+  'Register',
+  'Otp',
+  'onboarding',
+])
+
+function resolveOnboardingRedirect(auth: ReturnType<typeof useAuthStore>): string | null {
+  const hasToken = !!getToken()
+ 
+  if (!hasToken) return '/login'
+  if (!auth.user) return null // bootstrap still in progress — don't redirect yet
+ 
+  // API wraps data under .data in some responses
+  const userData = auth.user?.data ?? auth.user
+ 
+  if (isOnboardingComplete(userData)) {
+    clearOnboardingStorageKeys()
+    return '/dashboard'
+  }
+
+  // Onboarding incomplete: no company, no workspaces → return null (no forced redirection)
+  return null
+}
 const routes: RouteRecordRaw[] = [
   {
     path: "/",
@@ -55,12 +85,10 @@ const routes: RouteRecordRaw[] = [
         path: "",
         name: "new-homepage",
         component: NewHomepage,
-           beforeEnter: (to, from, next) => {
+        beforeEnter: (_to, _from, next) => {
           const authStore = useAuthStore()
-          console.log(to, from);
-          
           if (authStore.isAuthenticated) {
-            next('/dashboard')   // ← could fire if route fails
+            next('/dashboard')
           } else {
             next()
           }
@@ -88,17 +116,28 @@ const routes: RouteRecordRaw[] = [
       },
     ],
   },
-  { path: "/login", name: "Login", component: Login, meta: { requiresAuth: false } },
-  { path: "/register", name: "Register", component: Register, meta: { requiresAuth: false } },
-  { path: "/otp-verification/:email", name: "Otp", component: OtpVerification, meta: { requiresAuth: false } },
-  { path: "/forgot-password", name: "ForgotPassword", component: ForgotPassword, meta: { requiresAuth: false } },
-  { path: "/reset-password", name: "ResetPassword", component: ResetPassword, meta: { requiresAuth: false } },
-  { path: "/create-profile", name: "create-profile", component: CreateProfile, meta: { requiresAuth: false } },
-  { path: "/finish-profile", name: "finishProfile", component: FinishProfile, meta: { requiresAuth: true } },
+
+  // ── Auth / Onboarding routes ─────────────────────────────────────────────
+  // All marked with meta.onboarding = true so the global guard can handle them.
+  { path: "/login",                  name: "Login",          component: Login,            meta: { requiresAuth: false } },
+  { path: "/register",               name: "Register",       component: Register,         meta: { requiresAuth: false, onboarding: true } },
+  { path: "/otp-verification/:email",name: "Otp",            component: OtpVerification,  meta: { requiresAuth: false, onboarding: true } },
+  { path: "/onboarding",             name: "onboarding",     component: CreateProfile,    meta: { requiresAuth: false, onboarding: true } },
+  { path: "/onboarding-organization", name: "onboarding-organization", component: CreateOrganization, meta: { requiresAuth: false, onboarding: true } },
+  { path: "/create-organization", redirect: "/onboarding-organization" },
+  { path: "/associated-organization", name: "associated-organization", component: AssociatedOrganization, meta: { requiresAuth: true } },
+  { path: "/forgot-password",        name: "ForgotPassword", component: ForgotPassword,   meta: { requiresAuth: false } },
+  { path: "/reset-password",         name: "ResetPassword",  component: ResetPassword,    meta: { requiresAuth: false } },
+  { path: "/finish-profile",         name: "finishProfile",  component: FinishProfile,    meta: { requiresAuth: true } },
+
+  // ── Invite routes ────────────────────────────────────────────────────────
   { path: "/workspace-invite/:token", name: "workspaceInvite", component: WorkspaceInvite, meta: { requiresAuth: false } },
-  { path: "/space-invite/:token", name: "spaceInvite", component: CompanyInvites, meta: { requiresAuth: false } },
-  { path: "/company-join/:token", name: "companyjoin", component: companyJoin, meta: { requiresAuth: false } },
-  { path: "/join-as-owner/:token/:action", name: "joinAsOwner", component: joinAsOwner, meta: { requiresAuth: false } },
+  { path: "/space-invite/:token",     name: "spaceInvite",     component: CompanyInvites,  meta: { requiresAuth: false } },
+  { path: "/company-invite/:token",   name: "companyInvite",   component: CompanyInvites,  meta: { requiresAuth: false } },
+  { path: "/company-join/:token",     name: "companyjoin",     component: companyJoin,     meta: { requiresAuth: false } },
+  { path: "/join-as-owner/:token/:action", name: "joinAsOwner", component: joinAsOwner,   meta: { requiresAuth: false } },
+
+  // ── App routes ───────────────────────────────────────────────────────────
   {
     path: "/dashboard",
     component: LandingLayout,
@@ -116,12 +155,12 @@ const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true },
     children: [
       { path: "peak/:id/:job_id", name: "peakWithJob", component: Peak },
-      { path: "peak/:id", name: "peak", component: Peak },
-      { path: "talent/:id", name: "people", component: People },
-      { path: "pin/:id/:module_id", name: "pin", component: Pin },
-      { path: "plan/:id", name: "plan", component: Plan },
-      { path: "process/:id", name: "process", component: Process2 },
-      { path: "more/:id", name: "more", component: More },
+      { path: "peak/:id",         name: "peak",        component: Peak },
+      { path: "talent/:id",       name: "people",      component: People },
+      { path: "pin/:id/:module_id", name: "pin",       component: Pin },
+      { path: "plan/:id",         name: "plan",        component: Plan },
+      { path: "process/:id",      name: "process",     component: Process2 },
+      { path: "more/:id",         name: "more",        component: More },
       { path: "more/detail/:id/:module_id", name: "moreDetail", component: ModuleDetail },
       {
         path: ":id/:module_id",
@@ -144,74 +183,92 @@ const router = createRouter({
     return { top: 0, behavior: 'smooth' }
   },
 })
+
 api.interceptors.response.use(
   (response: AxiosResponse) => response,
   (error: AxiosError) => {
-    if (error.response?.status === 401) {
+    if (error.response?.status === 401 && !isPublicAuthRequest(error.config)) {
       const auth = useAuthStore()
       auth.logout()
-      router.replace({ name: 'Login' })
+      redirectToLogin(router, window.location.pathname)
     }
     return Promise.reject(error)
   }
 )
 
-// ✅ Single beforeEach — merged both into one
 router.beforeEach(async (to, _from, next) => {
   const auth = useAuthStore()
 
-  // ✅ Bootstrap only once
+  // Cross-subdomain logout: clear session and show login (do not bounce to Home)
+  if (to.name === 'Login' && to.query.logout === 'true') {
+    auth.logout()
+    return next()
+  }
+
+  // 1. Bootstrap auth state once per session
   if (!auth.initialized) {
     await auth.bootstrap()
   }
 
+  // ── Subdomain logic (unchanged from your original) ──────────────────────
   const hostname = window.location.hostname
   let subdomain: string | null = null
 
-  if (hostname.endsWith('.streamed.space')) {
-    const sub = hostname.replace('.streamed.space', '')
-    if (sub && sub !== 'www' && sub !== 'stagging') {
-      subdomain = sub
-    }
-  } else if (hostname.endsWith('.localhost')) {
-    const sub = hostname.replace('.localhost', '')
-    if (sub && sub !== 'www') {
-      subdomain = sub
-    }
+  if (hostname.endsWith('.streamed.space') && hostname !== 'streamed.space') {
+    subdomain = hostname.replace('.streamed.space', '')
+    if (subdomain === 'www' || subdomain === 'stagging') subdomain = null
+  } else if (hostname.endsWith('.orchit.ai') && hostname !== 'orchit.ai') {
+    subdomain = hostname.replace('.orchit.ai', '')
+    if (subdomain === 'www') subdomain = null
+  } else if (hostname.endsWith('.localhost') && hostname !== 'localhost') {
+    subdomain = hostname.replace('.localhost', '')
+    if (subdomain === 'www') subdomain = null
   }
 
-  // ✅ On subdomain, unknown paths → go to dashboard
   if (subdomain && to.name === 'NotFound') {
     return next('/dashboard')
   }
 
-  const requiresAuth = to.matched.some(
-    (record) => record.meta.requiresAuth === true
-  )
+  if (subdomain && to.name === 'Login') {
+    const primary = import.meta.env.VITE_PRIMARY_DOMAIN || 'stagging.streamed.space'
+    window.location.href = `${window.location.protocol}//${primary}/login?logout=true`
+    return
+  }
+  // ── End subdomain logic ──────────────────────────────────────────────────
 
-  // ✅ Check token from auth_session cookie object first
-  const session = (() => {
-    try {
-      const raw = document.cookie
-        .split('; ')
-        .find(row => row.startsWith('auth_session='))
-        ?.split('=')[1]
-      if (!raw) return null
-      return JSON.parse(decodeURIComponent(raw))
-    } catch { return null }
-  })()
+  const hasToken = !!getToken()
 
-  const hasToken = !!(session?.token ?? localStorage.getItem('token'))
+  // 1.5 Clean onboarding keys if onboarding is completed
+  if (hasToken && auth.user) {
+    const userData = auth.user?.data ?? auth.user
+    if (isOnboardingComplete(userData)) {
+      clearOnboardingStorageKeys()
+    }
+  }
 
+  const requiresAuth = to.matched.some(r => r.meta.requiresAuth === true)
+  const isOnboardingRoute = ONBOARDING_ROUTE_NAMES.has(to.name as string)
+  if (isOnboardingRoute && hasToken) {
+    const correctDestination = resolveOnboardingRedirect(auth)
+    if (correctDestination && correctDestination !== to.fullPath) {
+      // Use replace so we don't push another entry onto the history stack
+      return next({ path: correctDestination, replace: true })
+    }
+  }
+
+  // 3. ── STANDARD AUTH GATE ────────────────────────────────────────────────
   if (requiresAuth && !hasToken) {
+    const redirected = redirectToLogin(undefined, to.fullPath)
+    if (redirected) return
     return next({ name: 'Login' })
   }
 
-  if (to.name === 'Login' && hasToken) {
+  // 4. ── ALREADY LOGGED IN → don't show login page ────────────────────────
+  if (to.name === 'Login' && hasToken && !subdomain) {
     return next({ name: 'Home' })
   }
 
   next()
 })
 
-export default router;
+export default router

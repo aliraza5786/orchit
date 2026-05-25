@@ -16,11 +16,11 @@
       </div>
 
       <!-- Mode toggle -->
-      <div class="flex items-center gap-2 self-start sm:self-auto">
+      <div class="flex items-center gap-2 self-start sm:self-auto" v-if="!isViewer">
         <button
           @click="allocationMode = 'percentage'"
           :class="[
-            'inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold border transition-all duration-200 hover:scale-105 active:scale-95',
+            'inline-flex items-center gap-1.5 px-3 cursor-pointer py-2 rounded-lg text-xs font-semibold border transition-all duration-200 hover:scale-105 active:scale-95',
             allocationMode === 'percentage'
               ? 'bg-accent/10 border-accent/30 text-accent shadow-sm shadow-accent/10'
               : 'bg-transparent border-border text-text-secondary hover:border-accent/30 hover:text-accent hover:bg-accent/5'
@@ -34,7 +34,7 @@
         <button
           @click="allocationMode = 'custom'"
           :class="[
-            'inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold border transition-all duration-200 hover:scale-105 active:scale-95',
+            'inline-flex items-center gap-1.5 px-3 py-2 cursor-pointer rounded-lg text-xs font-semibold border transition-all duration-200 hover:scale-105 active:scale-95',
             allocationMode === 'custom'
               ? 'bg-accent/10 border-accent/30 text-accent shadow-sm shadow-accent/10'
               : 'bg-transparent border-border text-text-secondary hover:border-accent/30 hover:text-accent hover:bg-accent/5'
@@ -52,19 +52,19 @@
     <div class="flex flex-wrap items-stretch bg-bg-card border border-border/40 rounded-xl overflow-hidden">
       <div class="flex-1 min-w-[130px] px-5 py-4 transition-all duration-200 hover:bg-border/5 group cursor-default">
         <p class="text-[10px] font-semibold uppercase tracking-widest text-text-secondary">Total Budget</p>
-        <p class="text-2xl font-bold text-text-primary mt-1 mb-0.5 transition-transform duration-200 group-hover:scale-105 origin-left">{{ totalBudget.toLocaleString() }}</p>
+        <p class="text-2xl font-bold text-text-primary mt-1 mb-0.5 transition-transform duration-200 group-hover:scale-105 origin-left">{{ totalBudget?.toLocaleString() }}</p>
         <p class="text-[11px] text-text-secondary">tokens / mo</p>
       </div>
       <div class="w-px self-stretch bg-border/40 hidden sm:block"></div>
       <div class="flex-1 min-w-[130px] px-5 py-4 transition-all duration-200 hover:bg-border/5 group cursor-default">
         <p class="text-[10px] font-semibold uppercase tracking-widest text-text-secondary">Allocated</p>
-        <p class="text-2xl font-bold text-amber-400 mt-1 mb-0.5 transition-transform duration-200 group-hover:scale-105 origin-left">{{ allocatedTokens.toLocaleString() }}</p>
+        <p class="text-2xl font-bold text-amber-400 mt-1 mb-0.5 transition-transform duration-200 group-hover:scale-105 origin-left">{{ allocatedTokens?.toLocaleString() }}</p>
         <p class="text-[11px] text-text-secondary">{{ allocatedPercentage }}% used</p>
       </div>
       <div class="w-px self-stretch bg-border/40 hidden sm:block"></div>
       <div class="flex-1 min-w-[130px] px-5 py-4 transition-all duration-200 hover:bg-border/5 group cursor-default">
         <p class="text-[10px] font-semibold uppercase tracking-widest text-text-secondary">Remaining</p>
-        <p class="text-2xl font-bold text-emerald-400 mt-1 mb-0.5 transition-transform duration-200 group-hover:scale-105 origin-left">{{ remainingTokens.toLocaleString() }}</p>
+        <p class="text-2xl font-bold text-emerald-400 mt-1 mb-0.5 transition-transform duration-200 group-hover:scale-105 origin-left">{{ remainingTokens?.toLocaleString() || 0 }}</p>
         <p class="text-[11px] text-text-secondary">{{ remainingPercentage }}% free</p>
       </div>
       <div class="w-px self-stretch bg-border/40 hidden sm:block"></div>
@@ -103,7 +103,7 @@
           {{ user.name }}
         </div>
         <div class="flex items-center gap-1.5 text-xs text-text-secondary cursor-default">
-          <span class="w-2 h-2 rounded-full shrink-0 bg-border/40"></span>
+          <span class="w-2 h-2 rounded-full shrink-0 bg-accent/40"></span>
           Unallocated
         </div>
       </div>
@@ -185,7 +185,12 @@
         <div
           v-for="user in users"
           :key="user.id"
-          class="flex items-center gap-3 bg-bg-card border border-border/40 rounded-xl px-4 py-3 transition-all duration-200 hover:border-border/70 hover:shadow-md hover:shadow-black/10 hover:-translate-y-0.5 group/member"
+          class="flex items-center gap-3 bg-bg-card border border-border/40 rounded-xl px-4 py-3 transition-all duration-200 group/member relative"
+          :class="[
+            isUserVerified
+              ? 'hover:border-border/70 hover:shadow-md hover:shadow-black/10 hover:-translate-y-0.5' 
+              : 'opacity-60 grayscale-[0.5] cursor-not-allowed bg-bg-card/50'
+          ]"
         >
           <!-- Avatar -->
           <div
@@ -197,7 +202,12 @@
 
           <!-- Name + role -->
           <div class="min-w-0 flex-1">
-            <p class="text-sm font-semibold text-text-primary truncate">{{ user.name }}</p>
+            <div class="flex items-center gap-2">
+              <p class="text-sm font-semibold text-text-primary truncate">{{ user.name }}</p>
+              <span v-if="!isUserVerified" class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-md bg-red-500/10 text-red-400 border border-red-500/20 shrink-0">
+                Verify user first
+              </span>
+            </div>
             <p class="text-xs text-text-secondary mt-0.5">{{ user.role }}</p>
           </div>
 
@@ -214,17 +224,17 @@
           <!-- Controls -->
           <div class="text-right shrink-0 w-28">
             <template v-if="allocationMode === 'percentage'">
-              <div class="flex items-center justify-end gap-1">
-                <button
-                  @click="user.percentage = Math.max(1, user.percentage - 1)"
-                  class="w-5 h-5 rounded flex items-center justify-center border border-border/50 text-text-secondary hover:border-red-400/50 hover:text-red-400 hover:bg-red-400/5 text-base leading-none transition-all duration-150 active:scale-90"
-                >−</button>
-                <span class="text-sm font-bold w-9 text-center transition-all duration-150" :style="{ color: user.color }">{{ user.percentage }}%</span>
-                <button
-                  @click="user.percentage = Math.min(100, user.percentage + 1)"
-                  class="w-5 h-5 rounded flex items-center justify-center border border-border/50 text-text-secondary hover:border-emerald-400/50 hover:text-emerald-400 hover:bg-emerald-400/5 text-base leading-none transition-all duration-150 active:scale-90"
-                >+</button>
-              </div>
+              <input
+              v-model.number="user.percentage"
+              type="number"
+              min="0"
+              max="100"
+              step="1"
+              @change="requestAllocationChange(user)"
+              :disabled="!isUserVerified || isViewer"
+              class="w-20 text-right text-sm font-bold text-text-primary bg-border/10 border border-border/40 rounded-md px-2 py-1 outline-none focus:border-accent/50 hover:border-border/70 transition-colors duration-150 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
+            />
+            <span class="text-xs text-text-secondary ml-1">%</span>
               <p class="text-[10px] text-text-secondary mt-1">{{ ((user.percentage / 100) * totalBudget).toLocaleString() }} tkns</p>
             </template>
             <template v-else>
@@ -233,7 +243,8 @@
                 type="number"
                 min="0"
                 :max="totalBudget"
-                class="w-full text-right text-xs font-semibold text-text-primary bg-border/10 border border-border/40 rounded-md px-2 py-1 outline-none focus:border-accent/50 hover:border-border/70 transition-colors duration-150 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                :disabled="!isUserVerified"
+                class="w-full text-right text-xs font-semibold text-text-primary bg-border/10 border border-border/40 rounded-md px-2 py-1 outline-none focus:border-accent/50 hover:border-border/70 transition-colors duration-150 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
               />
               <p class="text-[10px] text-text-secondary mt-1">{{ ((user.tokens / totalBudget) * 100).toFixed(1) }}% of budget</p>
             </template>
@@ -350,64 +361,150 @@
       leave-from-class="opacity-100 translate-y-0"
       leave-to-class="opacity-0 translate-y-3"
     >
-      <div
-        v-if="hasChanges"
-        class="sticky bottom-4 z-10 flex items-center justify-between gap-4 bg-bg-card border border-border/60 rounded-xl px-5 py-3.5 shadow-xl shadow-black/30 transition-all duration-200 hover:shadow-2xl hover:shadow-black/40"
-      >
-        <div class="flex items-center gap-2.5">
-          <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse shrink-0"></span>
-          <p class="text-sm font-medium text-text-primary">You have unsaved changes</p>
-          <span class="hidden sm:inline text-xs text-text-secondary">— review allocations before saving</span>
-        </div>
+      <Teleport to="body">
+  <div
+    v-if="showAllocateConfirm"
+    class="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4"
+    @click.self="showAllocateConfirm = false"
+  >
+    <div class="w-full max-w-sm bg-bg-body border border-border rounded-2xl p-5">
+      
+      <h3 class="text-base font-bold text-text-primary">
+        Confirm allocation change
+      </h3>
 
-        <div class="flex items-center gap-2 shrink-0">
-          <button
-            @click="discardChanges"
-            class="px-3.5 py-2 text-xs font-semibold text-text-secondary border border-border/50 rounded-lg hover:bg-red-500/5 hover:border-red-400/30 hover:text-red-400 transition-all duration-150 active:scale-95"
-          >
-            Discard
-          </button>
-          <button
-            @click="saveAllocations"
-            :disabled="isSaving || isOverBudget"
-            :class="[
-              'inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg border transition-all duration-150',
-              isOverBudget
-                ? 'bg-border/20 border-border/30 text-text-secondary cursor-not-allowed opacity-60'
-                : 'bg-accent text-white border-accent/80 hover:bg-accent/90 hover:scale-105 active:scale-95 shadow-lg shadow-accent/20 hover:shadow-accent/30'
-            ]"
-          >
-            <svg v-if="isSaving" class="animate-spin" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
-            </svg>
-            <svg v-else-if="saveSuccess" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <polyline points="20 6 9 17 4 12"/>
-            </svg>
-            <svg v-else width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <p class="text-xs text-text-secondary mt-2">
+        You are about to
+        <span class="font-semibold text-text-primary">
+          {{ pendingChange?.type === 'inc' ? 'increase' : 'decrease' }}
+        </span>
+        allocation for this user.
+      </p>
+
+      <div class="flex gap-2 mt-5">
+        <button
+          class="flex-1 px-3 py-2 text-sm border rounded-lg"
+          @click="showAllocateConfirm = false"
+        >
+          Cancel
+        </button>
+
+        <button
+          class="flex-1 px-3 py-2 text-sm bg-accent text-white rounded-lg"
+         @click="confirmAllocation"
+        >
+          Confirm
+        </button>
+      </div>
+    </div>
+  </div>
+</Teleport>
+    </Transition>
+
+  <!-- ─── SAVE CONFIRMATION MODAL ─── -->
+  <Teleport to="body">
+    <Transition enter-active-class="transition duration-150 ease-out" enter-from-class="opacity-0" enter-to-class="opacity-100">
+      <div
+        v-if="showSaveConfirm"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+        @click.self="showSaveConfirm = false"
+      >
+        <div class="w-full max-w-sm bg-bg-body rounded-2xl border border-border shadow-2xl p-6">
+          <div class="w-12 h-12 rounded-full bg-accent/15 flex items-center justify-center mx-auto mb-4 border border-accent/30">
+            <svg class="text-accent animate-pulse" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
               <polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
             </svg>
-            {{ isSaving ? 'Saving…' : saveSuccess ? 'Saved!' : 'Save changes' }}
-          </button>
+          </div>
+          <h3 class="text-base font-bold text-text-primary text-center mb-1">Save allocations?</h3>
+          <p class="text-xs text-text-secondary text-center mb-5 leading-relaxed">
+            This will update the monthly AI token budgets for the team members according to the new configurations.
+          </p>
+          <div class="flex gap-3">
+            <button
+              @click="showSaveConfirm = false"
+              class="flex-1 px-4 py-2.5 text-sm font-medium rounded-lg border border-border hover:bg-bg-card transition-all"
+            >
+              Cancel
+            </button>
+            <button
+              @click="confirmSave"
+              :disabled="isSaving"
+              class="flex-1 px-4 py-2.5 bg-accent text-white text-sm font-semibold rounded-lg hover:bg-accent/90 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              <i v-if="isSaving" class="fa-solid fa-spinner animate-spin text-xs"></i>
+              <span>{{ isSaving ? 'Saving…' : 'Save' }}</span>
+            </button>
+          </div>
         </div>
       </div>
     </Transition>
+  </Teleport>
 
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+import { toast } from 'vue-sonner'
 import { useCompanyTokenAllocation, useSetUserAllocation, useSetAllocationMode } from '../../../queries/useCommon'
+
+const props = defineProps<{ profile?: any }>()
 
 const allocationMode = ref<'percentage' | 'custom'>('percentage')
 const range = ref('30d')
 const saveSuccess = ref(false)
 const saveError = ref<string | null>(null)
+const showSaveConfirm = ref(false)
 
+async function confirmSave() {
+  await saveAllocations()
+  if (!saveError.value) {
+    showSaveConfirm.value = false
+  }
+}
+// ─── Viewer lock ──────────────────────────────────────────────
+const activeCompany  = computed(() => props.profile?.active_company)
+const membershipRole = computed(() => activeCompany.value?.membership_role ?? '')
+const permissions    = computed<string[]>(() => activeCompany.value?.permissions ?? [])
+
+const isViewer = computed(() => {
+  if (membershipRole.value === 'owner') return false
+  if (membershipRole.value === 'super_admin') return false
+  if (membershipRole.value === 'admin') return false
+  if (membershipRole.value === 'editor') return false
+  const roleSlug = activeCompany.value?.role?.slug?.toLowerCase() ?? ''
+  if (roleSlug.includes('super') || roleSlug === 'admin') return false
+  if (membershipRole.value === 'viewer' || membershipRole.value === 'member') return true
+  // Editor/admin without package.change → read-only
+  return !permissions.value.includes('package.change')
+})
 const { data: allocationData } = useCompanyTokenAllocation()
 const { mutateAsync: setUserAllocation, isPending: isSaving } = useSetUserAllocation()
 const { mutateAsync: setAllocationMode } = useSetAllocationMode()
+
+const isUserVerified = computed(() => {
+  const profileVal = props.profile
+  const activeCompany = profileVal?.active_company
+  
+  // Find owner from per_user list in allocationData
+  const perUser = allocationData.value?.allocation?.per_user ?? []
+  const ownerUser = perUser.find((u: any) => u.membership_role === 'owner' || 'super_admin' || 'admin' || 'editor')
+  const isSuperAdminActiveVal = ownerUser?.membership_status === 'active'
+  const isCurrentUserActive = activeCompany?.membership_status === 'active'
+  const isPendingOtp = activeCompany?.membership_status === 'pending_super_admin_otp'
+
+  if ((isSuperAdminActiveVal || isCurrentUserActive) && !isPendingOtp) {
+    return true
+  }
+
+  if (profileVal?.isUserVerified === true || profileVal?.isUserVerified === 'true') return true
+  if (profileVal?.is_verified === true || profileVal?.is_verified === 'true') return true
+  if (profileVal?.u_verified === true || profileVal?.u_verified === 'true') return true
+  if (activeCompany?.isUserVerified === true || activeCompany?.isUserVerified === 'true') return true
+
+  return false
+})
 
 interface UserAllocation {
   id: string
@@ -420,6 +517,7 @@ interface UserAllocation {
   usedThisMonth: number
   sparkLine: string
   sparkPath: string
+  isVerified: boolean
 }
 
 function buildSpark(values: number[]) {
@@ -473,6 +571,7 @@ const apiUsers = computed<UserAllocation[]>(() => {
       role: u.membership_role
         ? u.membership_role.charAt(0).toUpperCase() + u.membership_role.slice(1)
         : 'Member',
+      isVerified: (apiUser?.u_is_verified !== false) && (apiUser?.u_is_verfied !== false) && (u.membership_status !== 'pending_super_admin_otp'),
       color: colorPalette[idx % colorPalette.length],
       percentage,
       tokens: allocatedTokens,
@@ -495,24 +594,14 @@ watch(apiUsers, (incoming) => {
 }, { immediate: true })
 
 // ── Budget totals ─────────────────────────────────────────────────────────────
-const totalBudget = computed(() => allocationData.value?.allocation?.total_tokens ?? 50_000)
+const totalBudget = computed(() => allocationData.value?.allocation?.total_tokens || 0)
 const allocatedTokens = computed(() => allocationData.value?.allocation?.used_tokens ?? 0)
-const remainingTokens = computed(() => totalBudget.value - allocatedTokens.value)
+const remainingTokens = computed(() => totalBudget.value - allocatedTokens.value || 0)
 const allocatedPercentage = computed(() =>
   totalBudget.value > 0 ? Math.round((allocatedTokens.value / totalBudget.value) * 100) : 0
 )
 const remainingPercentage = computed(() => 100 - allocatedPercentage.value)
 const memberCount = computed(() => users.value.length)
-
-// ── Dirty detection ───────────────────────────────────────────────────────────
-const hasChanges = computed(() =>
-  users.value.some((u, i) =>
-    i < savedSnapshot.value.length && (
-      u.percentage !== savedSnapshot.value[i].percentage ||
-      u.tokens     !== savedSnapshot.value[i].tokens
-    )
-  )
-)
 watch(allocationMode, (mode) => {
   users.value.forEach(u => {
     if (mode === 'custom') {
@@ -550,22 +639,15 @@ async function saveAllocations() {
     )
     savedSnapshot.value = users.value.map(u => ({ percentage: u.percentage, tokens: u.tokens }))
     saveSuccess.value = true
+    toast.success('AI Token allocations updated successfully')
     setTimeout(() => (saveSuccess.value = false), 2500)
   } catch (err: any) {
-    saveError.value = err?.message ?? 'Failed to save allocations. Please try again.'
+    const errMsg = err?.message ?? 'Failed to save allocations. Please try again.'
+    saveError.value = errMsg
+    toast.error(errMsg)
   }
 }
 
-// ── Discard ───────────────────────────────────────────────────────────────────
-function discardChanges() {
-  saveError.value = null
-  users.value.forEach((u, i) => {
-    if (i < savedSnapshot.value.length) {
-      u.percentage = savedSnapshot.value[i].percentage
-      u.tokens     = savedSnapshot.value[i].tokens
-    }
-  })
-}
 
 // ── Donut segments ────────────────────────────────────────────────────────────
 const CIRC = 2 * Math.PI * 80
@@ -583,4 +665,55 @@ const donutSegments = computed(() => {
 // ── Over-budget check ─────────────────────────────────────────────────────────
 const totalAllocated = computed(() => users.value.reduce((s, u) => s + u.percentage, 0))
 const isOverBudget   = computed(() => totalAllocated.value > 100)
+const showAllocateConfirm = ref(false)
+
+const pendingAllocation = ref<{
+  userId: string
+  newPercentage: number
+} | null>(null)
+
+const pendingChange = ref<{
+  userId: string
+  delta: number
+  type: 'inc' | 'dec'
+} | null>(null)
+
+function requestAllocationChange(user: any) {
+  if (!isUserVerified.value) return
+
+  pendingAllocation.value = {
+    userId: user.id,
+    newPercentage: user.percentage
+  }
+
+  showAllocateConfirm.value = true
+}
+async function confirmAllocation() {
+  if (!pendingAllocation.value) return
+
+  const user = users.value.find(u => u.id === pendingAllocation.value!.userId)
+  if (!user) return
+
+  try {
+    await setUserAllocation({
+      userId: user.id,
+      allocated_tokens: Math.round(
+        (user.percentage / 100) * totalBudget.value
+      )
+    })
+
+    // update snapshot so UI becomes clean state
+    savedSnapshot.value = users.value.map(u => ({
+      percentage: u.percentage,
+      tokens: u.tokens
+    }))
+
+    toast.success('Allocation updated')
+
+    showAllocateConfirm.value = false
+    pendingAllocation.value = null
+  } catch (err: any) {
+    toast.error(err?.message ?? 'Failed to allocate tokens')
+  }
+}
 </script>

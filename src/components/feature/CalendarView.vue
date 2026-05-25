@@ -1,6 +1,6 @@
 <template>
-  <div class="mobile-scroll-visible overflow-x-auto h-full m-2">
-    <div class="calendar-wrapper  max-h-[calc(100vh-100px)]">
+  <div class="scrollbar-visible overflow-x-auto h-full m-2">
+    <div class="calendar-wrapper max-h-[calc(100vh-100px)]">
       <FullCalendar ref="calendarRef" :options="calendarOptions" />
     </div>
   </div>
@@ -121,6 +121,7 @@ const calendarOptions = computed(() => ({
   },
   events: calendarEvents.value,
   dayMaxEventRows: true,
+  height: "auto",
   eventDisplay: "block",
   eventClick(info: any) {
     emit("select:ticket", info.event.extendedProps.card);
@@ -129,83 +130,323 @@ const calendarOptions = computed(() => ({
 </script>
 
 <style scoped>
-.calendar-wrapper{
+.calendar-wrapper {
   width: 100%;
   min-width: 1000px;
-  height:  calc(100% - 16px) !important;
-}
-::v-deep .fc-toolbar-chunk .fc-button {
-  background-color: transparent;
-  color: #7d68c8;
-  border: 1.5px solid #7d68c8;
-  border-radius: 6px;
-  font-weight: 500;
-  padding: 4px 12px;
-  transition: all 0.2s;
+  height: calc(100% - 16px) !important;
+  background-color: var(--bg-body);
 }
 
-::v-deep .fc-toolbar-chunk .fc-button:hover,
-::v-deep .fc-prev-button:hover,
-::v-deep .fc-next-button:hover,
-::v-deep .fc-today-button:hover {
-  background-color: #7d68c8;
-  color: white;
+/* --- Toolbar & Header --- */
+:deep(.fc-header-toolbar) {
+  padding: 0.75rem 0.5rem !important;
+  margin-bottom: 0.5rem !important;
+  border-bottom: 1px solid var(--border);
 }
 
-::v-deep .fc-toolbar-chunk .fc-button.fc-button-active {
-  background-color: #7d68c8;
-  color: white;
-  border: none;
-}
-::v-deep .fc-timegrid-all-day {
-  border-bottom: none !important;
-}
-
-::v-deep .fc-timegrid-all-day-cushion {
-  display: none !important;
-}
-
-::v-deep .fc-event {
-  border-radius: 6px !important;
-  padding: 4px 8px !important;
-  font-size: 13px !important;
-  font-weight: 500 !important;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
-  border: none !important;
-  cursor: pointer;
-}
-
-/* Responsive toolbar: wrap buttons on small devices */
-::v-deep .fc-toolbar {
-  flex-wrap: wrap;
-  margin-bottom: 10px !important;
-}
-::v-deep table {
-  border-color: var(--color-border) !important;
-}
-::v-deep td,
-::v-deep th {
-  border-color: var(--color-border) !important;
-}
-::v-deep .fc-toolbar-title {
-  font-size: 1.25rem !important;
+:deep(.fc-toolbar-title) {
+  font-size: 1.1rem !important;
   font-weight: 600 !important;
-  line-height: normal !important;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
 }
-/* ::v-deep table{
-  background-color: var(--color-bg-body) !important;
-} */
 
-@media (max-width: 640px) {
-  ::v-deep .fc-toolbar-chunk {
-    flex: 1 1 100%;
-    justify-content: center;
-    margin-bottom: 6px;
+/* --- Buttons --- */
+:deep(.fc-button) {
+  background-color: var(--bg-card) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text-primary) !important;
+  font-weight: 500 !important;
+  font-size: 0.8rem !important;
+  padding: 0.35rem 0.75rem !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+  text-transform: capitalize !important;
+  height: auto !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+:deep(.fc-button:hover) {
+  background-color: var(--bg-surface) !important;
+  border-color: var(--primary-color) !important;
+  color: var(--primary-color) !important;
+  z-index: 2;
+}
+
+:deep(.fc-button-active) {
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+  color: white !important;
+  z-index: 2;
+}
+
+:deep(.fc-today-button) {
+  font-weight: 600 !important;
+  opacity: 1 !important;
+  padding: 0.35rem 1rem !important;
+}
+
+:deep(.fc-today-button:disabled) {
+  background-color: var(--bg-surface) !important;
+  border-color: var(--border) !important;
+  color: var(--text-secondary) !important;
+  opacity: 0.5 !important;
+}
+
+/* --- Segmented Control Look for View Switcher --- */
+:deep(.fc-button-group) {
+  background-color: var(--bg-card);
+  border-radius: 6px;
+  padding: 2px;
+  border: 1px solid var(--border);
+}
+
+:deep(.fc-button-group .fc-button) {
+  border: none !important;
+  margin: 0 !important;
+  border-radius: 4px !important;
+  box-shadow: none !important;
+  min-width: 60px;
+}
+
+:deep(.fc-button-group .fc-button-active) {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* --- Grid & Cells --- */
+:deep(.fc-theme-standard td),
+:deep(.fc-theme-standard th),
+:deep(.fc-theme-standard .fc-scrollgrid) {
+  border-color: var(--border) !important;
+}
+
+:deep(.fc-col-header-cell) {
+  background-color: var(--bg-surface) !important;
+  padding: 8px 0 !important;
+}
+
+:deep(.fc-col-header-cell-cushion) {
+  color: var(--text-secondary) !important;
+  font-weight: 600 !important;
+  text-decoration: none !important;
+  font-size: 0.7rem !important;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+:deep(.fc-daygrid-day) {
+  background-color: var(--bg-surface) !important;
+}
+
+:deep(.fc-day-other) {
+  opacity: 0.6;
+}
+
+:deep(.fc-daygrid-day-number) {
+  color: var(--text-primary);
+  font-weight: 500;
+  padding: 6px 10px !important;
+  font-size: 0.8rem;
+  text-decoration: none !important;
+}
+
+:deep(.fc-daygrid-day-top) {
+  flex-direction: row !important;
+}
+
+/* --- Today Highlight --- */
+:deep(.fc-day-today) {
+  background-color: color-mix(
+    in srgb,
+    var(--primary-color),
+    transparent 85%
+  ) !important;
+}
+
+:deep(.fc-day-today .fc-daygrid-day-number) {
+  background-color: var(--primary-color);
+  color: white !important;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 4px;
+  padding: 0 !important;
+  font-size: 0.75rem;
+}
+
+/* --- Events --- */
+:deep(.fc-event) {
+  border-radius: 4px !important;
+  padding: 2px 6px !important;
+  margin: 1px 4px !important;
+  font-size: 0.75rem !important;
+  font-weight: 500 !important;
+  border: 1px solid rgba(0, 0, 0, 0.05) !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+  cursor: pointer;
+  transition: all 0.2s ease !important;
+  color: #1f2937 !important;
+}
+
+:deep(.fc-event:hover) {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1) !important;
+  filter: brightness(0.95);
+}
+
+[data-theme="dark"] :deep(.fc-event) {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+  color: #f3f4f6 !important;
+}
+
+[data-theme="dark"] :deep(.fc-event:not(.fc-event-draggable)) {
+  background-image: linear-gradient(
+    rgba(0, 0, 0, 0.3),
+    rgba(0, 0, 0, 0.3)
+  ) !important;
+}
+
+:deep(.fc-daygrid-block-event .fc-event-main) {
+  padding: 1px 0;
+}
+
+:deep(.fc-event-title) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* --- TimeGrid (Week/Day) Specifics --- */
+:deep(.fc-timegrid-slot) {
+  height: 2.5rem !important; /* More compact slots */
+  background-color: var(--bg-surface);
+}
+
+:deep(.fc-timegrid-slot-label-cushion) {
+  font-size: 0.7rem !important;
+  color: var(--text-secondary) !important;
+  text-transform: uppercase;
+}
+
+:deep(.fc-timegrid-axis-cushion),
+:deep(.fc-timegrid-slot-label-cushion) {
+  padding: 4px 8px !important;
+  font-size: 0.65rem !important;
+  font-weight: 600 !important;
+  text-transform: uppercase;
+  color: var(--text-secondary) !important;
+}
+
+:deep(.fc-timegrid-col) {
+  background-color: var(--bg-surface);
+}
+
+:deep(.fc-timegrid-axis-frame) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+:deep(.fc-timegrid-now-indicator-line) {
+  border-color: var(--primary-color) !important;
+}
+
+:deep(.fc-timegrid-now-indicator-arrow) {
+  border-top-color: var(--primary-color) !important;
+  border-bottom-color: var(--primary-color) !important;
+}
+
+/* --- List View Styling --- */
+:deep(.fc-list) {
+  border: none !important;
+  background: var(--bg-surface) !important;
+}
+
+:deep(.fc-list-day-cushion) {
+  background-color: var(--bg-card) !important;
+  padding: 10px 16px !important;
+}
+
+:deep(.fc-list-day-text),
+:deep(.fc-list-day-side-text) {
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  color: var(--text-primary) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+:deep(.fc-list-event) {
+  background-color: var(--bg-surface) !important;
+}
+
+:deep(.fc-list-event:hover td) {
+  background-color: color-mix(
+    in srgb,
+    var(--primary-color),
+    transparent 95%
+  ) !important;
+}
+
+:deep(.fc-list-event-title a) {
+  color: var(--text-primary) !important;
+  text-decoration: none !important;
+  font-weight: 500 !important;
+  font-size: 0.8rem !important;
+}
+
+:deep(.fc-list-event-time) {
+  color: var(--text-secondary) !important;
+  font-size: 0.75rem !important;
+}
+
+:deep(.fc-list-event-dot) {
+  border-color: var(--primary-color) !important;
+}
+
+/* --- Scrollbar visibility improvement --- */
+:deep(.fc-scroller) {
+  scrollbar-width: thin !important;
+  scrollbar-color: var(--border) transparent !important;
+}
+
+:deep(.fc-scroller::-webkit-scrollbar) {
+  width: 5px;
+  height: 5px;
+}
+
+:deep(.fc-scroller::-webkit-scrollbar-thumb) {
+  background: var(--border);
+  border-radius: 10px;
+}
+
+/* --- Responsive --- */
+@media (max-width: 768px) {
+  :deep(.fc-header-toolbar) {
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 0.75rem !important;
   }
 
-  ::v-deep .fc-toolbar-chunk .fc-button {
-    padding: 4px 8px;
-    font-size: 12px;
+  :deep(.fc-toolbar-chunk) {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .calendar-wrapper {
+    min-width: unset;
+    margin: 0 !important;
+  }
+
+  :deep(.fc-toolbar-title) {
+    font-size: 1rem !important;
   }
 }
 </style>

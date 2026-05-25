@@ -1,5 +1,6 @@
 <template>
     <BaseModal
+      :inSpace="true" 
       v-model="open"
       :size="size"
       :modalClass="computedModalClass"

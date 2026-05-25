@@ -1,5 +1,5 @@
 <template>
-    <BaseModal v-model="isOpen" size="md" title="Edit Field">
+    <BaseModal :inSpace="true"  v-model="isOpen" size="md" title="Edit Field">
       <!-- Header --> 
       
       <p class="text-sm text-text-secondary px-6 pt-6 pb-2">Edit the title and options for your field.</p>
@@ -57,7 +57,7 @@
               @input="validateOptionTitle"
             />
           </div>
-          <Button class="mt-6" size="md" variant="primary" :disabled="!canAddOption" @click="addOption">
+          <Button :inSpace="true" class="mt-6" size="md" variant="primary" :disabled="!canAddOption" @click="addOption">
             Add
           </Button>
         </div>
@@ -86,8 +86,8 @@
   
       <!-- Footer -->
       <div class="flex justify-end gap-2 px-6 py-4 border-t border-border sticky bottom-0 bg-bg-body">
-        <Button variant="secondary" @click="cancel">Cancel</Button>
-        <Button variant="primary"   :disabled="!isValid " @click="submit">
+        <Button :inSpace="true" variant="secondary" @click="cancel">Cancel</Button>
+        <Button :inSpace="true" variant="primary"   :disabled="!isValid " @click="submit">
           Save
         </Button>
       </div>

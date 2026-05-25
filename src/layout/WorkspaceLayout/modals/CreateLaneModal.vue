@@ -1,5 +1,5 @@
 <template>
-  <BaseModal v-model="workspaceStore.showCreateLaneModal" title="Create a new Tab" modalClass="!py-0" size="lg"> 
+  <BaseModal :inSpace="true"  v-model="workspaceStore.showCreateLaneModal" title="Create a new Tab" modalClass="!py-0" size="lg"> 
     <!-- Step 1: Basics -->
     <div class="space-y-8 px-6 pt-6">
       <div class="space-y-2.5">
@@ -40,10 +40,10 @@
 
     <!-- Footer -->
     <div class="flex justify-end mt-8 sticky bottom-0 bg-bg-body/90  gap-2 p-6 border-t border-border">
-      <Button variant="secondary" @click="prev">
+      <Button :inSpace="true" variant="secondary" @click="prev">
         Cancel
       </Button>
-      <Button variant="primary" @click="next">
+      <Button :inSpace="true" variant="primary" @click="next">
         {{ isPending ? 'Creating...' : 'Create' }}
       </Button>
     </div>

@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex-auto bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur rounded-[6px] flex-grow h-full bg-bg-card border border-border overflow-x-auto overflow-y-hidden flex-col flex scrollbar-visible w-full"
+    class="flex-auto bg-bg-surface backdrop-blur rounded-[6px] flex-grow h-full border border-border overflow-x-auto overflow-y-hidden flex-col flex scrollbar-visible w-full"
   >
     <div class="relative">
       <div
@@ -9,6 +9,7 @@
         <div class="flex gap-2">
           <!-- ... Sheet Dropdown ... -->
           <Dropdown
+            :inSpace="true"
             ref="sheetDropdownRef"
             @open="closeAllDropdowns('sheet')"
             @edit-option="openEditSprintModal"
@@ -38,14 +39,14 @@
             <button
               ref="filterTriggerRef"
               @click="toggleFilters"
-              class="flex items-center gap-2 px-3 h-[33px] rounded-md border cursor-pointer bg-bg-card hover:border-accent transition-all text-xs font-semibold relative"
-              :class="showFilterBar ? 'border-accent' : 'border-border'"
+              class="flex items-center gap-2 px-3 h-[33px] rounded-md border cursor-pointer bg-bg-transparent hover:border-primary-color transition-all text-xs font-semibold relative"
+              :class="showFilterBar ? 'border-primary-color' : 'border-border'"
             >
-              <i class="fa-solid fa-filter text-accent text-[14px]"></i>
+              <i class="fa-solid fa-filter text-primary-color text-[14px]"></i>
               <span>Filter</span>
               <span
                 v-if="activeFilterCount"
-                class="bg-accent text-white rounded-full px-1.5 py-0.5 text-[9px] min-w-[16px] flex items-center justify-center"
+                class="bg-primary-color text-white rounded-full px-1.5 py-0.5 text-[9px] min-w-[16px] flex items-center justify-center"
               >
                 {{ activeFilterCount }}
               </span>
@@ -54,7 +55,7 @@
             <button
               v-if="hasActiveFilters"
               @click="handleClearFilters"
-              class="text-[11px] font-medium text-text-secondary hover:text-accent transition-colors whitespace-nowrap"
+              class="text-[11px] font-medium text-text-secondary hover:text-primary-color transition-colors whitespace-nowrap"
             >
               Clear filters
             </button>
@@ -81,16 +82,20 @@
             <button
               ref="variableTriggerRef"
               @click="toggleVariableDropdown"
-              class="flex items-center gap-2 text-nowrap px-3 h-[33px] rounded-md border cursor-pointer bg-bg-card hover:border-accent transition-all text-xs font-semibold relative"
+              class="flex items-center gap-2 text-nowrap px-3 h-[33px] rounded-md border cursor-pointer bg-transparent hover:border-primary-color transition-all text-xs font-semibold relative"
               :class="
                 showVariableDropdown
-                  ? 'border-accent text-accent'
+                  ? 'border-primary-color text-primary-color'
                   : 'border-border text-text-primary'
               "
             >
               <i
                 class="fa-solid fa-layer-group text-[14px]"
-                :class="showVariableDropdown ? 'text-accent' : 'text-accent'"
+                :class="
+                  showVariableDropdown
+                    ? 'text-primary-color'
+                    : 'text-primary-color'
+                "
               ></i>
               <span class="text-nowrap">Group: {{ selectedViewByLabel }}</span>
             </button>
@@ -117,16 +122,20 @@
             <button
               ref="groupTriggerRef"
               @click="toggleGroupDropdown"
-              class="flex items-center gap-2 px-3 h-[33px] rounded-md border cursor-pointer bg-bg-card hover:border-accent transition-all text-xs font-semibold relative"
+              class="flex items-center gap-2 px-3 h-[33px] rounded-md border cursor-pointer bg-transparent hover:border-primary-color transition-all text-xs font-semibold relative"
               :class="
                 showGroupDropdown
-                  ? 'border-accent text-accent'
+                  ? 'border-primary-color text-primary-color'
                   : 'border-border text-text-primary'
               "
             >
               <i
                 class="fa-solid fa-layer-group text-[14px]"
-                :class="showGroupDropdown ? 'text-accent' : 'text-accent'"
+                :class="
+                  showGroupDropdown
+                    ? 'text-primary-color'
+                    : 'text-primary-color'
+                "
               ></i>
               <span>Group: {{ selectedGroupLabel }}</span>
             </button>
@@ -153,113 +162,112 @@
           />
 
           <div
-            class="flex items-center gap-2 bg-bg-surface/50 h-[32px] px-2 rounded-md"
-          >
-            <!-- View Buttons ... -->
-            <button
-              class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
-              :class="
-                view === 'kanban'
-                  ? 'text-accent bg-accent-text'
-                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
-              "
-              title="Kanban view"
-              @click="view = 'kanban'"
-            >
-              <i class="fa-solid fa-chart-kanban"></i>
-            </button>
+  class="flex items-center gap-1 bg-bg-surface/50 h-[36px] px-1.5 border-border border rounded-[6px]"
+>
+  <button
+    class="aspect-square cursor-pointer rounded-sm h-[28px] flex items-center justify-center border border-border outline-0"
+    :class="
+      view === 'kanban'
+        ? 'text-white bg-primary-color'
+        : 'backdrop-blur-2xl transition-all duration-75 hover:text-primary-color'
+    "
+    title="Kanban view"
+    @click="view = 'kanban'"
+  >
+    <i class="fa-solid fa-chart-kanban text-[14px]"></i>
+  </button>
 
-            <button
-              @click="view = 'table'"
-              class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
-              :class="
-                view === 'table'
-                  ? 'text-accent bg-accent-text'
-                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
-              "
-              title="List view"
-            >
-              <i class="fa-solid fa-align-left"></i>
-            </button>
+  <button
+    @click="view = 'table'"
+    class="aspect-square cursor-pointer rounded-sm h-[28px] flex items-center justify-center border border-border outline-0"
+    :class="
+      view === 'table'
+        ? 'text-white bg-primary-color'
+        : 'backdrop-blur-2xl transition-all duration-75 hover:text-primary-color'
+    "
+    title="List view"
+  >
+    <i class="fa-solid fa-align-left text-[14px]"></i>
+  </button>
 
-            <button
-              @click="view = 'mindmap'"
-              class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
-              :class="
-                view === 'mindmap'
-                  ? 'text-accent bg-accent-text'
-                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
-              "
-              title="MindMap view"
-            >
-              <i class="fa-solid fa-chart-diagram"></i>
-            </button>
+  <button
+    @click="view = 'mindmap'"
+    class="aspect-square cursor-pointer rounded-sm h-[28px] flex items-center justify-center border border-border outline-0"
+    :class="
+      view === 'mindmap'
+        ? 'text-white bg-primary-color'
+        : 'backdrop-blur-2xl transition-all duration-75 hover:text-primary-color'
+    "
+    title="MindMap view"
+  >
+    <i class="fa-solid fa-chart-diagram text-[14px]"></i>
+  </button>
 
-            <button
-              @click="view = 'calendar'"
-              class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
-              :class="
-                view === 'calendar'
-                  ? 'text-accent bg-accent-text'
-                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
-              "
-              title="Calendar view"
-            >
-              <i class="fa-regular fa-calendar"></i>
-            </button>
+  <button
+    @click="view = 'gantt'"
+    class="aspect-square cursor-pointer rounded-sm h-[28px] flex items-center justify-center border border-border outline-0"
+    :class="
+      view === 'gantt'
+        ? 'text-white bg-primary-color'
+        : 'backdrop-blur-2xl transition-all duration-75 hover:text-primary-color'
+    "
+    title="Gantt Chart view"
+  >
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      class="h-5 w-5"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+    >
+      <path
+        d="M4 6h2v12H4V6Zm4 4h10v2H8v-2Zm0 4h10v2H8v-2Zm0-8h10v2H8V6Z"
+      />
+    </svg>
+  </button>
 
-            <button
-              @click="view = 'gantt'"
-              class="aspect-square cursor-pointer rounded-sm p-0"
-              :class="
-                view === 'gantt'
-                  ? 'text-accent bg-accent-text'
-                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
-              "
-              title="Gantt Chart view"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-6 w-6"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-              >
-                <path
-                  d="M4 6h2v12H4V6Zm4 4h10v2H8v-2Zm0 4h10v2H8v-2Zm0-8h10v2H8V6Z"
-                />
-              </svg>
-            </button>
+  <button
+    @click="view = 'calendar'"
+    class="aspect-square cursor-pointer rounded-sm h-[28px] flex items-center justify-center border border-border outline-0"
+    :class="
+      view === 'calendar'
+        ? 'text-white bg-primary-color'
+        : 'backdrop-blur-2xl transition-all duration-75 hover:text-primary-color'
+    "
+    title="Calendar view"
+  >
+    <i class="fa-regular fa-calendar text-[14px]"></i>
+  </button>
 
-            <button
-              @click="view = 'timeline'"
-              class="aspect-square cursor-pointer rounded-sm p-0"
-              :class="
-                view === 'timeline'
-                  ? 'text-accent bg-accent-text'
-                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
-              "
-              title="Timeline view"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-6 w-6"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-              >
-                <path
-                  d="M4 12a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm16 0a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm-8 8a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm0-16a2 2 0 1 1 0-4 2 2 0 0 1 0 4Z"
-                  opacity="0"
-                />
-                <path
-                  d="M4 12h4m8 0h4M9 12h6M9 12v-6M15 12v6"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
-              </svg>
-            </button>
-          </div>
+  <button
+    @click="view = 'timeline'"
+    class="aspect-square cursor-pointer rounded-sm h-[28px] flex items-center justify-center border border-border outline-0"
+    :class="
+      view === 'timeline'
+        ? 'text-white bg-primary-color'
+        : 'backdrop-blur-2xl transition-all duration-75 hover:text-primary-color'
+    "
+    title="Timeline view"
+  >
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      class="h-5 w-5"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+    >
+      <path
+        d="M4 12a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm16 0a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm-8 8a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm0-16a2 2 0 1 1 0-4 2 2 0 0 1 0 4Z"
+        opacity="0"
+      />
+      <path
+        d="M4 12h4m8 0h4M9 12h6M9 12v-6M15 12v6"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+    </svg>
+  </button>
+</div>
         </div>
       </div>
     </div>
@@ -267,8 +275,32 @@
     <!-- ── Kanban View ─────────────────────────────────────────────────────── -->
     <template v-if="view == 'kanban'">
       <KanbanSkeleton v-show="(isPending || isSheetPending) && hasSheets" />
+
+      <!-- Empty State -->
       <div
-        v-show="!isPending && !isSheetPending && hasSheets"
+        v-if="
+          !isPending && !isSheetPending && hasSheets && !filteredBoard?.length
+        "
+        class="flex flex-col items-center justify-center flex-1 h-full py-20 text-center"
+      >
+        <div class="bg-bg-body p-6 rounded-full mb-4">
+          <i
+            class="fa-solid fa-chart-kanban text-4xl text-text-secondary/20"
+          ></i>
+        </div>
+        <h3 class="text-lg font-semibold text-text-primary">
+          No columns to display
+        </h3>
+        <p class="text-sm text-text-secondary mt-1 max-w-[300px]">
+          There are no columns found for the current grouping or filter
+          selection.
+        </p>
+      </div>
+
+      <div
+        v-show="
+          !isPending && !isSheetPending && hasSheets && filteredBoard?.length
+        "
         class="flex overflow-x-auto gap-2 scrollbar-visible h-full mx-2 pt-2"
       >
         <div class="flex gap-2">
@@ -313,7 +345,7 @@
             </template>
           </KanbanBoard>
 
-          <div class="min-w-[270px]" @click.stop>
+          <div v-if="isStatusView" class="min-w-[270px]" @click.stop>
             <div v-if="activeAddList" class="bg-bg-body rounded-lg p-4">
               <BaseTextField
                 :autofocus="true"
@@ -326,7 +358,7 @@
                 <Button
                   @click="emitAddColumn"
                   varaint="primary"
-                  class="px-3 py-1 bg-accent cursor-pointer text-white rounded"
+                  class="px-3 py-1 bg-primary-color  hover:bg-primary-color cursor-pointer text-white rounded"
                   >{{ addingList ? "Adding..." : "Add list" }}</Button
                 >
                 <i class="fa-solid fa-close" @click="setActiveAddList"></i>
@@ -400,7 +432,9 @@
           class="absolute inset-0 z-20 flex items-center justify-center bg-bg-card/60 backdrop-blur-[2px]"
         >
           <div class="flex flex-col items-center gap-3">
-            <i class="fa-solid fa-spinner fa-spin text-accent text-3xl"></i>
+            <i
+              class="fa-solid fa-spinner fa-spin text-primary-color text-3xl"
+            ></i>
             <span class="text-sm font-medium text-text-secondary italic"
               >Mapping your data...</span
             >
@@ -437,21 +471,51 @@
     </template>
 
     <!-- ── Calendar View ───────────────────────────────────────────────────── -->
-    <template v-if="view === 'calendar'">
+    <!-- <template v-if="view === 'calendar'">
       <CalendarView :data="filteredBoard" @select:ticket="selectCardHandler" />
-    </template>
+    </template> -->
 
     <!-- ── Gantt View ──────────────────────────────────────────────────────── -->
-    <template v-if="view === 'gantt'">
+    <!-- <template v-if="view === 'gantt'">
       <GanttChartView
+        :data="filteredBoard"
+        @select:ticket="selectCardHandler"
+      />
+    </template> -->
+
+    <!-- ── Timeline View ───────────────────────────────────────────────────── -->
+    <!-- <template v-if="view === 'timeline'">
+      <TimelineView :data="filteredBoard" @select:ticket="selectCardHandler" />
+    </template> -->
+
+    <!-- ── Custom Calendar View ─────────────────────────────────────────────── -->
+    <template v-if="view === 'calendar'">
+      <CustomCalendarView
         :data="filteredBoard"
         @select:ticket="selectCardHandler"
       />
     </template>
 
-    <!-- ── Timeline View ───────────────────────────────────────────────────── -->
+    <!-- ── Gantt View ───────────────────────────────────────────────────────── -->
+    <template v-if="view === 'gantt'">
+      <CustomGanttChart
+        :data="filteredBoard"
+        :loading="isAddingTableTicket"
+        @select:ticket="selectCardHandler"
+        @create:ticket="handleCreateTicket"
+        @update:ticket="handleUpdateTicket"
+      />
+    </template>
+
+    <!-- ── Custom Timeline View ─────────────────────────────────────────────── -->
     <template v-if="view === 'timeline'">
-      <TimelineView :data="filteredBoard" @select:ticket="selectCardHandler" />
+      <CustomTimelineView
+        :data="filteredBoard"
+        :loading="isAddingTableTicket"
+        @select:ticket="selectCardHandler"
+        @create:ticket="handleCreateTicket"
+        @update:ticket="handleUpdateTicket"
+      />
     </template>
 
     <!-- ── No Sheets Modal ─────────────────────────────────────────────────── -->
@@ -464,7 +528,7 @@
         class="bg-bg-card rounded-lg p-6 w-[420px] text-center shadow-md border border-border"
       >
         <div class="flex items-center flex-col justify-center mb-4 gap-2">
-          <i class="fa-regular fa-file-lines text-2xl text-accent"></i>
+          <i class="fa-regular fa-file-lines text-2xl text-primary-color"></i>
           <h3 class="text-lg font-semibold">No Sheets Created</h3>
         </div>
         <p class="text-sm text-text-secondary mb-6">
@@ -473,7 +537,7 @@
         </p>
         <div class="flex justify-center gap-3">
           <Button
-            class="px-4 py-2 bg-accent text-white"
+            class="px-4 py-2 bg-primary-color text-white"
             @click="handleCreateSheetFromModal"
           >
             + Create Sheet
@@ -580,6 +644,7 @@
   />
 
   <ShareModal
+    :inSpace="true"
     v-if="showShareModal"
     v-model="showShareModal"
     resourceType="sheet"
@@ -626,7 +691,11 @@ import {
 } from "../../queries/useSheets";
 import { useSidePanelStore } from "../../stores/sidePanelStore";
 import { useAgentStore } from "../../stores/agentStore";
-import { removeFromCacheStructure, performOptimisticUpdate, rollbackOptimisticUpdate } from "../../utilities/cacheSync";
+import {
+  removeFromCacheStructure,
+  performOptimisticUpdate,
+  rollbackOptimisticUpdate,
+} from "../../utilities/cacheSync";
 
 // ─── Lazy components ──────────────────────────────────────────────────────────
 const Dropdown = defineAsyncComponent(
@@ -659,14 +728,23 @@ const TableSearchCell = defineAsyncComponent(
 const TableAssigneeCell = defineAsyncComponent(
   () => import("../../components/feature/TableView/TableAssigneeCell.vue"),
 );
-const CalendarView = defineAsyncComponent(
-  () => import("../../components/feature/CalendarView.vue"),
+// const CalendarView = defineAsyncComponent(
+//   () => import("../../components/feature/CalendarView.vue"),
+// );
+// const GanttChartView = defineAsyncComponent(
+//   () => import("../../components/feature/GanttChartView.vue"),
+// );
+// const TimelineView = defineAsyncComponent(
+//   () => import("../../components/feature/TimelineView.vue"),
+// );
+const CustomCalendarView = defineAsyncComponent(
+  () => import("../../components/feature/CustomCalendarView.vue"),
 );
-const GanttChartView = defineAsyncComponent(
-  () => import("../../components/feature/GanttChartView.vue"),
+const CustomGanttChart = defineAsyncComponent(
+  () => import("../../components/feature/CustomGanttChart.vue"),
 );
-const TimelineView = defineAsyncComponent(
-  () => import("../../components/feature/TimelineView.vue"),
+const CustomTimelineView = defineAsyncComponent(
+  () => import("../../components/feature/CustomTimelineView.vue"),
 );
 const CreateTaskModal = defineAsyncComponent(
   () => import("./modals/CreateTaskModal.vue"),
@@ -822,6 +900,7 @@ const { data: variables, isPending: isVariablesPending } = useVariables(
   moduleId,
   selected_sheet_id,
 );
+console.log("variables data", variables.value);
 
 const sheetName = ref("");
 
@@ -938,6 +1017,9 @@ const selectedViewByVariable = computed(() => {
 });
 
 const selectedViewByLabel = computed(() => {
+  if (selected_view_by.value === "owner") return "Owner/Reporter";
+  if (selected_view_by.value === "assignee") return "Assignee";
+
   const opt = selectedViewByVariable.value;
   if (!opt) return "None";
 
@@ -947,7 +1029,22 @@ const selectedViewByLabel = computed(() => {
 
   return opt.title;
 });
+const isStatusView = computed(() => {
+  if (
+    selected_view_by.value === "owner" ||
+    selected_view_by.value === "assignee"
+  )
+    return false;
 
+  const v = selectedViewByVariable.value;
+  if (!v) return false;
+
+  // Match slug or title
+  const slug = v.slug?.toLowerCase() || "";
+  const title = v.title?.toLowerCase() || "";
+
+  return slug === "card-status" || slug === "status" || title === "status";
+});
 watch(selected_view_by, (newVal) => {
   const opt = variables.value?.find((v: any) => v._id === newVal);
   if (!opt?.nested?.length) {
@@ -1029,6 +1126,27 @@ const hasActiveFilters = computed(() => activeFilterCount.value > 0);
 
 // ─── Queries ──────────────────────────────────────────────────────────────────
 const workspaceStore = useWorkspaceStore();
+const kanbanActiveVariableId = computed(() => {
+  const val = selected_view_by.value;
+  if (val === "owner" || val === "assignee") return "";
+
+  return val;
+});
+
+const kanbanActiveVariableSlug = computed(() => {
+  if (selected_view_by.value === "owner") return "created_by";
+  if (selected_view_by.value === "assignee") return "assigned_to";
+  return "";
+});
+
+const kanbanGroupExtraParams = computed(() => {
+  const base = formattedExtraParams.value || {};
+  if (kanbanActiveVariableSlug.value) {
+    return { ...base, variable_slug: kanbanActiveVariableSlug.value };
+  }
+  return base;
+});
+
 const {
   data: Lists,
   isPending,
@@ -1037,8 +1155,8 @@ const {
   moduleId,
   selected_sheet_id,
   computed(() => [...workspaceStore.selectedLaneIds]),
-  selected_view_by,
-  formattedExtraParams,
+  kanbanActiveVariableId,
+  kanbanGroupExtraParams,
 );
 
 // ─── Dedicated flat Table View data (no variable_id = no grouping shuffle) ─────
@@ -1643,7 +1761,7 @@ function handleQuickCreate(title: string, group: any) {
     console.log(cardReporter);
   }
 
-  const laneId = laneOptions.value[0]?._id || "";
+  // const laneId = laneOptions.value[1]?._id || "";
 
   const payload = {
     "card-title": title,
@@ -1651,7 +1769,7 @@ function handleQuickCreate(title: string, group: any) {
     "card-type": cardType,
     priority: cardPriority,
     seat_id: cardAssignee,
-    workspace_lane_id: laneId,
+    // workspace_lane_id: laneId,
     variables: {
       "card-title": title,
       "card-status": cardStatus || "General",
@@ -1665,16 +1783,17 @@ function handleQuickCreate(title: string, group: any) {
 
 // ─── Lanes ────────────────────────────────────────────────────────────────────
 const { data: lanes } = useLanes(workspaceId);
-const laneOptions = computed<any[]>(() =>
-  (lanes?.value ?? []).map((el: any) => ({
+const laneOptions = computed<any[]>(() => {
+  const mainOption = { _id: "Main", title: "Main" };
+  const dynamicOptions = (lanes?.value ?? []).map((el: any) => ({
     ...el,
     _id: el._id,
     title: el?.variables?.["lane-title"] ?? String(el._id),
-  })),
-);
+  }));
+  return [mainOption, ...dynamicOptions];
+});
 
 // ─── Table Columns ────────────────────────────────────────────────────────────
-// ─── Table Rendering (Columns) ────────────────────────────────────────────────
 const columns = computed(() => {
   return [
     {
@@ -1686,9 +1805,9 @@ const columns = computed(() => {
             "a",
             {
               onClick: () => (selectedCard.value = row),
-            class:
-            "text-[12px] max-w-[80px] underline text-blue-500 shrink-0 cursor-pointer overflow-hidden text-ellipsis whitespace-nowrap",
-             title: row["card-code"],
+              class:
+                "text-[12px] max-w-[80px] underline text-blue-500 shrink-0 cursor-pointer overflow-hidden text-ellipsis whitespace-nowrap",
+              title: row["card-code"],
             },
             row["card-code"],
           ),
@@ -1698,7 +1817,7 @@ const columns = computed(() => {
                 handleChangeTicket(row, "card-title", e?.target?.value);
               },
               class:
-                "text-[12px] w-full overflow-ellipsis capitalize p-1 focus:border border-accent/60 rounded-sm focus:outline-none focus:ring-1 focus:ring-accent bg-transparent focus:bg-bg-body text-[12px] h-8",
+                "text-[12px] w-full overflow-ellipsis capitalize p-1 focus:border border-primary-color/60 rounded-sm focus:outline-none focus:ring-1 focus:ring-primary-color bg-transparent focus:bg-bg-body text-[12px] h-8",
               defaultValue: value,
               disabled: !canEditCard.value,
             }),
@@ -1727,12 +1846,12 @@ const columns = computed(() => {
       render: ({ row }: any) =>
         h(TableSearchCell, {
           options: laneOptions.value ?? [],
-          placeholder: "Select lane",
-          modelValue: row.lane?._id || null,
+          placeholder: "Select tab",
+          modelValue: row.lane?._id || row.workspace_lane_id || "Main",
           disabled: !canEditCard.value,
           "onUpdate:modelValue": (e: any) => setLane(row, e),
           displayField: "title",
-          emptyText: "Lane",
+          emptyText: "Tab",
         }),
     },
     {
@@ -1806,8 +1925,10 @@ const columns = computed(() => {
 
 const assignHandle = (row: any, users: any[]) => {
   const id = row?._id;
-  const userIds = (users || []).map(u => typeof u === 'string' ? u : (u?._id || u?.id)).filter(Boolean)
-  
+  const userIds = (users || [])
+    .map((u) => (typeof u === "string" ? u : u?._id || u?.id))
+    .filter(Boolean);
+
   const primarySeat = users.length > 0 ? users[0] : null;
 
   if (id) {
@@ -1816,12 +1937,12 @@ const assignHandle = (row: any, users: any[]) => {
       sidePanelStore,
       cardId: id,
       updates: { seat: primarySeat, seats: users, seat_id: userIds },
-      invalidateKeys: ['sheet-list', 'table-cards-flat']
+      invalidateKeys: ["sheet-list", "table-cards-flat"],
     });
 
     moveCard.mutate(
       { card_id: id, seat_id: userIds, optimisticUser: users },
-      { onError: () => rollbackOptimisticUpdate(queryClient, snapshots) }
+      { onError: () => rollbackOptimisticUpdate(queryClient, snapshots) },
     );
   } else {
     row.seat = primarySeat;
@@ -2371,20 +2492,19 @@ function handleChangeTicket(row: any, key: any, value: any) {
       sidePanelStore,
       cardId: id,
       updates: { [key]: cleanValue },
-      invalidateKeys: ['sheet-list', 'table-cards-flat']
+      invalidateKeys: ["sheet-list", "table-cards-flat"],
     });
 
     moveCard.mutate(
       { card_id: id, variables: { [key]: cleanValue } },
-      { onError: () => rollbackOptimisticUpdate(queryClient, snapshots) }
+      { onError: () => rollbackOptimisticUpdate(queryClient, snapshots) },
     );
   } else {
     row[key] = cleanValue;
     if (Array.isArray(row.variables)) {
       const varIndex = row.variables.findIndex((v: any) => v.slug === key);
       if (varIndex !== -1) row.variables[varIndex].value = cleanValue;
-      else
-        row.variables.push({ slug: key, value: cleanValue, type: "Text" });
+      else row.variables.push({ slug: key, value: cleanValue, type: "Text" });
     } else {
       if (!row.variables) row.variables = {};
       row.variables[key] = cleanValue;
@@ -2395,6 +2515,30 @@ function handleChangeTicket(row: any, key: any, value: any) {
 
 function handleCreateTicket(row: any) {
   checkAndCreateTicket(row);
+}
+
+function handleUpdateTicket(task: any) {
+  const id = task?._id;
+  if (!id) return;
+
+  const updates: Record<string, any> = {};
+  if (task._start) updates["start-date"] = task._start;
+  if (task._end) updates["end-date"] = task._end;
+
+  if (Object.keys(updates).length > 0) {
+    const snapshots = performOptimisticUpdate({
+      queryClient,
+      sidePanelStore,
+      cardId: id,
+      updates: updates,
+      invalidateKeys: ["sheet-list", "table-cards-flat"],
+    });
+
+    moveCard.mutate(
+      { card_id: id, variables: updates },
+      { onError: () => rollbackOptimisticUpdate(queryClient, snapshots) },
+    );
+  }
 }
 
 const setStartDate = (row: any, e: any) => {
@@ -2410,7 +2554,7 @@ const setStartDate = (row: any, e: any) => {
 
     moveCard.mutate(
       { card_id, variables: { "start-date": e } },
-      { onError: () => rollbackOptimisticUpdate(queryClient, snapshots) }
+      { onError: () => rollbackOptimisticUpdate(queryClient, snapshots) },
     );
   } else {
     row["end-date"] = e;
@@ -2421,6 +2565,7 @@ const setStartDate = (row: any, e: any) => {
 function setLane(row: any, v: any) {
   const id = row?._id;
   if (id) {
+    if (v === "Main") return;
     const newLane = laneOptions.value.find((l: any) => l._id === v);
     const snapshots = performOptimisticUpdate({
       queryClient,
@@ -2432,7 +2577,7 @@ function setLane(row: any, v: any) {
 
     moveCard.mutate(
       { card_id: id, workspace_lane_id: v },
-      { onError: () => rollbackOptimisticUpdate(queryClient, snapshots) }
+      { onError: () => rollbackOptimisticUpdate(queryClient, snapshots) },
     );
   } else {
     const newLane = laneOptions.value.find((l: any) => l._id === v);
@@ -2516,22 +2661,4 @@ declare global {
 }
 </script>
 
-<style scoped>
-/* Force visible scrollbars only where applied */
-.scrollbar-visible::-webkit-scrollbar {
-  display: block !important;
-  height: 8px;
-  width: 8px;
-}
-.scrollbar-visible::-webkit-scrollbar-thumb {
-  background-color: rgba(150, 150, 150, 0.4);
-  border-radius: 8px;
-}
-.scrollbar-visible::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(150, 150, 150, 0.6);
-}
-.scrollbar-visible {
-  scrollbar-width: thin !important;
-  scrollbar-color: rgba(150, 150, 150, 0.5) transparent !important;
-}
-</style>
+<style scoped></style>

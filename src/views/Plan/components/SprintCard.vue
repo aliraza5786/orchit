@@ -19,7 +19,7 @@
         <div
           role="status"
           aria-label="Loading"
-          class="h-8 w-8 rounded-full border-4 border-accent border-t-transparent animate-spin"
+          class="h-8 w-8 rounded-full border-4 border-primary-color border-t-transparent animate-spin"
         ></div>
       </div>
       <!-- Tickets List -->
@@ -36,9 +36,9 @@
               'flex items-center  gap-3 p-[8px] cursor-pointer transition-colors rounded-[8px]',
               selectedIds.includes(ticket.id)
                 ? 'border-2 border-[#5a2d7f]'
-                : 'border border-border-input',
+                : 'border border-border',
               isDark
-                ? 'bg-bg-body hover:bg-bg-surface'
+                ? 'bg-bg-body hover:bg-bg-card'
                 : 'bg-bg-charcoal hover:bg-bg-body',
             ]"
             @dragstart="onDragStart($event, ticket, 'sprint', sprint.id)"

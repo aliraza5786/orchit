@@ -38,15 +38,38 @@
       <div class="py-6 px-4 sm:px-6 sm:p-10 overflow-y-auto h-full flex flex-col">
         <div class="mx-auto w-full flex-1 flex flex-col">
 
-          <!-- Title & Description -->
-          <header class="mb-4 md:mb-8 text-center md:text-left">
-            <h1 class="text-xl lg:text-xl font-bold font-manrope mb-2 sm:mb-3 tracking-tight text-text-primary">
-              {{ pageTitle }}
-            </h1>
-            <p class="text-text-secondary mt-1">
-              {{ tabDescription }}
-            </p>
-          </header>
+          <!-- Verification Warning Banner -->
+          <div v-if="showVerificationWarning && hasOrgDomain" class="mb-6 p-4 rounded-xl border border-amber-500/20 bg-amber-500/5 shadow-sm">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div class="flex gap-3">
+                <div class="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
+                  <i class="fa-solid fa-shield-halved text-amber-600 text-lg"></i>
+                </div>
+                <div>
+                  <h4 class="text-sm font-bold text-amber-800">Organization Verification Required</h4>
+                  <p class="text-xs text-amber-700/80 mt-0.5 leading-relaxed">
+                    {{ verificationWarningMessage }}
+                  </p>
+                </div>
+              </div>
+              <div class="flex gap-2">
+                <button
+                  v-if="!hasVerifiedDomain"
+                  @click="router.push({ query: { ...route.query, tab: 'org-domain' } })"
+                  class="px-4 py-2 rounded-lg bg-amber-600 text-white text-xs font-bold hover:bg-amber-700 transition-all cursor-pointer whitespace-nowrap"
+                >
+                  Verify Domain
+                </button>
+                <button
+                  v-if="hasVerifiedDomain && !isSuperAdminVerified"
+                  @click="router.push({ query: { ...route.query, tab: 'org-setup' } })"
+                  class="px-4 py-2 rounded-lg bg-amber-600 text-white text-xs font-bold hover:bg-amber-700 transition-all cursor-pointer whitespace-nowrap"
+                >
+                  Verify Admin
+                </button>
+              </div>
+            </div>
+          </div>
 
           <!-- Dynamic Content -->
           <ProfileTab v-if="currentTab === 'profile'" />
@@ -61,9 +84,6 @@
           <OrgPackagesTab v-else-if="currentTab === 'org-packages'" :profile="profileData" />
           <OrgDomainSetup v-else-if="currentTab === 'org-domain'" :profile="profileData" />
           <OrgAiTokensAllocationTab v-else-if="currentTab === 'token-allocation'" :profile="profileData" />
-
-          <!-- Create org tab -->
-          <OrganizationTab v-else-if="currentTab === 'org-create'" :profile="profileData" :force-create="true" />
 
         </div>
       </div>
@@ -88,6 +108,8 @@ import PersonalTokens from './components/PersonalTokens.vue'
 import { useTheme } from '../../composables/useTheme'
 import { useQuery } from '@tanstack/vue-query'
 import { getProfile } from '../../services/user'
+import { useListDomains } from '../../queries/useCommon'
+import { useAuthStore } from '../../stores/auth'
 
 const { isDark } = useTheme()
 const route = useRoute()
@@ -104,57 +126,42 @@ const { data: profile } = useQuery({
 })
 
 const profileData = computed(() => profile.value?.data ?? null)
+const authStore = useAuthStore()
+const hasOrgDomain = computed(() => profileData.value?.activeCompany?.custom_domain)
+// --- Verification Logic ---
+const { data: domainsData } = useListDomains()
+
+const hasVerifiedDomain = computed(() => {
+  if (!authStore.company_id) return true
+  return domainsData.value?.domains?.some((d: any) => d.status === 'verified') ?? false
+})
+
+const isSuperAdminVerified = computed(() => {
+  if (!authStore.company_id) return true
+  const activeCompany = profileData.value?.active_company
+  return activeCompany?.membership_status !== 'pending_super_admin_otp'
+})
+
+const isAdminOrOwner = computed(() => {
+  const role = profileData.value?.active_company?.membership_role
+  return role === 'owner' || role === 'admin'
+})
+
+const showVerificationWarning = computed(() => {
+  if (!authStore.company_id || !isAdminOrOwner.value) return false
+  return !hasVerifiedDomain.value || !isSuperAdminVerified.value
+})
+
+const verificationWarningMessage = computed(() => {
+  if (!hasVerifiedDomain.value) return "Your organization's domain is not verified. Please complete verification to unlock all features."
+  if (!isSuperAdminVerified.value) return "Super admin verification is pending. Please complete the verification process."
+  return ""
+})
 async function onSwitchCompany(company: any) {
   localStorage.setItem('company_id', company._id)
   localStorage.setItem('company_name', company.title)
 }
 
-// ─── Page meta ────────────────────────────────────────────────────────────────
-const pageTitle = computed(() => {
-  const titles: Record<string, string> = {
-    profile: 'Your profile',
-    billing: 'Billing & subscription',
-    'token-utilization': 'AI tokens utilization',
-    'org-setup': 'Organization settings',
-    'org-domain': 'Domain setup',
-    'org-users': 'Team members',
-    'org-roles': 'Role management',
-    'ownership-transfer': 'Transfer ownership',
-    'org-packages': 'Organization billing',
-    'token-allocation': 'Tokens allocation',
-    'org-create': 'Create organization',
-  }
-  return titles[currentTab.value] || 'Account'
-})
-
-const tabDescription = computed(() => {
-  switch (currentTab.value) {
-    case 'profile':
-      return 'Manage your public profile and personal information.'
-    case 'billing':
-      return 'Manage your subscription, billing details, and usage limits.'
-    case 'token-utilization':
-      return 'View your personal AI token usage and limits.'
-    case 'org-setup':
-      return "Configure your organization's basic information, branding, and settings."
-    case 'org-domain':
-      return "Set up and manage your organization's custom domain."
-    case 'org-users':
-      return 'Invite team members, manage their roles, and control access.'
-    case 'org-roles':
-      return 'Create custom roles and manage permissions for your team.'
-    case 'org-packages':
-      return 'Manage billing and subscription plans for your organization.'
-    case 'token-allocation':
-      return 'Distribute AI token budgets across your team members.'
-    case 'ownership-transfer':
-      return 'Transfer ownership of your organization to another member.'
-    case 'org-create':
-      return 'Create a new organization and invite your team to collaborate.'
-    default:
-      return ''
-  }
-})
 
 // ─── Mobile sidebar ───────────────────────────────────────────────────────────
 function toggleMobileSidebar() {

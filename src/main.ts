@@ -10,17 +10,27 @@ import "@/assets/fontawesome/css/fontawesome.min.css";
 import "@/assets/fontawesome/css/regular.min.css";
 import { queryClient } from "./libs/queryClient";
 import { initThemeImmediately } from "./composables/useTheme";
+import type { ThemeMode } from "./composables/useTheme";
 import { createHead } from "@vueuse/head";
 import vue3GoogleLogin from "vue3-google-login";
 import vTooltip from "./directives/vTooltip";
 
 const COOKIE_KEY = "auth_session";
+const maxAge = 60 * 60 * 24 * 30;
 
-function getAuthCookie(): { token?: string; company_id?: string; personal_mode?: boolean } | null {
+const hostname = window.location.hostname;
+
+if (hostname === "streamed.space" || hostname.endsWith(".streamed.space")) {
+  document.domain = "streamed.space";
+} else if (hostname.endsWith(".localhost")) {
+  try { document.domain = "localhost"; } catch {}
+}
+
+function readCookie(name: string): Record<string, unknown> | null {
   try {
     const raw = document.cookie
       .split("; ")
-      .find((row) => row.startsWith(COOKIE_KEY + "="))
+      .find(row => row.startsWith(name + "="))
       ?.split("=")[1];
     if (!raw) return null;
     return JSON.parse(decodeURIComponent(raw));
@@ -29,66 +39,107 @@ function getAuthCookie(): { token?: string; company_id?: string; personal_mode?:
   }
 }
 
-if (
-  window.location.hostname === "orchit.ai" ||
-  window.location.hostname.endsWith(".orchit.ai")
-) {
-  document.domain = "orchit.ai";
-} else if (window.location.hostname.endsWith(".localhost")) {
-  try {
-    document.domain = "localhost";
-  } catch (e) {
-    console.log("⚠️ Could not set document.domain to localhost:", e);
+function writeAuthCookie(data: Record<string, unknown>) {
+  const existing = readCookie(COOKIE_KEY) || {};
+  const merged = { ...existing, ...data };
+
+  // Remove keys explicitly set to null
+  Object.keys(merged).forEach(k => { if (merged[k] === null) delete merged[k] })
+
+  const value = encodeURIComponent(JSON.stringify(merged));
+  if (hostname === "localhost" || hostname.endsWith(".localhost")) {
+    document.cookie = `${COOKIE_KEY}=${value}; path=/; max-age=${maxAge}; SameSite=Lax`;
+  } else if (hostname.endsWith(".streamed.space")) {
+    document.cookie = `${COOKIE_KEY}=${value}; domain=.streamed.space; path=/; max-age=${maxAge}; Secure; SameSite=Lax`;
   }
 }
 
-const hostname = window.location.hostname;
-const maxAge = 60 * 60 * 24 * 30;
+// ── Step 1: Read URL params ────────────────────────────────────────────────
 const urlParams = new URLSearchParams(window.location.search);
-const encodedToken = urlParams.get("_auth");
+const urlToken      = urlParams.get("_token");
+const urlCompanyId  = urlParams.get("company_id");
+const urlTheme      = urlParams.get("theme");
+const encodedToken  = urlParams.get("_auth");
+const urlPersonalMode = urlParams.get("personal_mode");
 
-if (encodedToken) {
+// ── Step 2: Save token ─────────────────────────────────────────────────────
+if (urlToken) {
+  localStorage.setItem("token", urlToken);
+  writeAuthCookie({ token: urlToken });
+  sessionStorage.setItem('_relay_token', urlToken);
+} else if (encodedToken) {
   try {
-    let token = encodedToken;
-    if (!encodedToken.startsWith("eyJ")) {
-      token = atob(
-        encodedToken.replace(/-/g, "+").replace(/_/g, "/").replace(/\./g, "="),
-      );
-    }
+    const token = encodedToken.startsWith("eyJ")
+      ? encodedToken
+      : atob(encodedToken.replace(/-/g, "+").replace(/_/g, "/").replace(/\./g, "="));
     localStorage.setItem("token", token);
-    if (hostname === "localhost" || hostname.endsWith(".localhost")) {
-      document.cookie = `auth_token=${token}; path=/; max-age=${maxAge}; SameSite=Lax`;
-    } else if (hostname.endsWith(".orchit.ai")) {
-      document.cookie = `auth_token=${token}; domain=.orchit.ai; path=/; max-age=${maxAge}; Secure; SameSite=Lax`;
-    }
+    writeAuthCookie({ token });
   } catch (e) {
-    console.error("❌ main.ts: Token decode failed:", e);
+    console.error("❌ Token decode failed:", e);
+  }
+} else {
+  const session = readCookie(COOKIE_KEY);
+  const legacySession = readCookie("space_auth");
+
+  const token = session?.token as string | undefined
+    ?? (legacySession?.token as string | undefined)
+    ?? undefined;
+
+  if (token) {
+    localStorage.setItem("token", token);
+    if (!session?.token) writeAuthCookie({ token });
   }
 }
 
-const session = getAuthCookie();
-const isPersonalMode = session?.personal_mode === true;
+// ── Step 3: Save company_id ────────────────────────────────────────────────
+if (urlCompanyId) {
+  localStorage.setItem("company_id", urlCompanyId);
+  writeAuthCookie({ company_id: urlCompanyId, personal_mode: null, company_switched: true });
+}
+
+// ── Step 4: Handle personal_mode param (switching back to personal) ────────
+if (urlPersonalMode === 'true') {
+  localStorage.removeItem('company_id');
+  localStorage.setItem('personal_mode', 'true');
+  writeAuthCookie({ company_id: null, personal_mode: true, company_switched: null });
+}
+
+// ── Step 5: Apply theme ────────────────────────────────────────────────────
+if (urlTheme) {
+  const validThemes: ThemeMode[] = ["light", "dark", "system"];
+  const safeTheme = validThemes.includes(urlTheme as ThemeMode)
+    ? (urlTheme as ThemeMode)
+    : "light";
+  localStorage.setItem("theme", safeTheme);
+}
+
+// ── Step 6: Clean URL — always runs unconditionally ────────────────────────
+const cleanedParams = new URLSearchParams(window.location.search);
+['_token', '_auth', 'company_id', 'theme', 'personal_mode'].forEach(p => cleanedParams.delete(p));
+const cleanedUrl =
+  window.location.pathname +
+  (cleanedParams.toString() ? '?' + cleanedParams.toString() : '');
+window.history.replaceState({}, '', cleanedUrl);
+
+// ── Step 7: Handle personal_mode from cookie (no URL param case) ──────────
+const session = readCookie(COOKIE_KEY);
+const isPersonalMode = urlPersonalMode === 'true' || session?.personal_mode === true;
 
 if (isPersonalMode) {
   localStorage.removeItem("company_id");
   if (session?.company_id) {
-    const cleaned = { ...session };
-    delete cleaned.company_id;
-    const value = encodeURIComponent(JSON.stringify(cleaned));
-    if (hostname === "localhost" || hostname.endsWith(".localhost")) {
-      document.cookie = `${COOKIE_KEY}=${value}; path=/; max-age=${maxAge}; SameSite=Lax`;
-    } else if (hostname.endsWith(".orchit.ai")) {
-      document.cookie = `${COOKIE_KEY}=${value}; domain=.orchit.ai; path=/; max-age=${maxAge}; Secure; SameSite=Lax`;
-    }
+    writeAuthCookie({ company_id: null });
   }
-} else if (session?.company_id && localStorage.getItem("company_id")) {
-  localStorage.setItem("company_id", session.company_id);
+} else if (session?.company_id && !urlCompanyId) {
+  localStorage.setItem("company_id", session.company_id as string);
 }
 
+// ── Step 8: Init theme ─────────────────────────────────────────────────────
+initThemeImmediately();
+
+// ── Step 9: Mount ─────────────────────────────────────────────────────────
 const head = createHead();
 const app = createApp(App);
-
-initThemeImmediately();
 
 app.directive("tooltip", vTooltip);
 app.component("Toaster", Toaster);

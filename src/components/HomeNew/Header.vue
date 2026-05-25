@@ -14,11 +14,11 @@
 
           <!-- Navigation (Desktop Only) -->
           <nav class="hidden lg:flex items-center space-x-8">
-            <a href="#product" @click.prevent="scrollTo('product')" class="text-[var(--muted)] hover:text-[var(--text)] transition-colors">Product</a>
-            <a href="#templates" @click.prevent="scrollTo('templates')" class="text-[var(--muted)] hover:text-[var(--text)] transition-colors">Templates</a>
-            <a href="#templates" @click.prevent="scrollTo('templates')" class="text-[var(--muted)] hover:text-[var(--text)] transition-colors">Marketplace</a>
+            <a href="/#product" @click.prevent="scrollTo('product')" class="text-[var(--muted)] hover:text-[var(--text)] transition-colors">Product</a>
+            <a href="/#templates" @click.prevent="scrollTo('templates')" class="text-[var(--muted)] hover:text-[var(--text)] transition-colors">Templates</a>
+            <a href="/#templates" @click.prevent="scrollTo('templates')" class="text-[var(--muted)] hover:text-[var(--text)] transition-colors">Marketplace</a>
             <router-link to="/pricing" class="text-[var(--muted)] hover:text-[var(--text)] transition-colors">Pricing</router-link>
-            <a href="#faq" @click.prevent="scrollTo('faq')" class="text-[var(--muted)] hover:text-[var(--text)] transition-colors">FAQ</a>
+            <a href="/#faq" @click.prevent="scrollTo('faq')" class="text-[var(--muted)] hover:text-[var(--text)] transition-colors">FAQ</a>
             <router-link to="/contact-us" class="text-[var(--muted)] hover:text-[var(--text)] transition-colors">Contact Sales</router-link> 
           </nav>
 
@@ -38,7 +38,7 @@
               </svg>
             </button>
 
-            <router-link to="/login" class="text-[var(--text)] hover:text-[var(--muted)] transition-colors">Log in</router-link>
+            <!-- <router-link to="/login" class="text-[var(--text)] hover:text-[var(--muted)] transition-colors">Log in</router-link> -->
 
             <!-- Get started (Desktop Only) -->
             <button @click="goToRegister" class="hidden cursor-pointer lg:inline-block px-6 py-2 bg-accent text-white rounded-lg hover:bg-accent-hover transition-colors font-medium">
@@ -117,7 +117,7 @@ const toggleSidebar = () => {
 };
 
 function goToRegister(){
-  router.push('/register')
+  router.push('/login')
 }
 
 const scrollTo = async (id: string) => {

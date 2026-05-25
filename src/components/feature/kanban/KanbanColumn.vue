@@ -1,28 +1,80 @@
 <template>
-  <div class="flex bg-bg-body flex-col min-h-[565px] h-full w-full rounded-lg transition-all duration-200"
-    :class="columnBgClass">
+  <div
+    class="flex bg-bg-body flex-col min-h-[565px] h-full w-full rounded-lg transition-all duration-200"
+    :class="columnBgClass"
+  >
     <!-- Column header -->
-    <div class="flex items-center justify-between w-full px-2 py-2.5 border-b border-border cursor-grab">
+    <div
+      class="flex items-center justify-between w-full px-2 py-2.5 border-b border-border cursor-grab"
+    >
       <div class="flex items-center gap-2 flex-auto max-w-4/5">
+        <!-- Avatar -->
+        <div v-if="column.avatar" class="flex-shrink-0">
+          <img
+            v-if="column.avatar.type === 'image'"
+            :src="column.avatar.src"
+            class="w-6 h-6 rounded-full object-cover border border-border shadow-sm"
+            :alt="column.title"
+          />
+          <div
+            v-else
+            class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-semibold border-2 border-bg-card text-text-primary uppercase"
+            :style="{
+              backgroundColor: column.title
+                ? avatarColor({
+                    name: column.title,
+                    _id: column._id,
+                  })
+                : '',
+            }"
+          >
+            {{ column.avatar.initials || getInitials(column.title) }}
+          </div>
+        </div>
+
         <!-- Title: display vs edit -->
-        <button v-if="!isEditingTitle"
-          class="font-semibold text-[14px] overflow-ellipsis line-clamp-1 text-nowrap capitalize  text-foreground px-1 py-0.5 rounded hover:bg-bg-card focus:outline-none focus:ring-1 focus:ring-border cursor-text"
-          @click="beginEdit" @keydown.enter.prevent="beginEdit" title="Click to rename">
+        <button
+          v-if="!isEditingTitle"
+          class="font-semibold text-[14px] overflow-ellipsis line-clamp-1 text-nowrap capitalize text-foreground px-1 py-0.5 rounded hover:bg-bg-card focus:outline-none focus:ring-1 focus:ring-border cursor-text"
+          @click="beginEdit"
+          @keydown.enter.prevent="beginEdit"
+          title="Click to rename"
+        >
           {{ localTitle }}
         </button>
 
-        <input v-else autofocus ref="titleInputRef" v-model="localTitle"
-          class="font-semibold inline  text-[14px] text-foreground px-1 py-0.5 rounded bg-transparent border border-border focus:outline-none focus:ring-1 focus:ring-border"
-          @keydown.enter.prevent="commitTitle" @keydown.esc.prevent="cancelTitle" @blur="commitTitle" @mousedown.stop />
+        <input
+          v-else
+          autofocus
+          ref="titleInputRef"
+          v-model="localTitle"
+          class="font-semibold inline text-[14px] text-foreground px-1 py-0.5 rounded bg-transparent border border-border focus:outline-none focus:ring-1 focus:ring-border"
+          @keydown.enter.prevent="commitTitle"
+          @keydown.esc.prevent="cancelTitle"
+          @blur="commitTitle"
+          @mousedown.stop
+        />
 
         <span
-          class="text-xs bg-muted bg-bg-card aspect-square flex justify-center items-center text-muted-foreground p-1 min-w-6 rounded-full">
+          class="text-xs bg-muted bg-bg-card aspect-square flex justify-center items-center text-muted-foreground p-1 min-w-6 rounded-full"
+        >
           {{ localTickets.length }}
         </span>
       </div>
-      <i class="cursor-pointer fa-solid fa-plus" v-if="plusIcon" @click="emit('onPlus', column)" />
+      <i
+        class="cursor-pointer fa-solid fa-plus"
+        v-if="plusIcon"
+        @click="emit('onPlus', column)"
+      />
 
-      <DropMenu v-if="showActions() && getMenuItems().length > 0 && (canEditVariable || canDeleteVariable)" :items="getMenuItems()">
+      <DropMenu
+        v-if="
+          showActions() &&
+          getMenuItems().length > 0 &&
+          (canEditVariable || canDeleteVariable)
+        "
+        :items="getMenuItems()"
+      >
         <template #trigger>
           <i class="fa-solid fa-ellipsis cursor-pointer"></i>
         </template>
@@ -30,20 +82,31 @@
     </div>
 
     <!-- Tickets list -->
-    <Draggable :disabled="!canDragList" v-model="localTickets" item-key="_id"
-      class="flex-1 p-2 space-y-2 overflow-y-auto" :group="{ name: 'tickets', pull: true, put: true }" :animation="180"
-      :ghost-class="'kanban-ghost'" :chosen-class="'kanban-chosen'" @start="onStart" @end="onEnd"
-      :drag-class="'kanban-dragging'" @change="onTicketsChange">
+    <Draggable
+      :disabled="!canDragList"
+      v-model="localTickets"
+      item-key="_id"
+      class="flex-1 p-2 space-y-2 overflow-y-auto"
+      :group="{ name: 'tickets', pull: true, put: true }"
+      :animation="180"
+      :ghost-class="'kanban-ghost'"
+      :chosen-class="'kanban-chosen'"
+      @start="onStart"
+      @end="onEnd"
+      :drag-class="'kanban-dragging'"
+      @change="onTicketsChange"
+    >
       <template #item="{ element: ticket }">
         <div>
-          <slot name="ticket" :ticket="ticket">
- 
-</slot>
-
+          <slot name="ticket" :ticket="ticket"> </slot>
         </div>
       </template>
       <template #footer>
-        <slot v-if="!localTickets.length" name="emptyState" :column="column"></slot>
+        <slot
+          v-if="!localTickets.length"
+          name="emptyState"
+          :column="column"
+        ></slot>
         <!-- <div v-if="!localTickets.length"
           class="flex items-center justify-center h-32 text-muted-foreground text-sm border border-border text-secondary border-dashed rounded-lg">
           Drop tickets here
@@ -51,122 +114,159 @@
       </template>
     </Draggable>
 
-    <slot name="footer" :column='column'></slot>
-
+    <slot name="footer" :column="column"></slot>
   </div>
-
-
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from 'vue'
-import Draggable from 'vuedraggable'
-import DropMenu from '../../ui/DropMenu.vue'
-import { useWorkspaceStore } from '../../../stores/workspace'
-import { usePermissions } from '../../../composables/usePermissions';
-const {  canDeleteVariable, canEditVariable } = usePermissions();
-type Id = string | number
-export interface Ticket { _id: Id;[k: string]: any }
-export interface Column { _id: Id; title: string; cards: Ticket[]; transitions: any ,showADDNEW?:any}
+import { computed, nextTick, ref, watch } from "vue";
+import Draggable from "vuedraggable";
+import DropMenu from "../../ui/DropMenu.vue";
+import { useWorkspaceStore } from "../../../stores/workspace";
+import { usePermissions } from "../../../composables/usePermissions";
+import { avatarColor } from "../../../utilities/avatarColor";
+import { getInitials } from "../../../utilities";
+const { canDeleteVariable, canEditVariable } = usePermissions();
+type Id = string | number;
+export interface Ticket {
+  _id: Id;
+  [k: string]: any;
+}
+export interface Column {
+  _id: Id;
+  title: string;
+  avatar?: {
+    type: "initials" | "image";
+    initials?: string;
+    src?: string;
+  };
+  cards: Ticket[];
+  transitions: any;
+  showADDNEW?: any;
+}
 
-const props = defineProps<{ 
-  column: Column, 
-  variable_id: string, 
-  sheet_id: string, 
-  canDragList: boolean, 
-  plusIcon: boolean,
-  index?: number,
-  totalColumns?: number
-}>()
+const props = defineProps<{
+  column: Column;
+  variable_id: string;
+  sheet_id: string;
+  canDragList: boolean;
+  plusIcon: boolean;
+  index?: number;
+  totalColumns?: number;
+}>();
 const emit = defineEmits<{
-  (e: 'update:column', payload: { title: string, oldTitle: string }): void
-  (e: 'delete:column', payload: { columnId: Id; title: string }): void
-  (e: 'onPlus', payload: any): void
-  (e: 'reorder', payload: {
-    moved: Ticket
-    fromColumnId: Id
-    toColumnId: Id
-    oldIndex: number | null
-    newIndex: number | null
-  }): void
-  (e: 'select:ticket', payload: Ticket): void
-  (e: 'move:column', payload: { direction: 'left' | 'right', column: Column }): void
-}>()
-const workspaceStore = useWorkspaceStore()
+  (e: "update:column", payload: { title: string; oldTitle: string }): void;
+  (e: "delete:column", payload: { columnId: Id; title: string }): void;
+  (e: "onPlus", payload: any): void;
+  (
+    e: "reorder",
+    payload: {
+      moved: Ticket;
+      fromColumnId: Id;
+      toColumnId: Id;
+      oldIndex: number | null;
+      newIndex: number | null;
+    },
+  ): void;
+  (e: "select:ticket", payload: Ticket): void;
+  (
+    e: "move:column",
+    payload: { direction: "left" | "right"; column: Column },
+  ): void;
+}>();
+const workspaceStore = useWorkspaceStore();
 const onStart = () => {
-  workspaceStore.setTransition({ ...props?.column?.transitions, currentColumn: props.column?.title })
-}
+  workspaceStore.setTransition({
+    ...props?.column?.transitions,
+    currentColumn: props.column?.title,
+  });
+};
 const onEnd = () => {
-  workspaceStore.setTransition({})
-}
+  workspaceStore.setTransition({});
+};
 /** Inline title editing state */
-const isEditingTitle = ref(false)
-const localTitle = ref(props.column.title)
-const titleInputRef = ref<HTMLInputElement | null>(null)
+const isEditingTitle = ref(false);
+const localTitle = ref(props.column.title);
+const titleInputRef = ref<HTMLInputElement | null>(null);
 
-watch(() => props.column.title, (v) => { localTitle.value = v })
+watch(
+  () => props.column.title,
+  (v) => {
+    localTitle.value = v;
+  },
+);
 
 function beginEdit() {
-  if(!canEditVariable.value) return
+  if (!canEditVariable.value) return;
   const isEditable = showActions();
   if (!isEditable) return;
 
-  isEditingTitle.value = true
+  isEditingTitle.value = true;
   nextTick(() => {
     if (titleInputRef.value) {
-      titleInputRef.value.focus()
-      titleInputRef.value.select()
+      titleInputRef.value.focus();
+      titleInputRef.value.select();
     }
-  })
+  });
 }
 
 function commitTitle() {
-  const newTitle = (localTitle.value ?? '').trim() || 'Untitled'
+  const newTitle = (localTitle.value ?? "").trim() || "Untitled";
   if (newTitle !== props.column.title) {
-    emit('update:column', { ...props.column, title: newTitle, oldTitle: props.column.title })
+    emit("update:column", {
+      ...props.column,
+      title: newTitle,
+      oldTitle: props.column.title,
+    });
   } else {
-    localTitle.value = props.column.title
+    localTitle.value = props.column.title;
   }
 
-  isEditingTitle.value = false
+  isEditingTitle.value = false;
 }
 
 function cancelTitle() {
-  localTitle.value = props.column.title
-  isEditingTitle.value = false
+  localTitle.value = props.column.title;
+  isEditingTitle.value = false;
 }
 
 /** Tickets local mirror */
-const localTickets = ref<Ticket[]>([...(props.column.cards ?? [])])
-watch(() => props.column.cards, (v) => { localTickets.value = [...(v ?? [])] })
+const localTickets = ref<Ticket[]>([...(props.column.cards ?? [])]);
+watch(
+  () => props.column.cards,
+  (v) => {
+    localTickets.value = [...(v ?? [])];
+  },
+);
 // watch(localTickets, (v) => { emit('update:column', {...props.column, title:v, oldTitle: props.column.title }) }, { deep: true })
 
 /** Background by id */
 const columnBgMap: Record<string, string> = {
-  backlog: 'bg-column-backlog',
-  todo: 'bg-column-todo',
-  progress: 'bg-column-progress',
-  done: 'bg-column-done',
-}
+  backlog: "bg-column-backlog",
+  todo: "bg-column-todo",
+  progress: "bg-column-progress",
+  done: "bg-column-done",
+};
 const columnBgClass = computed(() => {
-  const key = String(props.column._id)
-  return columnBgMap[key] ?? 'bg-muted/30'
-})
+  const key = String(props.column._id);
+  return columnBgMap[key] ?? "bg-muted/30";
+});
 
 /** Sortable change */
 function onTicketsChange(evt: any) {
-
-  const moved = evt.moved ?? evt.added
-  if (!moved) return
-  emit('reorder', {
+  const moved = evt.moved ?? evt.added;
+  if (!moved) return;
+  emit("reorder", {
     moved: moved.element,
-    fromColumnId: evt.from?.__draggable_component__?.$props?.listOwnerId ?? props.column?.title,
+    fromColumnId:
+      evt.from?.__draggable_component__?.$props?.listOwnerId ??
+      props.column?.title,
     toColumnId: props.column._id,
     oldIndex: moved.oldIndex ?? null,
     newIndex: moved.newIndex ?? null,
-  })
+  });
 }
- function getMenuItems() {
+function getMenuItems() {
   // If the user has no permission to edit or delete, return empty
   if (!canEditVariable.value && !canDeleteVariable.value) return [];
 
@@ -176,9 +276,9 @@ function onTicketsChange(evt: any) {
   if (canEditVariable.value) {
     if (props.index !== undefined && props.index > 0) {
       items.push({
-        label: 'Move left side',
+        label: "Move left side",
         action: () => {
-          emit('move:column', { direction: 'left', column: props.column });
+          emit("move:column", { direction: "left", column: props.column });
         },
       });
     }
@@ -189,9 +289,9 @@ function onTicketsChange(evt: any) {
       props.index < props.totalColumns - 1
     ) {
       items.push({
-        label: 'Move right side',
+        label: "Move right side",
         action: () => {
-          emit('move:column', { direction: 'right', column: props.column });
+          emit("move:column", { direction: "right", column: props.column });
         },
       });
     }
@@ -200,7 +300,7 @@ function onTicketsChange(evt: any) {
   // Delete only if user can delete
   if (canDeleteVariable.value) {
     items.push({
-      label: 'Delete',
+      label: "Delete",
       danger: true,
       action: () => handleDeleteColumn(),
     });
@@ -213,8 +313,8 @@ function showActions() {
   const title = props?.column?.title.trim().toLowerCase();
   if (title)
     switch (title) {
-      case 'admin':
-      return false
+      case "admin":
+        return false;
       // case 'administrator':
       //   return false
       // case 'to do':
@@ -228,11 +328,14 @@ function showActions() {
     }
 }
 const handleDeleteColumn = () => {
-  emit('delete:column', { title: props.column.title, columnId: props.column?._id })
-}
-window.addEventListener('close-all-showADDNEW', () => {
+  emit("delete:column", {
+    title: props.column.title,
+    columnId: props.column?._id,
+  });
+};
+window.addEventListener("close-all-showADDNEW", () => {
   props.column.showADDNEW = false;
-})
+});
 </script>
 
 <style scoped>
@@ -242,7 +345,7 @@ window.addEventListener('close-all-showADDNEW', () => {
 }
 
 .kanban-chosen {
-  outline: 2px dashed rgba(0, 0, 0, .15);
+  outline: 2px dashed rgba(0, 0, 0, 0.15);
 }
 
 .kanban-dragging {

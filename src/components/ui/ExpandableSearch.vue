@@ -11,7 +11,7 @@
     >
       <div
         v-if="isExpanded"
-        class="absolute right-full mr-2 h-8.5 w-64 bg-bg-input border border-bg-input rounded-[6px] flex items-center px-3 shadow-md z-10"
+        class="absolute right-full mr-2 h-8.5 w-64 bg-bg-body border border-bg-input rounded-[6px] flex items-center px-3 shadow-md z-10"
         :class="inputContainerClass"
       >
         <input

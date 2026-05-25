@@ -52,12 +52,9 @@
               {{ form.email }}
             </p>
             <div class="mt-4 flex flex-wrap justify-center sm:justify-start gap-2">
-               <span class="px-3 py-1 bg-accent/10 text-accent text-xs font-bold rounded-full border border-accent/20">
-                 {{ profileData.companies?.role?.title || 'Member' }}
-               </span>
-               <span v-if="profileData.companies?.title" class="px-3 py-1 bg-text-secondary/10 text-text-secondary text-xs font-bold rounded-full border border-border">
-                <i class="fa-solid fa-building text-accent"></i> {{ profileData.companies.title }}
-               </span>
+               <span className="px-3 py-1 bg-accent/10 text-accent text-xs font-bold rounded-full border border-accent/20">
+                {{profileData?.u_work_to_do || 'User' }}
+              </span>
             </div>
           </div>
         </div>
@@ -110,28 +107,6 @@
           </Button>
         </div>
       </Transition>
-
-        <!-- Organization Section -->
-        <section v-if="profileData.companies" class="bg-bg-body/30 p-4 sm:p-8 rounded-2xl border border-border/40">
-          <h4 class="text-lg font-bold text-text-primary mb-6 flex items-center gap-2">
-            <i class="fa-solid fa-building text-accent"></i>
-            Organization Details
-          </h4>
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div class="p-4 bg-bg-card/40 rounded-xl border border-border/50 transition-colors hover:border-accent/30">
-              <p class="text-xs font-bold text-text-secondary uppercase tracking-widest mb-1">Organization</p>
-              <p class="text-sm font-semibold text-text-primary">{{ profileData.companies.title }}</p>
-            </div>
-            <div class="p-4 bg-bg-card/40 rounded-xl border border-border/50 transition-colors hover:border-accent/30">
-              <p class="text-xs font-bold text-text-secondary uppercase tracking-widest mb-1">Company Size</p>
-              <p class="text-sm font-semibold text-text-primary">{{ profileData.companies.company_size }}</p>
-            </div>
-            <div class="p-4 bg-bg-card/40 rounded-xl border border-border/50 transition-colors hover:border-accent/30">
-              <p class="text-xs font-bold text-text-secondary uppercase tracking-widest mb-1">Job Role</p>
-              <p class="text-sm font-semibold text-text-primary">{{ profileData.companies.role?.title }}</p>
-            </div>
-          </div>
-        </section>
       </div>
 
      

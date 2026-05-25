@@ -4,7 +4,7 @@
         isRecording ? 'relative' : ` ${propClass.class} `
     ]">
         <canvas ref="canvasRef" class="w-full h-12 rounded-xl p-3 bg-bg-surface" v-show="isRecording"></canvas>
-        <div v-if="isRecording" class="absolute top-3 left-2 text-xs text-accent ml-2 mt-1">
+        <div v-if="isRecording" class="absolute top-3 left-2 text-xs ml-2 mt-1" :class=" inSpace ? 'text-primary-color' : 'text-accent'">
             {{ Math.floor(recordingTime / 60) }}:{{ (recordingTime % 60).toString().padStart(2, '0') }}
         </div>
 
@@ -14,14 +14,18 @@
         ]">
             <template v-if="isRecording">
                 <div
-                    class="w-8 h-8 aspect-square rounded-lg  cursor-pointer  bg-accent  p-2 flex items-center justify-center ">
+                    class="w-8 h-8 aspect-square rounded-lg  cursor-pointer  p-2 flex items-center justify-center " 
+                    :class=" inSpace ? 'bg-primary-color' : 'bg-accent'"
+                    >
                     <div class="w-2 bg-white h-2 aspect-square"></div>
                 </div>
 
             </template>
             <template v-else>
 
-                <div class="w-8 h-8 aspect-square rounded-lg bg-accent flex justify-center items-center text-center cursor-pointer   ">
+                <div class="w-8 h-8 aspect-square rounded-lg flex justify-center items-center text-center cursor-pointer"
+                :class=" inSpace ? 'bg-primary-color' : 'bg-accent'"
+                >
                     <i  class="text-white fa-solid fa-microphone font-base" > </i>
 
                 </div>
@@ -54,8 +58,12 @@ const emit = defineEmits(['transcribed', 'update:isRecording', 'update:hasAudio'
 const propClass = defineProps({
     class: {
         type: String,
-        default: ''
-    }
+        default: '',
+     },
+    inSpace: {
+       type: Boolean,
+       default: false,
+    },   
 });
 const recordingTime = ref(0);
 let timerInterval: number | null = null;

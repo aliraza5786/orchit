@@ -1,5 +1,5 @@
 <template>
-    <BaseModal v-model="isOpen" modalClass="!py-0" title="Create Ticket" size="lg">
+    <BaseModal :inSpace="true" v-model="isOpen" modalClass="!py-0" title="Create Ticket" size="lg">
         
           
       <h3 class="text-md text-text-secondary p-6">
@@ -31,7 +31,7 @@
                 <label class="text-sm">Start date</label>
                 <div class="border flex items-center border-border h-10 px-2 bg-bg-input rounded-lg"
                     :class="startDateError ? 'border-red-500' : ''">
-                    <DatePicker placeholder="Set start date" class="w-full" :model-value="form.startDate" emit-as="ymd"
+                    <DatePicker :inSpace="true" placeholder="Set start date" class="w-full" :model-value="form.startDate" emit-as="ymd"
                         @update:modelValue="setStartDate" :min-date="today" />
                 </div>
                 <p v-if="startDateError" class="text-xs text-red-500">{{ startDateError }}</p>
@@ -42,7 +42,7 @@
                 <label class="text-sm">End date</label>
                 <div class="border flex items-center border-border h-10 px-2 bg-bg-input rounded-lg"
                     :class="endDateError ? 'border-red-500' : ''">
-                    <DatePicker placeholder="Set end date" class="w-full" :model-value="form.endDate" emit-as="ymd"
+                    <DatePicker :inSpace="true" placeholder="Set end date" class="w-full" :model-value="form.endDate" emit-as="ymd"
                         @update:modelValue="setEndDate" :min-date="form.startDate || today" />
                 </div>
                 <p v-if="endDateError" class="text-xs text-red-500">{{ endDateError }}</p>
@@ -59,14 +59,14 @@
         </div>
 
         <div class="px-6 mt-2">
-            <BaseRichTextEditor label="Description" placeholder="What needs to be done, acceptance criteria, links…"
+            <BaseRichTextEditor :inSpace="true" label="Description" placeholder="What needs to be done, acceptance criteria, links…"
                 @blur="touched.description = true" v-model="form.description" />
         </div>
 
         <!-- Footer -->
         <div class="flex justify-end gap-2 p-6 mt-8 sticky bottom-0 bg-bg-body border-t border-border">
-            <Button variant="secondary" @click="cancel">Cancel</Button>
-            <Button variant="primary" :disabled="!isValid || isSubmitting" @click="create">
+            <Button :inSpace="true" variant="secondary" @click="cancel">Cancel</Button>
+            <Button :inSpace="true" variant="primary" :disabled="!isValid || isSubmitting" @click="create">
                 {{ isSubmitting ? 'Adding…' : 'Add Ticket' }}
             </Button>
         </div>

@@ -1,5 +1,5 @@
 <template>
-    <BaseModal v-model="workspaceStore.showCreateLaneModalWithAI" title="Create a new Tab" size="lg">
+    <BaseModal :inSpace="true" v-model="workspaceStore.showCreateLaneModalWithAI" title="Create a new Tab" size="lg">
        
 
         <!-- Main Content -->
@@ -20,14 +20,14 @@
                         <transition v-if="!description" name="fade-slide" appear>
                             <div class="bottom-5 right-4"
                                 :class="isRecording || audioURL ? 'w-full rounded-full' : 'absolute'">
-                                <AudioRecorder v-model="description" @transcribed="onTranscription"
+                                <AudioRecorder :inSpace="true" v-model="description" @transcribed="onTranscription"
                                     v-model:isRecording="isRecording" v-model:hasAudio="audioURL" />
                             </div>
                         </transition>
 
                         <transition v-else name="rotate-fade" appear>
                             <div @click="handleGenerate"
-                                class="absolute bottom-5 right-4 w-8 h-8 p-1 bg-accent rounded-md flex items-center justify-center shadow"
+                                class="absolute bottom-5 right-4 w-8 h-8 p-1 bg-primary-color rounded-md flex items-center justify-center shadow"
                                 :class="isCreatingLane ? 'animate-pulse-ring cursor-not-allowed' : ' cursor-pointer'">
                                 <i class="text-white fa-solid fa-arrow-right" 
                                 :disabled="isCreatingLane"
@@ -62,7 +62,7 @@
                             description = suggestion.description
                         }
                        }"
-                        class="flex min-w-[160px] h-[110px] items-center flex-[1_0_0] cursor-pointer bg-bg-card/50 border border-border/20 backdrop-blur-sm p-[17px] rounded-xl max-md:h-20 max-md:p-5 max-sm:p-[15px] hover:bg-card/70 hover:border-accent-hover/30 hover:shadow-lg hover:shadow-accent/10 transition-all duration-300 hover-scale">
+                        class="flex min-w-[160px] h-[110px] items-center flex-[1_0_0] cursor-pointer bg-bg-card/50 border border-border/20 backdrop-blur-sm p-[17px] rounded-xl max-md:h-20 max-md:p-5 max-sm:p-[15px] hover:bg-card/70 hover:border-primary-color/30 hover:shadow-lg hover:shadow-primary-color/10 transition-all duration-300 hover-scale">
                         <span
                              class="text-text-secondary line-clamp-3 text-base font-normal leading-5 hover:text-text-primary transition-colors max-md:static max-md:w-auto max-md:h-auto max-sm:text-sm max-sm:leading-[18px]">
                             {{ suggestion.description }}
@@ -78,7 +78,7 @@
             <hr class="flex-auto text-border">
         </div>
         <div class="px-6 mt-5">
-            <Button variant="primary" color="dark" :block="true" @click="createManualHandler">
+            <Button :inSpace="true" variant="primary" color="dark" :block="true" @click="createManualHandler">
                 Create Manually
             </Button>
         </div>

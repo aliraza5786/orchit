@@ -10,13 +10,15 @@
         : workspaceStore.background.startsWith('url') && !isActive
           ? 'text-text-primary bg-bg-card'
           : workspaceStore.background.startsWith('url') && isActive
-            ? 'text-text-primary bg-accent'
+            ? 'text-text-primary bg-primary-color'
             : isActive
               ? 'text-text-primary bg-bg-card '
               : ' text-text-secondary',
       expanded
         ? 'w-[32px] h-[32px] sm:w-full sm:h-[32px] gap-2.5'
-        : ' w-[32px] h-[32px] gap-1.5 ',
+        : isActive
+          ? 'w-auto h-[32px] px-2 gap-1.5 sm:w-[32px] sm:px-2'
+          : ' w-[32px] h-[32px] gap-1.5 ',
     ]"
     ref="itemRef"
   >
@@ -25,9 +27,7 @@
       v-if="isActive"
       class="absolute left-0 top-1/2 -translate-y-1/2 h-[60%] w-[2px] rounded-r-md"
       :style="{
-        backgroundColor:
-          workspaceStore.singleWorkspace?.variables?.['workspace-color'] ||
-          'var(--accent)',
+        backgroundColor: 'var(--primary-color)',
       }"
     ></div>
 
@@ -41,22 +41,28 @@
       v-else
       :class="[
         ...iconClasses,
-        expanded ? 'text-[12px]' : 'text-[12px]',
+        expanded ? 'text-[16px]' : 'text-[16px]',
         isActive ? '' : 'text-text-secondary',
       ]"
       :style="
         isActive
           ? {
-              color:
-                workspaceStore.singleWorkspace?.variables?.[
-                  'workspace-color'
-                ] || 'var(--accent)',
+              color: 'var(--primary-color)',
             }
           : {}
       "
     ></i>
 
-    <!-- Label -->
+    <!-- Mobile active label (shows beside icon when not expanded, only on mobile) -->
+    <span
+      v-if="!expanded && isActive && label"
+      class="sm:hidden block text-[11px] font-semibold leading-tight whitespace-nowrap truncate max-w-[80px]"
+      :style="{ color: 'var(--primary-color)' }"
+    >
+      {{ label.length > 10 ? label.slice(0, 10) + '…' : label }}
+    </span>
+
+    <!-- Label (desktop expanded / mobile active) -->
     <Transition name="sidebar-label">
       <div
         v-if="expanded"

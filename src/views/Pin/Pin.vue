@@ -1,11 +1,12 @@
 <template>
   <div
-    class="flex-auto flex-grow h-full bg-bg-card rounded-[6px] border border-border flex-col flex overflow-hidden"
+    class="flex-auto flex-grow h-full bg-bg-surface  rounded-[6px] border border-border flex-col flex overflow-hidden"
   >
     <!-- Header -->
     <div class="overflow-x-auto shrink-0 border-b border-border">
       <div class="header px-2 py-2 flex items-center justify-between gap-2">
         <Dropdown
+          :inSpace="true"
           v-model="selected_sheet_id"
           :options="transformedData"
           variant="secondary"
@@ -33,16 +34,20 @@
             <button
               ref="variableTriggerRef"
               @click="toggleVariableDropdown"
-              class="flex items-center gap-2 text-nowrap px-3 h-[33px] rounded-md border cursor-pointer bg-bg-card hover:border-accent transition-all text-xs font-semibold relative"
+              class="flex items-center gap-2 text-nowrap px-3 h-[33px] rounded-md border cursor-pointer bg-bg-transparent hover:border-primary-color transition-all text-xs font-semibold relative"
               :class="
                 showVariableDropdown
-                  ? 'border-accent text-accent'
+                  ? 'border-primary-color text-primary-color'
                   : 'border-border text-text-primary'
               "
             >
               <i
                 class="fa-solid fa-layer-group text-[14px]"
-                :class="showVariableDropdown ? 'text-accent' : 'text-accent'"
+                :class="
+                  showVariableDropdown
+                    ? 'text-primary-color'
+                    : 'text-primary-color'
+                "
               ></i>
               <span class="text-nowrap">Group: {{ selectedViewByLabel }}</span>
             </button>
@@ -54,6 +59,7 @@
               :options="variables"
               v-model="selected_view_by"
               :canCreateVariable="canCreateVariable"
+              :hide-assignee="true"
               @close="showVariableDropdown = false"
               @add-new="
                 () => {
@@ -68,16 +74,20 @@
             <button
               ref="groupTriggerRef"
               @click="toggleGroupDropdown"
-              class="flex items-center gap-2 px-3 h-[33px] rounded-md border cursor-pointer bg-bg-card hover:border-accent transition-all text-xs font-semibold relative"
+              class="flex items-center gap-2 px-3 h-[33px] rounded-md border cursor-pointer bg-bg-transparent hover:border-primary-color transition-all text-xs font-semibold relative"
               :class="
                 showGroupDropdown
-                  ? 'border-accent text-accent'
+                  ? 'border-primary-color text-primary-color'
                   : 'border-border text-text-primary'
               "
             >
               <i
                 class="fa-solid fa-layer-group text-[14px]"
-                :class="showGroupDropdown ? 'text-accent' : 'text-accent'"
+                :class="
+                  showGroupDropdown
+                    ? 'text-primary-color'
+                    : 'text-primary-color'
+                "
               ></i>
               <span>Group: {{ selectedGroupLabel }}</span>
             </button>
@@ -104,72 +114,60 @@
           >
           </SearchBar>
           <div
-            class="flex items-center gap-3 bg-bg-surface/50 h-[32px] px-2 rounded-md"
+            class="flex items-center gap-1 bg-bg-surface/50 h-[36px] px-1.5 border-border border rounded-[6px]"
           >
             <button
-              class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
+              class="aspect-square cursor-pointer rounded-sm h-[28px] flex items-center justify-center border border-border outline-0"
               :class="
                 view === 'kanban'
-                  ? 'text-accent bg-accent-text'
-                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
+                  ? 'text-white bg-primary-color'
+                  : 'backdrop-blur-2xl transition-all duration-75 hover:text-primary-color'
               "
               title="Kanban view"
               @click="view = 'kanban'"
             >
-              <i class="fa-solid fa-chart-kanban"></i>
+              <i class="fa-solid fa-chart-kanban text-[14px]"></i>
             </button>
 
             <button
               @click="view = 'table'"
-              class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
+              class="aspect-square cursor-pointer rounded-sm h-[28px] flex items-center justify-center border border-border outline-0"
               :class="
                 view === 'table'
-                  ? 'text-accent bg-accent-text'
-                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
+                  ? 'text-white bg-primary-color'
+                  : 'backdrop-blur-2xl transition-all duration-75 hover:text-primary-color'
               "
               title="List view"
             >
-              <i class="fa-solid fa-align-left"></i>
-            </button>
-            <button
-              @click="view = 'mindmap'"
-              class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
-              :class="
-                view === 'mindmap'
-                  ? 'text-accent bg-accent-text'
-                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
-              "
-              title="MindMap view"
-            >
-              <i class="fa-solid fa-chart-diagram"></i>
+              <i class="fa-solid fa-align-left text-[14px]"></i>
             </button>
 
             <button
-              @click="view = 'calendar'"
-              class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
+              @click="view = 'mindmap'"
+              class="aspect-square cursor-pointer rounded-sm h-[28px] flex items-center justify-center border border-border outline-0"
               :class="
-                view === 'calendar'
-                  ? 'text-accent bg-accent-text'
-                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
+                view === 'mindmap'
+                  ? 'text-white bg-primary-color'
+                  : 'backdrop-blur-2xl transition-all duration-75 hover:text-primary-color'
               "
-              title="Calendar view"
+              title="MindMap view"
             >
-              <i class="fa-regular fa-calendar"></i>
+              <i class="fa-solid fa-chart-diagram text-[14px]"></i>
             </button>
 
             <button
               @click="view = 'gantt'"
-              class="aspect-square cursor-pointer rounded-sm p-0"
+              class="aspect-square cursor-pointer rounded-sm h-[28px] flex items-center justify-center border border-border outline-0"
               :class="
                 view === 'gantt'
-                  ? 'text-accent bg-accent-text'
-                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
+                  ? 'text-white bg-primary-color'
+                  : 'backdrop-blur-2xl transition-all duration-75 hover:text-primary-color'
               "
               title="Gantt Chart view"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                class="h-6 w-6"
+                class="h-5 w-5"
                 viewBox="0 0 24 24"
                 fill="currentColor"
               >
@@ -180,18 +178,31 @@
             </button>
 
             <button
+              @click="view = 'calendar'"
+              class="aspect-square cursor-pointer rounded-sm h-[28px] flex items-center justify-center border border-border outline-0"
+              :class="
+                view === 'calendar'
+                  ? 'text-white bg-primary-color'
+                  : 'backdrop-blur-2xl transition-all duration-75 hover:text-primary-color'
+              "
+              title="Calendar view"
+            >
+              <i class="fa-regular fa-calendar text-[14px]"></i>
+            </button>
+
+            <button
               @click="view = 'timeline'"
-              class="aspect-square cursor-pointer rounded-sm p-0"
+              class="aspect-square cursor-pointer rounded-sm h-[28px] flex items-center justify-center border border-border outline-0"
               :class="
                 view === 'timeline'
-                  ? 'text-accent bg-accent-text'
-                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
+                  ? 'text-white bg-primary-color'
+                  : 'backdrop-blur-2xl transition-all duration-75 hover:text-primary-color'
               "
               title="Timeline view"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                class="h-6 w-6"
+                class="h-5 w-5"
                 viewBox="0 0 24 24"
                 fill="currentColor"
               >
@@ -252,6 +263,7 @@
               Create pins and add your ideas into the related pins.
             </p>
             <Button
+              :inSpace="true"
               :disabled="!canCreateVariable"
               size="sm"
               @click="plusHandler(column)"
@@ -261,7 +273,11 @@
         </template>
       </KanbanBoard>
       <!-- Add List Section -->
-      <div class="min-w-[270px]" v-if="view === 'kanban'" @click.stop>
+      <div
+        class="min-w-[270px]"
+        v-if="view === 'kanban' && isStatusView"
+        @click.stop
+      >
         <div v-if="activeAddList" class="bg-bg-body rounded-lg p-4">
           <BaseTextField
             :autofocus="true"
@@ -274,7 +290,7 @@
             <Button
               @click="emitAddColumn"
               variant="primary"
-              class="px-3 py-1 bg-accent cursor-pointer text-white rounded"
+              class="px-3 py-1 bg-primary-color hover:bg-primary-color cursor-pointer text-white rounded"
             >
               {{ addingList ? "Adding..." : "Add list" }}
             </Button>
@@ -334,7 +350,9 @@
         class="absolute inset-0 z-20 flex items-center justify-center bg-bg-card/60 backdrop-blur-[2px]"
       >
         <div class="flex flex-col items-center gap-3">
-          <i class="fa-solid fa-spinner fa-spin text-accent text-3xl"></i>
+          <i
+            class="fa-solid fa-spinner fa-spin text-primary-color text-3xl"
+          ></i>
           <span class="text-sm font-medium text-text-secondary italic"
             >Mapping your data...</span
           >
@@ -357,20 +375,50 @@
         @create:card="(payload) => handleMindmapCreateCard(payload)"
       />
     </div>
-    <template v-if="view === 'calendar'">
+    <!-- <template v-if="view === 'calendar'">
       <CalendarView :data="filteredBoard" @select:ticket="selectCardHandler" />
-    </template>
+    </template> -->
     <!-- ── Gantt View ──────────────────────────────────────────────────────── -->
-    <template v-if="view === 'gantt'">
+    <!-- <template v-if="view === 'gantt'">
       <GanttChartView
         :data="filteredBoard"
         @select:ticket="selectCardHandler"
       />
-    </template>
+    </template> -->
 
     <!-- ── Timeline View ───────────────────────────────────────────────────── -->
-    <template v-if="view === 'timeline'">
+    <!-- <template v-if="view === 'timeline'">
       <TimelineView :data="filteredBoard" @select:ticket="selectCardHandler" />
+    </template> -->
+
+    <!-- ── Custom Calendar View ─────────────────────────────────────────────── -->
+    <template v-if="view === 'calendar'">
+      <CustomCalendarView
+        :data="timelineData"
+        @select:ticket="selectCardHandler"
+      />
+    </template>
+
+    <!-- ── Gantt View ───────────────────────────────────────────────────────── -->
+    <template v-if="view === 'gantt'">
+      <CustomGanttChart
+        :data="timelineData"
+        :loading="isAddingTicket"
+        @select:ticket="selectCardHandler"
+        @create:ticket="handleCreateTicket"
+        @update:ticket="handleUpdateTicket"
+      />
+    </template>
+
+    <!-- ── Custom Timeline View ─────────────────────────────────────────────── -->
+    <template v-if="view === 'timeline'">
+      <CustomTimelineView
+        :data="timelineData"
+        :loading="isAddingTicket"
+        @select:ticket="selectCardHandler"
+        @create:ticket="handleCreateTicket"
+        @update:ticket="handleUpdateTicket"
+      />
     </template>
 
     <!-- Modals -->
@@ -491,9 +539,10 @@ import { request, toApiMessage } from "../../libs/api";
 import SearchBar from "../../components/ui/SearchBar.vue";
 import PinMindmapView from "../Pin/components/MindMap.vue";
 import TableView from "../../components/feature/TableView/TableView.vue";
-import CalendarView from "../../components/feature/CalendarView.vue";
-import GanttChartView from "../../components/feature/GanttChartView.vue";
-import TimelineView from "../../components/feature/TimelineView.vue";
+// import CalendarView from "../../components/feature/CalendarView.vue";
+// import GanttChartView from "../../components/feature/GanttChartView.vue";
+// import TimelineView from "../../components/feature/TimelineView.vue";
+import { useSidePanelStore } from "../../stores/sidePanelStore";
 import { useAgentStore } from "../../stores/agentStore";
 const TableSearchCell = defineAsyncComponent(
   () => import("../../components/feature/TableView/TableSearchCell.vue"),
@@ -513,7 +562,20 @@ const TableGroupDropdown = defineAsyncComponent(
 const VariableViewDropdown = defineAsyncComponent(
   () => import("../Product/components/VariableViewDropdown.vue"),
 );
-import { updateCardInStructure } from "../../utilities/cacheSync";
+const CustomTimelineView = defineAsyncComponent(
+  () => import("../../components/feature/CustomTimelineView.vue"),
+);
+const CustomGanttChart = defineAsyncComponent(
+  () => import("../../components/feature/CustomGanttChart.vue"),
+);
+const CustomCalendarView = defineAsyncComponent(
+  () => import("../../components/feature/CustomCalendarView.vue"),
+);
+import {
+  updateCardInStructure,
+  performOptimisticUpdate,
+  rollbackOptimisticUpdate,
+} from "../../utilities/cacheSync";
 
 import { usePermissions } from "../../composables/usePermissions";
 import { toast } from "vue-sonner";
@@ -557,6 +619,7 @@ const queryClient = useQueryClient();
 const selectedTicketId = ref("");
 const isDeletingTicket = ref(false);
 const agentStore = useAgentStore();
+const sidePanelStore = useSidePanelStore();
 
 const sheetDropdownRef = ref<any>(null);
 // Variables & Sheets
@@ -586,6 +649,28 @@ watch(viewBy, (val) => (selected_view_by.value = val));
 const storageKey = computed(
   () => `pin_selected_sheets_${workspaceId.value}_${moduleId.value}`,
 );
+
+const isStatusView = computed(() => {
+  if (
+    selected_view_by.value === "owner" ||
+    selected_view_by.value === "assignee"
+  )
+    return false;
+
+  const v = selectedViewByVariable.value;
+  if (!v) return false;
+
+  // Match slug or title
+  const slug = v.slug?.toLowerCase() || "";
+  const title = v.title?.toLowerCase() || "";
+
+  return (
+    slug === "pin-list" ||
+    slug === "status" ||
+    title === "pin list" ||
+    slug === "card-status"
+  );
+});
 
 watch(
   data,
@@ -632,6 +717,29 @@ watch(selected_sheet_id, (newVal) => {
 });
 
 const formattedExtraParams = computed(() => ({}));
+
+const kanbanActiveVariableId = computed(() => {
+  const val = selected_view_by.value;
+  if (val === "owner" || val === "assignee") return "";
+
+  return val;
+});
+
+const kanbanActiveVariableSlug = computed(() => {
+  if (selected_view_by.value === "owner") return "created_by";
+  if (selected_view_by.value === "assignee") return "assigned_to";
+  return "";
+});
+
+const kanbanGroupExtraParams = computed(() => {
+  const base = formattedExtraParams.value || {};
+  const result: any = { ...base, variable_id: kanbanActiveVariableId.value };
+  if (kanbanActiveVariableSlug.value) {
+    result.variable_slug = kanbanActiveVariableSlug.value;
+  }
+  return result;
+});
+
 const {
   data: Lists,
   isPending: isListPending,
@@ -640,8 +748,8 @@ const {
   moduleId,
   selected_sheet_id,
   computed(() => [...workspaceStore.selectedLaneIds]),
-  selected_view_by,
-  formattedExtraParams,
+  kanbanActiveVariableId,
+  kanbanGroupExtraParams,
 );
 
 const toggleVariableDropdown = () => {
@@ -657,10 +765,14 @@ const selectedViewByVariable = computed(() => {
 });
 
 const selectedViewByLabel = computed(() => {
+  if (selected_view_by.value === "owner") return "Owner/Reporter";
+  if (selected_view_by.value === "assignee") return "Assignee";
   return selectedViewByVariable.value?.title || "None";
 });
 
 const selectedGroupLabel = computed(() => {
+  if (selectedGroup.value === "owner") return "Owner/Reporter";
+  if (selectedGroup.value === "assignee") return "Assignee";
   return selectedGroup.value?.title || "None";
 });
 
@@ -673,12 +785,37 @@ const { data: FlatTableData, isPending: isFlatTablePending } = useTableCards(
 );
 
 const tableActiveVariableId = computed(() => {
-  return selectedGroup.value?._id || "";
+  const group = selectedGroup.value;
+  if (!group) return "";
+
+  const groupId = typeof group === "string" ? group : group?._id;
+  if (groupId === "assignee" || groupId === "owner") return "";
+
+  return groupId || "";
+});
+
+// Maps group selections that use variable_slug instead of variable_id
+const tableActiveVariableSlug = computed(() => {
+  const group = selectedGroup.value;
+  const groupId = typeof group === "string" ? group : group?._id;
+
+  if (groupId === "assignee") return "assigned_to";
+  if (groupId === "owner") return "created_by";
+  return "";
 });
 
 // Extra params for the grouped table query
 const tableGroupExtraParams = computed(() => {
-  return formattedExtraParams.value || {};
+  const base = formattedExtraParams.value || {};
+  const result: any = { ...base };
+  if (tableActiveVariableSlug.value) {
+    result.variable_slug = tableActiveVariableSlug.value;
+  }
+  // If we have a regular variable ID, ensure it's in the payload too
+  if (tableActiveVariableId.value) {
+    result.variable_id = tableActiveVariableId.value;
+  }
+  return result;
 });
 
 const { data: TableGroupedLists, isPending: isTablePending } = useSheetList(
@@ -729,12 +866,15 @@ async function openPanelFromRoute() {
 }
 
 const { data: lanes } = useLanes(workspaceId);
-const laneOptions = computed<any[]>(() =>
-  (lanes?.value ?? []).map((el: any) => ({
+const laneOptions = computed<any[]>(() => {
+  const mainOption = { _id: "Main", title: "Main" };
+  const dynamicOptions = (lanes?.value ?? []).map((el: any) => ({
+    ...el,
     _id: el._id,
     title: el?.variables?.["lane-title"] ?? String(el._id),
-  })),
-);
+  }));
+  return [mainOption, ...dynamicOptions];
+});
 
 // Add List Logic
 const { mutate: addList, isPending: addingList } = useAddList({
@@ -829,6 +969,7 @@ function onReorder(a: any) {
 function handleBoardUpdate(_: any) {}
 
 function selectCardHandler(card: any) {
+  selectedTicketId.value = card?._id;
   selectedCard.value = card;
 
   // Clean up card_id query param if present
@@ -1127,6 +1268,33 @@ const filteredBoard = computed(() => {
   });
 });
 
+const timelineData = computed(() => {
+  return filteredBoard.value.map((column: any) => {
+    return {
+      ...column,
+      cards: column.cards?.map((card: any) => {
+        let start = card.variables?.["start-date"] || card["start-date"];
+        let end = card.variables?.["end-date"] || card["end-date"];
+
+        if (!start) {
+          start = card.createdAt || new Date().toISOString();
+        }
+        if (!end) {
+          const startDate = new Date(start);
+          startDate.setDate(startDate.getDate() + 2);
+          end = startDate.toISOString();
+        }
+
+        return {
+          ...card,
+          "start-date": start,
+          "end-date": end,
+        };
+      }),
+    };
+  });
+});
+
 const tableRows = computed(() => {
   const query = debouncedQuery.value?.trim();
   const allCards = flattenSheetListCards(FlatTableData.value);
@@ -1259,7 +1427,7 @@ const columns = computed(() => {
           h("div", { class: "flex-1 min-w-0" }, [
             h("input", {
               class:
-                "text-[12px] w-full overflow-ellipsis capitalize p-1 focus:border border-accent/60 rounded-sm focus:outline-none focus:ring-1 focus:ring-accent bg-transparent focus:bg-bg-body h-8",
+                "text-[12px] w-full overflow-ellipsis capitalize p-1 focus:border border-primary-color/60 rounded-sm focus:outline-none focus:ring-1 focus:ring-primary-color bg-transparent focus:bg-bg-body h-8",
               value: row["card-title"] || value,
               placeholder: "Enter title...",
               disabled: !canEditCard.value,
@@ -1294,12 +1462,12 @@ const columns = computed(() => {
             row.workspace_lane_id ||
             value?._id ||
             value ||
-            null,
+            "Main",
           "onUpdate:modelValue": (val: any) => setLane(row, val),
           displayField: "title",
           disabled: !canEditCard.value,
-          placeholder: "Select lane",
-          emptyText: "Lane",
+          placeholder: "Select tab",
+          emptyText: "Tab",
         }),
     },
     {
@@ -1382,6 +1550,7 @@ function handleTableRowsUpdate(newRows: any[]) {
 
 function setLane(row: any, laneId: string) {
   if (row._id) {
+    if (laneId === "Main") return;
     moveCard.mutate({ card_id: row._id, workspace_lane_id: laneId });
     // Update local state optimistically
     const newLane = laneOptions.value.find((l: any) => l._id === laneId);
@@ -1561,6 +1730,30 @@ const { mutate: addTicket, isPending: isAddingTicket } = useAddTicket({
   },
 });
 
+function handleUpdateTicket(task: any) {
+  const id = task?._id;
+  if (!id) return;
+
+  const updates: Record<string, any> = {};
+  if (task._start) updates["start-date"] = task._start;
+  if (task._end) updates["end-date"] = task._end;
+
+  if (Object.keys(updates).length > 0) {
+    const snapshots = performOptimisticUpdate({
+      queryClient,
+      sidePanelStore,
+      cardId: id,
+      updates: updates,
+      invalidateKeys: ["sheet-list", "table-cards-flat"],
+    });
+
+    moveCard.mutate(
+      { card_id: id, variables: updates },
+      { onError: () => rollbackOptimisticUpdate(queryClient, snapshots) },
+    );
+  }
+}
+
 function handleCreateTicket(newRow: any) {
   // Fill default owner
   if (authStore.user?.data) {
@@ -1578,7 +1771,7 @@ function handleQuickCreate(title: string, group: any) {
 
   const variableKey = selectedGroup.value?.slug;
   const label = selectedGroupLabel.value?.toLowerCase();
-  const laneId = laneOptions.value?.[0]?._id || "";
+  // const laneId = laneOptions.value?.[0]?._id || "";
 
   // Build variables object dynamically
   const variablesObj: Record<string, any> = {
@@ -1589,7 +1782,7 @@ function handleQuickCreate(title: string, group: any) {
 
   const payload: any = {
     "card-title": title,
-    workspace_lane_id: laneId,
+    // workspace_lane_id: laneId,
     variables: variablesObj,
   };
 
@@ -1640,5 +1833,8 @@ function handleMindmapCreateCard(payload: any) {
 .custom_scroll_bar {
   scrollbar-width: thin;
   scrollbar-color: rgba(150, 150, 150, 0.5) transparent !important;
+}
+ .node-card-stripe{
+  background: var(--primary-color) !important;
 }
 </style>

@@ -1,5 +1,5 @@
 <template>
-    <BaseModal v-model="workspaceStore.showUpdateLaneModal" modalClass="!py-0" title="Update Tab" size="lg">
+    <BaseModal :inSpace="true"  v-model="workspaceStore.showUpdateLaneModal" modalClass="!py-0" title="Update Tab" size="lg">
        
 
         <div class="pt-6"> 
@@ -61,10 +61,10 @@
             <!-- Footer -->
             <div
                 class="flex backdrop-blur-3xl justify-end mt-8 sticky bottom-0 dark:bg-light-black gap-2 p-6 border-t border-border">
-                <Button variant="secondary" @click="prevStep">
+                <Button :inSpace="true"  variant="secondary" @click="prevStep">
                     {{ currentStep === 0 ? 'Cancel' : 'Back' }}
                 </Button>
-                <Button variant="primary" @click="nextStep">
+                <Button :inSpace="true"  variant="primary" @click="nextStep">
                     {{ isLaneUpdateing ? 'Updating...' : 'Update' }}
                 </Button>
             </div>

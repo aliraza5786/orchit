@@ -27,7 +27,7 @@
         <button
           :disabled="!canCreateCard"
           @click="$emit('open-create-ticket')"
-          class="relative inline-flex items-center justify-center font-medium py-1.5 px-3 text-sm rounded-md focus:outline-none transition h-[34px] bg-accent text-white hover:bg-accent-hover border-border-input border"
+          class="relative inline-flex items-center justify-center font-medium py-1.5 px-3 text-sm rounded-md focus:outline-none transition h-[34px] bg-primary-color text-white hover:bg-primary-hover border-border-input border"
           :class="canCreateCard ? 'cursor-pointer' : 'cursor-not-allowed'"
         >
           Create Ticket
@@ -45,7 +45,7 @@
            <div
                 role="status"
                 aria-label="Loading"
-                class="h-10 w-10 rounded-full border-4 border-accent border-t-transparent animate-spin"
+                class="h-10 w-10 rounded-full border-4 border-primary-color border-t-transparent animate-spin"
               ></div>
           </div>
 
@@ -59,9 +59,9 @@
                 'flex items-center gap-3 p-[8px] cursor-pointer transition-colors rounded-[8px]',
                 selectedBacklogIds.includes(ticket.id)
                   ? 'border-2 border-[#5a2d7f]'
-                  : 'border border-border-input',
+                  : 'border border-border',
                 isDark
-                  ? 'bg-bg-body hover:bg-bg-surface'
+                  ? 'bg-bg-body hover:bg-bg-card'
                   : 'bg-bg-charcoal hover:bg-bg-body',
               ]"
               @dragstart="onDragStart($event, ticket, 'backlog')"
@@ -137,6 +137,7 @@
       <!-- Pagination -->
        <div class="overflow-x-auto overflow-y-hidden">
         <Pagination
+           :inSpace="true"
            v-if="backlogResp?.pagination?.pages > 1"
            :current-page="page"
            :last-page="backlogResp?.pagination?.pages"

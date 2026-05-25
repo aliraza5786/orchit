@@ -3,6 +3,13 @@ import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 
 export type ThemeMode = "light" | "dark" | "system";
 export function initThemeImmediately() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const themeParam = urlParams.get("theme") as ThemeMode | null;
+
+  if (themeParam && ["light", "dark", "system"].includes(themeParam)) {
+    localStorage.setItem(STORAGE_KEY, themeParam);
+  }
+
   const saved = localStorage.getItem(STORAGE_KEY) as ThemeMode | null;
 
   const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -31,7 +38,6 @@ const LIGHT_VARS: Record<string, string> = {
   "--card": "#ffffff",
   "--text": "#0f172a",
   "--muted": "#6b7280",
-  "--border": "#e5e7eb",
   "--background": "#ffffff",
 };
 
@@ -41,7 +47,6 @@ const DARK_VARS: Record<string, string> = {
   "--card": "#12151d",
   "--text": "#e5e7eb",
   "--muted": "#9ca3af",
-  "--border": "#303948",
   "--background": "#1b1b1b",
 };
 
@@ -150,7 +155,7 @@ export function useTheme() {
       }
 
       // 2) Apply theme
-      // applyTheme();
+      applyTheme();
 
       // 3) Setup system preference listeners
       mql = window.matchMedia("(prefers-color-scheme: dark)");
@@ -163,15 +168,6 @@ export function useTheme() {
       applyTheme();
     }
   });
-onMounted(() => {
-  mountedCount++;
-  if (mountedCount === 1) {
-    mql = window.matchMedia("(prefers-color-scheme: dark)");
-    systemPrefersDark.value = mql.matches;
-    mql.addEventListener("change", onSystemChange);
-    window.addEventListener("storage", onStorage);
-  }
-});
 
   onBeforeUnmount(() => {
     mountedCount--;

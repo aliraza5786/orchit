@@ -131,7 +131,7 @@ const closeMenu = () => {
 }
 
 const handleGetStarted = () => {
-    router.push('/register');
+    router.push('/login');
 };
 </script>
 

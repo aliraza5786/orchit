@@ -34,14 +34,14 @@
     <div class="max-w-82 p-2 bg-bg-body rounded-md mx-2">
       <div
         @click="router.push(`/`)"
-        class="bg-bg-card rounded-lg p-4 shadow-sm cursor-pointer hover:shadow-md transition-all duration-200 border border-border hover:border-accent"
+        class="bg-bg-card rounded-lg p-4 shadow-sm cursor-pointer hover:shadow-md transition-all duration-200 border border-border hover:border-primary-color"
       >
         <div class="flex justify-between gap-2 items-start">
           <div class="flex items-start gap-3 flex-1">
             <div
-              class="w-10 h-10 bg-accent/20 flex justify-center items-center rounded-lg"
+              class="w-10 h-10 bg-primary-color/20 flex justify-center items-center rounded-lg"
             >
-              <i class="fa-solid fa-diagram-project text-accent"></i>
+              <i class="fa-solid fa-diagram-project text-primary-color"></i>
             </div>
             <div class="flex-1 min-w-0">
               <h3
@@ -93,7 +93,7 @@
           <Button
             @click="emitAddColumn"
             variant="primary"
-            class="px-3 py-1 bg-accent cursor-pointer text-white rounded"
+            class="px-3 py-1 bg-primary-color cursor-pointer text-white rounded"
           >
             {{ addingList ? "Adding..." : "Add Column" }}
           </Button>
@@ -104,7 +104,7 @@
         </div>
       </div>
       <!-- <button v-else
-          class="text-sm text-white py-2.5 cursor-pointer font-medium flex items-center justify-center w-full gap-2 bg-accent rounded-lg"
+          class="text-sm text-white py-2.5 cursor-pointer font-medium flex items-center justify-center w-full gap-2 bg-primary-color rounded-lg"
           @click.stop="setActiveAddList">
           + Add Column
         </button> -->

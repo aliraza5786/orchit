@@ -17,20 +17,26 @@
   /* colors */
   --text-primary: #2b2c30;
   --text-secondary: #6b6b6e;
-  --border: #d9d9d9;
-  --bg-body: #f3f4f6;
-  --bg-surface: #dedfe3; /* table headers, panels */
+  --border: #d9d9d996;
+  --bg-body: #f4f4f4;
+  --bg-surface: #fefeff; /* table headers, panels */
   --bg-card: #ffffff;
   --accent: #7d68c8;
   --accent-hover: #6e3b96;
   --accent-text: #ffffff;
   --sidebar-primary: 224.3 76.3% 48%;
   --bg-charcoal: #fff;
+  --danger: #ef4444;
+  --danger-bg: rgba(239, 68, 68, 0.06);
+  --danger-border: rgba(239, 68, 68, 0.25);
+  /* Theme Colors */
+  --primary-color: var(--accent);
+  --secondary-color: var(--accent-hover);
 
   /* Dropdowns & Inputs */
   --bg-input: #ffffff; /* input & dropdown background */
   --border-input: #d9d9d9; /* input borders */
-  --bg-dropdown: #ffffff; /* dropdown menus */
+  --bg-dropdown: #f4f4f4; /* dropdown menus */
   /* Use brand hue plus complimentary neon accents */
   --glow-brand: var(--sidebar-primary);
   --glow-2: 190 95% 62%; /* cyan */
@@ -47,22 +53,29 @@ html.theme-switching * {
 [data-theme="dark"] {
   --text-primary: #f5f5f5;
   --text-secondary: #b0b0b0;
-  --border: #3e3e42;
-  --bg-body: #0d0d0d;
-  --bg-surface: #1a1a1a; /* table headers, panels */
-  --bg-card: #2b2c30;
+  --border: #3b3a3a;
+  --bg-body: #1f1f1e;
+  --bg-surface: #2c2c2b; /* table headers, panels */
+  --bg-card: #2c2c2b;
   --sidebar-primary: 224.3 76.3% 48%;
   --small-color: #82cfff;
   --bg-charcoal: #2a2a2c;
   --bg-lavender: #27272a;
 
-  --accent: #9356c5;
+  --accent: #9356c5;  
   --accent-hover: #6e3b96;
   --accent-text: #ffffff;
+   --danger: #f87171;
+--danger-bg: rgba(239, 68, 68, 0.1);
+--danger-border: rgba(239, 68, 68, 0.2);
+  /* Theme Colors */
+  --primary-color: var(--accent);
+  --secondary-color: var(--accent-hover);
+
   /* Dropdowns & Inputs */
-  --bg-input: #1a1a1a; /* dark input backgrounds */
-  --border-input: #3e3e42; /* input borders */
-  --bg-dropdown: #2b2c30; /* dropdown menus */
+  --bg-input: #383838; /* dark input backgrounds */
+  --border-input: #1d222c; /* input borders */
+  --bg-dropdown: #1f1f1e; /* dropdown menus */
   /* Use brand hue plus complimentary neon accents */
   --glow-brand: var(--sidebar-primary);
   --glow-2: 190 95% 62%; /* cyan */
@@ -82,11 +95,15 @@ html.theme-switching * {
   --color-accent: var(--accent);
   --color-accent-hover: var(--accent-hover);
   --color-accent-text: var(--accent-text);
+  /* Theme Colors */
+  --color-primary-color: var(--primary-color);
+  --color-secondary-color: var(--secondary-color);
+
   /* Dropdowns & Inputs */
   --color-bg-input: var(--bg-input); /* input & dropdown background */
   --color-border-input: var(--border-input); /* input borders */
-  --color-bg-dropdown: var(--bg-input); /* dropdown menus */
-  --color-bg-dropdown-menu-hover: var(--bg-body); /* dropdown menus */
+  --color-bg-dropdown: var(--bg-dropdown); /* dropdown menus */
+  --color-bg-dropdown-menu-hover: var(--bg-card); /* dropdown menus */
   --color-sky: var(--small-color);
   --font-sans: "Inter", sans-serif;
   --font-manrope: "Manrope", sans-serif;
@@ -266,15 +283,16 @@ input:-webkit-autofill:active {
   color: rgb(48, 41, 246);
   text-decoration: underline;
 }
-/* Hide scrollbars everywhere EXCEPT home page */
-body:not(.home-page) *:not(.mobile-scroll-visible)::-webkit-scrollbar {
+/* Hide scrollbars everywhere EXCEPT home page and where explicitly enabled */
+body:not(.home-page) *:not(.scrollbar-visible)::-webkit-scrollbar {
   display: none;
 }
 
-body:not(.home-page) * {
+body:not(.home-page) *:not(.scrollbar-visible) {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
 .home-page *::-webkit-scrollbar {
   width: 8px;
 }
@@ -413,31 +431,25 @@ body:not(.home-page) * {
   stroke-width: 3 !important;
 }
 
-/* -------- Mobile Scroll Visibility -------- */y
-.mobile-scroll-visible {
-  overflow: auto;
-}
-body .mobile-scroll-visible::-webkit-scrollbar {
+/* -------- Global visible scrollbar Utility -------- */
+.scrollbar-visible::-webkit-scrollbar {
   display: block !important;
-  height: 6px !important;
-  width: 6px !important;
+  width: 6px;
+  height: 6px;
 }
-
-body .mobile-scroll-visible::-webkit-scrollbar-track {
-  background: var(--bg-surface) !important;
-  border-radius: 4px;
+.scrollbar-visible::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 8px;
 }
-
-body .mobile-scroll-visible::-webkit-scrollbar-thumb {
-  background-color: red !important;   
-  border-radius: 4px; 
+.scrollbar-visible::-webkit-scrollbar-thumb {
+  background-color: rgba(150, 150, 150, 0.35);
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
 }
-
-body .mobile-scroll-visible::-webkit-scrollbar-thumb:hover {
-  background-color: var(--text-secondary) !important;
+.scrollbar-visible::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(150, 150, 150, 0.6);
 }
-
-body .mobile-scroll-visible {
-  scrollbar-width: auto !important;
-  scrollbar-color: var(--border) var(--bg-surface) !important;
+.scrollbar-visible {
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(150, 150, 150, 0.4) transparent !important;
 }

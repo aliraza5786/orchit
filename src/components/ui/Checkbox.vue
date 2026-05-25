@@ -13,7 +13,7 @@
             'flex mt-0.5 items-center justify-center border transition-colors duration-200',
             'w-4 min-w-4 h-4 min-h-4',
             ' rounded-[3px] border-orchit-white/10 D5D7DA] ',
-            checked ? 'bg-accent border-accent' : 'bg-bg-card'
+            checked ? (inSpace? 'bg-primary-color border-primary-color': 'bg-accent border-accent' ) : 'bg-bg-card'
         ]">
             <img v-if="checked" :src="tick" alt="check" class="w-3 transition-opacity duration-150" />
         </div>
@@ -36,6 +36,7 @@ defineProps<{
     id?: string
     disabled?: boolean
     className?: string
+    inSpace?: boolean
 }>()
 
 defineEmits<{

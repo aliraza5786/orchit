@@ -22,7 +22,7 @@
               v-model="searchQuery"
               type="text" 
               placeholder="Search variables"
-              class="w-full bg-bg-input border border-border rounded-md pl-9 pr-4 py-1.5 text-xs focus:ring-1 focus:ring-accent outline-none transition-all placeholder:text-text-secondary/50"
+              class="w-full bg-bg-input border border-border rounded-md pl-9 pr-4 py-1.5 text-xs focus:ring-1 focus:ring-primary-color outline-none transition-all placeholder:text-text-secondary/50"
               ref="searchInput"
             />
           </div>
@@ -40,10 +40,10 @@
               @mouseenter="handleMouseEnter(recentOption, 'recent-')"
               @mouseleave="handleItemLeave"
               class="px-3 py-2 flex items-center justify-between cursor-pointer transition-colors group relative"
-              :class="modelValue === recentOption?._id ? 'bg-accent/10 text-accent font-semibold' : 'hover:bg-bg-body text-text-primary'"
+              :class="modelValue === recentOption?._id ? 'bg-primary-color/10 text-primary-color font-semibold' : 'hover:bg-bg-body text-text-primary'"
             >
               <div class="flex items-center gap-2 min-w-0">
-                 <i v-if="recentOption.icon" :class="[recentOption.icon.prefix, recentOption.icon.iconName]" class="text-accent text-[14px]"></i>
+                 <i v-if="recentOption.icon" :class="[recentOption.icon.prefix, recentOption.icon.iconName]" class="text-primary-color text-[14px]"></i>
                  <span class="text-xs truncate">{{ recentOption.title }}</span>
               </div>
               
@@ -66,10 +66,10 @@
             @mouseenter="handleMouseEnter(option)"
             @mouseleave="handleItemLeave"
             class="px-3 py-2 flex items-center justify-between cursor-pointer transition-colors group relative"
-            :class="modelValue === option._id ? 'bg-accent/10 text-accent font-semibold' : 'hover:bg-bg-body text-text-primary'"
+            :class="modelValue === option._id ? 'bg-primary-color/10 text-primary-color font-semibold' : 'hover:bg-bg-card text-text-primary'"
           >
             <div class="flex items-center gap-2 min-w-0">
-               <i v-if="option.icon" :class="[option.icon.prefix, option.icon.iconName]" class="text-accent text-[14px]"></i>
+               <i v-if="option.icon" :class="[option.icon.prefix, option.icon.iconName]" class="text-primary-color text-[14px]"></i>
                <span class="text-xs truncate">{{ option.title }}</span>
             </div>
 
@@ -140,6 +140,7 @@ const props = defineProps<{
   modelValue: string;
   options: Option[];
   canCreateVariable?: boolean;
+  hideAssignee?: boolean;
 }>();
 
 const emit = defineEmits(['update:modelValue', 'close', 'nested-select', 'add-new']);
@@ -167,21 +168,33 @@ let cleanupNested: (() => void) | null = null;
 
 const recentId = ref(localStorage.getItem('last_selected_view_by') || '');
 
+const staticOptions: Option[] = [
+  { _id: 'assignee', title: 'Assignee' },
+  { _id: 'owner', title: 'Owner/Reporter' },
+];
+
+const allOptions = computed(() => {
+  const filteredStatic = props.hideAssignee 
+    ? staticOptions.filter(o => o._id !== 'assignee')
+    : staticOptions;
+  return [...filteredStatic, ...props.options];
+});
+
 const recentOption = computed(() => {
   if (!recentId.value) return null;
-  return props.options.find(o => o._id === recentId.value);
+  return allOptions.value.find(o => o._id === recentId.value);
 });
 
 const filteredOptions = computed(() => {
   const q = searchQuery.value.toLowerCase();
 
-  return props.options.filter(o => {
+  return allOptions.value.filter(o => {
     const matchesSearch = o.title.toLowerCase().includes(q);
 
     // ❌  hide if is_checkbox_table === true
     const isHidden = o.is_checkbox_table === true;
 
-    return matchesSearch && !isHidden;
+    return matchesSearch && !isHidden && o._id !== recentId.value;
   });
 });
 

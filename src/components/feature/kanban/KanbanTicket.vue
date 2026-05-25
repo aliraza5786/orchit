@@ -11,7 +11,7 @@
                     {{ ticket['card-type'] && ticket['card-type'] !== '' ? ticket['card-type'] : 'General' }}
                 </span>
                 <span v-if="localStatus && selectedVarSlug[0]?.slug != 'card-status'"
-                    class="text-[10px] px-2 py-1 h-6 rounded bg-accent/20 text-accent font-medium capitalize">
+                    class="text-[10px] px-2 py-1 h-6 rounded bg-primary-color/20 text-primary-color font-medium capitalize">
                     {{ localStatus }}
                 </span>
             </div>
@@ -39,14 +39,14 @@
 
         <div v-if="!footer" class="flex justify-between items-center mt-3 pt-3 border-t border-border/50">
             <div class="flex items-center gap-3 flex-1">
-                <div v-if="canAssignCard || canViewCard ">
-                    <AssigmentDropdown :users="members" @assign="assignHandle" :assigneeId="ticket.seat_id"
+                <div @click.stop>
+                    <AssigmentDropdown :disabled="!canAssignCard" :users="members" @assign="assignHandle" :assigneeId="ticket.seat_id"
                         :seat="ticket?.seats" />
                 </div>
 
                 <div @click.stop
                     class="flex items-center gap-2 text-nowrap overflow-ellipsis text-xs text-text-secondary">
-                    <DatePicker placeholder="end date" :model-value="dueDate" theme="dark" emit-as="ymd"
+                    <DatePicker :disabled="!canEditCard" :inSpace="true" placeholder="end date" :model-value="dueDate" theme="dark" emit-as="ymd"
                         @update:modelValue="setDueDate" />
                 </div>
             </div>
@@ -98,7 +98,7 @@ import { useRouteIds } from '../../../composables/useQueryParams'
 
 import { usePermissions } from '../../../composables/usePermissions'
 import { toast } from 'vue-sonner'
-const { canDeleteCard,  canAssignCard, canViewCard, canEditCard } = usePermissions()
+const { canDeleteCard,  canAssignCard, canEditCard } = usePermissions()
 
 const { workspaceId } = useRouteIds();
 const { data: members } = useWorkspacesRoles(workspaceId.value);

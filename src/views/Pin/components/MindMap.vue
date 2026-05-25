@@ -54,7 +54,7 @@
               <path
                 d="M2 1L8 5L2 9"
                 fill="none"
-                stroke="#6e3b96"
+                stroke="var(--primary-color, var(--primary-color))"
                 stroke-width="1.5"
                 stroke-linecap="round"
                 stroke-linejoin="round"
@@ -487,7 +487,7 @@
             >
               <i
                 class="fa-solid fa-layer-group ctx-item-icon"
-                style="color: #7d68c8"
+                style="color: var(--primary-color)"
               ></i>
               <span>{{
                 isCollapsed(ctxMenu.nodeId) ? "Expand" : "Collapse"
@@ -545,7 +545,7 @@
               :class="
                 selectedNodeId ? 'fa-solid fa-sliders' : 'fa-solid fa-palette'
               "
-              style="color: var(--accent, #6e3b96)"
+              style="color: var(--primary-color, var(--primary-color))"
             ></i>
             <span>{{ selectedNodeId ? "Format Node" : "Map Theme" }}</span>
           </div>
@@ -1196,11 +1196,29 @@ const THEMES: MapTheme[] = [
   {
     id: "default",
     name: "Default",
-    bg: "#dedfe3",
-    nodeColors: { root: "#f1eeff", sheet: "#ede9fb", list: "#f3f4f6", card: "#ffffff" },
-    edgeColor: "#7D68C8",
-    textColor: "#2b2c30",
+    bg: "var(--bg-body)",
+    nodeColors: {
+      root: "var(--primary-color)",
+      sheet: "var(--bg-surface)",
+      list: "var(--bg-card)",
+      card: "var(--bg-card)",
+    },
+    edgeColor: "var(--primary-color)",
+    textColor: "var(--text-primary)",
   },
+  // {
+  //   id: "default",
+  //   name: "Default",
+  //   bg: "#dedfe3",
+  //   nodeColors: {
+  //     root: "#f1eeff",
+  //     sheet: "#ede9fb",
+  //     list: "#f3f4f6",
+  //     card: "#ffffff",
+  //   },
+  //   edgeColor: "#7D68C8",
+  //   textColor: "#2b2c30",
+  // },
   {
     id: "ocean",
     name: "Ocean",
@@ -1395,7 +1413,7 @@ const BG_COLORS = [
 ];
 
 const activeThemeId = ref("default");
-const activeCanvasBg = ref("#dedfe3");
+const activeCanvasBg = ref("var(--bg-body)");
 const recentlyUsedColors = ref<string[]>([]);
 const customBgColor = ref("#dedfe3");
 const savedThemeDocId = ref<string | null>(null);
@@ -1536,86 +1554,86 @@ const LAYOUT_GROUPS = [
         id: "right",
         name: "Right",
         svg: `<g>
-          <rect x="4" y="18" width="14" height="8" rx="2" fill="#f1eeff" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="32" y="6" width="22" height="7" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="32" y="18" width="22" height="7" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="32" y="30" width="22" height="7" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <path d="M18 22 C25 22 25 9 32 9" fill="none" stroke="#7D68C8" stroke-width="1"/>
-          <path d="M18 22 C25 22 25 21 32 21" fill="none" stroke="#7D68C8" stroke-width="1"/>
-          <path d="M18 22 C25 22 25 33 32 33" fill="none" stroke="#7D68C8" stroke-width="1"/>
+          <rect x="4" y="18" width="14" height="8" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="32" y="6" width="22" height="7" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="32" y="18" width="22" height="7" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="32" y="30" width="22" height="7" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <path d="M18 22 C25 22 25 9 32 9" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
+          <path d="M18 22 C25 22 25 21 32 21" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
+          <path d="M18 22 C25 22 25 33 32 33" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
         </g>`,
       },
       {
         id: "left",
         name: "Left",
         svg: `<g>
-          <rect x="42" y="18" width="14" height="8" rx="2" fill="#f1eeff" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="6" y="6" width="22" height="7" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="6" y="18" width="22" height="7" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="6" y="30" width="22" height="7" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <path d="M42 22 C35 22 35 9 28 9" fill="none" stroke="#7D68C8" stroke-width="1"/>
-          <path d="M42 22 C35 22 35 21 28 21" fill="none" stroke="#7D68C8" stroke-width="1"/>
-          <path d="M42 22 C35 22 35 33 28 33" fill="none" stroke="#7D68C8" stroke-width="1"/>
+          <rect x="42" y="18" width="14" height="8" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="6" y="6" width="22" height="7" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="6" y="18" width="22" height="7" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="6" y="30" width="22" height="7" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <path d="M42 22 C35 22 35 9 28 9" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
+          <path d="M42 22 C35 22 35 21 28 21" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
+          <path d="M42 22 C35 22 35 33 28 33" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
         </g>`,
       },
       {
         id: "center",
         name: "Centered",
         svg: `<g>
-          <rect x="23" y="18" width="14" height="8" rx="2" fill="#f1eeff" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="2" y="6" width="16" height="6" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="2" y="18" width="16" height="6" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="2" y="31" width="16" height="6" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="42" y="6" width="16" height="6" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="42" y="18" width="16" height="6" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="42" y="31" width="16" height="6" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <path d="M23 22 C15 22 15 9 18 9" fill="none" stroke="#7D68C8" stroke-width="1"/>
-          <path d="M23 22 C15 22 15 21 18 21" fill="none" stroke="#7D68C8" stroke-width="1"/>
-          <path d="M23 22 C15 22 15 34 18 34" fill="none" stroke="#7D68C8" stroke-width="1"/>
-          <path d="M37 22 C45 22 45 9 42 9" fill="none" stroke="#7D68C8" stroke-width="1"/>
-          <path d="M37 22 C45 22 45 21 42 21" fill="none" stroke="#7D68C8" stroke-width="1"/>
-          <path d="M37 22 C45 22 45 34 42 34" fill="none" stroke="#7D68C8" stroke-width="1"/>
+          <rect x="23" y="18" width="14" height="8" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="2" y="6" width="16" height="6" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="2" y="18" width="16" height="6" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="2" y="31" width="16" height="6" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="42" y="6" width="16" height="6" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="42" y="18" width="16" height="6" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="42" y="31" width="16" height="6" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <path d="M23 22 C15 22 15 9 18 9" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
+          <path d="M23 22 C15 22 15 21 18 21" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
+          <path d="M23 22 C15 22 15 34 18 34" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
+          <path d="M37 22 C45 22 45 9 42 9" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
+          <path d="M37 22 C45 22 45 21 42 21" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
+          <path d="M37 22 C45 22 45 34 42 34" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
         </g>`,
       },
       {
         id: "top",
         name: "Top down",
         svg: `<g>
-          <rect x="23" y="4" width="14" height="8" rx="2" fill="#f1eeff" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="4" y="28" width="14" height="7" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="23" y="28" width="14" height="7" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="42" y="28" width="14" height="7" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <path d="M30 12 C30 20 11 20 11 28" fill="none" stroke="#7D68C8" stroke-width="1"/>
-          <path d="M30 12 C30 20 30 20 30 28" fill="none" stroke="#7D68C8" stroke-width="1"/>
-          <path d="M30 12 C30 20 49 20 49 28" fill="none" stroke="#7D68C8" stroke-width="1"/>
+          <rect x="23" y="4" width="14" height="8" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="4" y="28" width="14" height="7" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="23" y="28" width="14" height="7" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="42" y="28" width="14" height="7" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <path d="M30 12 C30 20 11 20 11 28" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
+          <path d="M30 12 C30 20 30 20 30 28" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
+          <path d="M30 12 C30 20 49 20 49 28" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
         </g>`,
       },
       {
         id: "bottom",
         name: "Bottom up",
         svg: `<g>
-          <rect x="23" y="30" width="14" height="8" rx="2" fill="#f1eeff" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="4" y="8" width="14" height="7" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="23" y="8" width="14" height="7" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="42" y="8" width="14" height="7" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <path d="M30 30 C30 22 11 22 11 15" fill="none" stroke="#7D68C8" stroke-width="1"/>
-          <path d="M30 30 C30 22 30 22 30 15" fill="none" stroke="#7D68C8" stroke-width="1"/>
-          <path d="M30 30 C30 22 49 22 49 15" fill="none" stroke="#7D68C8" stroke-width="1"/>
+          <rect x="23" y="30" width="14" height="8" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="4" y="8" width="14" height="7" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="23" y="8" width="14" height="7" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="42" y="8" width="14" height="7" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <path d="M30 30 C30 22 11 22 11 15" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
+          <path d="M30 30 C30 22 30 22 30 15" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
+          <path d="M30 30 C30 22 49 22 49 15" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
         </g>`,
       },
       {
         id: "radial",
         name: "Radial",
         svg: `<g>
-          <rect x="23" y="18" width="14" height="8" rx="2" fill="#f1eeff" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="23" y="2" width="14" height="6" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="23" y="38" width="14" height="6" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="2" y="18" width="14" height="6" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="44" y="18" width="14" height="6" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <path d="M30 22 C30 14 30 10 30 8" fill="none" stroke="#7D68C8" stroke-width="1"/>
-          <path d="M30 22 C30 30 30 36 30 38" fill="none" stroke="#7D68C8" stroke-width="1"/>
-          <path d="M23 22 C16 22 14 22 16 21" fill="none" stroke="#7D68C8" stroke-width="1"/>
-          <path d="M37 22 C44 22 46 22 44 21" fill="none" stroke="#7D68C8" stroke-width="1"/>
+          <rect x="23" y="18" width="14" height="8" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="23" y="2" width="14" height="6" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="23" y="38" width="14" height="6" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="2" y="18" width="14" height="6" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="44" y="18" width="14" height="6" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <path d="M30 22 C30 14 30 10 30 8" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
+          <path d="M30 22 C30 30 30 36 30 38" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
+          <path d="M23 22 C16 22 14 22 16 21" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
+          <path d="M37 22 C44 22 46 22 44 21" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
         </g>`,
       },
     ],
@@ -1627,46 +1645,46 @@ const LAYOUT_GROUPS = [
         id: "logic-right",
         name: "Logic Right",
         svg: `<g>
-          <rect x="2" y="18" width="16" height="8" rx="1" fill="#f1eeff" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="30" y="6" width="28" height="6" rx="1" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="30" y="16" width="28" height="6" rx="1" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="30" y="26" width="28" height="6" rx="1" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="30" y="36" width="28" height="6" rx="1" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <path d="M18 22 L22 22 L22 9 L30 9" fill="none" stroke="#7D68C8" stroke-width="1"/>
-          <path d="M22 22 L22 19 L30 19" fill="none" stroke="#7D68C8" stroke-width="1"/>
-          <path d="M22 22 L22 29 L30 29" fill="none" stroke="#7D68C8" stroke-width="1"/>
-          <path d="M22 22 L22 39 L30 39" fill="none" stroke="#7D68C8" stroke-width="1"/>
+          <rect x="2" y="18" width="16" height="8" rx="1" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="30" y="6" width="28" height="6" rx="1" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="30" y="16" width="28" height="6" rx="1" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="30" y="26" width="28" height="6" rx="1" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="30" y="36" width="28" height="6" rx="1" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <path d="M18 22 L22 22 L22 9 L30 9" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
+          <path d="M22 22 L22 19 L30 19" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
+          <path d="M22 22 L22 29 L30 29" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
+          <path d="M22 22 L22 39 L30 39" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
         </g>`,
       },
       {
         id: "logic-left",
         name: "Logic Left",
         svg: `<g>
-          <rect x="42" y="18" width="16" height="8" rx="1" fill="#f1eeff" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="2" y="6" width="28" height="6" rx="1" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="2" y="16" width="28" height="6" rx="1" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="2" y="26" width="28" height="6" rx="1" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="2" y="36" width="28" height="6" rx="1" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <path d="M42 22 L38 22 L38 9 L30 9" fill="none" stroke="#7D68C8" stroke-width="1"/>
-          <path d="M38 22 L38 19 L30 19" fill="none" stroke="#7D68C8" stroke-width="1"/>
-          <path d="M38 22 L38 29 L30 29" fill="none" stroke="#7D68C8" stroke-width="1"/>
-          <path d="M38 22 L38 39 L30 39" fill="none" stroke="#7D68C8" stroke-width="1"/>
+          <rect x="42" y="18" width="16" height="8" rx="1" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="2" y="6" width="28" height="6" rx="1" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="2" y="16" width="28" height="6" rx="1" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="2" y="26" width="28" height="6" rx="1" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="2" y="36" width="28" height="6" rx="1" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <path d="M42 22 L38 22 L38 9 L30 9" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
+          <path d="M38 22 L38 19 L30 19" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
+          <path d="M38 22 L38 29 L30 29" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
+          <path d="M38 22 L38 39 L30 39" fill="none" stroke="var(--primary-color)" stroke-width="1"/>
         </g>`,
       },
       {
         id: "fishbone",
         name: "Fishbone",
         svg: `<g>
-          <rect x="36" y="19" width="20" height="6" rx="1" fill="#f1eeff" stroke="#b8a8e8" stroke-width="1"/>
-          <line x1="4" y1="22" x2="36" y2="22" stroke="#7D68C8" stroke-width="1.5"/>
-          <line x1="10" y1="22" x2="18" y2="10" stroke="#7D68C8" stroke-width="1"/>
-          <line x1="22" y1="22" x2="30" y2="10" stroke="#7D68C8" stroke-width="1"/>
-          <line x1="10" y1="22" x2="18" y2="34" stroke="#7D68C8" stroke-width="1"/>
-          <line x1="22" y1="22" x2="30" y2="34" stroke="#7D68C8" stroke-width="1"/>
-          <rect x="14" y="5" width="12" height="6" rx="1" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="26" y="5" width="12" height="6" rx="1" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="14" y="33" width="12" height="6" rx="1" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="26" y="33" width="12" height="6" rx="1" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
+          <rect x="36" y="19" width="20" height="6" rx="1" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <line x1="4" y1="22" x2="36" y2="22" stroke="var(--primary-color)" stroke-width="1.5"/>
+          <line x1="10" y1="22" x2="18" y2="10" stroke="var(--primary-color)" stroke-width="1"/>
+          <line x1="22" y1="22" x2="30" y2="10" stroke="var(--primary-color)" stroke-width="1"/>
+          <line x1="10" y1="22" x2="18" y2="34" stroke="var(--primary-color)" stroke-width="1"/>
+          <line x1="22" y1="22" x2="30" y2="34" stroke="var(--primary-color)" stroke-width="1"/>
+          <rect x="14" y="5" width="12" height="6" rx="1" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="26" y="5" width="12" height="6" rx="1" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="14" y="33" width="12" height="6" rx="1" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="26" y="33" width="12" height="6" rx="1" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
         </g>`,
       },
     ],
@@ -1678,43 +1696,41 @@ const LAYOUT_GROUPS = [
         id: "org-chart",
         name: "Org Chart",
         svg: `<g>
-          <rect x="22" y="2" width="16" height="8" rx="2" fill="#f1eeff" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="4" y="22" width="14" height="8" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="23" y="22" width="14" height="8" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="42" y="22" width="14" height="8" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <line x1="30" y1="10" x2="30" y2="15" stroke="#7D68C8" stroke-width="1"/>
-          <line x1="11" y1="15" x2="49" y2="15" stroke="#7D68C8" stroke-width="1"/>
-          <line x1="11" y1="15" x2="11" y2="22" stroke="#7D68C8" stroke-width="1"/>
-          <line x1="30" y1="15" x2="30" y2="22" stroke="#7D68C8" stroke-width="1"/>
-          <line x1="49" y1="15" x2="49" y2="22" stroke="#7D68C8" stroke-width="1"/>
+          <rect x="22" y="2" width="16" height="8" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="4" y="22" width="14" height="8" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="23" y="22" width="14" height="8" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="42" y="22" width="14" height="8" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <line x1="30" y1="10" x2="30" y2="15" stroke="var(--primary-color)" stroke-width="1"/>
+          <line x1="11" y1="15" x2="49" y2="15" stroke="var(--primary-color)" stroke-width="1"/>
+          <line x1="11" y1="15" x2="11" y2="22" stroke="var(--primary-color)" stroke-width="1"/>
+          <line x1="30" y1="15" x2="30" y2="22" stroke="var(--primary-color)" stroke-width="1"/>
+          <line x1="49" y1="15" x2="49" y2="22" stroke="var(--primary-color)" stroke-width="1"/>
         </g>`,
       },
       {
         id: "timeline",
         name: "Timeline",
         svg: `<g>
-          <line x1="4" y1="22" x2="56" y2="22" stroke="#7D68C8" stroke-width="1.5"/>
-          <circle cx="12" cy="22" r="2.5" fill="#7D68C8"/>
-          <circle cx="30" cy="22" r="2.5" fill="#7D68C8"/>
-          <circle cx="48" cy="22" r="2.5" fill="#7D68C8"/>
-          <rect x="5" y="8" width="14" height="8" rx="2" fill="#f1eeff" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="23" y="28" width="14" height="8" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="41" y="8" width="14" height="8" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <line x1="12" y1="19" x2="12" y2="16" stroke="#7D68C8" stroke-width="1"/>
-          <line x1="30" y1="25" x2="30" y2="28" stroke="#7D68C8" stroke-width="1"/>
-          <line x1="48" y1="19" x2="48" y2="16" stroke="#7D68C8" stroke-width="1"/>
+          <line x1="4" y1="22" x2="56" y2="22" stroke="var(--primary-color)" stroke-width="1.5"/>
+          <circle cx="12" cy="22" r="2.5" fill="var(--primary-color)"/>
+          <circle cx="30" cy="22" r="2.5" fill="var(--primary-color)"/>
+          <circle cx="48" cy="22" r="2.5" fill="var(--primary-color)"/>
+          <rect x="5" y="8" width="14" height="8" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="23" y="28" width="14" height="8" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="41" y="8" width="14" height="8" rx="2" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <line x1="12" y1="19" x2="12" y2="16" stroke="var(--primary-color)" stroke-width="1"/>
+          <line x1="30" y1="25" x2="30" y2="28" stroke="var(--primary-color)" stroke-width="1"/>
+          <line x1="48" y1="19" x2="48" y2="16" stroke="var(--primary-color)" stroke-width="1"/>
         </g>`,
       },
       {
         id: "tree-map",
         name: "Tree Map",
         svg: `<g>
-          <rect x="2" y="2" width="56" height="40" rx="2" fill="none" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="2" y="2" width="30" height="22" rx="2" fill="#f1eeff" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="32" y="2" width="26" height="22" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="2" y="24" width="18" height="18" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="20" y="24" width="20" height="18" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
-          <rect x="40" y="24" width="18" height="18" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
+          <rect x="2" y="2" width="56" height="40" rx="2" fill="none" stroke="var(--border)" stroke-width="1"/>
+          <rect x="6" y="6" width="24" height="14" rx="1" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="32" y="6" width="22" height="14" rx="1" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
+          <rect x="6" y="22" width="48" height="16" rx="1" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1"/>
         </g>`,
       },
     ],
@@ -2131,7 +2147,7 @@ function getLaneColor(card: any): string {
   return (
     card.lane?.variables?.["lane-color"] ||
     card?.variables?.lane?.variables?.["lane-color"] ||
-    "#7D68C8"
+    "var(--primary-color)"
   );
 }
 
@@ -2574,7 +2590,7 @@ const visibleEdges = computed<Edge[]>(() => {
     edges.push({
       id: "__spine__",
       path: `M 300 ${root.y + root.h / 2} L ${root.x} ${root.y + root.h / 2}`,
-      color: "#7D68C8",
+      color: "var(--primary-color)",
       dashed: false,
     });
   }
@@ -2589,7 +2605,7 @@ const visibleEdges = computed<Edge[]>(() => {
     edges.push({
       id: "__timeline_spine__",
       path: `M ${root.x + root.w} ${spineY} L ${endX} ${spineY}`,
-      color: "#7D68C8",
+      color: "var(--primary-color)",
       dashed: false,
     });
   }
@@ -2649,7 +2665,7 @@ const visibleEdges = computed<Edge[]>(() => {
       }
     }
 
-    edges.push({ id: `root-${key}`, path: rootEdgePath, color: "#7D68C8", dashed: false });
+    edges.push({ id: `root-${key}`, path: rootEdgePath, color: "var(--primary-color)", dashed: false });
 
     // ── Sheet → Cards ────────────────────────────────────────────────────
     if (!isCollapsed(key)) {
@@ -3162,7 +3178,7 @@ watch(
   box-shadow: 0 4px 16px rgba(125, 104, 200, 0.18);
 }
 .pm-node--selected {
-  border-color: #7d68c8 !important;
+  border-color: var(--primary-color) !important;
   box-shadow:
     0 0 0 2px rgba(125, 104, 200, 0.25),
     0 4px 16px rgba(0, 0, 0, 0.12) !important;
@@ -3170,8 +3186,8 @@ watch(
 
 /* Root */
 .pm-node--root {
-  background: var(--mm-node-root-bg, #f1eeff);
-  border-color: #c4b8f0;
+  background: var(--primary-color, #f1eeff);
+  border-color: var(--primary-color);
   border-radius: 26px;
 }
 .root-inner {
@@ -3185,7 +3201,7 @@ watch(
 .root-title {
   font-size: 14px;
   font-weight: 700;
-  color: var(--mm-text-color, #2b2c30);
+  color:  #fff;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -3194,7 +3210,7 @@ watch(
 /* Sheet */
 .pm-node--sheet {
   background: var(--mm-node-sheet-bg, #ede9fb);
-  border-color: #b8a8e8;
+  border-color: var(--color-primary-color);
   overflow: visible;
 }
 .sheet-inner {
@@ -3209,7 +3225,7 @@ watch(
   gap: 8px;
 }
 .node-sheet-icon {
-  color: #7d68c8;
+  color: var(--primary-color);
   font-size: 12px;
   flex-shrink: 0;
 }
@@ -3250,7 +3266,7 @@ watch(
 }
 .collapse-btn:hover {
   background: rgba(125, 104, 200, 0.12);
-  color: #7d68c8;
+  color: var(--primary-color);
 }
 .collapsed-badge {
   font-size: 9px;
@@ -3262,10 +3278,10 @@ watch(
   width: 100%;
   padding: 3px 6px;
   font-size: 10px;
-  font-weight: 500;
-  color: #7d68c8;
-  background: rgba(125, 104, 200, 0.07);
-  border: 1px dashed rgba(125, 104, 200, 0.3);
+  font-weight: 500; 
+  color: #fff;
+  background: var(--primary-color);
+  border-color:  var(--primary-color);
   border-radius: 5px;
   cursor: pointer;
   text-align: left;
@@ -3280,8 +3296,9 @@ watch(
   display: flex;
 }
 .add-card-btn:hover {
-  background: rgba(125, 104, 200, 0.14);
-  border-color: rgba(125, 104, 200, 0.5);
+  color: #fff;
+  background: var(--primary-color);
+  border-color:  var(--primary-color);
 }
 
 /* Inline create */
@@ -3296,7 +3313,7 @@ watch(
   padding: 5px 8px;
   font-size: 11px;
   font-weight: 500;
-  border: 1.5px solid #7d68c8;
+  border: 1.5px solid var(--primary-color);
   border-radius: 5px;
   outline: none;
   background: #fff;
@@ -3325,14 +3342,14 @@ watch(
   font-size: 10px;
 }
 .inline-btn--ok {
-  background: #7d68c8;
+  background: var(--primary-color);
   color: #fff;
 }
 .inline-btn--ok:hover:not(:disabled) {
-  background: #6e3b96;
+  background: var(--primary-color, var(--primary-color));
 }
 .inline-btn--ok:disabled {
-  background: rgba(125, 104, 200, 0.4);
+  background:  var(--primary-color);
   cursor: not-allowed;
 }
 .inline-btn--cancel {
@@ -3346,7 +3363,7 @@ watch(
 /* Card */
 .pm-node--card {
   background: var(--mm-node-card-bg, #fff);
-  border-color: #c4b8f0;
+  border-color: var(--primary-color);
   display: flex;
   flex-direction: column;
 }
@@ -3380,7 +3397,7 @@ watch(
 }
 .badge--status {
   background: rgba(125, 104, 200, 0.12);
-  color: #7d68c8;
+  color: var(--primary-color);
 }
 .badge--low {
   background: #dcfce7;
@@ -3446,13 +3463,13 @@ watch(
 }
 .nact:hover {
   background: rgba(125, 104, 200, 0.1);
-  color: #7d68c8;
+  color: var(--primary-color);
 }
 .nact--danger:hover {
   color: #ef4444 !important;
 }
 .nact--open:hover {
-  color: #7d68c8 !important;
+  color: var(--primary-color) !important;
 }
 .nact--add:hover {
   color: #22c55e !important;
@@ -3490,9 +3507,9 @@ watch(
 }
 .ctrl-btn:hover,
 .ctrl-btn--active {
-  background: #7d68c8;
+  background: var(--primary-color);
   color: #fff;
-  border-color: #7d68c8;
+  border-color: var(--primary-color);
 }
 .ctrl-divider {
   width: 20px;
@@ -3575,7 +3592,7 @@ watch(
   margin-bottom: 4px;
 }
 .ctx-header-icon {
-  color: #7d68c8;
+  color: var(--primary-color);
   font-size: 11px;
 }
 .ctx-header-title {
@@ -3621,13 +3638,13 @@ watch(
   color: #22c55e;
 }
 .ctx-icon--open {
-  color: #7d68c8;
+  color: var(--primary-color);
 }
 .ctx-icon--duplicate {
   color: #0ea5e9;
 }
 .ctx-icon--format {
-  color: #9356c5;
+  color: var(--primary-color);
 }
 .ctx-icon--copy-style {
   color: #a855f7;
@@ -3765,8 +3782,8 @@ watch(
   color: #2b2c30;
 }
 .fs-tab--active {
-  color: #7d68c8;
-  border-bottom-color: #7d68c8;
+  color: var(--primary-color);
+  border-bottom-color: var(--primary-color);
 }
 
 /* Theme panel */
@@ -3805,8 +3822,8 @@ watch(
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 .bg-swatch--active {
-  border-color: #7d68c8 !important;
-  box-shadow: 0 0 0 2px rgba(125, 104, 200, 0.4) !important;
+  border-color: var(--primary-color) !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary-color), transparent 60%) !important;
 }
 
 .bg-custom-row {
@@ -3876,12 +3893,12 @@ watch(
     box-shadow 0.15s;
 }
 .theme-card:hover {
-  border-color: #7d68c8;
-  box-shadow: 0 2px 10px rgba(125, 104, 200, 0.2);
+  border-color: var(--primary-color);
+  box-shadow: 0 2px 10px color-mix(in srgb, var(--primary-color), transparent 80%);
 }
 .theme-card--active {
-  border-color: #7d68c8 !important;
-  box-shadow: 0 0 0 2px rgba(125, 104, 200, 0.3) !important;
+  border-color: var(--primary-color) !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary-color), transparent 70%) !important;
 }
 .theme-preview {
   position: relative;
@@ -3932,7 +3949,7 @@ watch(
   top: 3px;
   right: 4px;
   font-size: 8px;
-  color: #7d68c8;
+  color: var(--primary-color, var(--primary-color));
   background: white;
   border-radius: 50%;
   padding: 1px;
@@ -3961,12 +3978,12 @@ watch(
   overflow: hidden;
 }
 .layout-card:hover {
-  border-color: #7d68c8;
-  box-shadow: 0 2px 10px rgba(125, 104, 200, 0.2);
+  border-color: var(--primary-color);
+  box-shadow: 0 2px 10px color-mix(in srgb, var(--primary-color), transparent 80%);
 }
 .layout-card--active {
-  border-color: #7d68c8 !important;
-  box-shadow: 0 0 0 2px rgba(125, 104, 200, 0.3) !important;
+  border-color: var(--primary-color) !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary-color), transparent 70%) !important;
 }
 .layout-preview {
   width: 100%;
@@ -3993,7 +4010,7 @@ watch(
   top: 3px;
   right: 4px;
   font-size: 8px;
-  color: #7d68c8;
+  color: var(--primary-color);
   background: white;
   border-radius: 50%;
   padding: 1px;
@@ -4035,7 +4052,7 @@ watch(
 }
 .fs-node-icon {
   font-size: 11px;
-  color: #7d68c8;
+  color: var(--primary-color);
 }
 .fs-node-label {
   font-size: 12px;
@@ -4124,7 +4141,7 @@ watch(
   box-sizing: border-box;
 }
 .fs-input:focus {
-  border-color: #7d68c8;
+  border-color: var(--primary-color);
   background: #fff;
 }
 .fs-input-full {
@@ -4140,7 +4157,7 @@ watch(
   transition: border-color 0.12s;
 }
 .fs-input-full:focus {
-  border-color: #7d68c8;
+  border-color: var(--primary-color);
   background: #fff;
 }
 .fs-select {
@@ -4156,7 +4173,7 @@ watch(
   transition: border-color 0.12s;
 }
 .fs-select:focus {
-  border-color: #7d68c8;
+  border-color: var(--primary-color);
 }
 .input-with-unit {
   display: flex;
@@ -4191,9 +4208,9 @@ watch(
 }
 .align-btn:hover,
 .align-btn--active {
-  background: #7d68c8;
+  background: var(--primary-color);
   color: #fff;
-  border-color: #7d68c8;
+  border-color: var(--primary-color);
 }
 .fs-presets {
   display: flex;
@@ -4235,9 +4252,9 @@ watch(
 }
 .shadow-btn:hover,
 .shadow-btn--active {
-  border-color: #7d68c8;
+  border-color: var(--primary-color);
   background: rgba(125, 104, 200, 0.07);
-  color: #7d68c8;
+  color: var(--primary-color);
 }
 .fs-reset-btn {
   width: 100%;
@@ -4265,7 +4282,7 @@ watch(
   font-size: 12px;
   font-weight: 600;
   color: #fff;
-  background: #7d68c8;
+  background: var(--primary-color);
   border: none;
   border-radius: 7px;
   cursor: pointer;
@@ -4276,10 +4293,10 @@ watch(
   transition: background 0.15s;
 }
 .fs-save-btn:hover:not(:disabled) {
-  background: #6e3b96;
+  background: var(--primary-color);
 }
 .fs-save-btn:disabled {
-  background: rgba(125, 104, 200, 0.45);
+  background: color-mix(in srgb, var(--primary-color), transparent 55%);
   cursor: not-allowed;
 }
 .spinner {
@@ -4324,177 +4341,177 @@ watch(
 
 /* ── Dark mode ──────────────────────────────────────────────────── */
 .pin-mindmap-root[data-dark="true"] .viewport {
-  background: #2b2c30;
+  background: var(--bg-body, #2b2c30);
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    linear-gradient(var(--border, rgba(255, 255, 255, 0.03)) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border, rgba(255, 255, 255, 0.03)) 1px, transparent 1px);
   background-size: 20px 20px;
 }
 .pin-mindmap-root[data-dark="true"] .pm-node--root {
-  background: #2b2c30;
-  color: #c4b8f0;
+  background: var(--bg-surface, #2b2c30);
+  color: var(--text-primary, var(--text-primary));
 }
 .pin-mindmap-root[data-dark="true"] .pm-node--sheet {
-  background: #2b2c30;
-  border-color: #3e3e42;
+  background: var(--bg-surface, #2b2c30);
+  border-color: var(--border, #3e3e42);
 }
 .pin-mindmap-root[data-dark="true"] .pm-node--card {
-  background: #2b2c30;
-  border-color: #3e3e42;
+  background: var(--bg-surface, #2b2c30);
+  border-color: var(--border, #3e3e42);
 }
 .pin-mindmap-root[data-dark="true"] .sheet-title {
-  color: #f1f5f9;
+  color: var(--text-primary);
 }
 .pin-mindmap-root[data-dark="true"] .sheet-meta {
-  color: #94a3b8;
+  color: var(--text-secondary);
 }
 .pin-mindmap-root[data-dark="true"] .card-title {
-  color: #f1f5f9;
+  color: var(--text-primary);
 }
 .pin-mindmap-root[data-dark="true"] .card-actions {
   border-color: rgba(255, 255, 255, 0.06);
 }
 .pin-mindmap-root[data-dark="true"] .collapse-btn {
-  color: #94a3b8;
+  color: var(--text-secondary);
 }
 .pin-mindmap-root[data-dark="true"] .collapsed-badge {
-  color: #94a3b8;
+  color: var(--text-secondary);
 }
 .pin-mindmap-root[data-dark="true"] .inline-input {
   background: #1e293b;
-  color: #f1f5f9;
-  border-color: #7d68c8;
+  color: var(--text-primary);
+  border-color: var(--primary-color);
 }
 .pin-mindmap-root[data-dark="true"] .inline-btn--cancel {
-  background: #334155;
-  color: #94a3b8;
+  background: var(--border);
+  color: var(--text-secondary);
 }
 .pin-mindmap-root[data-dark="true"] .add-card-btn {
-  color: #9356c5;
-  background: rgba(147, 86, 197, 0.12);
-  border-color: rgba(147, 86, 197, 0.3);
+  color: #fff;
+  background: var(--primary-color);
+  border-color:  var(--primary-color);
 }
 .pin-mindmap-root[data-dark="true"] .root-title {
-  color: #c4b8f0;
+  color: var(--text-primary);
 }
 .pin-mindmap-root[data-dark="true"] .canvas-controls {
   background: #2b2c30;
-  border-color: #334155;
+  border-color: var(--border);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
 }
 .pin-mindmap-root[data-dark="true"] .ctrl-btn {
-  border-color: #334155;
-  color: #94a3b8;
+  border-color: var(--border);
+  color: var(--text-secondary);
 }
 .pin-mindmap-root[data-dark="true"] .ctrl-divider {
-  background: #334155;
+  background: var(--border);
 }
 .pin-mindmap-root[data-dark="true"] .zoom-label {
-  color: #94a3b8;
+  color: var(--text-secondary);
 }
 .pin-mindmap-root[data-dark="true"] .canvas-stats {
   background: rgba(15, 23, 42, 0.85);
-  border-color: #334155;
-  color: #94a3b8;
+  border-color: var(--border);
+  color: var(--text-secondary);
 }
 .pin-mindmap-root[data-dark="true"] .nact {
-  color: #94a3b8;
+  color: var(--text-secondary);
 }
 .pin-mindmap-root[data-dark="true"] .nact:hover {
   background: rgba(147, 86, 197, 0.15);
 }
 .pin-mindmap-root[data-dark="true"] .badge--type {
   background: rgba(255, 255, 255, 0.07);
-  color: #94a3b8;
+  color: var(--text-secondary);
 }
 .pin-mindmap-root[data-dark="true"] .badge--status {
-  background: rgba(147, 86, 197, 0.2);
-  color: #c4b8f0;
+  background: var(--bg-surface);
+  color: var(--text-primary);
 }
 .pin-mindmap-root[data-dark="true"] .format-sidebar {
   background: #3e3e42;
-  border-color: #334155;
+  border-color: var(--border);
 }
 .pin-mindmap-root[data-dark="true"] .fs-header {
-  border-color: #334155;
+  border-color: var(--border);
 }
 .pin-mindmap-root[data-dark="true"] .fs-header-left {
-  color: #f1f5f9;
+  color: var(--text-primary);
 }
 .pin-mindmap-root[data-dark="true"] .fs-close:hover {
-  background: #334155;
-  color: #f1f5f9;
+  background: var(--border);
+  color: var(--text-primary);
 }
 .pin-mindmap-root[data-dark="true"] .fs-tabs {
-  border-color: #334155;
+  border-color: var(--border);
 }
 .pin-mindmap-root[data-dark="true"] .fs-tab {
-  color: #94a3b8;
+  color: var(--text-secondary);
 }
 .pin-mindmap-root[data-dark="true"] .fs-tab:hover {
-  color: #f1f5f9;
+  color: var(--text-primary);
 }
 .pin-mindmap-root[data-dark="true"] .fs-tab--active {
-  color: #c4b8f0;
-  border-bottom-color: #9356c5;
+  color: var(--primary-color);
+  border-bottom-color: var(--primary-color);
 }
 .pin-mindmap-root[data-dark="true"] .fs-node-label {
-  color: #f1f5f9;
+  color: var(--text-primary);
 }
 .pin-mindmap-root[data-dark="true"] .fs-section {
   border-color: rgba(255, 255, 255, 0.06);
 }
 .pin-mindmap-root[data-dark="true"] .fs-field label {
-  color: #94a3b8;
+  color: var(--text-secondary);
 }
 .pin-mindmap-root[data-dark="true"] .fs-input,
 .pin-mindmap-root[data-dark="true"] .fs-select,
 .pin-mindmap-root[data-dark="true"] .fs-input-full,
 .pin-mindmap-root[data-dark="true"] .color-hex {
-  background: #0f172a;
-  border-color: #334155;
-  color: #f1f5f9;
+  background: var(--bg-card);
+  border-color: var(--border);
+  color: var(--text-primary);
 }
 .pin-mindmap-root[data-dark="true"] .align-btn {
-  background: #0f172a;
-  border-color: #334155;
-  color: #94a3b8;
+  background: var(--bg-card);
+  border-color: var(--border);
+  color: var(--text-secondary);
 }
 .pin-mindmap-root[data-dark="true"] .shadow-btn {
-  background: #0f172a;
-  border-color: #334155;
-  color: #f1f5f9;
+  background: var(--bg-card);
+  border-color: var(--border);
+  color: var(--text-primary);
 }
 .pin-mindmap-root[data-dark="true"] .fs-footer {
-  border-color: #334155;
+  border-color: var(--border);
 }
 .pin-mindmap-root[data-dark="true"] .fs-reset-btn {
   background: rgba(239, 68, 68, 0.12);
   border-color: rgba(239, 68, 68, 0.3);
 }
 .pin-mindmap-root[data-dark="true"] .theme-panel::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: var(--border);
 }
 .pin-mindmap-root[data-dark="true"] .bg-custom-row {
-  background: #0f172a;
-  border-color: #334155;
+  background: var(--bg-card);
+  border-color: var(--border);
 }
 .pin-mindmap-root[data-dark="true"] .bg-hex-input {
-  color: #f1f5f9;
+  color: var(--text-primary);
 }
 .pin-mindmap-root[data-dark="true"] .bg-opacity-label {
-  background: #334155;
+  background: var(--border);
   border-color: #475569;
-  color: #94a3b8;
+  color: var(--text-secondary);
 }
 .pin-mindmap-root[data-dark="true"] .bg-recent-label {
-  color: #94a3b8;
+  color: var(--text-secondary);
 }
 .pin-mindmap-root[data-dark="true"] .theme-card {
-  border-color: #334155;
+  border-color: var(--border);
 }
 .pin-mindmap-root[data-dark="true"] .theme-name {
-  color: #94a3b8;
+  color: var(--text-secondary);
 }
 .pin-mindmap-root[data-dark="true"] .theme-check {
   background: #1e293b;
@@ -4506,19 +4523,19 @@ watch(
   color: #64748b;
 }
 .pin-mindmap-root[data-dark="true"] .fs-node-name {
-  border-color: #334155;
+  border-color: var(--border);
 }
 .pin-mindmap-root[data-dark="true"] .layout-card {
-  border-color: #334155;
+  border-color: var(--border);
 }
 .pin-mindmap-root[data-dark="true"] .layout-preview {
-  background: #0f172a;
+  background: var(--bg-card);
 }
 .pin-mindmap-root[data-dark="true"] .layout-name {
-  color: #94a3b8;
+  color: var(--text-secondary);
 }
 .pin-mindmap-root[data-dark="true"] .layout-check {
   background: #1e293b;
-  color: #c4b8f0;
+  color: var(--primary-color);
 }
 </style>

@@ -1,70 +1,126 @@
 <template>
   <Loader v-if="(createWorkspacePending || isPending || isLoader)"></Loader>
-  <div v-else class="w-full flex flex-col mb-[60px]">
+  <div v-else class="w-full flex flex-col mb-[60px] max-w-[800px] mx-auto">
     <!-- Header -->
-    <div class="text-left w-full mb-6 ">
-      <h2 class="text-2xl md:text-4xl font-semibold text-text-primary text-left m-0">
-        Project Summary
+    <div class="step-enter step-enter-1 w-full text-center space-y-3 mb-8">
+      <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent/10 border border-accent/20 text-[11px] font-semibold text-accent uppercase tracking-widest mb-1">
+        <span class="w-1.5 h-1.5 rounded-full bg-accent inline-block animate-pulse"></span>
+        Ready to Launch
+      </div>
+      <h2 class="text-[24px] font-medium text-transparent bg-clip-text bg-gradient-to-r from-text-primary to-text-secondary tracking-tight m-0">
+        Workspace Summary
       </h2>
-      <p class="text-sm md:text-base text-text-secondary text-left mt-3 sm:mt-5 mb-0 md:mb-4">
-        Review your project details before creation
+      <p class="text-sm text-text-secondary mb-0 max-w-[520px] mx-auto leading-relaxed">
+        Review your workspace details before creation
       </p>
     </div>
-
     <!-- Summary Cards -->
-    <div class=" flex-wrap flex md:flex-nowrap gap-4 mb-6 ">
+    <div class="flex-wrap flex md:flex-nowrap gap-5 mb-8">
       <!-- Project Overview -->
-      <div class="bg-bg-surface w-full text-text-primary rounded-xl p-6 flex-auto">
-        <h3 class="text-xl font-semibold mb-5.5">Project Overview</h3>
-        <p class="text-text-primary text-base font-semibold">
-          <strong class="text-text-secondary text-sm font-medium">Project Name</strong><br />{{
-            project?.variables?.title }}
-        </p>
-        <p class="mt-5 text-text-primary text-base font-semibold capitalize">
-          <strong class="text-text-secondary text-sm font-medium">Project Type</strong><br />{{
-            project?.variables ? project?.variables["workspace-type"] : '' }} Project
-        </p>
-        <p v-if="project?.variables?.idea" class="mt-5 ttext-text-primary text-base font-semibold">
-          <strong class="text-text-secondary text-sm font-medium">Description</strong><br />
-          {{
-            project?.variables?.idea }}
-        </p>
+      <div class="step-enter step-enter-2 bg-bg-surface w-full text-text-primary rounded-2xl p-6 border border-border/50 shadow-sm transition-all duration-300 hover:shadow-lg hover:shadow-black/5 hover:border-border/80 flex-auto">
+        <h3 class="text-lg font-semibold mb-6 flex items-center gap-2">
+          <i class="fa-regular fa-folder-open text-text-secondary text-base"></i> Workspace Overview
+        </h3>
+        <div class="space-y-5">
+           <div>
+              <strong class="text-text-secondary text-[11px] uppercase tracking-wider font-semibold block mb-1">Workspace Name</strong>
+              <p class="text-text-primary text-base font-semibold">{{ project?.variables?.title }}</p>
+           </div>
+           
+           <div>
+              <strong class="text-text-secondary text-[11px] uppercase tracking-wider font-semibold block mb-1">Workspace Type</strong>
+              <p class="text-text-primary capitalize">
+                <span class="inline-flex items-center px-3 py-1 rounded-full bg-bg-card border border-border text-sm font-medium mt-0.5">
+                  {{ project?.variables ? project?.variables["workspace-type"] : '' }}
+                </span>
+              </p>
+           </div>
+
+           <div v-if="project?.variables?.['workspace-color']">
+              <strong class="text-text-secondary text-[11px] uppercase tracking-wider font-semibold block mb-2">Workspace Color</strong>
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full border-2 border-border/50 shadow-md shrink-0" :style="`background: ${project.variables['workspace-color']}; box-shadow: 0 0 14px ${project.variables['workspace-color']}55`"></div>
+                <span class="text-sm font-mono text-text-secondary">{{ project.variables['workspace-color'] }}</span>
+              </div>
+           </div>
+           
+           <div v-if="project?.variables?.idea">
+              <strong class="text-text-secondary text-[11px] uppercase tracking-wider font-semibold block mb-1">Description</strong>
+              <div class="bg-bg-card/40 rounded-xl p-3.5 border border-border/40 mt-2 transition-colors hover:bg-bg-card/60">
+                <p class="text-text-primary text-sm font-medium leading-relaxed m-0">{{ project?.variables?.idea }}</p>
+              </div>
+           </div>
+        </div>
       </div>
 
       <!-- Team Resources -->
-      <div v-if="total_resorces_recommened" class="bg-bg-surface w-full text-text-primary rounded-xl p-6">
-        <h3 class="text-lg font-semibold mb-4">Team Assignment</h3>
-        <p class="text-4xl font-bold">
-          {{ total_resorces }} / {{ total_resorces_recommened }}
-        </p>
-        <p class="text-sm text-text-secondary mb-4">Total team Assigned</p>
+      <div v-if="total_resorces_recommened" class="step-enter step-enter-3 bg-bg-surface w-full text-text-primary rounded-2xl p-6 border border-border shadow-sm transition-all duration-300 hover:shadow-lg hover:shadow-black/5 hover:border-border/80">
+        <div class="flex items-center justify-between mb-4">
+           <h3 class="text-lg font-semibold m-0 flex items-center gap-2">
+             <i class="fa-regular fa-user-group text-text-secondary text-base"></i> Team Assignment
+           </h3>
+           <div class="flex items-baseline gap-1.5 bg-accent/10 px-3 py-1 rounded-full border border-accent/20" title="Total team assigned">
+             <span class="text-[15px] font-bold text-accent">{{ total_resorces }}</span>
+             <span class="text-[11px] font-medium text-accent/70">/ {{ total_resorces_recommened }}</span>
+           </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="mb-5">
+          <div class="h-1.5 w-full bg-bg-card rounded-full overflow-hidden">
+            <div 
+              class="h-full bg-gradient-to-r from-accent to-accent/70 rounded-full transition-all duration-700 ease-out"
+              :style="`width: ${total_resorces_recommened > 0 ? Math.round((total_resorces / total_resorces_recommened) * 100) : 0}%`"
+            ></div>
+          </div>
+          <p class="text-[11px] text-text-secondary mt-1.5">
+            {{ total_resorces_recommened > 0 ? Math.round((total_resorces / total_resorces_recommened) * 100) : 0 }}% capacity filled
+          </p>
+        </div>
+        
         <ul class="space-y-3">
-          <li v-for="role in project.variables?.roles" class="flex justify-between">
-            <span class="flex gap-2 items-center text-text-primary text-base font-semibold">
-              <span v-if="role.role_emoji" class="mr-2 text-lg"> {{ role.role_emoji }}</span>
-              <span v-if="role.role_icon" class="mr-2 text-lg"><i :class="[role.role_icon.prefix, role.role_icon.iconName]" class="text-[14px]" /></span>
+          <li v-for="role in project.variables?.roles" :key="role.id" class="flex justify-between items-center bg-bg-card/40 rounded-xl px-4 py-3 border border-border transition-colors hover:border-border/70 hover:bg-bg-card/60">
+            <span class="flex gap-3 items-center text-text-primary text-sm font-medium">
+              <div class="w-8 h-8 rounded-lg bg-bg-surface border border-border/50 flex items-center justify-center shrink-0 shadow-sm">
+                <span v-if="role.role_emoji" class="text-[15px]">{{ role.role_emoji }}</span>
+                <span v-else-if="role.role_icon" class="text-[15px] text-text-secondary"><i :class="[role.role_icon.prefix, role.role_icon.iconName]" /></span>
+                <i v-else class="fa-regular fa-user text-text-secondary text-[13px]"></i>
+              </div>
               {{ role.title }}
             </span>
-            <span> {{ role.people.length }} / {{ role.max_num_people }} </span>
+            <div class="flex flex-col items-end gap-1">
+              <span class="text-xs font-semibold bg-bg-surface border border-border px-2.5 py-0.5 rounded-md text-text-secondary shadow-sm">
+                {{ role.people.length }} / {{ role.max_num_people }}
+              </span>
+              <div class="w-14 h-1 bg-bg-card rounded-full overflow-hidden">
+                <div 
+                  class="h-full bg-accent/60 rounded-full"
+                  :style="`width: ${role.max_num_people > 0 ? Math.round((role.people.length / role.max_num_people) * 100) : 0}%`"
+                ></div>
+              </div>
+            </div>
           </li>
         </ul>
       </div>
     </div>
 
     <!-- Selected Lanes -->
-    <div v-if="project?.lanes?.length > 0" class=" h-full flex-grow flec flex-col">
-      <h3 class="text-lg font-semibold text-text-primary mb-4">
-        Selected Project Tabs
+    <div v-if="project?.lanes?.length > 0" class="step-enter step-enter-4 h-full flex-grow flex flex-col mt-2">
+      <h3 class="text-lg font-semibold text-text-primary mb-5 px-1 flex items-center gap-2">
+        <i class="fa-regular fa-table-columns text-text-secondary text-base"></i> Selected Workspace Tabs
       </h3>
-      <div class="grid  grid-cols-2 md:grid-cols-3 flex-wrap gap-3 md:gap-4">
-        <div v-for="lane in project.lanes" class="bg-bg-surface text-text-primary px-4 py-3 rounded-lg">
-          <div class="flex gap-4 items-center">
-            <div class="w-4 h-4 rounded-full aspect-square" :style="`background:${lane.variables['lane-color']}`"></div>
+      <div class="grid grid-cols-2 md:grid-cols-3 flex-wrap gap-4">
+        <div v-for="lane in project.lanes" :key="lane.variables.id" class="group bg-bg-surface border border-border/50 text-text-primary px-5 py-4 rounded-2xl shadow-sm transition-all duration-300 hover:shadow-lg hover:border-accent/40 hover:-translate-y-1 relative overflow-hidden cursor-default">
+          <div class="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-300 pointer-events-none" :style="`background: linear-gradient(135deg, ${lane.variables['lane-color']} 0%, transparent 100%)`"></div>
+          <div class="flex gap-4 items-center relative z-10">
+            <div class="w-10 h-10 rounded-xl shrink-0 shadow-sm border border-border flex items-center justify-center transition-transform duration-300 group-hover:scale-110" :style="`background-color: color-mix(in srgb, ${lane.variables['lane-color']} 15%, transparent)`">
+              <div class="w-3 h-3 rounded-full" :style="`background:${lane.variables['lane-color']}; box-shadow: 0 0 10px ${lane.variables['lane-color']}80`"></div>
+            </div>
             <div class="flex-1 min-w-0">
-              <p class="text-sm font-medium">
+              <p class="text-sm font-semibold text-text-primary truncate transition-colors duration-300 group-hover:text-accent">
                 {{ lane.variables["lane-title"] }}
               </p>
-              <p class="text-xs text-text-secondary line-clamp-2 ">
+              <p class="text-[11px] text-text-secondary line-clamp-1 mt-0.5">
                 {{ lane.variables["lane-description"] }}
               </p>
             </div>
@@ -83,10 +139,10 @@ import {
   useCreateWorkspace,
 } from "../../../queries/useWorkspace";
 import { useRouter } from "vue-router";
-import { useCompanyId } from "../../../services/user";
 import { useWorkspaceStore } from '../../../stores/workspace';
+import { useAuthStore } from "../../../stores/auth";
 const isLoader = ref(false);
-
+const authStore = useAuthStore()
 const workspaceStore = useWorkspaceStore();
 const router = useRouter()
 const { mutate: createStep2, isPending } = useCreateLanes({
@@ -100,7 +156,8 @@ const { mutate: createStep2, isPending } = useCreateLanes({
 const { mutate: createWorkspace, isPending: createWorkspacePending } =
   useCreateWorkspace({
     onError: (error: any) => console.error("Error creating workspace:", error),
-    onSuccess: (data: any) => {
+    onSuccess: async (data: any) => {
+      await authStore.bootstrap()
       if (props.ai)
         createStep2({
           workspace_id: data._id,
@@ -140,12 +197,11 @@ const total_resorces = computed(() => project.value.variables?.roles ? project.v
   return e.people.length + el;
 }, 0) : 0
 );
-const { data: companyId } = useCompanyId()
 function createProjectHandler() {
   createWorkspace({
-    company_id: companyId?.value?._id,
+    ...(authStore.company_id ? { company_id: authStore.company_id } : {}),
     ...project.value,
-  }); // This triggers the workspace creation process
+  });
 }
 defineExpose({
   createProjectHandler,
@@ -158,4 +214,24 @@ const props = defineProps<{
 const emits = defineEmits(['back'])
 </script>
 
-<style scoped></style>
+<style scoped>
+.step-enter {
+  opacity: 0;
+  animation: slideUpFade 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.step-enter-1 { animation-delay: 0.05s; }
+.step-enter-2 { animation-delay: 0.15s; }
+.step-enter-3 { animation-delay: 0.25s; }
+.step-enter-4 { animation-delay: 0.35s; }
+
+@keyframes slideUpFade {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+</style>

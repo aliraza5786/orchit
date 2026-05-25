@@ -9,7 +9,9 @@ type IconValue = { prefix: IconPrefix; iconName: string } | null;
 
 const props = defineProps<{ 
   modelValue?: IconValue,
-  relevantIcons?: string[]
+  relevantIcons?: string[],
+  inSpace?: boolean
+  noSearch?: boolean
 }>();
 const emit = defineEmits<{ (e: 'update:modelValue', value: any): void }>();
 
@@ -88,15 +90,15 @@ function openIconLibrary() {
     <!-- Button / Empty state -->
     <div v-if="!showIconPicker && !modelValue?.iconName"
       class="border border-dashed bg-bg-input border-border rounded-xl p-6 flex flex-col items-center text-center">
-      <Button variant="primary" @click="openIconLibrary">Select Icon</Button>
+      <Button :inSpace="props.inSpace? props.inSpace : false"  variant="primary" @click="openIconLibrary">Select Icon</Button>
       <p class="text-xs text-text-secondary mt-2">Browse PrimeIcons</p>
     </div>
 
     <!-- Icon picker -->
-    <div v-else-if="showIconPicker" class="mt-6">
+    <div v-else-if="showIconPicker">
       <div class="grid gap-3 w-full">
-        <!-- Search -->
-        <input v-model="query" placeholder="Search icons…" class="px-3 py-2 rounded-lg border col-span-full border-border bg-bg-card text-sm placeholder-text-secondary
+        <!-- Search --> 
+        <input  v-if="!props.noSearch" v-model="query" placeholder="Search icons…" class="px-3 py-2 rounded-[6px] border col-span-full border-border bg-bg-input text-sm placeholder-text-secondary
                  focus:outline-none focus:ring-2 focus:ring-accent focus:border-border" type="text" />
 
         <!-- Grid -->
@@ -133,9 +135,9 @@ function openIconLibrary() {
 </template>
 
 <style scoped>
-.grid {
+/* .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
   gap: 1rem;
-}
+} */
 </style>

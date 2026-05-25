@@ -201,6 +201,8 @@ export const useDashboardTeams = (workspace_id: Ref<string> | string, options = 
     ...options,
   });
 };
+export const DASHBOARD_ACTIVITIES_PAGE_SIZE = 10
+
 export const useDashboardActivities = (
   workspace_id: Ref<string> | string,
   page: Ref<number> | number = 1,
@@ -214,11 +216,12 @@ export const useDashboardActivities = (
       'dashboard-activities',
       workspaceIdRef.value,
       pageRef.value,
+      DASHBOARD_ACTIVITIES_PAGE_SIZE,
     ]),
 
     queryFn: ({ signal }) =>
       request<any>({
-        url: `workspace/${workspaceIdRef.value}/activities?page=${pageRef.value}`,
+        url: `workspace/${workspaceIdRef.value}/activities?page=${pageRef.value}&limit=${DASHBOARD_ACTIVITIES_PAGE_SIZE}`,
         method: 'GET',
         signal,
       }),

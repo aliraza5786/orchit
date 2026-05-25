@@ -1,9 +1,9 @@
 <template>
-  <BaseModal v-model="model" size="md" title="Update Module">
+  <BaseModal :inSpace="true" v-model="model" size="md" title="Update Module">
     <div class="px-6 py-6 space-y-4">
 
       <!-- Icon Picker -->
-      <IconPicker v-model="form.icon" />
+      <IconPicker :inSpace="true" v-model="form.icon" />
 
       <!-- Module Name -->
       <BaseTextField
@@ -23,7 +23,7 @@
         >
           Cancel
         </button>
-        <Button class="px-4" @click="submit" :disabled="isPending">
+        <Button :inSpace="true" class="px-4" @click="submit" :disabled="isPending">
           {{ isPending ? 'Saving...' : 'Save' }}
         </Button>
       </div>
