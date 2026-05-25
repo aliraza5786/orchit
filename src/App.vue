@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, computed } from 'vue'
+import { onMounted, computed, watch } from 'vue'
 import { Toaster } from 'vue-sonner'
 import 'vue-sonner/style.css'
 import { useTheme } from './composables/useTheme'
@@ -20,6 +20,15 @@ onMounted(async () => {
   await authStore.bootstrap()
 })
 useDeletionGuard(profileData)
+watch(
+  profileData,
+  async (user) => { 
+    if (user?.is_suspended) {
+      await authStore.logout()
+    }
+  },
+  { immediate: true }
+)
 </script>
 
 <template>

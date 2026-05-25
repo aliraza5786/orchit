@@ -221,13 +221,6 @@
                           <p class="text-xs font-semibold text-text-primary truncate">{{ user.u_full_name }}</p>
                           <p class="text-[10px] text-text-secondary truncate">{{ user.u_email }}</p>
                         </div>
-
-                        <span
-                          class="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full"
-                          :class="user.is_active ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-400'"
-                        >
-                          {{ user.is_active ? 'Active' : 'Inactive' }}
-                        </span>
                       </div>
 
                       <div v-if="!domainUsersMap[domain._id]?.length" class="py-8 text-center">

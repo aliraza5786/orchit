@@ -66,13 +66,27 @@
     <!-- ── Search + Filters ── -->
     <div class="flex flex-col sm:flex-row gap-2.5">
       <div class="flex-1 relative">
-        <input
-          v-model="searchQuery"
-          placeholder="Search by name or email…"
-          class="w-full pl-9 pr-4 py-2.5 border border-border/60 bg-bg-body/80 rounded-lg text-sm focus:border-accent/50 focus:ring-2 focus:ring-accent/10 outline-none transition-all placeholder:text-text-tertiary"
-        />
-        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary/60 text-xs"></i>
-      </div>
+  <input
+    v-model="searchQuery"
+    placeholder="Search by name or email…"
+    class="w-full pl-9 pr-10 py-2.5 border border-border/60 bg-bg-body/80 rounded-lg text-sm focus:border-accent/50 focus:ring-2 focus:ring-accent/10 outline-none transition-all placeholder:text-text-tertiary"
+  />
+
+  <!-- Search Icon -->
+  <i
+    class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary/60 text-xs"
+  ></i>
+
+  <!-- Clear Icon -->
+  <button
+    v-if="searchQuery"
+    @click="searchQuery = ''"
+    type="button"
+    class="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary/60 hover:text-text-primary transition-colors"
+  >
+    <i class="fa-solid fa-xmark text-sm"></i>
+  </button>
+</div>
 
       <div class="relative">
         <select
@@ -270,7 +284,12 @@
           v-if="!isSuperAdminMember(member) && (canUpdateUsers || canDeleteUsers)"
         >
           <button
-            v-if="canUpdateUsers && (member.membership_status === 'active' || member.membership_status === 'deactivated' || member.membership_status === 'suspended')"
+            v-if="canUpdateUsers && (
+            member.membership_status === 'active' ||
+            member.membership_status === 'deactivated' ||
+            member.membership_status === 'suspended' ||
+            member.membership_status == null
+          )"
             @click.stop="openStatusModal(member)"
             :disabled="togglingUserId === member._id || !isUserVerified"
             :title="member.membership_status === 'active' ? 'Deactivate member' : 'Activate member'"
@@ -876,10 +895,12 @@ const BULK_SELECTABLE_STATUSES: MembershipStatus[] = ['active', 'deactivated', '
 function isBulkSelectable(member: CompanyUser): boolean {
   return (
     !isSuperAdminMember(member) &&
-    BULK_SELECTABLE_STATUSES.includes(member.membership_status as MembershipStatus)
+    (
+      BULK_SELECTABLE_STATUSES.includes(member.membership_status as MembershipStatus) ||
+      member.membership_status == null // ← newly registered, no status yet
+    )
   )
 }
-
 // ─── Members data (unchanged) ─────────────────────────────────
 const companyUsersParams = computed(() => ({
   company_id:      companyId.value,
