@@ -201,6 +201,15 @@
 
         <div class="space-y-3 " v-show="activeStep === 2 && selected === 'team'">
           <BaseTextField ref="teamRef" v-model="team" placeholder="Company name" size="md" :error="!!errors.team" :message="errors.team" />
+          <BaseMultiSelect
+            v-model="industries"
+            :options="industryOptions"
+            size="md"
+            :allowCustom="true"
+            placeholder="Select Industries: e.g. Ecommerce, SaaS, Health"
+            :error="!!errors.industries"
+            :message="errors.industries"
+          />
           <BaseSelectField :noSearchAble="true" ref="roleRef" v-model="role" :options="staticRolesList" placeholder="Select your role" size="md" :error="!!errors.role" :message="errors.role" />
           <BaseSelectField :noSearchAble="true" ref="companySizeRef" v-model="companySize"  :options="companySizeOptions" placeholder="Select Company size" size="md" :error="!!errors.companySize" :message="errors.companySize" />
         </div>
@@ -1133,6 +1142,7 @@ import teamIcon from '../../assets/platform/team.svg'
 import personalIcon from '../../assets/platform/personal-use.svg'
 import Button from '../../components/ui/Button.vue'
 import BaseSelectField from '../../components/ui/BaseSelectField.vue'
+import BaseMultiSelect from '../../components/ui/BaseMultiSelect.vue'
 import BaseTextField from '../../components/ui/BaseTextField.vue'
 import SwitchTab from '../../components/ui/SwitchTab.vue'
 import { useRouter, useRoute } from 'vue-router'
@@ -1145,6 +1155,7 @@ import { useCreateCompanyUser, useSendSuperAdminOtp, useVerifySuperAdminOtp } fr
 import gsap from 'gsap'
 import { toast } from 'vue-sonner'
 import { useCompanyRolesWithoutPermission } from '../../queries/useCommon'
+import { useIndustries } from '../../queries/useWorkspace'
 import { useTheme } from '../../composables/useTheme';
 import { isCompanyEmail as checkIsCompanyEmail } from '../../utilities/onboardingRedirect'
 import { clearOrgDraft } from '../../utilities/createOrganizationDraft'
@@ -1152,6 +1163,7 @@ import { clearOrgDraft } from '../../utilities/createOrganizationDraft'
 const { theme } = useTheme();
 defineOptions({ name: 'OnboardingFlow' })
 const { data: rolesData, isLoading: isRolesLoading, refetch: refetchRoles } = useCompanyRolesWithoutPermission()
+const { data: industryData } = useIndustries()
 const { mutateAsync: sendOtp } = useSendSuperAdminOtp()
 const { mutateAsync: verifyOtp } = useVerifySuperAdminOtp()
 
@@ -1187,6 +1199,7 @@ const companySizeRef = ref(null)
 
 const role = ref('')
 const team = ref('')
+const industries = ref([])
 const companySize = ref('')
 const personalRole = ref('')
 const schoolName = ref('')
@@ -1454,6 +1467,20 @@ const staticRolesList = Object.freeze([
   { title: 'Other',                _id: 'other' },
 ])
 
+const industryOptions = computed(() => {
+  const raw = industryData.value
+  const list = Array.isArray(raw)
+    ? raw
+    : Array.isArray(raw?.data)
+      ? raw.data
+      : []
+  return list.map((item) => {
+    if (typeof item === 'string') return { title: item, _id: item }
+    const title = item.title ?? item.name ?? ''
+    return { title, _id: String(item._id ?? title) }
+  })
+})
+
 const companySizeOptions = Object.freeze([
   { title: '1 – 10',         _id: '1–10' },
   { title: '11 – 50',        _id: '11–50' },
@@ -1643,6 +1670,7 @@ function handlePopState(event) {
 
 // ─── Watchers ─────────────────────────────────────────────────────────────────
 watch(team,        (v) => { if (v?.trim() && errors.value.team)        errors.value.team        = undefined })
+watch(industries,  (v) => { if (v?.length && errors.value.industries)  errors.value.industries  = undefined })
 watch(role,        (v) => { if (v && errors.value.role)                errors.value.role        = undefined })
 watch(companySize, (v) => { if (v && errors.value.companySize)         errors.value.companySize = undefined })
 watch(workType,    (v) => { if (v && errors.value.workType)            errors.value.workType    = undefined })
@@ -2143,7 +2171,14 @@ function buildProfilePayload(includeSite = false) {
     base.site_slug = siteSlug.value
   }
   if (selected.value === 'team') {
-    return { ...base, title: team.value, type: 'team', role_id: role.value, company_size: companySize.value }
+    return {
+      ...base,
+      title: team.value,
+      type: 'team',
+      role_id: role.value,
+      company_size: companySize.value,
+      industries: industries.value,
+    }
   }
   if (selected.value === 'personal') {
     return { ...base, type: 'personal', u_work_to_do: personalRole.value }
@@ -2598,6 +2633,7 @@ function getUserInitials(name) {
 function validateCompanyStep() {
   const next = {}
   if (!team.value.trim()) next.team        = 'Please enter your company name.'
+  if (!industries.value.length) next.industries = 'Select at least one industry.'
   if (!role.value)        next.role        = 'Please select your role.'
   if (!companySize.value) next.companySize = 'Please select your company size.'
   errors.value = next
