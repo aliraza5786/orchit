@@ -1008,27 +1008,9 @@ watch([page, searchQuery, statusFilter, roleFilter], () => { bulkSelectedIds.val
 // ─── Mutations ────────────────────────────────────────────────
 const togglingUserId = ref<string | null>(null)
 
-const { mutate: toggleActive } = useToggleCompanyUserActive(companyId.value, {
-  onSuccess: (data: any) => { toast.success((data?.data ?? data)?.message || 'Status updated'); togglingUserId.value = null },
-  onError:   (error: any) => { toast.error(error?.response?.data?.message || 'Failed to update status'); togglingUserId.value = null },
-})
+const { mutate: toggleActive } = useToggleCompanyUserActive(companyId.value)
 
-const { mutate: deactivateUser } = useDeactivateCompanyUser(companyId.value, {
-  onSuccess: (data: any) => {
-    toast.success((data?.data ?? data)?.message || 'Member removed')
-    showDeactivateConfirm.value = false
-    deactivatingMember.value    = null
-    isDeactivating.value        = false
-    // Step back if we just emptied the last page
-    if (paginatedMembers.value.length === 1 && page.value > 1) {
-      page.value--
-    }
-  },
-  onError: (error: any) => {
-    toast.error(error?.response?.data?.message || 'Failed to remove member')
-    isDeactivating.value = false
-  },
-})
+const { mutate: deactivateUser } = useDeactivateCompanyUser(companyId.value)
 
 // ─── Bulk activate ────────────────────────────────────────────
 async function handleBulkActivate() {
@@ -1077,16 +1059,19 @@ async function handleBulkDeactivate() {
 // ─── Inline role update ───────────────────────────────────────
 const roleUpdatingUserId = ref<string | null>(null)
 
-const { mutate: updateUser } = useUpdateCompanyUser(companyId.value, {
-  onSuccess: (data: any) => { toast.success((data?.data ?? data)?.message || 'Role updated'); roleUpdatingUserId.value = null },
-  onError:   (error: any) => { toast.error(error?.response?.data?.message || 'Failed to update role'); roleUpdatingUserId.value = null },
-})
+const { mutate: updateUser } = useUpdateCompanyUser(companyId.value)
 
 function handleInlineRoleUpdate(member: CompanyUser, roleId: string) {
   if (!canUpdateUsers.value) { toast.error('No permission to update roles'); return }
   if (!roleId || member.company_role_id === roleId) return
   roleUpdatingUserId.value = member._id
-  updateUser({ userId: member._id, payload: { company_role_id: roleId } })
+  updateUser(
+    { userId: member._id, payload: { company_role_id: roleId } },
+    {
+      onSuccess: (data: any) => { toast.success((data?.data ?? data)?.message || 'Role updated'); roleUpdatingUserId.value = null },
+      onError:   (error: any) => { toast.error(error?.response?.data?.message || 'Failed to update role'); roleUpdatingUserId.value = null },
+    }
+  )
 }
 
 // ─── Status modal ─────────────────────────────────────────────
@@ -1299,23 +1284,7 @@ function openEditModal(member: CompanyUser) {
 
 function closeEditModal() { showEditModal.value = false; editingMember.value = null }
 
-const { mutate: updateMember } = useUpdateCompanyUser(companyId.value, {
-  onSuccess: (data: any) => {
-    const payload = data?.data ?? data
-    if (!payload || payload?.status === false) {
-      editServerError.value = payload?.message || 'Something went wrong.'
-      isEditing.value = false
-      return
-    }
-    toast.success('Member updated successfully')
-    closeEditModal()
-    isEditing.value = false
-  },
-  onError: (error: any) => {
-    editServerError.value = error?.response?.data?.message || error?.message || 'Failed to update member'
-    isEditing.value = false
-  },
-})
+const { mutate: updateMember } = useUpdateCompanyUser(companyId.value)
 
 function handleEdit() {
   if (!editingMember.value) return
@@ -1331,7 +1300,26 @@ function handleEdit() {
     u_department: editForm.value.u_department || undefined,
   }
   if (showResetPassword.value && editForm.value.u_password) payload.u_password = editForm.value.u_password
-  updateMember({ userId: editingMember.value._id, payload })
+  updateMember(
+  { userId: editingMember.value._id, payload },
+  {
+    onSuccess: (data: any) => {
+      const p = data?.data ?? data
+      if (!p || p?.status === false) {
+        editServerError.value = p?.message || 'Something went wrong.'
+        isEditing.value = false
+        return
+      }
+      toast.success(p?.message || 'Member updated successfully')
+      closeEditModal()
+      isEditing.value = false
+    },
+    onError: (error: any) => {
+      editServerError.value = error?.response?.data?.message || error?.message || 'Failed to update member'
+      isEditing.value = false
+    },
+  }
+)
 }
 
 // ─── Remove modal ─────────────────────────────────────────────
@@ -1348,9 +1336,20 @@ function confirmDeactivate(member: CompanyUser) {
 function handleDeactivate() {
   if (!deactivatingMember.value) return
   isDeactivating.value = true
-  deactivateUser(deactivatingMember.value._id)
+  deactivateUser(deactivatingMember.value._id, {
+    onSuccess: (data: any) => {
+      toast.success((data?.data ?? data)?.message || 'Member removed')
+      showDeactivateConfirm.value = false
+      deactivatingMember.value    = null
+      isDeactivating.value        = false
+      if (paginatedMembers.value.length === 1 && page.value > 1) page.value--
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || 'Failed to remove member')
+      isDeactivating.value = false
+    },
+  })
 }
-
 // ─── Bulk action helpers ──────────────────────────────────────
 const bulkHasActivatable = computed(() =>
   bulkSelectedIds.value.some(id => {
