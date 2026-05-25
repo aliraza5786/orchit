@@ -1,15 +1,25 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, computed } from 'vue'
 import { Toaster } from 'vue-sonner'
 import 'vue-sonner/style.css'
 import { useTheme } from './composables/useTheme'
 import { useAuthStore } from './stores/auth'
+import { useDeletionGuard } from './composables/useDeletionGuard'
+import { useQuery } from '@tanstack/vue-query'
+import { getProfile } from './services/user'
 const { isDark } = useTheme()
 const authStore = useAuthStore()
 
+const { data: profile } = useQuery({
+  queryKey: ['profile'],
+  queryFn: getProfile,
+  placeholderData: (prev) => prev,
+})
+const profileData = computed(() => profile.value?.data ?? null)
 onMounted(async () => {
   await authStore.bootstrap()
 })
+useDeletionGuard(profileData)
 </script>
 
 <template>

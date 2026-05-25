@@ -28,7 +28,7 @@ const isPersonalFree = computed(() =>
   props.profile?.individual_subscription?.package?.packageType === 'free'
 )
 
-
+const isPendingDeletion = computed(() => !!activeCompany.value?.is_pending_deletion)
 const isCompanyEmail = computed(() => {
   const email  = props.profile?.u_email || ''
   if (!email) return false
@@ -324,28 +324,29 @@ function orgInitials(title: string) {
             <p class="text-[10px] uppercase tracking-widest text-text-secondary/50 font-semibold mb-2 px-1">Organization</p>
             <div class="space-y-1">
               <button
-                v-for="company in allCompanies"
-                :key="company._id"
-                @click="selectCompany(company)"
-                class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] transition-all border cursor-pointer"
-                :class="displayCompanyId === company._id
-                  ? 'bg-accent/10 border-accent/20 text-text-primary'
-                  : 'border-transparent hover:bg-bg-card text-text-secondary hover:text-text-primary'"
-              >
-                <div
-                  class="w-7 h-7 rounded-lg flex items-center justify-center text-white text-[10px] font-bold shrink-0 overflow-hidden"
-                  style="background: linear-gradient(135deg, #6c63ff 0%, #a78bfa 100%)"
-                >
-                  <img v-if="company.logo" :src="company.logo" class="w-full h-full object-cover" alt="" />
-                  <span v-else>{{ orgInitials(company.title) }}</span>
-                </div>
-                <div class="flex-1 min-w-0 text-left">
-                  <p class="text-[12px] font-semibold truncate leading-tight">{{ company.title }}</p>
-                  <p class="text-[10px] text-text-secondary capitalize leading-tight mt-0.5">{{ company?.role?.title }}</p>
-                </div>
-                <span v-if="isSwitching && selectedCompanyId === company._id" class="w-3 h-3 border border-accent border-t-transparent rounded-full animate-spin shrink-0"></span>
-                <span v-else-if="displayCompanyId === company._id" class="w-1.5 h-1.5 rounded-full bg-accent shrink-0"></span>
-              </button>
+  v-for="company in allCompanies"
+  :key="company._id"
+  @click="selectCompany(company)"
+  class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] transition-all border cursor-pointer"
+  :class="displayCompanyId === company._id
+    ? 'bg-accent/10 border-accent/20 text-text-primary'
+    : 'border-transparent hover:bg-bg-card text-text-secondary hover:text-text-primary'"
+>
+  <div
+    class="w-7 h-7 rounded-lg flex items-center justify-center text-white text-[10px] font-bold shrink-0 overflow-hidden"
+    style="background: linear-gradient(135deg, #6c63ff 0%, #a78bfa 100%)"
+  >
+    <img v-if="company.logo" :src="company.logo" class="w-full h-full object-cover" alt="" />
+    <span v-else>{{ orgInitials(company.title) }}</span>
+  </div>
+  <div class="flex-1 min-w-0 text-left">
+    <p class="text-[12px] font-semibold truncate leading-tight">{{ company.title }}</p>
+    <p class="text-[10px] text-text-secondary capitalize leading-tight mt-0.5">{{ company?.role?.title }}</p>
+  </div>
+  <span v-if="isSwitching && selectedCompanyId === company._id" class="w-3 h-3 border border-accent border-t-transparent rounded-full animate-spin shrink-0"></span>
+  <span v-else-if="company.is_pending_deletion" class="text-[9px] font-medium px-1.5 py-0.5 rounded-full shrink-0" style="background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger-border);">Deleting</span>
+  <span v-else-if="displayCompanyId === company._id" class="w-1.5 h-1.5 rounded-full bg-accent shrink-0"></span>
+</button>
             </div>
           </div>
 
@@ -353,27 +354,37 @@ function orgInitials(title: string) {
           <div v-if="visibleOrgItems.length > 0">
             <p class="text-[10px] uppercase tracking-widest text-text-secondary/50 font-semibold mb-2 px-1">Settings</p>
             <nav class="space-y-0.5">
-              <button
-                v-for="item in visibleOrgItems"
-                :key="item.tab"
-                @click="selectTab(item.tab)"
-                class="w-full flex items-center cursor-pointer gap-3 px-3 py-2 rounded-lg text-[13px] transition-all"
-                :class="currentTab === item.tab
-                  ? 'bg-accent/10 text-accent font-semibold'
-                  : 'text-text-secondary hover:bg-bg-card hover:text-text-primary'"
-              >
-                <i :class="[item.icon, 'w-4 text-center text-[13px] shrink-0']"></i>
-                {{ item.label }}
-                <i v-if="currentTab === item.tab" class="fa-solid fa-chevron-right text-[9px] ml-auto opacity-40"></i>
-              </button>
-            </nav>
+  <button
+    v-for="item in visibleOrgItems"
+    :key="item.tab"
+    @click="!isPendingDeletion && selectTab(item.tab)"
+    class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] transition-all"
+    :class="isPendingDeletion
+      ? 'text-text-secondary/40 cursor-not-allowed'
+      : currentTab === item.tab
+        ? 'bg-accent/10 text-accent font-semibold cursor-pointer'
+        : 'text-text-secondary hover:bg-bg-card hover:text-text-primary cursor-pointer'"
+    :disabled="isPendingDeletion"
+    :title="isPendingDeletion ? 'Organization is pending deletion' : ''"
+  >
+    <i :class="[item.icon, 'w-4 text-center text-[13px] shrink-0']"></i>
+    {{ item.label }}
+    <i v-if="currentTab === item.tab && !isPendingDeletion" class="fa-solid fa-chevron-right text-[9px] ml-auto opacity-40"></i>
+    <i v-if="isPendingDeletion" class="fa-solid fa-lock text-[9px] ml-auto" style="color: var(--danger);"></i>
+  </button>
+</nav>
           </div>
 
           <!-- Upgrade banner — org owners on free plan -->
           <div v-if="isOrgFree && canSeeUpgradeBanner">
-  <div class="rounded-xl border border-purple-500/25 bg-gradient-to-b from-purple-500/10 to-purple-500/5 p-4">
+  <div
+    class="rounded-xl border p-4 transition-all"
+    :class="isPendingDeletion
+      ? 'border-border opacity-40 cursor-not-allowed pointer-events-none'
+      : 'border-purple-500/25 bg-gradient-to-b from-purple-500/10 to-purple-500/5'"
+  >
     <div class="flex items-center gap-2 mb-2">
-      <i class="fa-solid fa-crown text-purple-400 text-[11px]"></i>
+      <i class="fa-solid fa-crown text-[11px]" :class="isPendingDeletion ? 'text-text-secondary' : 'text-purple-400'"></i>
       <p class="text-[12px] font-bold text-text-primary">You're on the Free plan</p>
     </div>
 
@@ -383,23 +394,27 @@ function orgInitials(title: string) {
 
     <ul class="mb-3 space-y-1.5">
       <li class="flex items-start gap-2 text-[11px] text-text-secondary">
-        <i class="fa-solid fa-circle-check text-purple-400 text-[10px] mt-0.5 shrink-0"></i>
+        <i class="fa-solid fa-circle-check text-[10px] mt-0.5 shrink-0" :class="isPendingDeletion ? 'text-text-secondary' : 'text-purple-400'"></i>
         <span>Unlimited workspaces &amp; team members</span>
       </li>
       <li class="flex items-start gap-2 text-[11px] text-text-secondary">
-        <i class="fa-solid fa-circle-check text-purple-400 text-[10px] mt-0.5 shrink-0"></i>
+        <i class="fa-solid fa-circle-check text-[10px] mt-0.5 shrink-0" :class="isPendingDeletion ? 'text-text-secondary' : 'text-purple-400'"></i>
         <span>Org AI Token Pool — up to 25M tokens/month</span>
       </li>
       <li class="flex items-start gap-2 text-[11px] text-text-secondary">
-        <i class="fa-solid fa-circle-check text-purple-400 text-[10px] mt-0.5 shrink-0"></i>
+        <i class="fa-solid fa-circle-check text-[10px] mt-0.5 shrink-0" :class="isPendingDeletion ? 'text-text-secondary' : 'text-purple-400'"></i>
         <span>Advanced controls, roles &amp; integrations</span>
       </li>
     </ul>
 
     <button
       @click="selectTab('org-packages')"
-      class="w-full py-2 rounded-lg text-white text-[12px] cursor-pointer font-bold hover:opacity-90 active:scale-[0.97] transition-all"
-      style="background: linear-gradient(90deg, #7c3aed, #6c63ff)"
+      :disabled="isPendingDeletion"
+      class="w-full py-2 rounded-lg text-white text-[12px] font-bold transition-all"
+      :class="isPendingDeletion
+        ? 'cursor-not-allowed opacity-50 bg-border'
+        : 'cursor-pointer hover:opacity-90 active:scale-[0.97]'"
+      :style="isPendingDeletion ? '' : 'background: linear-gradient(90deg, #7c3aed, #6c63ff)'"
     >
       Upgrade organization →
     </button>
