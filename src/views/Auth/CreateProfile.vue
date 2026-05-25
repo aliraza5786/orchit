@@ -448,7 +448,7 @@
                     <path d="M8 5v4M8 11v.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
                   </svg>
                   <p class="text-xs text-text-secondary leading-relaxed">
-                    Next you'll verify a super admin email at <strong class="text-text-primary">@{{ dnsInput }}</strong>, then verify domain ownership via DNS.
+                    Next you'll verify domain ownership via DNS for <strong class="text-text-primary">{{ dnsInput }}</strong>.
                   </p>
                 </div>
               </div>
@@ -467,6 +467,8 @@
           </div>
         </div>
 
+        <!-- STEP 51 — Verify Super Admin (disabled for now; re-enable by removing v-if="false" wrapper) -->
+        <template v-if="false">
         <!-- ═══════════════════════════════════════════════════════
              STEP 51 — Super Admin Verification
              ONLY for Scenario 2 (gmail + team/school + custom domain)
@@ -639,6 +641,7 @@
             </div>
           </div>
         </div>
+        </template>
 
         <!-- ═══════════════════════════════════════════════════════
              STEP 6 — Loading / provisioning
@@ -1144,16 +1147,7 @@ import { toast } from 'vue-sonner'
 import { useCompanyRolesWithoutPermission } from '../../queries/useCommon'
 import { useTheme } from '../../composables/useTheme';
 import { isCompanyEmail as checkIsCompanyEmail } from '../../utilities/onboardingRedirect'
-import {
-  getOrgDraft,
-  hasOrgDraft,
-  saveOrgDraft,
-  hasCreateOrgPendingOnboarding,
-  clearCreateOrgPendingFlag,
-  clearOrgDraft,
-  CREATE_ORG_DRAFT_KEY,
-  CREATE_ORG_PENDING_KEY,
-} from '../../utilities/createOrganizationDraft'
+import { clearOrgDraft } from '../../utilities/createOrganizationDraft'
 
 const { theme } = useTheme();
 defineOptions({ name: 'OnboardingFlow' })
@@ -1167,32 +1161,16 @@ const authStore = useAuthStore()
 const router = useRouter()
 const route = useRoute()
 
-// /create-organization: start on step 3 immediately so step 1/2 never flash
-const orgDraftAtInit = getOrgDraft()
-const isCreateOrgEntry = !!(
-  orgDraftAtInit ||
-  hasCreateOrgPendingOnboarding() ||
-  route.query.step === '3'
-)
-
 function resolveInitialOnboardingStep() {
-  if (orgDraftAtInit || hasCreateOrgPendingOnboarding()) return 3
   const queryStep = Number(route.query.step)
   if (queryStep && !Number.isNaN(queryStep)) return queryStep
   return 1
 }
 
-if (orgDraftAtInit) {
-  localStorage.setItem('onboarding_selected_type', 'team')
-  clearCreateOrgPendingFlag()
-}
-
 // ─── Core State ──────────────────────────────────────────────────────────────
 const companyID = ref()
 const activeStep = ref(resolveInitialOnboardingStep())
-const selected = ref(
-  orgDraftAtInit ? 'team' : (localStorage.getItem('onboarding_selected_type') || 'team'),
-)
+const selected = ref(localStorage.getItem('onboarding_selected_type') || 'team')
 watch(selected, (v) => {
   if (v) localStorage.setItem('onboarding_selected_type', v)
 })
@@ -1207,10 +1185,9 @@ const teamRef = ref(null)
 const roleRef = ref(null)
 const companySizeRef = ref(null)
 
-// ─── Step 2 (hydrate from org draft before first paint when coming from /create-organization)
-const role = ref(orgDraftAtInit?.role ?? '')
-const team = ref(orgDraftAtInit?.team ?? '')
-const companySize = ref(orgDraftAtInit?.companySize ?? '')
+const role = ref('')
+const team = ref('')
+const companySize = ref('')
 const personalRole = ref('')
 const schoolName = ref('')
 const educationLevel = ref('')
@@ -1270,41 +1247,7 @@ const filteredOptions = computed(() => {
 })
 
 
-function applyOrgDraftFromStorage() {
-  const draft = getOrgDraft()
-  if (!draft) return
-  selected.value = 'team'
-  localStorage.setItem('onboarding_selected_type', 'team')
-  team.value = draft.team
-  role.value = draft.role
-  companySize.value = draft.companySize
-}
-
-function applyCreateOrgOnboardingEntry() {
-  const fromCreateOrg =
-    hasCreateOrgPendingOnboarding() ||
-    hasOrgDraft() ||
-    route.query.from === 'create-organization'
-  if (!fromCreateOrg) return false
-
-  applyOrgDraftFromStorage()
-  clearCreateOrgPendingFlag()
-  activeStep.value = 3
-  if (Number(route.query.step) !== 3) {
-    router.replace({ path: '/onboarding', query: { step: '3' } })
-  }
-  return true
-}
-
 onMounted(async () => {
-  if (isCreateOrgEntry) {
-    applyOrgDraftFromStorage()
-    activeStep.value = 3
-    if (Number(route.query.step) !== 3) {
-      router.replace({ path: '/onboarding', query: { step: '3' } })
-    }
-  }
-
   const storedUser = authStore.user?.data ?? authStore.user
   if (storedUser && storedUser.u_email) {
     profileData.value = storedUser
@@ -1331,16 +1274,11 @@ onMounted(async () => {
     console.error('Failed to fetch profile', error)
   }
 
-  if (isCreateOrgEntry) return
-
-  if (applyCreateOrgOnboardingEntry()) return
-
   if (route.query.step) {
-    const s = Number(route.query.step)
-    const minStep = (isEmailLoaded.value && !isCompanyEmail.value && !hasOrgDraft()) ? 2 : 1
+    let s = Number(route.query.step)
+    if (s === 51) s = 8 // step 51 (super admin) disabled — resume at domain verify
+    const minStep = isEmailLoaded.value && !isCompanyEmail.value ? 2 : 1
     activeStep.value = Math.max(minStep, s)
-  } else {
-    applyOrgDraftFromStorage()
   }
 })
 
@@ -1472,14 +1410,8 @@ watchEffect(() => {
 
 const isEmailLoaded = computed(() => !!userEmail.value)
 
-// Auto-select based on email domain and route steps (skip when org draft from /create-organization)
 watch([isCompanyEmail, isEmailLoaded, userEmailDomain], ([isCompany, isLoaded]) => {
   if (!isLoaded) return
-  if (hasOrgDraft() || isCreateOrgEntry) {
-    selected.value = 'team'
-    localStorage.setItem('onboarding_selected_type', 'team')
-    return
-  }
   if (isCompany) {
     if (!localStorage.getItem('onboarding_selected_type')) {
       selected.value = 'team'
@@ -1773,14 +1705,15 @@ watch(activeStep, (step) => {
 
 // Sync URL → Step (Back/Forward button support)
 watch(() => route.query.step, (step) => {
-  const minStep = (isEmailLoaded.value && !isCompanyEmail.value && !hasOrgDraft()) ? 2 : 1
+  const minStep = isEmailLoaded.value && !isCompanyEmail.value ? 2 : 1
   if (step) {
-    const s = Number(step)
+    let s = Number(step)
+    if (s === 51) s = 8 // step 51 (super admin) disabled
     const targetStep = Math.max(minStep, s)
     if (activeStep.value !== targetStep) {
       activeStep.value = targetStep
     }
-  } else if (activeStep.value !== minStep && !hasOrgDraft()) {
+  } else if (activeStep.value !== minStep) {
     activeStep.value = minStep
   }
 })
@@ -1999,14 +1932,23 @@ const { mutate: createProfile, isPending: creatingProfile } = useCreateCompany({
     localStorage.setItem('company_id', id ?? '')
     siteCreated.value = true
 
-    // Scenario 2a: company created, now go to super admin verification
+    // Scenario 2a: company created — step 51 (super admin) disabled for now → domain verify
     if (pendingSuperAdminStep.value) {
       pendingSuperAdminStep.value = false
       isProvisioning.value  = false
       isLoaderRunning.value = false
-      // Refetch roles so we get the super admin role for the new company
+      domainPhase.value = 'idle'
+      currentDomain.value = null
+      currentInstructions.value = null
+      activeStep.value = 8
+      return
+    }
+    /* Step 51 — Verify Super Admin (disabled for now)
+    if (pendingSuperAdminStep.value) {
+      pendingSuperAdminStep.value = false
+      isProvisioning.value  = false
+      isLoaderRunning.value = false
       await refetchRoles()
-      // Re-resolve superAdminRole for the newly created company
       const currentCompanyId = id
       const matchedRole = allRoles.value.find(r => r.is_super_admin && r.company_id === currentCompanyId)
         || allRoles.value.find(r => r.is_super_admin && r.company_id)
@@ -2016,6 +1958,7 @@ const { mutate: createProfile, isPending: creatingProfile } = useCreateCompany({
       activeStep.value = 51
       return
     }
+    */
     // isLoaderRunning stays true; LoadingCreateProfile animation drives timing
   },
   onError: (error) => {
@@ -2216,7 +2159,6 @@ function clearOnboardingState() {
     'onboarding_super_admin_email_prefix', 'onboarding_super_admin_name',
     'onboarding_domain_phase', 'onboarding_current_domain', 'onboarding_current_instructions',
     'onboarding_selected_verification_method', 'onboarding_selected_type',
-    CREATE_ORG_DRAFT_KEY, CREATE_ORG_PENDING_KEY,
   ]
   keys.forEach(k => localStorage.removeItem(k))
   clearOrgDraft()
@@ -2272,15 +2214,6 @@ function handleConflictRedirect() {
   companySlugError.value = null
   isNameConflictError.value = false
   siteName.value = ''
-  // /create-organization: clear stale site slug so step 5 regenerates from updated company name
-  if (hasOrgDraft()) {
-    siteSlug.value = ''
-    isSlugAvailable.value = null
-    isCheckingSlug.value = false
-    siteCreated.value = false
-    localStorage.removeItem('onboarding_site_name')
-    localStorage.removeItem('onboarding_site_slug')
-  }
 }
 
 function onProvisioningComplete() {
@@ -2292,7 +2225,7 @@ function onProvisioningComplete() {
     return
   }
 
-  // Custom domain: step 51 → 8 → 7 handled separately after company create
+  // Custom domain: 8 → 7 handled separately after company create (step 51 disabled)
   if (isCustomDomainFlow.value) return
 
   // Subdomain / company subdomain: continue to referral step
@@ -2697,13 +2630,6 @@ async function continueHandler() {
   if (activeStep.value === 2) {
     if (selected.value === 'team'     && !validateCompanyStep())  return
     if (selected.value === 'personal' && !validatePersonalStep()) return
-    if (selected.value === 'team' && hasOrgDraft()) {
-      saveOrgDraft({
-        team: team.value.trim(),
-        role: role.value,
-        companySize: companySize.value,
-      })
-    }
     activeStep.value++
     return
   }
@@ -2774,7 +2700,7 @@ async function continueHandler() {
 async function continueSiteHandler() {
   if (isCreateSiteDisabled.value) return
 
-  // Custom domain → create company first, then super admin OTP → domain verify → referral
+  // Custom domain → create company first, then domain verify → referral (step 51 super admin disabled)
   if (isCustomDomainFlow.value) {
     pendingSuperAdminStep.value = true
     isProvisioning.value  = true

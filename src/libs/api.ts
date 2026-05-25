@@ -60,8 +60,11 @@ api.interceptors.response.use(
     const isUnauthorized = err.response?.status === 401;
     const isNetworkOrCorsError = !err.response || err.message === 'Network Error' || err.code === 'ERR_NETWORK';
     const skipSessionRedirect = isPublicAuthRequest(err.config);
+    const isOrgOnboardingRoute =
+      typeof window !== 'undefined' &&
+      window.location.pathname.includes('/onboarding-organization');
 
-    if ((isUnauthorized || isNetworkOrCorsError) && !skipSessionRedirect) {
+    if ((isUnauthorized || isNetworkOrCorsError) && !skipSessionRedirect && !isOrgOnboardingRoute) {
       console.warn(isUnauthorized ? "User not authorized." : "Backend down or CORS error.", "Clearing session and redirecting.");
       
       const logoutKeys = [

@@ -79,7 +79,7 @@
   import { verifyOtp, resendOtp } from '../../services/auth'
   import { useAuthStore } from '../../stores/auth'
   import { getPostAuthRedirectPath } from '../../utilities/onboardingRedirect'
-  import { hasCreateOrgPendingOnboarding, clearCreateOrgPendingFlag } from '../../utilities/createOrganizationDraft'
+  import { hasCreateOrgPendingOnboarding, saveOrgSignupToken } from '../../utilities/createOrganizationDraft'
   import type { ComponentPublicInstance } from 'vue'
 
   defineOptions({ name: 'OtpVerify' })
@@ -140,7 +140,19 @@ async function verifyCode() {
 
     // Standard post-register OTP flow
     const data = await verifyAsync({ u_email: email.value, otp: fullCode })
-    localStorage.setItem('token', data?.data?.token)
+    const token =
+      data?.data?.token ??
+      data?.token ??
+      data?.data?.access_token ??
+      data?.access_token ??
+      null
+    if (token) {
+      authStore.setSessionToken(token)
+      if (hasCreateOrgPendingOnboarding()) saveOrgSignupToken(token)
+    } else if (hasCreateOrgPendingOnboarding()) {
+      otpError.value = 'Verification succeeded but no session token was returned.'
+      return
+    }
     await authStore.bootstrap(true)
 
     // ✅ Check post_auth_intent first
@@ -169,8 +181,7 @@ async function verifyCode() {
     }
 
     if (hasCreateOrgPendingOnboarding()) {
-      clearCreateOrgPendingFlag()
-      router.replace({ path: '/onboarding', query: { step: '3' } })
+      router.replace({ path: '/onboarding-organization', query: { step: '5', otpVerified: '1' } })
       return
     }
 

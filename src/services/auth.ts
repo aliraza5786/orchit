@@ -1,5 +1,6 @@
 import api, { request } from "../libs/api";
 import { useApiMutation } from "../libs/vq";
+import { getToken } from "../stores/auth";
 
 export const login = (payload: { u_email: string; u_password: string }) =>
   api.post("/auth/login", payload).then((res) => res.data);
@@ -12,6 +13,7 @@ export const register = (payload: {
   u_email: string;
   u_password: string;
   agree_to_terms?: boolean;
+  sendOtp?: boolean;
 }) => api.post("/auth/signup", payload).then((res) => res.data);
 
 export const verifyOtp = (payload: { u_email: string; otp: string }) =>
@@ -28,7 +30,9 @@ export const socialLogin = (payload: {
   u_full_name?: string;
 }) => api.post("/auth/social-login", payload).then((res) => res.data);
 
-type createCompany = { payload: any };
+type createCompany = { payload: any; accessToken?: string };
+
+const fullBodyExtractor = <T>(res: { data: T }) => res.data;
 
 export const useCreateCompany = (options = {}) =>
   useApiMutation<any, createCompany>(
@@ -37,13 +41,20 @@ export const useCreateCompany = (options = {}) =>
     } as any,
     {
       mutationFn: async (vars: createCompany) => {
+        const token = (vars.accessToken?.trim() || getToken() || "").trim();
+        if (!token) {
+          const err = new Error("Authentication required. Please sign in again.");
+          (err as any).response = { data: { status: false, message: err.message } };
+          throw err;
+        }
         const data = await request({
           url: `/workspace/company`,
           method: "POST",
           data: vars.payload,
+          config: { headers: { Authorization: `Bearer ${token}` } },
+          extract: fullBodyExtractor,
         });
 
-        // ✅ Treat API-level failures as thrown errors
         if (data?.status === false) {
           const err = new Error(data?.message ?? "Request failed");
           (err as any).response = { data };
@@ -61,12 +72,18 @@ export const useUpdateCompany = (options = {}) =>
       key: ["update-company"],
     } as any,
     {
-      mutationFn: (vars: createCompany) =>
-        request({
+      mutationFn: (vars: createCompany) => {
+        const token = (vars.accessToken?.trim() || getToken() || "").trim();
+        return request({
           url: `/workspace/company`,
           method: "PUT",
           data: vars.payload,
-        }),
+          config: token
+            ? { headers: { Authorization: `Bearer ${token}` } }
+            : undefined,
+          extract: fullBodyExtractor,
+        });
+      },
       ...(options as any),
     } as any,
   );

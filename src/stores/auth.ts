@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import api from '../libs/api'
+import { setAuthCookie } from '../utilities/auth'
 const COOKIE_KEY = 'auth_session'
 function parseCookie(): { token?: string; company_id?: string; personal_mode?: boolean; company_switched?: boolean } | null {
   try {
@@ -35,6 +36,10 @@ function writeCookie(data: {
       document.cookie = `${COOKIE_KEY}=${value}; path=/; max-age=${maxAge}; SameSite=Lax`
     } else if (hostname.endsWith('.streamed.space')) {
       document.cookie = `${COOKIE_KEY}=${value}; domain=.streamed.space; path=/; max-age=${maxAge}; Secure; SameSite=Lax`
+    } else if (hostname.endsWith('.orchit.ai')) {
+      document.cookie = `${COOKIE_KEY}=${value}; domain=.orchit.ai; path=/; max-age=${maxAge}; Secure; SameSite=Lax`
+    } else {
+      document.cookie = `${COOKIE_KEY}=${value}; path=/; max-age=${maxAge}; Secure; SameSite=Lax`
     }
   } catch (e) {
     console.error('❌ Failed to set auth cookie:', e)
@@ -119,6 +124,13 @@ export const useAuthStore = defineStore('auth', {
   },
 
   actions: {
+    setSessionToken(token: string) {
+      if (!token?.trim()) return
+      localStorage.setItem('token', token)
+      writeCookie({ token })
+      setAuthCookie(token)
+    },
+
     setCompany(id: string) {
   this.company_id = id
   localStorage.setItem('company_id', id)
