@@ -1055,11 +1055,7 @@ function formatToday(iso: string) {
   return today.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) 
     + ', ' + today.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
 }
-function formatDate(iso: string) {
-  const d = new Date(iso)
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-    + ', ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-}
+
 function countdownText(iso: string) {
   const diffMs = new Date(iso).getTime() - Date.now()
   if (diffMs <= 0) return 'Deletion processing...'

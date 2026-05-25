@@ -23,36 +23,6 @@ export interface Notification {
 // -----------------------------
 const dummyNotifications: Notification[] = [];
 
- 
-function getCompanyId(): string | null {
-  const hostname = window.location.hostname
-
-  const isSubdomain =
-    (hostname.endsWith('.orchit.ai') && hostname !== 'orchit.ai') ||
-    (hostname.endsWith('.streamed.space') && hostname !== 'streamed.space') ||
-    (hostname.endsWith('.localhost') && hostname !== 'localhost')
-
-  // ✅ Read from auth_session cookie — single source of truth
-  let session: { token?: string; company_id?: string; personal_mode?: boolean } | null = null
-  try {
-    const raw = document.cookie
-      .split('; ')
-      .find(row => row.startsWith('auth_session='))
-      ?.split('=')[1]
-    if (raw) session = JSON.parse(decodeURIComponent(raw))
-  } catch { /* ignore */ }
-
-  // ✅ Personal mode on main domain → no company
-  if (session?.personal_mode && !isSubdomain) return null
-
-  // ✅ On subdomain → trust company_id from cookie
-  if (isSubdomain && session?.company_id) return session.company_id
-
-  // ✅ Main domain without personal_mode → use company_id if present
-  if (session?.company_id && !session?.personal_mode) return session.company_id
-
-  return null
-}
 export const fetchNotifications = async () => {
   try {
     const { data } = await api.get('/notifications')
