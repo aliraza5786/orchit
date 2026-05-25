@@ -55,8 +55,7 @@ function getCompanyId(): string | null {
 }
 export const fetchNotifications = async () => {
   try {
-    const companyId = getCompanyId()
-    const { data } = await api.get(`/notifications${companyId ? `?company_id=${companyId}` : ''}`)
+    const { data } = await api.get('/notifications')
     
     const notifications = data?.data?.notifications || []
     const mappedNotifications = notifications.map((item: any): Notification => ({
@@ -81,8 +80,7 @@ export const fetchNotifications = async () => {
 
 export const fetchUnreadCount = async () => {
   try {
-    const companyId = getCompanyId()
-    const { data } = await api.get(`/notifications/unread-count${companyId ? `?company_id=${companyId}` : ''}`)
+    const { data } = await api.get('/notifications/unread-count')
     return data.data.count || 0
   } catch (err) {
     console.warn("⚠️ Unread count API failed, returning 0")
@@ -96,9 +94,7 @@ export const markNotificationsRead = async (ids: string[]) => {
 }
 
 export const markAllNotificationsRead = async () => {
-  const companyId = getCompanyId()
-  // ✅ company_id was missing — server was rejecting or updating wrong tenant
-  const { data } = await api.patch(`/notifications/read-all${companyId ? `?company_id=${companyId}` : ''}`)
+  const { data } = await api.patch('/notifications/read-all')
   return data.data
 }
 
@@ -122,13 +118,13 @@ export const useNotificationsQuery = (options = {}) => {
   })
 
   const notificationsQuery = useQuery({
-    queryKey: ["notifications", "list", companyId],
+    queryKey: ["notifications", "list"],
     queryFn: fetchNotifications,
     ...options,
   })
 
   const unreadCountQuery = useQuery({
-    queryKey: ["notifications", "unreadCount", companyId],
+    queryKey: ["notifications", "unreadCount"],
     queryFn: fetchUnreadCount,
     ...options,
   })
@@ -140,7 +136,7 @@ export const useNotificationsQuery = (options = {}) => {
     sock.on("new_notification", (raw: any) => {
       // Prepend to list immediately — no waiting for HTTP
       queryClient.setQueryData(
-        ["notifications", "list", companyId.value],
+        ["notifications", "list"],
         (old: Notification[] = []) => [{
           id: raw._id,
           actor_name: raw.triggered_by?.user_email || "Unknown",
@@ -156,7 +152,7 @@ export const useNotificationsQuery = (options = {}) => {
       )
       // Bump the badge count
       queryClient.setQueryData(
-        ["notifications", "unreadCount", companyId.value],
+        ["notifications", "unreadCount"],
         (old: number = 0) => old + 1
       )
     })
@@ -164,7 +160,7 @@ export const useNotificationsQuery = (options = {}) => {
     sock.on("unread_count_update", (data: { count: number }) => {
       // ✅ Server pushes authoritative count — use it directly
       queryClient.setQueryData(
-        ["notifications", "unreadCount", companyId.value],
+        ["notifications", "unreadCount"],
         data.count
       )
     })
@@ -183,7 +179,7 @@ export const useNotificationsQuery = (options = {}) => {
     onMutate: async (ids: string[]) => {
       // ✅ Optimistic update — dot disappears instantly on click
       queryClient.setQueryData(
-        ["notifications", "list", companyId.value],
+        ["notifications", "list"],
         (old: Notification[] = []) =>
           old.map(n => ids.includes(n.id) ? { ...n, read: true } : n)
       )
@@ -198,11 +194,11 @@ export const useNotificationsQuery = (options = {}) => {
     onMutate: async () => {
       // ✅ Optimistic — all dots vanish before server responds
       queryClient.setQueryData(
-        ["notifications", "list", companyId.value],
+        ["notifications", "list"],
         (old: Notification[] = []) => old.map(n => ({ ...n, read: true }))
       )
       queryClient.setQueryData(
-        ["notifications", "unreadCount", companyId.value],
+        ["notifications", "unreadCount"],
         0
       )
     },

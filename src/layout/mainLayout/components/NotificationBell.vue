@@ -217,27 +217,28 @@ function openNotification(notification: any) {
     markReadMutation.mutate([notification.id]);
   }
 
-  // Use normalized .url if it's not the '#' fallback, otherwise use raw .action_url if present
-  const targetUrl = (notification.url && notification.url !== '#') ? notification.url : notification.action_url;
-
-  if (targetUrl) {
-    router.push(targetUrl);
-    isOpen.value = false;
-    return;
-  }
-
   const ws = notification?.workspace_id ?? notification?.data?.workspace_id;
   const moduleId = notification?.module_id ?? notification?.data?.module_id;
+  const cardId = notification?.metaData?.card_id || notification?.metaData?.task_id || notification?.metadata?.card_id;
   
-  if (ws && moduleId) {
+  if (ws && moduleId && cardId) {
     router.push({
       name: "productTask",
       params: {
         id: ws,
         module_id: moduleId,
-        card_id: notification?.metaData?.card_id || notification?.metaData?.task_id || notification?.metadata?.card_id
+        card_id: cardId
       }
     });
+    isOpen.value = false;
+    return;
+  }
+
+  // Use normalized .url if it's not the '#' fallback, otherwise use raw .action_url if present
+  const targetUrl = (notification.url && notification.url !== '#') ? notification.url : notification.action_url;
+
+  if (targetUrl) {
+    router.push(targetUrl);
     isOpen.value = false;
     return;
   }
