@@ -113,8 +113,13 @@
           class="flex justify-between items-center mb-3 p-3 border border-border rounded-md"
         >
           <div class="flex flex-col">
-            <span class="text-sm font-semibold capitalize text-text-primary m-0 leading-tight">{{ member.name }}</span>
-            <span class="text-xs text-text-secondary mt-1">{{ member.email }}</span>
+            <span
+              class="text-sm font-semibold capitalize text-text-primary m-0 leading-tight"
+              >{{ member.name || `${role.title} ${Number(idx) + 1}` }}</span
+            >
+            <span class="text-xs text-text-secondary mt-1">{{
+              member.email
+            }}</span>
           </div>
           <button
             type="button"

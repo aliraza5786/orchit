@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from "vue";
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from "vue";
 import AssigmentDropdown from "../../views/Product/components/AssigmentDropdown.vue";
 
 const scrollContainerRef = ref<HTMLElement | null>(null);
@@ -254,7 +254,19 @@ const prev = () => {
     currentDate.value = d;
   }
 };
-const goToToday = () => (currentDate.value = new Date());
+const goToToday = () => {
+  currentDate.value = new Date();
+  nextTick(() => scrollToToday());
+};
+
+const scrollToToday = () => {
+  if (scrollContainerRef.value) {
+    const todayEl = scrollContainerRef.value.querySelector('.is-today');
+    if (todayEl) {
+      todayEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }
+};
 // const getAvatar = (task: any) =>
 //   task.seat || (task.seats && task.seats[0]) || null;
 
@@ -314,9 +326,13 @@ const closePopup = () => {
 };
 
 // Close popup on view change
-watch(activeView, () => closePopup());
+watch(activeView, () => {
+  closePopup();
+  nextTick(() => scrollToToday());
+});
 
 onMounted(() => {
+  setTimeout(scrollToToday, 100);
   const handleGlobalClick = (e: MouseEvent) => {
     if (!activeDayPopup.value) return;
     const target = e.target as HTMLElement;

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from "vue";
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from "vue";
 
 const props = defineProps({
   data: {
@@ -269,6 +269,12 @@ onMounted(() => {
     });
     resizeObserver.observe(containerRef.value);
   }
+
+  setTimeout(goToToday, 100);
+});
+
+watch([timelineRange, zoomLevel], () => {
+  nextTick(() => goToToday());
 });
 
 onUnmounted(() => {

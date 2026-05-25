@@ -1,5 +1,5 @@
 <template>
-  <Loader v-if="(route.params.id && isPending)" />
+  <Loader v-if="route.params.id && isPending" />
   <div class="ideal-step w-full flex flex-col gap-6">
     <!-- Hero -->
     <div class="ideal-enter ideal-enter-1 text-center space-y-3 mb-4">
@@ -10,11 +10,16 @@
         <i class="fa-solid fa-sparkles text-[10px]"></i>
         AI-Powered Setup
       </span>
-      <h2 class="text-[24px] font-medium text-transparent bg-clip-text bg-gradient-to-r from-text-primary to-text-secondary tracking-tight">
+      <h2
+        class="text-[24px] font-medium text-transparent bg-clip-text bg-gradient-to-r from-text-primary to-text-secondary tracking-tight"
+      >
         Welcome to Orchit AI Space
       </h2>
-      <p class="text-sm text-text-secondary mb-0 max-w-[520px] mx-auto leading-relaxed">
-        Describe your workspace, and we'll build the plan instantly with AI magic.
+      <p
+        class="text-sm text-text-secondary mb-0 max-w-[520px] mx-auto leading-relaxed"
+      >
+        Describe your workspace, and we'll build the plan instantly with AI
+        magic.
       </p>
     </div>
 
@@ -33,7 +38,11 @@
             :disabled="isPending"
             v-if="!isRecording && !audioURL"
             v-model="description"
-            :placeholder="isFocused || description ? 'Ask Orchit AI to create a workspace...' : ''"
+            :placeholder="
+              isFocused || description
+                ? 'Ask Orchit AI to create a workspace...'
+                : ''
+            "
             style="height: 100% !important"
             class="w-full h-full bg-transparent text-text-primary text-sm font-normal leading-normal resize-none outline-none placeholder:text-text-secondary/60 relative z-[1]"
             @focus="isFocused = true"
@@ -44,14 +53,19 @@
             class="absolute inset-0 pl-[17px] pr-[48px] py-[15px] max-sm:px-5 max-sm:py-5 pointer-events-none flex items-start z-0"
             aria-hidden="true"
           >
-            <span class="text-sm  text-text-secondary/55 font-normal">
+            <span class="text-sm text-text-secondary/55 font-normal">
               {{ animatedPlaceholder }}<span class="typing-caret">|</span>
             </span>
           </div>
         </div>
 
         <transition v-if="!description" name="fade-slide" appear>
-          <div class="bottom-5 right-4" :class="isRecording || audioURL ? 'w-full rounded-full' : 'absolute'">
+          <div
+            class="bottom-5 right-4"
+            :class="
+              isRecording || audioURL ? 'w-full rounded-full' : 'absolute'
+            "
+          >
             <AudioRecorder
               v-model="description"
               @transcribed="onTranscription"
@@ -62,17 +76,24 @@
         </transition>
 
         <transition v-else name="rotate-fade" appear>
-          <div
+          <button
             @click="handleGenerate"
-            class="absolute bottom-5 flex justify-center items-center right-4 w-9 h-9 aspect-square rounded-xl cursor-pointer bg-gradient-to-br from-accent to-accent-hover shadow-md hover:shadow-lg hover:shadow-accent/30 hover:-translate-y-0.5 transition-all duration-300"
-            :class="isPending ? 'animate-pulse-ring' : ''"
+            :disabled="isPending"
+            class="absolute bottom-5 flex justify-center items-center right-4 w-9 h-9 aspect-square rounded-xl bg-gradient-to-br from-accent to-accent-hover shadow-md transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-md"
+            :class="
+              isPending
+                ? 'animate-pulse-ring'
+                : 'cursor-pointer hover:shadow-lg hover:shadow-accent/30 hover:-translate-y-0.5'
+            "
           >
             <i class="text-[13px] text-white fa-solid fa-arrow-right"></i>
-          </div>
+          </button>
         </transition>
       </div>
 
-      <p class="text-sm max-md:text-xs text-text-secondary text-center m-0">Or try these examples:</p>
+      <p class="text-sm max-md:text-xs text-text-secondary text-center m-0">
+        Or try these examples:
+      </p>
       <div class="suggestions flex gap-3 max-w-[800px] w-full mx-auto">
         <div
           v-if="isSuggestionPending"
@@ -93,13 +114,16 @@
           </div>
         </div>
 
-        <div v-else class="suggestions flex overflow-auto gap-3 max-w-[800px] w-full pt-1">
+        <div
+          v-else
+          class="suggestions flex overflow-auto gap-3 max-w-[800px] w-full pt-1"
+        >
           <div
             v-for="(suggestion, idx) in suggestions"
             :key="idx"
             :style="{ animationDelay: `${0.08 * Number(idx)}s` }"
             @click="handleSuggestionClick(suggestion)"
-            class="suggestion-card group flex min-w-[160px] h-[100px] items-center flex-[1_0_0] cursor-pointer bg-bg-card/40 border border-border/40 backdrop-blur-md p-[15px] rounded-2xl hover:bg-bg-surface hover:border-accent/40 hover:shadow-sm hover:shadow-accent/15 hover:-translate-y-0.5  transition-all duration-400"
+            class="suggestion-card group flex min-w-[160px] h-[100px] items-center flex-[1_0_0] cursor-pointer bg-bg-card/40 border border-border/40 backdrop-blur-md p-[15px] rounded-2xl hover:bg-bg-surface hover:border-accent/40 hover:shadow-sm hover:shadow-accent/15 hover:-translate-y-0.5 transition-all duration-400"
           >
             <span
               class="text-text-secondary line-clamp-3 text-sm font-normal leading-5 group-hover:text-text-primary transition-colors duration-300 max-md:static max-md:w-auto max-md:h-auto"
@@ -113,9 +137,13 @@
 
     <!-- Manual path -->
     <div class="ideal-enter ideal-enter-4 w-full max-w-[800px] mx-auto">
-      <div class="flex w-full text-xs text-text-secondary/70 items-center gap-4">
+      <div
+        class="flex w-full text-xs text-text-secondary/70 items-center gap-4"
+      >
         <hr class="flex-auto border-border/60" />
-        <span class="font-medium tracking-widest uppercase text-[10px]">or</span>
+        <span class="font-medium tracking-widest uppercase text-[10px]"
+          >or</span
+        >
         <hr class="flex-auto border-border/60" />
       </div>
 
@@ -138,11 +166,15 @@
                 v-if="!manualTypingDone"
                 class="typing-caret typing-caret--btn ml-0.5"
                 aria-hidden="true"
-              >|</span>
+                >|</span
+              >
             </span>
             <i
               class="fa-solid fa-arrow-right text-[13px] text-text-secondary/60 ml-auto transition-all duration-400 group-hover:translate-x-1 group-hover:text-accent"
-              :class="{ 'opacity-0': !manualTypingDone, 'opacity-100': manualTypingDone }"
+              :class="{
+                'opacity-0': !manualTypingDone,
+                'opacity-100': manualTypingDone,
+              }"
             ></i>
           </button>
           <p
@@ -158,17 +190,22 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
-import AudioRecorder from '../components/AudioRecorder.vue';
-import { toast } from 'vue-sonner';
-import { useCreateWorkspaceWithAIPrivate, useDescription, useSuggestions } from '../../../queries/useWorkspace';
-import { useRoute } from 'vue-router';
-import Loader from '../../../components/ui/Loader.vue';
-import { useWorkspaceStore } from '../../../stores/workspace';
+import { computed, onMounted, onUnmounted, ref, watch } from "vue";
+import AudioRecorder from "../components/AudioRecorder.vue";
+import { toast } from "vue-sonner";
+import {
+  useCreateWorkspaceWithAIPrivate,
+  useDescription,
+  useSuggestions,
+} from "../../../queries/useWorkspace";
+import { useRoute } from "vue-router";
+import Loader from "../../../components/ui/Loader.vue";
+import { useWorkspaceStore } from "../../../stores/workspace";
 
 const workspaceStore = useWorkspaceStore();
 const route = useRoute();
-const { data: suggestions, isPending: isSuggestionPending } = useSuggestions('workspace');
+const { data: suggestions, isPending: isSuggestionPending } =
+  useSuggestions("workspace");
 const { data: descriptionData, isSuccess } = useDescription();
 
 const hasId = computed(() => Boolean(route.params.id));
@@ -179,7 +216,7 @@ watch(
   allLoaded,
   (ready) => {
     if (ready && !autoTriggered.value && hasId.value) {
-      description.value = descriptionData.value?.data ?? '';
+      description.value = descriptionData.value?.data ?? "";
       handleGenerate();
       autoTriggered.value = true;
     }
@@ -187,26 +224,26 @@ watch(
   { immediate: true },
 );
 
-const description = ref('');
+const description = ref("");
 const isRecording = ref(false);
 const audioURL = ref<string | null>(null);
 const isFocused = ref(false);
-const textareaRef = ref<HTMLTextAreaElement | null>(null);
+// const textareaRef = ref<HTMLTextAreaElement | null>(null);
 
 const badgeStyle = {
-  color: 'var(--accent)',
-  background: 'color-mix(in srgb, var(--accent) 12%, transparent)',
-  borderColor: 'color-mix(in srgb, var(--accent) 28%, transparent)',
+  color: "var(--accent)",
+  background: "color-mix(in srgb, var(--accent) 12%, transparent)",
+  borderColor: "color-mix(in srgb, var(--accent) 28%, transparent)",
 };
 
 // Rotating placeholder (textarea)
-const staticPrefix = 'Ask Orchit AI to ';
+const staticPrefix = "Ask Orchit AI to ";
 const placeholderSuffixes = [
-  'create a product launch workspace...',
-  'plan a marketing campaign...',
-  'organize an engineering sprint...',
-  'build a client onboarding flow...',
-  'structure a design review process...',
+  "create a product launch workspace...",
+  "plan a marketing campaign...",
+  "organize an engineering sprint...",
+  "build a client onboarding flow...",
+  "structure a design review process...",
 ];
 const animatedPlaceholder = ref(staticPrefix);
 const currentPlaceholderIndex = ref(0);
@@ -226,7 +263,8 @@ function typePlaceholder() {
   let charIndex = 0;
   typingInterval = setInterval(() => {
     if (charIndex < suffix.length) {
-      animatedPlaceholder.value = staticPrefix + suffix.substring(0, charIndex + 1);
+      animatedPlaceholder.value =
+        staticPrefix + suffix.substring(0, charIndex + 1);
       charIndex++;
     } else {
       if (typingInterval) clearInterval(typingInterval);
@@ -240,7 +278,8 @@ function erasePlaceholder() {
   let charIndex = suffix.length;
   erasingInterval = setInterval(() => {
     if (charIndex > 0) {
-      animatedPlaceholder.value = staticPrefix + suffix.substring(0, charIndex - 1);
+      animatedPlaceholder.value =
+        staticPrefix + suffix.substring(0, charIndex - 1);
       charIndex--;
     } else {
       if (erasingInterval) clearInterval(erasingInterval);
@@ -252,8 +291,8 @@ function erasePlaceholder() {
 }
 
 // Manual button typing
-const MANUAL_LABEL = 'Create Manually';
-const manualLabelDisplayed = ref('');
+const MANUAL_LABEL = "Create Manually";
+const manualLabelDisplayed = ref("");
 const showManualSection = ref(false);
 const manualTypingDone = ref(false);
 let manualTypingTimeouts: ReturnType<typeof setTimeout>[] = [];
@@ -261,9 +300,9 @@ let manualTypingTimeouts: ReturnType<typeof setTimeout>[] = [];
 function typeManualLabel() {
   manualTypingTimeouts.forEach(clearTimeout);
   manualTypingTimeouts = [];
-  manualLabelDisplayed.value = '';
+  manualLabelDisplayed.value = "";
   manualTypingDone.value = false;
-  MANUAL_LABEL.split('').forEach((char, index) => {
+  MANUAL_LABEL.split("").forEach((char, index) => {
     const t = setTimeout(() => {
       manualLabelDisplayed.value += char;
       if (index === MANUAL_LABEL.length - 1) {
@@ -277,10 +316,10 @@ function typeManualLabel() {
 const { mutate: generate, isPending } = useCreateWorkspaceWithAIPrivate({
   onSuccess: (aiResponse: any) => {
     workspaceStore.setWorkspace(aiResponse);
-    emit('manual');
+    emit("manual");
   },
   onError: (error: any) => {
-    toast.error('Something went wrong', error);
+    toast.error("Something went wrong", error);
   },
 });
 
@@ -289,8 +328,8 @@ const typingTimeouts: ReturnType<typeof setTimeout>[] = [];
 function typeEffect(text: string) {
   typingTimeouts.forEach(clearTimeout);
   typingTimeouts.length = 0;
-  description.value = '';
-  const chars = text.split('');
+  description.value = "";
+  const chars = text.split("");
   chars.forEach((char, index) => {
     const timeout = setTimeout(() => {
       description.value += char;
@@ -304,12 +343,12 @@ function onTranscription(transcript: string) {
 }
 
 function handleGenerate() {
-  localStorage.setItem('mannualWorkspace', 'false');
+  localStorage.setItem("mannualWorkspace", "false");
   generate({ idea: description.value });
 }
 
 onMounted(() => {
-  localStorage.setItem('mannualWorkspace', 'false');
+  localStorage.setItem("mannualWorkspace", "false");
   typePlaceholder();
   delayTimeout = setTimeout(() => {
     showManualSection.value = true;
@@ -324,10 +363,10 @@ onUnmounted(() => {
 });
 
 function mannualHandler() {
-  localStorage.setItem('mannualWorkspace', 'true');
+  localStorage.setItem("mannualWorkspace", "true");
   workspaceStore.setWorkspace(null);
-  localStorage.removeItem('jobId');
-  emit('manual', 'mannual');
+  localStorage.removeItem("jobId");
+  emit("manual", "mannual");
 }
 
 function handleSuggestionClick(suggestion: { description: string }) {
@@ -338,10 +377,15 @@ function handleSuggestionClick(suggestion: { description: string }) {
   }
 }
 
-const emit = defineEmits(['generate', 'manual', 'update:isRecording', 'update:hasAudio']);
+const emit = defineEmits([
+  "generate",
+  "manual",
+  "update:isRecording",
+  "update:hasAudio",
+]);
 
-watch(isRecording, (val) => emit('update:isRecording', val));
-watch(audioURL, (val) => emit('update:hasAudio', !!val));
+watch(isRecording, (val) => emit("update:isRecording", val));
+watch(audioURL, (val) => emit("update:hasAudio", !!val));
 </script>
 
 <style scoped>
@@ -370,7 +414,7 @@ watch(audioURL, (val) => emit('update:hasAudio', !!val));
   }
 }
 
-.ai-input-shell { 
+.ai-input-shell {
   backdrop-filter: blur(5px);
   background: var(--bg-input, var(--color-bg-input));
   border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
@@ -379,7 +423,7 @@ watch(audioURL, (val) => emit('update:hasAudio', !!val));
     box-shadow 0.3s ease;
 }
 .ai-input-shell:focus-within {
-  border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); 
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
 }
 
 .suggestion-card {
