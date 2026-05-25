@@ -12,10 +12,10 @@
     <i class="fa-solid fa-lock text-[12px]" style="color: var(--danger);"></i>
   </div>
   <span>
-    Organization settings are
-    <strong class="font-semibold" style="color: var(--danger);">locked</strong>
-    because a deletion has been scheduled.
-  </span>
+  This organization is scheduled for deletion and is now
+  <strong class="font-semibold" style="color: var(--danger);">read-only.</strong>
+  All settings have been locked.
+</span>
 </div>
     <!-- Pending deletion banner -->
 <div v-if="currentCompany?.is_pending_deletion"
@@ -44,7 +44,7 @@
     <div class="grid grid-cols-2 gap-2.5">
       <div class="rounded-[10px] p-3" style="border:1px solid rgba(239,68,68,0.25); background:rgba(239,68,68,0.05)">
         <p class="text-[10px] uppercase tracking-wider text-text-secondary m-0 mb-1">Requested on</p>
-        <p class="text-[13px] font-medium text-text-primary m-0">{{ formatDate(currentCompany.deletion_scheduled_date) }}</p>
+        <p class="dr-date-val text-[13px] font-medium text-text-primary m-0">{{ formatToday(currentCompany.deletion_scheduled_date) }}</p>
       </div>
       <div class="rounded-[10px] p-3" style="border:1px solid rgba(239,68,68,0.25); background:rgba(239,68,68,0.05)">
         <p class="text-[10px] uppercase tracking-wider text-text-secondary m-0 mb-1">Deletes on</p>
@@ -1038,26 +1038,32 @@ async function doConfirmStep() {
 // deletion request
 const deletionSteps = [
   { icon: 'fa-solid fa-check', label: 'Deletion requested', sub: 'Confirmed by owner', done: true },
-{ icon: 'fa-solid fa-envelope', label: 'Confirmation email sent', sub: "Sent to owner's registered email", done: true },
+  { icon: 'fa-solid fa-envelope', label: 'Confirmation email sent', sub: "Sent to owner's registered email", done: true },
   { icon: 'fa-solid fa-database', label: 'Data purge begins', sub: 'Members, files, and workspaces removed', done: false },
   { icon: 'fa-solid fa-circle-xmark', label: 'Organization fully deleted', sub: 'Account permanently closed', done: false },
 ]
 
-function formatDate(iso: string) {
+
+// deletion_scheduled_date IS the deletion date, no +2 needed
+function formatDeletionDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
-
-function formatDeletionDate(iso: string) {
-  const d = new Date(iso)
-  d.setDate(d.getDate() + 2) // +48hrs grace
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+function formatToday(iso: string) {
+  const deletionDate = new Date(iso)
+  const today = new Date()
+  today.setHours(deletionDate.getHours(), deletionDate.getMinutes(), deletionDate.getSeconds())
+  return today.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) 
+    + ', ' + today.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
 }
-
+function formatDate(iso: string) {
+  const d = new Date(iso)
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    + ', ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+}
 function countdownText(iso: string) {
-  const target = new Date(iso)
-  target.setDate(target.getDate() + 2)
-  const diffH = Math.floor((target.getTime() - Date.now()) / 3600000)
-  if (diffH <= 0) return 'Deletion processing...'
+  const diffMs = new Date(iso).getTime() - Date.now()
+  if (diffMs <= 0) return 'Deletion processing...'
+  const diffH = Math.floor(diffMs / 3600000)
   const d = Math.floor(diffH / 24), h = diffH % 24
   return d > 0 ? `${d}d ${h}h remaining` : `${diffH}h remaining`
 }

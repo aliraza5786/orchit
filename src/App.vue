@@ -9,11 +9,11 @@ import { useQuery } from '@tanstack/vue-query'
 import { getProfile } from './services/user'
 const { isDark } = useTheme()
 const authStore = useAuthStore()
-
 const { data: profile } = useQuery({
   queryKey: ['profile'],
   queryFn: getProfile,
   placeholderData: (prev) => prev,
+  enabled: computed(() => !!localStorage.getItem('token'))
 })
 const profileData = computed(() => profile.value?.data ?? null)
 onMounted(async () => {

@@ -47,17 +47,14 @@ export function useDeletionGuard(profileRef: any) {
       forceLogout()
     }
   }
-
-  function startPolling() {
-    if (pollInterval) return
-    // check every 60 seconds
-    pollInterval = setInterval(() => {
-      // re-fetch profile so we get fresh server state
-      queryClient.invalidateQueries({ queryKey: ['profile'] })
-      checkDeletion()
-    }, 60_000)
-  }
-
+function startPolling() {
+  if (pollInterval) return
+  pollInterval = setInterval(() => {
+    if (!profileRef.value) { stopPolling(); return } // stop if no profile
+    queryClient.invalidateQueries({ queryKey: ['profile'] })
+    checkDeletion()
+  }, 60_000)
+}
   function stopPolling() {
     if (pollInterval) {
       clearInterval(pollInterval)
