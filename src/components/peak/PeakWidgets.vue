@@ -1,60 +1,51 @@
 <template>
   <div class="rounded-[6px]">
-    <!-- Header -->
-    <div
-      class="flex items-center justify-between mb-6 flex-wrap gap-3 bg-bg-surface px-5 py-2 rounded-[6px] border border-border"
-    >
-      <div class="text-lg font-semibold text-text-primary">Peak Widgets</div>
-      <div class="flex items-center gap-2">
-        <button
-          class="inline-flex items-center gap-1.5 px-3.5 py-[7px] bg-[var(--bg-body)] text-[var(--text-primary)] border border-[var(--border)] rounded-[6px] text-[13px] cursor-pointer transition-colors hover:bg-[var(--bg-surface)] disabled:opacity-50 disabled:cursor-not-allowed"
-          @click="fetchAllPinnedWidgetData"
-          :disabled="store.isLoadingWidgets"
-          title="Refresh all"
-        >
-          <i
-            class="fa-solid fa-rotate"
-            :class="{ 'fa-spin': store.isLoadingWidgets }"
-          ></i>
-        </button>
-        <button
-          class="inline-flex items-center gap-1.5 px-3.5 py-[7px] bg-primary-color text-white border-none rounded-[6px] text-[13px] font-semibold cursor-pointer transition-colors hover:bg-primary-color disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-          @click="openAddModal"
-        >
-          <i class="fa-solid fa-plus"></i>
-          <span>Add Widget</span>
-        </button>
-      </div>
+<!-- Header -->
+<div class="flex items-center justify-between mb-4 flex-wrap gap-3 bg-bg-surface px-5 py-3 rounded-t-[10px] border border-border">
+  <div class="flex items-center gap-3">
+    <div class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style="background: var(--bg-lavender)">
+      <i class="fa-solid fa-chart-pie text-[12px] text-primary-color"></i>
     </div>
-
-    <!-- Empty state -->
-    <div
-      v-if="
-        !store.isLoadingWidgets &&
-        store.pinnedWidgets.length === 0 &&
-        !store.pendingProposal
-      "
-      class="flex flex-col items-center justify-center py-16 px-6 text-center gap-3 bg-bg-surface rounded-[6px] border border-border"
+    <div class="text-[14px] font-semibold text-text-primary">Peak Widgets</div>
+  </div>
+  <div class="flex items-center gap-2">
+    <button
+      class="inline-flex items-center gap-1.5 px-3.5 py-[7px] bg-[var(--bg-body)] text-[var(--text-primary)] border border-[var(--border)] rounded-[6px] text-[13px] cursor-pointer transition-colors hover:bg-[var(--bg-surface)] disabled:opacity-50 disabled:cursor-not-allowed"
+      @click="fetchAllPinnedWidgetData"
+      :disabled="store.isLoadingWidgets"
+      title="Refresh all"
     >
-      <div
-        class="w-14 h-14 bg-[var(--bg-lavender)] rounded-2xl flex items-center justify-center text-[22px] text-[var(--primary-color)] mb-1"
-      >
-        <i class="fa-solid fa-chart-pie"></i>
-      </div>
-      <h3 class="text-base font-bold text-[var(--text-primary)] m-0">
-        No widgets yet
-      </h3>
-      <p class="text-[13px] text-[var(--text-secondary)] m-0 max-w-[300px]">
-        Add widgets to track your workspace metrics in real time.
-      </p>
-      <button
-        class="inline-flex items-center gap-1.5 px-3.5 py-[7px] bg-[var(--primary-color)] text-white border-none rounded-[6px] text-[13px] font-semibold cursor-pointer transition-colors hover:bg-[var(--primary-color)]"
-        @click="openAddModal"
-      >
-        <i class="fa-solid fa-plus"></i> Add your first widget
-      </button>
-    </div>
-
+      <i class="fa-solid fa-rotate" :class="{ 'fa-spin': store.isLoadingWidgets }"></i>
+    </button>
+    <button
+      class="inline-flex items-center gap-1.5 px-3.5 py-[7px] bg-primary-color text-white border-none rounded-[6px] text-[13px] font-semibold cursor-pointer transition-colors hover:bg-secondary-color disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+      @click="openAddModal"
+    >
+      <i class="fa-solid fa-plus"></i>
+      <span>Add Widget</span>
+    </button>
+  </div>
+</div>
+<!-- Empty state -->
+<div
+  v-if="!store.isLoadingWidgets && store.pinnedWidgets.length === 0 && !store.pendingProposal"
+  class="flex flex-col items-center justify-center py-16 px-6 text-center gap-3 bg-bg-surface rounded-b-[10px] border border-t-0 border-border"
+  style="min-height: 260px"
+>
+  <div class="w-14 h-14 bg-[var(--bg-lavender)] rounded-2xl flex items-center justify-center text-[22px] text-[var(--primary-color)] mb-1">
+    <i class="fa-solid fa-chart-pie"></i>
+  </div>
+  <h3 class="text-[15px] font-semibold text-text-primary m-0">No widgets yet</h3>
+  <p class="text-[13px] text-text-secondary m-0 max-w-[280px] leading-relaxed">
+    Add widgets to track your workspace metrics in real time.
+  </p>
+  <button
+    class="inline-flex items-center gap-2 mt-1 px-4 py-2 bg-primary-color text-white rounded-[6px] text-[13px] font-semibold cursor-pointer hover:bg-secondary-color transition-all active:scale-[0.97]"
+    @click="openAddModal"
+  >
+    <i class="fa-solid fa-plus text-[11px]"></i> Add your first widget
+  </button>
+</div>
     <!-- Pending agent proposal banner -->
     <div
       v-if="store.pendingProposal"
@@ -121,23 +112,21 @@
       class="flex gap-4 items-stretch flex-wrap"
     >
       <div
-        v-for="(widget, widgetIndex) in store.pinnedWidgets"
-        :key="widget._id"
-        class="bg-card border border-border rounded-[6px] flex flex-col overflow-hidden transition-all duration-200 relative group"
-        :class="[
-          widgetIndex === 0
-            ? 'flex-[1_1_30%] min-w-[240px]'
-            : widgetIndex === 1
-              ? 'flex-[2_1_55%] min-w-[320px]'
-              : 'flex-[1_1_40%] min-w-[260px]',
-              
-          store.isWidgetDataLoading(widget._id) ? 'opacity-75' : '',
-        ]"
-      >
+  v-for="(widget, widgetIndex) in store.pinnedWidgets"
+  :key="widget._id"
+  class="bg-bg-card border border-border rounded-[10px] flex flex-col overflow-hidden transition-all duration-200 relative group widget-card"
+  :class="[
+    widgetIndex === 0 ? 'flex-[1_1_30%] min-w-[240px]'
+      : widgetIndex === 1 ? 'flex-[2_1_55%] min-w-[320px]'
+      : 'flex-[1_1_40%] min-w-[260px]',
+    store.isWidgetDataLoading(widget._id) ? 'opacity-75' : '',
+  ]"
+  :style="{ borderLeft: `3px solid 'var(--primary-color)'}` }"
+>
         <!-- Colored top primary-color bar -->
         <div
           class="h-[3px] w-full flex-shrink-0"
-          :style="{ background: widget.color || 'var(--primary-color)' }"
+          :style="'var(--primary-color)' "
         ></div>
 
         <!-- Card header -->
@@ -147,10 +136,8 @@
           <div
             class="w-10 h-10 rounded-[6px] flex items-center justify-center flex-shrink-0 transition-transform duration-150 group-hover:scale-105"
             :style="{
-              background: widget.color
-                ? widget.color + '15'
-                : 'var(--bg-lavender)',
-              color: widget.color || 'var(--primary-color)',
+              background:  'var(--bg-lavender)',
+              color:'var(--primary-color)',
             }"
           >
             <template v-if="isFaIcon(widget.icon)">
@@ -173,7 +160,7 @@
           </div>
           <div class="flex-1 min-w-0">
             <p
-              class="text-[14px] font-bold text-[var(--text-primary)] m-0 truncate leading-snug"
+              class="text-[14px] font-bold text-primary m-0 truncate leading-snug"
             >
               {{ widget.title }}
             </p>
@@ -1166,46 +1153,7 @@
                   ></i>
                     </button>
                   </div>
-                </div>
-                <!-- recent messages -->
-                   <div
-  v-if="chatHistory.length"
-  class="bg-[var(--bg-card)] border border-[var(--border)] rounded-[6px] p-3"
->
-  <p class="text-[12px] font-semibold text-[var(--text-secondary)] mb-3">
-    Recent  Messages
-  </p>
-
-  <div class="flex flex-col gap-3 max-h-[180px] overflow-y-auto pr-1">
-    <div
-      v-for="msg in chatHistory"
-      :key="msg._id"
-      class="flex"
-      :class="msg.type === 'user' ? 'justify-end' : 'justify-start'"
-    >
-      <!-- Bubble -->
-      <div
-        class="max-w-[85%] px-3 py-2 rounded-2xl text-[12px] leading-relaxed shadow-sm whitespace-pre-wrap"
-        :class="msg.type === 'user'
-          ? 'bg-[var(--primary-color)] text-white rounded-br-sm'
-          : 'bg-[var(--bg-surface)] text-[var(--text-primary)] border border-[var(--border)] rounded-bl-sm'"
-      >
-        <!-- Label -->
-        <div
-          class="text-[10px] uppercase tracking-wide mb-1 opacity-70"
-          :class="msg.type === 'user' ? 'text-white/70' : 'text-[var(--text-secondary)]'"
-        >
-          {{ msg.type }}
-        </div>
-
-        <!-- Content -->
-        <div class="whitespace-pre-wrap break-words">
-          {{ msg.content }}
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+              
                 <div>
                   <p
                     class="text-[13px] text-[var(--text-secondary)] text-center mb-3"
@@ -1228,15 +1176,15 @@
                     </button>
                   </div>
                 </div>
-                <div class="flex items-center gap-3">
+                <!-- <div class="flex items-center gap-3">
                   <div class="flex-1 h-px bg-[var(--border)]"></div>
                   <span
                     class="text-[12px] text-[var(--text-secondary)] font-medium"
                     >OR</span
                   >
                   <div class="flex-1 h-px bg-[var(--border)]"></div>
-                </div>
-                <button
+                </div> -->
+                <!-- <button
                 :disabled="isDisabled"
                 @click="
                   showManualForm = true;
@@ -1245,7 +1193,8 @@
                 class="w-full py-3 rounded-[6px] bg-[var(--primary-color)] text-white text-[14px] font-semibold border-none cursor-pointer transition-colors hover:bg-[var(--primary-color)] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Create Widget Manually
-              </button>
+              </button> -->
+              </div>
               </div>
             </template>
             <template v-else-if="modalMode === 'preview'">
@@ -1903,11 +1852,8 @@ type PreviewItem = {
     sheets: any[];
   };
 };
-const chatHistory = computed(() => {
-  return (agentStore.chatHistory[0]?.messages || []).slice(0, 6);
-});
 const previewData = computed<PreviewItem[]>(() => {
-  return (entities.value || []).map((e: any) => ({
+  return (entities.value || [])?.map((e: any) => ({
     action: e.action ?? "read",
     entity_type: e.entity_type ?? "",
     workspace_id: workspaceId.value,
@@ -2460,9 +2406,7 @@ const hoveredBar = ref<null | {
   x: number;
   y: number;
 }>(null);
-const isDisabled = computed(() => {
-  return aiPrompt.value.trim().length > 0
-})
+
 </script>
 
 <style scoped>

@@ -46,7 +46,7 @@
           <div class="flex-1 w-full max-w-full lg:max-w-xl h-64 sm:h-80 md:h-96">
             <canvas ref="chartCanvas"></canvas>
           </div>
-
+<!-- 
           <div class="flex gap-4 flex-wrap ml-4 mt-3">
             <div v-for="(item, index) in chartData" :key="index" class="flex items-center">
               <div class="flex items-center gap-1">
@@ -58,7 +58,7 @@
               </div>
               <span class="font-semibold text-primary ms-2">{{ item.value }}</span>
             </div>
-          </div>
+          </div> -->
         </div>
 
         <!-- Empty State -->
