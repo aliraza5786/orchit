@@ -63,9 +63,15 @@
                 <i class="fa-solid fa-plus mr-2" aria-hidden="true" /> Add Steps
               </Button>
 
-              <Button :inSpace="true" variant="primary" size="sm" :disabled="isSaving || !canEditCard || !canCreateCard" @click="openSaveModal">
-                {{ updateButtonLabel }}
-              </Button>
+              <Button 
+              :inSpace="true" 
+              variant="primary" 
+              size="sm" 
+              :disabled="isSaving || !canEditCard || !canCreateCard || !hasChanges"
+              @click="openSaveModal"
+            >
+              {{ updateButtonLabel }}
+            </Button>
 
               <button class="text-xl text-text-secondary hover:text-text-primary" @click="close" aria-label="Close">
                 <i class="fa-solid fa-times" aria-hidden="true" />
@@ -270,14 +276,26 @@ const { data: transitionData, isLoading, refetch } = useProcessTransition(worksp
 /* Workflow State */
 const workflowState = useLocalWorkflowState()
 provide('workflowState', workflowState)
+const hasChanges = ref(false)
 
-/* Initialize Workflow on Open / Data Load */
+function resetChangeTracking() {
+  hasChanges.value = false
+}
+const hasInitialized = ref(false)
+
 watch(() => transitionData.value, (data) => {
-  if (data && isOpen.value) {
-    // initialize as needed
+  if (data && isOpen.value && !hasInitialized.value) {
+    hasInitialized.value = true
+    resetChangeTracking()
   }
 })
 
+watch(isOpen, (val) => {
+  if (!val) {
+    hasInitialized.value = false
+    resetChangeTracking()
+  }
+})
 /* Save Modal State */
 const showSaveModal = ref(false)
 const saveStatus = ref<'active' | 'draft'>('active')
@@ -306,6 +324,7 @@ const { mutate: updateTransition, isPending: isSaving } = useUpdateTransition({
     queryClient.invalidateQueries({ queryKey: ['process-groups-with-transitions'] })
     queryClient.invalidateQueries({ queryKey: ['sheets'] })
     closeSaveModal()
+    resetChangeTracking()
     toast.success('Workflow saved successfully!')
   },
   onError: (err: any) => {
@@ -344,11 +363,25 @@ function close() {
 }
 
 // Event handlers
+// Event handlers
 function handleAddStatus() { showAddStatusModal.value = true; editingStatus.value = ''; }
-function handleStatusAdded(e: any) { showAddStatusModal.value = false; Canvas.value?.handleAddNode?.(e); }
+
+function handleStatusAdded(e: any) { 
+  showAddStatusModal.value = false
+  Canvas.value?.handleAddNode?.(e)
+  hasChanges.value = true  // ← add this
+}
+
 function handleEditNode(nodeData: any) { editingStatus.value = nodeData; showAddStatusModal.value = true; }
-function handleEditConfirm(id: string, data: any) { Canvas.value?.handleConfirmEdit(id, data); }
-function handleWorkflowUpdate() { refetch(); }
+
+function handleEditConfirm(id: string, data: any) { 
+  Canvas.value?.handleConfirmEdit(id, data)
+  hasChanges.value = true  // ← add this
+}
+
+function handleWorkflowUpdate() { 
+  hasChanges.value = true  // no refetch here
+}
 </script>
 
 <style scoped>

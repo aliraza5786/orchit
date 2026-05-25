@@ -1,29 +1,172 @@
 <template>
   <div class="w-full space-y-5 flex-1">
+    <div
+  v-if="isPendingDeletion"
+  class="flex items-center gap-3 px-4 py-3 rounded-xl text-[13px] text-text-secondary"
+  style="border: 1px solid var(--danger-border); background: var(--danger-bg);"
+>
+  <div
+    class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+    style="background: var(--danger-bg); border: 1px solid var(--danger-border);"
+  >
+    <i class="fa-solid fa-lock text-[12px]" style="color: var(--danger);"></i>
+  </div>
+  <span>
+    Organization settings are
+    <strong class="font-semibold" style="color: var(--danger);">locked</strong>
+    because a deletion has been scheduled.
+  </span>
+</div>
+    <!-- Pending deletion banner -->
+<div v-if="currentCompany?.is_pending_deletion"
+  class="rounded-xl overflow-hidden"
+  style="border: 1.5px solid #ef4444; border-left: 4px solid #ef4444; box-shadow: 0 10px 40px -10px rgba(239,68,68,0.18);"
+>
+  <!-- Header -->
+  <div style="background: rgba(239,68,68,0.07); border-bottom: 1px solid rgba(239,68,68,0.2); padding: 14px 18px;"
+    class="flex items-center gap-3">
+    <div class="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style="background:#ef4444">
+      <i class="fa-solid fa-trash text-white text-[13px]"></i>
+    </div>
+    <div class="flex-1 min-w-0">
+      <p class="text-[14px] font-medium text-text-primary m-0">Deletion scheduled</p>
+      <p class="text-[12px] text-text-secondary m-0 mt-0.5">This organization is pending permanent deletion.</p>
+    </div>
+    <span class="shrink-0 text-[11px] font-medium text-white px-3 py-1 rounded-full" style="background:#ef4444">
+      Pending deletion
+    </span>
+  </div>
 
-    <!-- ── Skeleton while refetching ── -->
-    <div v-if="isRefetchingAfterCreate" class="space-y-5 animate-pulse">
-      <section class="rounded-2xl border border-border/40 bg-bg-card p-6">
-        <div class="mb-6 space-y-2">
-          <div class="h-5 w-48 bg-border/40 rounded-lg"></div>
-          <div class="h-3 w-72 bg-border/20 rounded-lg"></div>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div class="md:col-span-2 flex items-center gap-4">
-            <div class="w-20 h-20 rounded-2xl bg-border/30 shrink-0"></div>
-            <div class="space-y-2 flex-1">
-              <div class="h-3 w-32 bg-border/30 rounded"></div>
-              <div class="h-3 w-24 bg-border/20 rounded"></div>
-              <div class="h-8 w-28 bg-border/30 rounded-lg"></div>
-            </div>
-          </div>
-          <div class="space-y-2"><div class="h-3 w-24 bg-border/30 rounded"></div><div class="h-10 bg-border/20 rounded-xl"></div></div>
-          <div class="space-y-2"><div class="h-3 w-24 bg-border/30 rounded"></div><div class="h-10 bg-border/20 rounded-xl"></div></div>
-        </div>
-      </section>
+  <!-- Body -->
+  <div class="p-[18px] flex flex-col gap-3 bg-bg-card">
+
+    <!-- Dates -->
+    <div class="grid grid-cols-2 gap-2.5">
+      <div class="rounded-[10px] p-3" style="border:1px solid rgba(239,68,68,0.25); background:rgba(239,68,68,0.05)">
+        <p class="text-[10px] uppercase tracking-wider text-text-secondary m-0 mb-1">Requested on</p>
+        <p class="text-[13px] font-medium text-text-primary m-0">{{ formatDate(currentCompany.deletion_scheduled_date) }}</p>
+      </div>
+      <div class="rounded-[10px] p-3" style="border:1px solid rgba(239,68,68,0.25); background:rgba(239,68,68,0.05)">
+        <p class="text-[10px] uppercase tracking-wider text-text-secondary m-0 mb-1">Deletes on</p>
+        <p class="text-[13px] font-medium text-text-primary m-0">{{ formatDeletionDate(currentCompany.deletion_scheduled_date) }}</p>
+        <p class="text-[11px] text-text-secondary m-0 mt-0.5">{{ countdownText(currentCompany.deletion_scheduled_date) }}</p>
+      </div>
     </div>
 
-    <div v-else class="space-y-5">
+    <!-- Timeline -->
+    <div class="rounded-[10px] overflow-hidden" style="border:1px solid rgba(239,68,68,0.2); background:rgba(239,68,68,0.04)">
+      <div v-for="(step, i) in deletionSteps" :key="i"
+        class="flex items-center gap-3 px-3.5 py-2.5"
+        :style="i < deletionSteps.length - 1 ? 'border-bottom:1px solid rgba(239,68,68,0.12)' : ''"
+      >
+        <div class="w-6 h-6 rounded-full flex items-center justify-center shrink-0"
+          :style="step.done ? 'background:#22c55e' : 'background:rgba(239,68,68,0.15)'"
+        >
+          <i :class="step.icon + ' text-[11px]'" :style="step.done ? 'color:#fff' : 'color:#ef4444'"></i>
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-[13px] text-text-primary m-0">{{ step.label }}</p>
+          <p class="text-[11px] text-text-secondary m-0 mt-0.5">{{ step.sub }}</p>
+        </div>
+        <span class="text-[11px] font-medium px-2.5 py-0.5 rounded-full shrink-0"
+          :style="step.done
+            ? 'background:rgba(34,197,94,0.12);color:#15803d'
+            : 'background:rgba(234,179,8,0.12);color:#a16207'"
+        >{{ step.done ? 'Done' : 'Pending' }}</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+  <!-- ── Skeleton: initial load OR refetch after create ── -->
+<div v-if="isLoading || isRefetchingAfterCreate" class="space-y-5 animate-pulse">
+
+  <!-- Read-only notice placeholder -->
+  <div class="h-12 rounded-xl bg-border/20"></div>
+
+  <!-- Org Info card skeleton -->
+  <section class="rounded-2xl border border-border/40 bg-bg-card overflow-hidden">
+    <!-- Header -->
+    <div class="px-6 py-4 border-b border-border/40 bg-bg-surface/50 flex items-center gap-3">
+      <div class="w-8 h-8 rounded-lg bg-border/30"></div>
+      <div class="space-y-1.5">
+        <div class="h-3.5 w-44 bg-border/40 rounded"></div>
+        <div class="h-2.5 w-64 bg-border/20 rounded"></div>
+      </div>
+    </div>
+    <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-5">
+      <!-- Logo row -->
+      <div class="md:col-span-2 flex items-center gap-4">
+        <div class="w-[72px] h-[72px] rounded-2xl bg-border/30 shrink-0"></div>
+        <div class="space-y-2 flex-1">
+          <div class="h-3 w-32 bg-border/30 rounded"></div>
+          <div class="h-2.5 w-24 bg-border/20 rounded"></div>
+          <div class="h-8 w-28 bg-border/30 rounded-lg"></div>
+        </div>
+      </div>
+      <!-- Org name -->
+      <div class="space-y-2">
+        <div class="h-2.5 w-28 bg-border/30 rounded"></div>
+        <div class="h-10 bg-border/20 rounded-xl"></div>
+      </div>
+      <!-- Domain/Slug -->
+      <div class="space-y-2">
+        <div class="h-2.5 w-24 bg-border/30 rounded"></div>
+        <div class="h-10 bg-border/20 rounded-xl"></div>
+      </div>
+      <!-- Team Size -->
+      <div class="space-y-2">
+        <div class="h-2.5 w-20 bg-border/30 rounded"></div>
+        <div class="h-10 bg-border/20 rounded-xl"></div>
+      </div>
+      <!-- Industry -->
+      <div class="space-y-2">
+        <div class="h-2.5 w-20 bg-border/30 rounded"></div>
+        <div class="h-10 bg-border/20 rounded-xl"></div>
+      </div>
+      <!-- Description -->
+      <div class="md:col-span-2 space-y-2">
+        <div class="h-2.5 w-24 bg-border/30 rounded"></div>
+        <div class="h-24 bg-border/20 rounded-xl"></div>
+        <div class="h-2 w-16 bg-border/10 rounded"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Owner card skeleton -->
+  <section class="rounded-2xl border border-border/40 bg-bg-card overflow-hidden">
+    <div class="px-6 py-4 border-b border-border/40 bg-bg-surface/50 flex items-center gap-3">
+      <div class="w-8 h-8 rounded-lg bg-border/30"></div>
+      <div class="space-y-1.5">
+        <div class="h-3.5 w-40 bg-border/40 rounded"></div>
+        <div class="h-2.5 w-56 bg-border/20 rounded"></div>
+      </div>
+    </div>
+    <div class="p-6">
+      <div class="flex items-center gap-4 p-4 rounded-xl border border-border/40">
+        <div class="w-12 h-12 rounded-full bg-border/30 shrink-0"></div>
+        <div class="flex-1 space-y-2">
+          <div class="h-3 w-36 bg-border/40 rounded"></div>
+          <div class="h-2.5 w-48 bg-border/20 rounded"></div>
+          <div class="h-2 w-28 bg-border/15 rounded"></div>
+        </div>
+        <div class="hidden sm:block h-7 w-28 bg-border/20 rounded-lg shrink-0"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Actions skeleton -->
+  <div class="flex gap-3">
+    <div class="h-10 w-32 bg-border/30 rounded-xl"></div>
+    <div class="h-10 w-40 bg-border/20 rounded-xl"></div>
+  </div>
+
+  <!-- Info box skeleton -->
+  <div class="h-12 rounded-xl bg-border/15"></div>
+
+</div>
+
+<div v-else class="space-y-5">
 
       <!-- Read-only notice for members -->
       <div
@@ -56,11 +199,11 @@
               <div
                 class="w-[72px] h-[72px] rounded-2xl border-2 flex items-center justify-center shrink-0 overflow-hidden relative group transition-all duration-200"
                 :class="isMember ? 'border-border/40 bg-bg-body' : 'border-accent/20 bg-gradient-to-br from-accent/20 to-accent/5 cursor-pointer hover:border-accent/40'"
-                @click="!isMember && triggerLogoPicker()"
+               @click="!(isMember || isPendingDeletion) && triggerLogoPicker()"
               >
                 <img v-if="orgLogoPreview || orgData.logo" :src="orgLogoPreview || orgData.logo" class="w-full h-full object-cover" alt="Organization logo" />
                 <i v-else class="fa-solid fa-image text-accent text-xl"></i>
-                <div v-if="!isMember" class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center rounded-2xl">
+                <div v-if="!(isMember || isPendingDeletion)" class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center rounded-2xl">
                   <i class="fa-solid fa-upload text-white text-sm"></i>
                 </div>
               </div>
@@ -68,7 +211,7 @@
                 <h4 class="text-[13px] font-semibold text-text-primary mb-1 truncate">{{ orgName || 'Organization' }}</h4>
                 <p class="text-[11px] text-text-secondary mb-3">PNG, JPG up to 2MB</p>
                 <button
-                  v-if="!isMember"
+                  v-if="!isMember && !isPendingDeletion"
                   @click="triggerLogoPicker"
                   :disabled="isUploadingLogo"
                   class="px-3.5 py-1.5 text-[12px] cursor-pointer font-medium rounded-lg border border-border/60 hover:border-accent/40 hover:bg-accent/[0.05] hover:text-accent transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
@@ -87,7 +230,7 @@
             <label class="text-[10px] font-bold text-text-secondary uppercase tracking-wider block">Organization Name</label>
             <input
               v-model="orgName"
-              :readonly="isMember"
+              :readonly="isMember || isPendingDeletion"
               class="w-full border rounded-xl px-4 py-2.5 text-[13px] outline-none transition-all placeholder:text-text-secondary/40"
               :class="isMember
                 ? 'border-border/40 bg-bg-body/60 text-text-secondary cursor-default'
@@ -108,7 +251,6 @@
               :class="isMember
                 ? 'border-border/40 bg-bg-body/60'
                 : errors.orgSlug ? 'border-red-400/60 bg-bg-body focus-within:ring-2 focus-within:ring-red-400/10'
-                : isSlugAvailable === false ? 'border-red-400/60 bg-bg-body focus-within:ring-2 focus-within:ring-red-400/10'
                 : isSlugAvailable === true ? 'border-green-500/50 bg-bg-body focus-within:ring-2 focus-within:ring-green-500/10'
                 : 'border-border/60 bg-bg-body focus-within:border-accent/50 focus-within:ring-2 focus-within:ring-accent/10'"
             >
@@ -122,7 +264,6 @@
               <div class="px-3 flex items-center shrink-0">
                 <i v-if="isCheckingSlug" class="fa-solid fa-spinner fa-spin text-text-secondary text-xs"></i>
                 <i v-else-if="isSlugAvailable === true && orgSlug !== currentCompany?.slug" class="fa-solid fa-circle-check text-green-500 text-xs"></i>
-                <i v-else-if="isSlugAvailable === false" class="fa-solid fa-circle-xmark text-red-500 text-xs"></i>
               </div>
             </div>
             <p v-if="errors.orgSlug" class="text-[11px] text-red-500 flex items-center gap-1">
@@ -136,7 +277,7 @@
             <div class="relative">
               <select
                 v-model="orgSize"
-                :disabled="isMember"
+                :disabled="isMember || isPendingDeletion"
                 class="w-full border rounded-xl px-4 py-2.5 pr-9 text-[13px] outline-none transition-all appearance-none"
                 :class="isMember
                   ? 'border-border/40 bg-bg-body/60 text-text-secondary cursor-default opacity-75'
@@ -148,7 +289,7 @@
                 <option value="201–500">201–500 people</option>
                 <option value="500+">500+ people</option>
               </select>
-              <i v-if="!isMember" class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary text-[10px] pointer-events-none"></i>
+              <i v-if="!isMember && !isPendingDeletion" class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary text-[10px] pointer-events-none"></i>
             </div>
           </div>
 
@@ -158,7 +299,7 @@
             <div class="relative">
               <select
                 v-model="industry"
-                :disabled="isMember"
+                :disabled="isMember || isPendingDeletion"
                 class="w-full border rounded-xl px-4 py-2.5 pr-9 text-[13px] outline-none transition-all appearance-none"
                 :class="isMember
                   ? 'border-border/40 bg-bg-body/60 text-text-secondary cursor-default opacity-75'
@@ -176,7 +317,7 @@
                 <option value="operations">Operations</option>
                 <option value="other">Other</option>
               </select>
-              <i v-if="!isMember" class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary text-[10px] pointer-events-none"></i>
+              <i v-if="!isMember && !isPendingDeletion" class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary text-[10px] pointer-events-none"></i>
             </div>
           </div>
 
@@ -185,7 +326,7 @@
             <label class="text-[10px] font-bold text-text-secondary uppercase tracking-wider block">Description</label>
             <textarea
               v-model="orgDescription"
-              :readonly="isMember"
+              :disabled="isMember || isPendingDeletion"
               placeholder="Tell us about your organization…"
               class="w-full border rounded-xl px-4 py-2.5 text-[13px] outline-none transition-all resize-none h-24"
               :class="isMember
@@ -252,7 +393,7 @@
       </section>
 
       <!-- Actions — hidden for members -->
-      <div v-if="!isMember" class="flex flex-col sm:flex-row gap-3">
+      <div v-if="!isMember && !isPendingDeletion" class="flex flex-col sm:flex-row gap-3">
         <button
           @click="saveOrg"
           :disabled="isSaving || !hasChanges"
@@ -542,7 +683,7 @@ const props = defineProps<{
   forceCreate?: boolean
   profile?: any
 }>()
-
+const isLoading = computed(() => !props.profile || !currentCompany.value)
 // ─── Stores ───────────────────────────────────────────────────
 const queryClient    = useQueryClient()
 const authStore      = useAuthStore()
@@ -562,7 +703,9 @@ watch(() => props.profile?.active_company_id, (id) => {
   if (id && !selectedCompanyId.value) selectedCompanyId.value = id
 }, { immediate: true })
 
-const organizationOwner = props.profile?.active_company?.owner;
+const organizationOwner = computed(() => {
+  return props.profile?.active_company?.owner;
+});
 function handleCompanyChange(e: any) { selectedCompanyId.value = e.detail }
 onMounted(() => window.addEventListener('company-changed', handleCompanyChange))
 onBeforeUnmount(() => window.removeEventListener('company-changed', handleCompanyChange))
@@ -758,7 +901,7 @@ async function saveOrg() {
     toast.error(e?.message || 'Failed to update organization')
   }
 }
-
+const isPendingDeletion = computed(() => !!currentCompany.value?.is_pending_deletion)
 // ─── Delete modal ─────────────────────────────────────────────
 const otpRefs = ref<any[]>([])
 
@@ -891,5 +1034,31 @@ async function doConfirmStep() {
     const msg = err?.response?.data?.message || err?.message || 'Failed to delete organization'
     deleteModal.errors.confirmName = msg; toast.error(msg)
   }
+}
+// deletion request
+const deletionSteps = [
+  { icon: 'fa-solid fa-check', label: 'Deletion requested', sub: 'Confirmed by owner', done: true },
+{ icon: 'fa-solid fa-envelope', label: 'Confirmation email sent', sub: "Sent to owner's registered email", done: true },
+  { icon: 'fa-solid fa-database', label: 'Data purge begins', sub: 'Members, files, and workspaces removed', done: false },
+  { icon: 'fa-solid fa-circle-xmark', label: 'Organization fully deleted', sub: 'Account permanently closed', done: false },
+]
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
+function formatDeletionDate(iso: string) {
+  const d = new Date(iso)
+  d.setDate(d.getDate() + 2) // +48hrs grace
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
+function countdownText(iso: string) {
+  const target = new Date(iso)
+  target.setDate(target.getDate() + 2)
+  const diffH = Math.floor((target.getTime() - Date.now()) / 3600000)
+  if (diffH <= 0) return 'Deletion processing...'
+  const d = Math.floor(diffH / 24), h = diffH % 24
+  return d > 0 ? `${d}d ${h}h remaining` : `${diffH}h remaining`
 }
 </script>
