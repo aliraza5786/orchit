@@ -4,10 +4,8 @@
     <p class="text-sm text-text-secondary p-6">
         Add emails, workspace role and pick role based permission.
     </p>
-
     <!-- Body -->
     <div class="px-6 flex flex-col gap-4">
-      <!-- Emails -->
       <BaseEmailChip
         class="w-full"
         label="User emails"
@@ -154,6 +152,7 @@ const props = withDefaults(
   defineProps<{
     modelValue: boolean;
     defaultWorkspaceId?: string | number;
+    workspaceId?: string | number;
   }>(),
   { modelValue: false }
 );
@@ -174,19 +173,28 @@ const form = reactive({
   additional_seats: 1,
   workspace_access_role_id: null as SelectValue,
 });
+// REPLACE the existing watch with these two:
 
 watch(
   () => props.defaultWorkspaceId,
   (id) => {
+    console.log("workspace id", props.defaultWorkspaceId);
+    
     if (id) {
       form.workspace_id = id as SelectValue;
-      // Reset role when workspace changes to avoid sticking to a role from another workspace
       form.role_id = null;
     }
   },
   { immediate: true }
 );
 
+// ADD THIS — sync workspace_id whenever modal opens
+watch(isOpen, (open) => {
+  if (open && props.defaultWorkspaceId) {
+    form.workspace_id = props.defaultWorkspaceId as SelectValue;
+    form.role_id = null;
+  }
+});
 // --- Roles Loading Logic ---
 const workspaceIdRef = computed(() => form.workspace_id ?? undefined) as Ref<
   string | number

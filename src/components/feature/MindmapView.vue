@@ -275,7 +275,7 @@
                 <div class="node-card-actions-row">
                   <button
                     v-if="canCreateCard && !asTalent"
-                    class="nact nact--add"
+                    class="nact nact--add bg-primary-color"
                     @click.stop="
                       node.parent && createCardDirectly(node.parent, node)
                     "
@@ -1001,7 +1001,7 @@
           <!-- Add card below -->
           <button
             v-if="canCreateCard && !asTalent"
-            class="ctx-item"
+            class="ctx-item bg-primary-color"
             @click="ctxAddCard"
           >
             <i class="fa-solid fa-plus ctx-item-icon ctx-icon--add"></i>
@@ -1317,7 +1317,22 @@ interface MapTheme {
   edgeColor: string;
   textColor: string;
 }
-
+function getDefaultTheme(): MapTheme {
+  const dark = isDark.value
+  return {
+    id: 'default',
+    name: 'Default',
+    bg: dark ? '#1f1f1e' : '#f4f4f4',
+    nodeColors: {
+      root:  dark ? '#3b3a3a' : '#f1eeff',
+      sheet: dark ? '#2c2c2b' : '#ede9fb',
+      list:  dark ? '#1f1f1e' : '#f3f4f6',
+      card:  dark ? '#2c2c2b' : '#ffffff',
+    },
+    edgeColor: 'var(--primary-color)',
+    textColor: dark ? '#f5f5f5' : '#2b2c30',
+  }
+}
 const THEMES: MapTheme[] = [
   {
     id: "default",
@@ -1672,6 +1687,7 @@ const BG_COLORS = [
 const activeThemeId = ref<string>("default");
 const activeCanvasBg =  ref("var(--bg-body)");
 const recentlyUsedColors = ref<string[]>([]);
+const activeEdgeColor = ref('var(--primary-color)')
 // const themeColorPickerOpen = ref(false);
 const customBgColor = ref("#dedfe3");
 async function persistTheme(stylePayload: Record<string, any>) {
@@ -1707,16 +1723,26 @@ async function persistTheme(stylePayload: Record<string, any>) {
 async function applyTheme(theme: MapTheme, persist = true) {
   activeThemeId.value = theme.id;
   activeCanvasBg.value = theme.bg;
-  customBgColor.value = theme.bg;
+  customBgColor.value = theme.bg.startsWith('var(') 
+    ? getComputedVar(theme.bg.slice(4, -1), '#dedfe3')
+    : theme.bg;
+  
   const el = rootEl.value;
   if (!el) return;
-  el.style.setProperty("--mm-bg", theme.bg);
-  el.style.setProperty("--mm-node-root-bg", theme.nodeColors.root);
-  el.style.setProperty("--mm-node-sheet-bg", theme.nodeColors.sheet);
-  el.style.setProperty("--mm-node-list-bg", theme.nodeColors.list);
-  el.style.setProperty("--mm-node-card-bg", theme.nodeColors.card);
-  el.style.setProperty("--mm-edge-color", theme.edgeColor);
-  el.style.setProperty("--mm-text-color", theme.textColor);
+
+  const resolveColor = (c: string) =>
+    c.startsWith('var(') ? `var(${c.slice(4, -1)})` : c
+
+  el.style.setProperty('--mm-bg',            resolveColor(theme.bg));
+  el.style.setProperty('--mm-node-root-bg',  resolveColor(theme.nodeColors.root));
+  el.style.setProperty('--mm-node-sheet-bg', resolveColor(theme.nodeColors.sheet));
+  el.style.setProperty('--mm-node-list-bg',  resolveColor(theme.nodeColors.list));
+  el.style.setProperty('--mm-node-card-bg',  resolveColor(theme.nodeColors.card));
+  el.style.setProperty('--mm-edge-color',    resolveColor(theme.edgeColor));
+  el.style.setProperty('--mm-text-color',    resolveColor(theme.textColor));
+
+  activeEdgeColor.value = theme.edgeColor;
+
   if (!persist) return;
 
   const stylePayload = {
@@ -1776,74 +1802,48 @@ function applyStyleObject(style: Record<string, any>, persist = false) {
   }
 }
 
+// AFTER
 async function loadSavedTheme() {
   try {
     const { type, type_id } = resolveThemeContext();
-
     const match = await themeStore.getMindmapThemeByWorkflow(
-      props.workspaceId,
-      type_id,
-      type,
+      props.workspaceId, type_id, type,
     );
-
     if (match?._id && match?.style) {
-      savedThemeDocId.value = match._id;
-
-      // Ensure rootEl is mounted
+      savedThemeDocId.value = match._id;  // keep the ID — don't clear it
       let tries = 0;
       while (!rootEl.value && tries < 20) {
         await nextTick();
         tries++;
       }
-
       if (rootEl.value) {
         applyStyleObject(match.style, false);
-        savedThemeDocId.value = "";
       }
       return;
     }
   } catch (err) {
     console.warn("Could not load theme from API:", err);
   }
-
-  // Fallback — no saved theme, apply default only
-  if (!savedThemeDocId.value && rootEl.value) {
+  // No saved theme found — clear the ID and apply defaults
+  savedThemeDocId.value = null;
+  await nextTick()
+  if (rootEl.value) {
     applyDefaultTheme();
   }
 }
+// REPLACE with a single correct watcher:
 watch(
   () => {
     const { type, type_id } = resolveThemeContext();
-
-    return [
-      type,
-      type_id ?? undefined,
-      props.sheetId,
-      props.selectedSheetId,
-      localStorage.getItem("selected_sheet_id"),
-    ] as [
-      string,
-      string | undefined,
-      string | undefined,
-      string | undefined,
-      string | null,
-    ];
+    return [type, type_id ?? undefined] as [string, string | undefined];
   },
-  watch(
-    () => {
-      const { type, type_id } = resolveThemeContext();
-      return [type, type_id ?? undefined] as [string, string | undefined];
-    },
-    async (newVal, oldVal) => {
-      const [type, type_id] = newVal;
-      const [prevType, prevTypeId] = oldVal ?? [];
-      if (type === prevType && type_id === prevTypeId) return;
-      else await loadSavedTheme();
-    },
-    {
-      immediate: true,
-    },
-  ),
+  async (newVal, oldVal) => {
+    const [type, type_id] = newVal;
+    const [prevType, prevTypeId] = oldVal ?? [];
+    if (type === prevType && type_id === prevTypeId) return;
+    await loadSavedTheme();
+  },
+  { immediate: true },
 );
 const themeContext = computed(() => {
   const { type, type_id } = resolveThemeContext();
@@ -2236,27 +2236,40 @@ const LAYOUT_GROUPS = [
   },
 ];
 function mapBackendStyle(style: any = {}): NodeStyle {
+  const def = DEFAULT_BACKEND_STYLE;
+  
   return {
-    background: style.bg_color,
-    color: style.color,
-    fontSize: style.font_size != null ? `${style.font_size}px` : undefined,
-    fontWeight: style.font_weight,
-    fontStyle: style.font_style,
-    fontFamily: style.font_family,
-    textAlign: style.text_align,
-    borderColor: style.border_color,
-    borderWidth:
-      style.border_width != null ? `${style.border_width}px` : undefined,
-    borderRadius:
-      style.border_radius != null ? `${style.border_radius}px` : undefined,
-    borderStyle: style.border_style,
-    padding: style.padding != null ? `${style.padding}px` : undefined,
-    opacity: style.opacity,
-    boxShadow: style.box_shadow,
+    background: style.bg_color && style.bg_color !== def.bg_color 
+      ? style.bg_color : undefined,
+    color: style.color && style.color !== def.color 
+      ? style.color : undefined,
+    fontSize: style.font_size != null && style.font_size !== def.font_size 
+      ? `${style.font_size}px` : undefined,
+    fontWeight: style.font_weight && style.font_weight !== def.font_weight 
+      ? style.font_weight : undefined,
+    fontStyle: style.font_style && style.font_style !== def.font_style 
+      ? style.font_style : undefined,
+    fontFamily: style.font_family && style.font_family !== def.font_family 
+      ? style.font_family : undefined,
+    textAlign: style.text_align && style.text_align !== def.text_align 
+      ? style.text_align : undefined,
+    borderColor: style.border_color && style.border_color !== def.border_color 
+      ? style.border_color : undefined,
+    borderWidth: style.border_width != null && style.border_width !== def.border_width 
+      ? `${style.border_width}px` : undefined,
+    borderRadius: style.border_radius != null && style.border_radius !== def.border_radius 
+      ? `${style.border_radius}px` : undefined,
+    borderStyle: style.border_style && style.border_style !== def.border_style 
+      ? style.border_style : undefined,
+    padding: style.padding != null && style.padding !== def.padding 
+      ? `${style.padding}px` : undefined,
+    opacity: style.opacity != null && style.opacity !== def.opacity 
+      ? style.opacity : undefined,
+    boxShadow: style.box_shadow && style.box_shadow !== def.box_shadow 
+      ? style.box_shadow : undefined,
     hyperLink: style.hyperLink || undefined,
   };
 }
-
 function resolveStyle<T>(ui: T | undefined, orig: T | undefined, def: T): T {
   return ui !== undefined ? ui : orig !== undefined ? orig : def;
 }
@@ -3284,10 +3297,7 @@ function nodeLevel(node: MindNode): number {
   }
   return l;
 }
-const currentEdgeColor = computed(() => {
-  const theme = THEMES.find((t) => t.id === activeThemeId.value);
-  return theme?.edgeColor ?? "var(--primary-color)";
-});
+const currentEdgeColor = computed(() => activeEdgeColor.value)
 const visibleEdges = computed<Edge[]>(() => {
   const root = nodeMap.get(rootNodeId.value);
   if (!root) return [];
@@ -3494,7 +3504,7 @@ function nodeInlineStyle(node: MindNode): Record<string, string> {
     base.borderRadius = "10px";
     base.border = "1.5px solid var(--border)";
     base.background = "var(--mm-node-sheet-bg, var(--bg-surface))";
-    base.overflow = "visible"; // must be visible so cards aren't clipped
+    base.overflow = "visible";
     base.display = "block";
     base.padding = "0";
     base.boxSizing = "border-box";
@@ -3509,7 +3519,7 @@ function nodeInlineStyle(node: MindNode): Record<string, string> {
     }
     base.borderRadius = "4px";
     base.border = "none";
-    base.background = "var(--bg-surface)";
+    base.background = "var(--mm-node-list-bg, var(--bg-surface))";
     base.boxShadow = "none";
     base.overflow = "hidden";
     base.display = "flex";
@@ -3532,9 +3542,9 @@ function nodeInlineStyle(node: MindNode): Record<string, string> {
     return base;
   }
 
-  // ... rest of existing nodeInlineStyle code unchanged below ...
-  if (s.background) base.background = s.background;
-  if (s.color) base.color = s.color;
+  // Only apply background if it's a real custom value (not a default)
+  if (s.background !== undefined) base.background = s.background;
+  if (s.color !== undefined) base.color = s.color;
   if (s.fontFamily) base.fontFamily = s.fontFamily;
   if (s.fontSize) base.fontSize = s.fontSize;
   if (s.fontWeight) base.fontWeight = s.fontWeight;
@@ -3551,14 +3561,12 @@ function nodeInlineStyle(node: MindNode): Record<string, string> {
     base.borderColor = s.borderColor;
   }
   if (s.padding && node.uniqueName !== "card") base.padding = s.padding;
-  if (s.padding && node.uniqueName === "card")
-    base["--card-body-padding"] = s.padding;
+  if (s.padding && node.uniqueName === "card") base["--card-body-padding"] = s.padding;
   if (ext.opacity != null) base.opacity = String(ext.opacity);
   if (ext.boxShadow) base.boxShadow = ext.boxShadow;
 
   return base;
 }
-
 const activeFormatStyle = computed<NodeStyle>(() => {
   if (selectedNodeId.value) {
     const n = nodeMap.get(selectedNodeId.value);
@@ -4744,14 +4752,51 @@ onMounted(async () => {
   await nextTick();
   await loadSavedTheme();
 });
-function applyDefaultTheme() {
-  // Don't override a saved theme
-  if (savedThemeDocId.value) return;
-  const defaultTheme = THEMES[0];
-  if (!defaultTheme) return;
-  applyTheme(defaultTheme, false);
+// AFTER — resolve CSS vars from the actual document root so the values are real hex
+function getComputedVar(name: string, fallback: string): string {
+  const el = document.documentElement
+  return getComputedStyle(el).getPropertyValue(name).trim() || fallback
 }
 
+function applyDefaultTheme() {
+  if (savedThemeDocId.value) return;
+
+  const dark = isDark.value;
+  const el = rootEl.value;
+  if (!el) return;
+
+  const bg      = dark ? '#1f1f1e' : getComputedVar('--bg-body', '#f4f4f4');
+  const primary = getComputedVar('--primary-color', dark ? '#9356c5' : '#7d68c8');
+  const surface = dark ? '#2c2c2b' : getComputedVar('--bg-surface', '#fefeff');
+  const card    = dark ? '#2c2c2b' : getComputedVar('--bg-card', '#ffffff');
+  const text    = dark ? '#f5f5f5' : getComputedVar('--text-primary', '#2b2c30');
+
+  el.style.setProperty('--mm-bg',            bg);
+  el.style.setProperty('--mm-node-root-bg',  dark ? '#2c2c2b' : primary);
+  el.style.setProperty('--mm-node-sheet-bg', dark ? '#2c2c2b' : surface);
+  el.style.setProperty('--mm-node-list-bg',  dark ? '#1f1f1e' : card);
+  el.style.setProperty('--mm-node-card-bg',  dark ? '#2c2c2b' : card);
+  el.style.setProperty('--mm-edge-color',    primary);
+  el.style.setProperty('--mm-text-color',    text);
+
+  activeEdgeColor.value = primary;
+  activeThemeId.value   = 'default';
+  activeCanvasBg.value  = bg;
+  customBgColor.value   = dark ? '#1f1f1e' : '#dedfe3';
+}
+// AFTER the existing themeContext watcher — add this:
+watch(isDark, async () => {
+  // When global dark/light mode changes, re-apply the mindmap theme
+  await nextTick()
+  if (savedThemeDocId.value) {
+    // A persisted theme is loaded — re-apply it with the new mode context
+    // (colors like 'var(--primary-color)' will now resolve differently)
+    await loadSavedTheme()
+  } else {
+    // No persisted theme — re-apply the default which respects isDark
+    applyDefaultTheme()
+  }
+}, { immediate: false })
 function resolveThemeContext(): { type: string; type_id: string | null } {
   const path = route.path;
 
@@ -5206,8 +5251,16 @@ onBeforeUnmount(() => {
 .nact--open:hover {
   color: var(--primary-color) !important;
 }
+.nact--add {
+  background: var(--primary-color) !important;
+  color: #ffffff !important;
+  border-radius: 4px;
+}
+
 .nact--add:hover {
-  color: #22c55e !important;
+  opacity: 0.85;
+  background: var(--secondary-color) !important;
+  color: #ffffff !important;
 }
 
 .list-add-card-btn {
@@ -6066,17 +6119,17 @@ onBeforeUnmount(() => {
   background: var(--bg-card, #2b2c30);
   color: var(--text-secondary, #b0b0b0);
 }
-.mindmap-root[data-dark="true"] :where(.mm-node--List) {
-  background: var(--bg-surface, #1a1a1a);
-  color: var(--text-secondary, #b0b0b0);
+.mindmap-root[data-dark="true"] .mm-node--List {
+  background: var(--mm-node-list-bg, #1f1f1e) !important;
+  color: var(--mm-text-color, #b0b0b0) !important;
 }
-.mindmap-root[data-dark="true"] :where(.mm-node--card) {
-  background: var(--bg-card, #2b2c30);
-  color: var(--text-primary, #f5f5f5);
+.mindmap-root[data-dark="true"] .mm-node--card {
+  background: var(--mm-node-card-bg, #2c2c2b) !important;
+  color: var(--mm-text-color, #f5f5f5) !important;
 }
-
-.mindmap-root[data-dark="true"] .mm-node--root {
-  border-color: var(--primary-color);
+.mindmap-root[data-dark="true"] .mm-node--sheet {
+  background: var(--mm-node-sheet-bg, #2c2c2b) !important;
+  color: var(--mm-text-color, #b0b0b0) !important;
 }
 .mindmap-root[data-dark="true"] .mm-node--sheet {
   border-color: var(--border, #3e3e42);
@@ -6745,5 +6798,22 @@ onBeforeUnmount(() => {
 .mindmap-root[data-dark="true"] .layout-check {
   background: #2b2c30;
   color: var(--primary-color);
+}
+/* Add these rules to ensure --mm-* vars always cascade into node backgrounds
+   even when no inline background style is set */
+.mm-node--root:not([style*="background"]) .node-root-inner {
+  background: var(--mm-node-root-bg, var(--primary-color)) !important;
+}
+
+.mm-node--sheet:not([style*="background"]) {
+  background: var(--mm-node-sheet-bg, var(--bg-surface)) !important;
+}
+
+.mm-node--List:not([style*="background"]) {
+  background: var(--mm-node-list-bg, var(--bg-card)) !important;
+}
+
+.mm-node--card:not([style*="background"]) {
+  background: var(--mm-node-card-bg, var(--bg-card)) !important;
 }
 </style>

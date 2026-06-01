@@ -1512,23 +1512,6 @@
           </nav>
         </div>
 
-        <!-- Suggested quick prompts (from new tab data) -->
-        <div
-          v-if="activeSuggestedPrompts.length && !orderedMessages.length"
-          class="mb-3 flex flex-wrap gap-1.5"
-        >
-          <button
-            v-for="sp in activeSuggestedPrompts.slice(0, 4)"
-            :key="sp.label"
-            @click="applyPromptToInput(sp.text)"
-            class="px-3 py-1.5 rounded-full border border-primary-color/20 bg-primary-color/5 text-[11px] text-primary-color font-medium hover:bg-primary-color/12 hover:border-primary-color/35 transition-all cursor-pointer"
-          >
-            <i class="fa-solid fa-lightbulb mr-1 text-[9px] opacity-70"></i>
-            {{ sp.label }}
-          </button>
-        </div>
-
-
         <!-- Chat Input Area -->
         <div
           class="flex flex-col gap-2.5"
@@ -1542,7 +1525,7 @@
             <button
               v-for="sp in activeSuggestedPrompts.slice(0, 4)"
               :key="sp.label"
-              @click="applyPromptToInput(sp.text)"
+              @click="applyPromptAndSend(sp.text)"
               class="px-3 py-1.5 rounded-full border border-primary-color/20 bg-primary-color/5 text-[11px] text-primary-color font-medium hover:bg-primary-color/12 hover:border-primary-color/35 transition-all cursor-pointer"
             >
               <i class="fa-solid fa-sparkles text-[9px] mr-1"></i>
@@ -4019,11 +4002,25 @@ const selectedAgentName = computed(() => {
   return agent.name.length > 20 ? agent.name.slice(0, 20) + "..." : agent.name;
 });
 
-// ✅ Simple — always select first agent on any route
+// ✅ Simple — always select first agent on any route (but respect agentPassed if set)
 watch(
   () => agentsCreated.value?.data?.agents,
   (agents) => {
     if (!agents?.length) return;
+    
+    // If an agent was explicitly passed (clicked from People view), use that
+    if (agentStore.agentPassed && agentStore.agentPassed._id) {
+      // Only set if the agent exists in current list
+      const passedAgentExists = agents.some(
+        (a: any) => a._id === agentStore.agentPassed?._id,
+      );
+      if (passedAgentExists) {
+        selectedAgentId.value = agentStore.agentPassed._id;
+        return;
+      }
+    }
+    
+    // Otherwise, default to first agent
     if (!selectedAgentId.value) {
       selectedAgentId.value = agents[0]._id;
     } else {
@@ -4037,6 +4034,19 @@ watch(
   },
   { immediate: true },
 );
+
+// ✅ Watch for agentPassed from store — when user clicks "Chat with Agent"
+watch(
+  () => agentStore.agentPassed,
+  (passedAgent) => {
+    if (passedAgent && passedAgent._id) {
+      selectedAgentId.value = passedAgent._id;
+      // Clear agentPassed after applying it to avoid conflicts
+      agentStore.agentPassed = null;
+    }
+  },
+);
+
 const availableAgentsLevels = [
   { _id: "1", title: "Expert", value: "EXPERT" },
   { _id: "2", title: "Lead", value: "LEAD" },
@@ -4630,8 +4640,24 @@ async function fetchAssignedAgents() {
     selectedModule.value,
   );
   const agents = agentStore.agentsCreated?.data?.agents;
-  if (agents?.length && !selectedAgentId.value) {
-    selectedAgentId.value = agents[0]._id;
+  if (agents?.length) {
+    // If an agent was explicitly passed, use that
+    if (agentStore.agentPassed && agentStore.agentPassed._id) {
+      const passedAgentExists = agents.some(
+        (a: any) => a._id === agentStore.agentPassed?._id,
+      );
+      if (passedAgentExists) {
+        selectedAgentId.value = agentStore.agentPassed._id;
+        // Clear after applying to prevent interference
+        agentStore.agentPassed = null;
+        return;
+      }
+    }
+    
+    // Otherwise, set to first agent if not already set
+    if (!selectedAgentId.value) {
+      selectedAgentId.value = agents[0]._id;
+    }
   }
 }
 async function fetchAgentsRolesPermissions() {

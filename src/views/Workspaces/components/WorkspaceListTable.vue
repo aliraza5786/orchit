@@ -323,7 +323,7 @@ const renderPeople = ({ row, value }: any) =>
           : "hidden",
         onClick: (e: Event) => {
           e.stopPropagation();
-          openInviteModal(row._id);
+          openInviteModal(row);
         },
         title: "Invite Users",
       },
