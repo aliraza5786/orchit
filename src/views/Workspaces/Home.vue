@@ -194,6 +194,7 @@
       <InviteUsersWithPermissions
         v-model="showInviteModal"
         :defaultWorkspaceId="selectedInvitingWorkspaceId"
+         :workspaceId="selectedInvitingWorkspaceId"
       />
       <ShareModal
         v-if="selectedShareWorkspace"
@@ -355,9 +356,9 @@ const openShareModal = (ws: any) => {
   selectedShareWorkspace.value = ws;
   showShareModal.value = true;
 };
-
-const openInviteModal = (ws: any) => {
+const openInviteModal = async (ws: any) => {
   selectedInvitingWorkspaceId.value = ws._id;
+  await nextTick();  // let the prop propagate before modal opens
   showInviteModal.value = true;
 };
 

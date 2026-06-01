@@ -214,7 +214,7 @@
                           </div>
                         </div>
                       </div>
-                      
+                       {{ group }}
                       <!-- Footer Action -->
                       <div class="border-t border-border pt-3 mt-1">
                           <button
@@ -1460,7 +1460,7 @@ function levelClass(level: string): string {
 }
 
 function handleChatWithAgent(agent: any, module_id: any, module_name: any) {
-  console.log("module name", module_name);
+  console.log("module name", agent, module_id, module_name);
   agentStore.handleAgentPassed(agent, module_id, module_name);
   workspaceStore.toggleChatBotPanel();
 }
