@@ -127,9 +127,8 @@ function openIconLibrary() {
       <div class="min-w-0">
         <p class="font-medium truncate"> {{ modelValue.iconName }}</p>
 
-      </div>
-      <img src="../../../assets/icons/cross.svg" @click="select(null)" class="ml-auto cursor-pointer"
-        alt="Clear icon" />
+      </div> 
+        <i class="fa-solid fa-xmark ml-auto cursor-pointer text-text-secondary" @click="select(null)"></i>
     </div>
   </div>
 </template>

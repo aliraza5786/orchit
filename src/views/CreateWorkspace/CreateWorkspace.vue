@@ -113,9 +113,32 @@ const STEPS = Object.freeze([
 ] as const)
 
 
-const currentStep = ref<0 | 1 | 2 | 3 | 4>(!workspaceStore.workspace ? 0 : workspaceStore.workspace?.logo ? 4 : 1)
+const draftMeta = workspaceStore.hydrateWorkspaceDraft()
+
+function resolveInitialStep(): 0 | 1 | 2 | 3 | 4 {
+  const saved = draftMeta?.currentStep
+  if (saved !== undefined && saved >= 0 && saved <= 4) {
+    return saved as 0 | 1 | 2 | 3 | 4
+  }
+  if (!workspaceStore.workspace) return 0
+  return workspaceStore.workspace?.logo ? 4 : 1
+}
+
+const currentStep = ref<0 | 1 | 2 | 3 | 4>(resolveInitialStep())
 const isStepperVisible = ref(true)
-const isAI = ref(true)
+const isAI = ref(draftMeta?.isAI ?? true)
+
+watch(
+  [currentStep, isAI],
+  ([step, ai]) => {
+    if (workspaceStore.workspace) {
+      saveCreateWorkspaceDraft(workspaceStore.workspace, {
+        currentStep: step,
+        isAI: ai,
+      })
+    }
+  },
+)
 type StepOneInst = InstanceType<typeof StepOneSync> | null
 type StepTwoInst = InstanceType<typeof StepTwo> | null
 type StepFourInst = InstanceType<typeof StepFour> | null
@@ -201,7 +224,8 @@ function handleClose() {
     router.push({ path: '/dashboard', query: { welcome: '1', theme: theme.value } })
   }
 }
-import { onMounted } from 'vue'
+import { onMounted, watch } from 'vue'
+import { saveCreateWorkspaceDraft } from './workspaceDraft'
 
 onMounted(() => {
   const wsFeature = workspaceStore.getFeature('no-of-workspaces')
@@ -252,6 +276,7 @@ function handleSkip() {
   currentStep.value = 4
 }
 function startOver() {
+  workspaceStore.clearWorkspaceDraft()
   currentStep.value = 0
   isStartOver.value++;
 }

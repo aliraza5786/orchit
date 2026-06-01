@@ -1,5 +1,5 @@
 <template>
-    <div class="w-full h-2 bg-bg-surface rounded-full overflow-hidden">
+    <div class="w-full h-2 bg-bg-body rounded-full overflow-hidden">
       <div
         class="h-full rounded-full transition-all duration-300 ease-in-out"
         :class="isTailwindColor ? fillColor : ''"

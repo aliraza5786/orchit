@@ -364,7 +364,7 @@ onUnmounted(() => {
 
 function mannualHandler() {
   localStorage.setItem("mannualWorkspace", "true");
-  workspaceStore.setWorkspace(null);
+  workspaceStore.clearWorkspaceDraft();
   localStorage.removeItem("jobId");
   emit("manual", "mannual");
 }

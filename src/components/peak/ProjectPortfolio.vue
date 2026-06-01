@@ -1,5 +1,5 @@
 <template>
-  <div class="border border-border rounded-lg bg-bg-surface">
+  <div class="border border-border rounded-[6px] bg-bg-surface">
 
     <!-- ✅ FULL CARD LOADING STATE -->
     <div v-if="isLoading" class="p-6 animate-pulse space-y-6 rounded-full">

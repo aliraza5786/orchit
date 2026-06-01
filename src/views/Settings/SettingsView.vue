@@ -1,93 +1,118 @@
 <template>
-  <div class="h-[100dvh] bg-bg-body text-text-primary flex flex-col md:flex-row overflow-hidden">
-    <!-- Mobile Header -->
-    <div class="md:hidden h-[60px] bg-bg-body border-b border-border flex items-center justify-between px-4 shrink-0 z-30 relative">
-      <button
-        @click="toggleMobileSidebar"
-        v-if="!isMobileSidebarOpen"
-        class="text-sm font-medium text-text-secondary flex items-center gap-2"
+  <div class="h-[100dvh] bg-bg-body text-text-primary flex flex-col overflow-hidden">
+
+    <!-- ── Mobile Header ─────────────────────────────────────────── -->
+    <header class="md:hidden h-[56px] bg-bg-body border-b border-border flex items-center justify-between px-4 shrink-0 z-30 relative">
+      <!-- Left: menu toggle or back -->
+      <div class="w-24 flex items-center">
+        <button
+          v-if="!isMobileSidebarOpen"
+          @click="toggleMobileSidebar"
+          class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg border border-border text-text-secondary hover:bg-bg-card hover:text-text-primary transition-all text-xs font-medium"
+        >
+          <i class="fa-solid fa-bars text-[11px]"></i>
+          <span>Menu</span>
+        </button>
+        <button
+          v-else
+          @click="closeMobileSidebar"
+          class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg border border-border text-text-secondary hover:bg-bg-card hover:text-text-primary transition-all text-xs font-medium"
+        >
+          <i class="fa-solid fa-xmark text-[11px]"></i>
+          <span>Close</span>
+        </button>
+      </div>
+
+      <!-- Center: title -->
+      <h1 class="absolute left-1/2 -translate-x-1/2 text-[14px] font-semibold text-text-primary whitespace-nowrap pointer-events-none">
+        Account Settings
+      </h1>
+
+      <!-- Right: back to dashboard -->
+      <div class="w-24 flex justify-end">
+        <button
+          @click="goBack"
+          class="flex items-center gap-1.5 text-[11px] text-text-secondary hover:text-accent transition-colors"
+        >
+          <i class="fa-solid fa-arrow-left text-[10px]"></i>
+          <span class="hidden xs:inline">Dashboard</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- ── Body: sidebar + main ───────────────────────────────────── -->
+    <div class="flex flex-1 min-h-0 overflow-hidden md:flex-row">
+
+      <SettingsSidebar
+        :mobile-open="isMobileSidebarOpen"
+        :profile="profileData"
+        @close-mobile="closeMobileSidebar"
+        @switch-company="onSwitchCompany"
+      />
+
+      <!-- Main Content Area -->
+      <main
+        class="flex-1 min-w-0 flex flex-col overflow-hidden
+               md:mx-2 md:rounded-[6px] md:border border-border"
+        :class="isDark ? 'bg-bg-card/30' : 'bg-bg-card'"
       >
-        <i class="fa-solid fa-chevron-left text-xs mt-1"></i> Settings
-      </button>
-      <button
-        v-if="isMobileSidebarOpen"
-        @click="goBack"
-        class="group flex items-center px-2 py-2 cursor-pointer rounded-[6px] border border-border text-xs text-text-secondary transition-all relative hover:bg-bg-card hover:text-text-primary select-none justify-start gap-2"
-      >
-        <i class="fa-solid fa-arrow-left text-[10px]"></i>
-        <span class="whitespace-nowrap font-medium text-[12px] tracking-normal leading-[14px]">Go back</span>
-      </button>
+        <div class="flex-1 overflow-y-auto">
+          <div class="py-6 px-4 sm:px-6 md:p-10 w-full flex flex-col min-h-full">
 
-      <h2 class="text-base font-semibold text-text-primary absolute left-1/2 -translate-x-1/2">
-        Account settings
-      </h2>
-    </div>
-
-    <SettingsSidebar
-      :mobile-open="isMobileSidebarOpen"
-      :profile="profileData"
-      @close-mobile="closeMobileSidebar"
-      @switch-company="onSwitchCompany"
-    />
-
-    <!-- Main Content Area -->
-    <main
-      class="flex-grow flex flex-col min-w-0 max-w-full md:m-2 md:rounded-lg md:border border-border overflow-hidden relative"
-      :class="isDark ? 'bg-bg-card/30' : 'bg-bg-card'"
-    >
-      <div class="py-6 px-4 sm:px-6 sm:p-10 overflow-y-auto h-full flex flex-col">
-        <div class="mx-auto w-full flex-1 flex flex-col">
-
-          <!-- Verification Warning Banner -->
-          <div v-if="showVerificationWarning && hasOrgDomain" class="mb-6 p-4 rounded-xl border border-amber-500/20 bg-amber-500/5 shadow-sm">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div class="flex gap-3">
-                <div class="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
-                  <i class="fa-solid fa-shield-halved text-amber-600 text-lg"></i>
+            <!-- Verification Warning Banner -->
+            <div
+              v-if="showVerificationWarning && hasOrgDomain"
+              class="mb-6 p-4 rounded-xl border border-amber-500/20 bg-amber-500/5"
+            >
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div class="flex gap-3">
+                  <div class="w-9 h-9 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
+                    <i class="fa-solid fa-shield-halved text-amber-600 text-base"></i>
+                  </div>
+                  <div>
+                    <h4 class="text-sm font-bold text-amber-800">Organization Verification Required</h4>
+                    <p class="text-xs text-amber-700/80 mt-0.5 leading-relaxed">
+                      {{ verificationWarningMessage }}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h4 class="text-sm font-bold text-amber-800">Organization Verification Required</h4>
-                  <p class="text-xs text-amber-700/80 mt-0.5 leading-relaxed">
-                    {{ verificationWarningMessage }}
-                  </p>
+                <div class="flex gap-2 shrink-0">
+                  <button
+                    v-if="!hasVerifiedDomain"
+                    @click="router.push({ query: { ...route.query, tab: 'org-domain' } })"
+                    class="px-4 py-2 rounded-lg bg-amber-600 text-white text-xs font-bold hover:bg-amber-700 transition-all cursor-pointer whitespace-nowrap"
+                  >
+                    Verify Domain
+                  </button>
+                  <button
+                    v-if="hasVerifiedDomain && !isSuperAdminVerified"
+                    @click="router.push({ query: { ...route.query, tab: 'org-setup' } })"
+                    class="px-4 py-2 rounded-lg bg-amber-600 text-white text-xs font-bold hover:bg-amber-700 transition-all cursor-pointer whitespace-nowrap"
+                  >
+                    Verify Admin
+                  </button>
                 </div>
-              </div>
-              <div class="flex gap-2">
-                <button
-                  v-if="!hasVerifiedDomain"
-                  @click="router.push({ query: { ...route.query, tab: 'org-domain' } })"
-                  class="px-4 py-2 rounded-lg bg-amber-600 text-white text-xs font-bold hover:bg-amber-700 transition-all cursor-pointer whitespace-nowrap"
-                >
-                  Verify Domain
-                </button>
-                <button
-                  v-if="hasVerifiedDomain && !isSuperAdminVerified"
-                  @click="router.push({ query: { ...route.query, tab: 'org-setup' } })"
-                  class="px-4 py-2 rounded-lg bg-amber-600 text-white text-xs font-bold hover:bg-amber-700 transition-all cursor-pointer whitespace-nowrap"
-                >
-                  Verify Admin
-                </button>
               </div>
             </div>
+
+            <!-- Dynamic Content -->
+            <ProfileTab v-if="currentTab === 'profile'" />
+            <BillingTab v-else-if="currentTab === 'billing'" />
+            <PersonalTokens v-else-if="currentTab === 'token-utilization'" />
+
+            <!-- Org tabs — always pass profileData (active_company drives the context) -->
+            <OrganizationTab v-else-if="currentTab === 'org-setup'" :profile="profileData" />
+            <OrgUsersTab v-else-if="currentTab === 'org-users'" :profile="profileData" />
+            <OrgRolesTab v-else-if="currentTab === 'org-roles'" :profile="profileData" />
+            <OwnershipTransfer v-else-if="currentTab === 'ownership-transfer'" :profile="profileData" />
+            <OrgPackagesTab v-else-if="currentTab === 'org-packages'" :profile="profileData" />
+            <OrgDomainSetup v-else-if="currentTab === 'org-domain'" :profile="profileData" />
+            <OrgAiTokensAllocationTab v-else-if="currentTab === 'token-allocation'" :profile="profileData" />
+
           </div>
-
-          <!-- Dynamic Content -->
-          <ProfileTab v-if="currentTab === 'profile'" />
-          <BillingTab v-else-if="currentTab === 'billing'" />
-          <PersonalTokens v-else-if="currentTab === 'token-utilization'" />
-
-          <!-- Org tabs — always pass profileData (active_company drives the context) -->
-          <OrganizationTab v-else-if="currentTab === 'org-setup'" :profile="profileData" />
-          <OrgUsersTab v-else-if="currentTab === 'org-users'" :profile="profileData" />
-          <OrgRolesTab v-else-if="currentTab === 'org-roles'" :profile="profileData" />
-          <OwnershipTransfer v-else-if="currentTab === 'ownership-transfer'" :profile="profileData" />
-          <OrgPackagesTab v-else-if="currentTab === 'org-packages'" :profile="profileData" />
-          <OrgDomainSetup v-else-if="currentTab === 'org-domain'" :profile="profileData" />
-          <OrgAiTokensAllocationTab v-else-if="currentTab === 'token-allocation'" :profile="profileData" />
-
         </div>
-      </div>
-    </main>
+      </main>
+    </div>
   </div>
 </template>
 
@@ -114,7 +139,6 @@ import { useAuthStore } from '../../stores/auth'
 const { isDark } = useTheme()
 const route = useRoute()
 const router = useRouter()
-// const queryClient = useQueryClient()
 
 const isMobileSidebarOpen = ref(false)
 const currentTab = computed(() => (route.query.tab as string) || 'profile')
@@ -128,6 +152,7 @@ const { data: profile } = useQuery({
 const profileData = computed(() => profile.value?.data ?? null)
 const authStore = useAuthStore()
 const hasOrgDomain = computed(() => profileData.value?.activeCompany?.custom_domain)
+
 // --- Verification Logic ---
 const { data: domainsData } = useListDomains()
 
@@ -157,11 +182,11 @@ const verificationWarningMessage = computed(() => {
   if (!isSuperAdminVerified.value) return "Super admin verification is pending. Please complete the verification process."
   return ""
 })
+
 async function onSwitchCompany(company: any) {
   localStorage.setItem('company_id', company._id)
   localStorage.setItem('company_name', company.title)
 }
-
 
 // ─── Mobile sidebar ───────────────────────────────────────────────────────────
 function toggleMobileSidebar() {
@@ -178,5 +203,8 @@ function goBack() {
 </script>
 
 <style scoped>
-/* View-specific styles */
+/* xs breakpoint for very small screens */
+@media (min-width: 480px) {
+  .xs\:inline { display: inline; }
+}
 </style>

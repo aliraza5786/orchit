@@ -1176,13 +1176,22 @@ const route = useRoute()
 function resolveInitialOnboardingStep() {
   const queryStep = Number(route.query.step)
   if (queryStep && !Number.isNaN(queryStep)) return queryStep
+  
+  // If coming from settings to create organization, skip step 1
+  const fromSettings = route.query.fromSettings === 'true'
+  if (fromSettings) return 2
+  
   return 1
 }
 
 // ─── Core State ──────────────────────────────────────────────────────────────
 const companyID = ref()
 const activeStep = ref(resolveInitialOnboardingStep())
-const selected = ref(localStorage.getItem('onboarding_selected_type') || 'team')
+const selected = ref(
+  route.query.mode === 'team' 
+    ? 'team'
+    : localStorage.getItem('onboarding_selected_type') || 'team'
+)
 watch(selected, (v) => {
   if (v) localStorage.setItem('onboarding_selected_type', v)
 })
@@ -1280,6 +1289,15 @@ onMounted(async () => {
       const ac = res.data?.associated_company
       if (ac && ac._id) {
         router.replace('/associated-organization')
+        return
+      }
+
+      // If user already has workspaces, skip onboarding and go to dashboard
+      // UNLESS they're explicitly creating an organization from Settings
+      const workspaces = res.data?.workspaces
+      const isFromSettings = route.query.fromSettings === 'true'
+      if (Array.isArray(workspaces) && workspaces.length > 0 && !isFromSettings) {
+        router.replace('/dashboard')
         return
       }
     }
