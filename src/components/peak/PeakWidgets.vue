@@ -1,7 +1,7 @@
 <template>
   <div class="rounded-[6px]">
 <!-- Header -->
-<div class="flex items-center justify-between mb-4 flex-wrap gap-3 bg-bg-surface px-5 py-3 rounded-t-[10px] border border-border">
+<div class="flex items-center justify-between mb-4 flex-wrap gap-3 bg-bg-surface px-5 py-3 rounded-t-[6px] border border-border">
   <div class="flex items-center gap-3">
     <div class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style="background: var(--bg-lavender)">
       <i class="fa-solid fa-chart-pie text-[12px] text-primary-color"></i>
@@ -114,7 +114,7 @@
       <div
   v-for="(widget, widgetIndex) in store.pinnedWidgets"
   :key="widget._id"
-  class="bg-bg-card border border-border rounded-[10px] flex flex-col overflow-hidden transition-all duration-200 relative group widget-card"
+  class="bg-bg-card border border-border rounded-[6px] flex flex-col overflow-hidden transition-all duration-200 relative group widget-card"
   :class="[
     widgetIndex === 0 ? 'flex-[1_1_30%] min-w-[240px]'
       : widgetIndex === 1 ? 'flex-[2_1_55%] min-w-[320px]'

@@ -72,7 +72,6 @@ const isOwnerOfActive = computed(() => membershipRole.value === 'owner')
 const canSeeUpgradeBanner = computed(() => 
   ['owner', 'super_admin', 'admin', 'editor'].includes(membershipRole.value)
 )
-// ✅ isMember: ONLY plain members/viewers with no elevated role
 const isMember = computed(() => membershipRole.value === 'viewer')
 const isOrgFree = computed(() =>
   !props.profile?.active_company?.company_subscription?.package?.packageType ||
@@ -149,66 +148,21 @@ const visiblePersonalItems = computed(() =>
   })
 )
 const orgItems = [
-  {
-    label: 'Overview',
-    tab: 'org-setup',
-    icon: 'fa-regular fa-sliders',
-    perm: null,
-    ownerOnly: false,
-  },
-  {
-    label: 'Domain',
-    tab: 'org-domain',
-    icon: 'fa-regular fa-globe',
-    perm: 'domain.read',
-    ownerOnly: false,
-  },
-  {
-    label: 'Members',
-    tab: 'org-users',
-    icon: 'fa-regular fa-users',
-    perm: 'company_user.read',
-    ownerOnly: false,
-  },
-  {
-    label: 'Roles',
-    tab: 'org-roles',
-    icon: 'fa-regular fa-shield-halved',
-    perm: 'company_user.read', // ✅ visible to anyone with this perm
-    ownerOnly: false,
-  },
-  {
-    label: 'Billing & Plans',
-    tab: 'org-packages',
-    icon: 'fa-regular fa-credit-card',
-    perm: 'package.read',
-    ownerOnly: false,
-  },
-  {
-    label: 'Token Allocation',
-    tab: 'token-allocation',
-    icon: 'fa-regular fa-chart-bar',
-    perm: 'package.read',      // ✅ visible to anyone with this perm
-    ownerOnly: false,
-  },
-  {
-    label: 'Transfer Owner',
-    tab: 'ownership-transfer',
-    icon: 'fa-regular fa-user-gear',
-    perm: null,
-    ownerOnly: true,           // ✅ owner only, always
-  },
+  { label: 'Overview',        tab: 'org-setup',          icon: 'fa-regular fa-sliders',       perm: null,             ownerOnly: false },
+  { label: 'Domain',          tab: 'org-domain',          icon: 'fa-regular fa-globe',          perm: 'domain.read',    ownerOnly: false },
+  { label: 'Members',         tab: 'org-users',           icon: 'fa-regular fa-users',          perm: 'company_user.read', ownerOnly: false },
+  { label: 'Roles',           tab: 'org-roles',           icon: 'fa-regular fa-shield-halved',  perm: 'company_user.read', ownerOnly: false },
+  { label: 'Billing & Plans', tab: 'org-packages',        icon: 'fa-regular fa-credit-card',    perm: 'package.read',   ownerOnly: false },
+  { label: 'Token Allocation',tab: 'token-allocation',    icon: 'fa-regular fa-chart-bar',      perm: 'package.read',   ownerOnly: false },
+  { label: 'Transfer Owner',  tab: 'ownership-transfer',  icon: 'fa-regular fa-user-gear',      perm: null,             ownerOnly: true  },
 ]
 
 const visibleOrgItems = computed(() => {
-  // Pure members/viewers with zero permissions → Overview only
   if (isMember.value && permissions.value.length === 0) {
     return orgItems.filter(i => i.tab === 'org-setup')
   }
-
   return orgItems.filter(i => {
     if (i.ownerOnly && !isOwnerOfActive.value) return false
-    // null perm = always show; otherwise check permissions array
     if (i.perm && !hasPerm(i.perm)) return false
     return true
   })
@@ -220,34 +174,54 @@ function orgInitials(title: string) {
 </script>
 
 <template>
+  <!-- Backdrop overlay for mobile -->
+  <Transition name="fade">
+    <div
+      v-if="mobileOpen"
+      class="md:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-30"
+      @click="emit('close-mobile')"
+    />
+  </Transition>
+
   <aside
-    class="settings-sidebar h-full flex flex-col bg-bg-body border-r border-border w-[240px] shrink-0 overflow-y-auto"
+    class="settings-sidebar h-full flex flex-col bg-bg-body border-r border-border shrink-0 overflow-y-auto
+           w-full max-w-[280px] md:w-[240px]"
     :class="{ 'mobile-open': mobileOpen }"
   >
-    <!-- Back -->
-    <div class="px-2 pt-4 pb-3 shrink-0">
+    <!-- Back + mobile close -->
+    <div class="px-3 pt-4 pb-3 shrink-0 flex items-center justify-between gap-2">
       <button
         @click="goBack"
-        class="flex items-center gap-2 cursor-pointer text-[12px] text-text-secondary hover:text-accent group transition-colors px-2 py-1.5 rounded-lg hover:bg-bg-card w-full mb-1"
+        class="flex items-center gap-2 cursor-pointer text-[12px] text-text-secondary hover:text-accent group transition-colors px-2 py-2 rounded-lg hover:bg-bg-card flex-1 mb-1"
       >
         <i class="fa-solid fa-arrow-left text-[10px] group-hover:-translate-x-0.5 transition-transform"></i>
         Back to dashboard
       </button>
+
+      <!-- Close button — mobile only -->
+      <button
+        @click="emit('close-mobile')"
+        class="md:hidden mb-1 w-7 h-7 flex items-center justify-center rounded-lg text-text-secondary hover:text-text-primary hover:bg-bg-card border border-border transition-all shrink-0 cursor-pointer"
+        aria-label="Close menu"
+      >
+        <i class="fa-solid fa-xmark text-[12px]"></i>
+      </button>
     </div>
 
-    <div class="flex flex-col flex-1 px-2 pb-5 min-h-0 gap-6">
+    <div class="flex flex-col flex-1 px-3 pb-6 min-h-0 gap-6">
 
       <!-- ── PERSONAL (non-company emails) ── -->
       <template v-if="mode === 'personal' && !isCompanyEmail">
-        <div class="flex items-center gap-3 px-2 pt-1">
-          <div class="w-8 h-8 rounded-full bg-accent/15 flex items-center justify-center text-accent text-[12px] font-bold shrink-0">
+        <!-- User identity card -->
+        <div class="flex items-center gap-3 px-2 pt-1 pb-1">
+          <div class="w-9 h-9 rounded-full bg-accent/15 flex items-center justify-center text-accent text-[13px] font-bold shrink-0 ring-2 ring-accent/20">
             {{ initials }}
           </div>
           <div class="flex-1 min-w-0">
-            <p class="text-[12px] font-semibold text-text-primary truncate leading-tight">
-              {{ profile?.u_full_name || 'Your Account' }}
+            <p class="text-[13px] font-semibold text-text-primary truncate leading-tight">
+              {{ profile?.data?.u_full_name || 'Your Account' }}
             </p>
-            <p class="text-[10px] text-text-secondary truncate leading-tight mt-0.5">{{ personalPlan }} plan</p>
+            <p class="text-[11px] text-text-secondary truncate leading-tight mt-0.5">{{ personalPlan }} plan</p>
           </div>
         </div>
 
@@ -258,7 +232,7 @@ function orgInitials(title: string) {
               v-for="item in visiblePersonalItems"
               :key="item.tab"
               @click="selectTab(item.tab)"
-              class="w-full flex items-center cursor-pointer gap-3 px-3 py-2 rounded-lg text-[13px] transition-all"
+              class="w-full flex items-center cursor-pointer gap-3 px-3 py-2.5 rounded-lg text-[13px] transition-all"
               :class="currentTab === item.tab
                 ? 'bg-accent/10 text-accent font-semibold'
                 : 'text-text-secondary hover:bg-bg-card hover:text-text-primary'"
@@ -279,14 +253,14 @@ function orgInitials(title: string) {
             <p class="text-[11px] text-text-secondary leading-snug mb-3">
               Upgrade to unlock higher token limits, advanced AI features, and full access to premium tools.
             </p>
-            <ul class="text-[11px] text-text-secondary mb-3 space-y-1">
-              <li>• More AI tokens per month</li>
-              <li>• Access to advanced features</li>
-              <li>• Faster processing &amp; priority usage</li>
+            <ul class="text-[11px] text-text-secondary mb-3 space-y-1.5">
+              <li class="flex items-center gap-1.5"><i class="fa-solid fa-circle-check text-purple-400 text-[10px]"></i> More AI tokens per month</li>
+              <li class="flex items-center gap-1.5"><i class="fa-solid fa-circle-check text-purple-400 text-[10px]"></i> Access to advanced features</li>
+              <li class="flex items-center gap-1.5"><i class="fa-solid fa-circle-check text-purple-400 text-[10px]"></i> Faster processing &amp; priority usage</li>
             </ul>
             <button
               @click="selectTab('billing')"
-              class="w-full py-2 rounded-lg text-white text-[12px] cursor-pointer font-bold hover:opacity-90 active:scale-[0.97] transition-all"
+              class="w-full py-2.5 rounded-lg text-white text-[12px] cursor-pointer font-bold hover:opacity-90 active:scale-[0.97] transition-all"
               style="background: linear-gradient(90deg, #7c3aed, #6c63ff)"
             >
               Upgrade plan →
@@ -297,26 +271,29 @@ function orgInitials(title: string) {
 
       <!-- ── ORGANIZATION ── -->
       <template v-if="isCompanyEmail || mode === 'org'">
+
+        <!-- No org state -->
         <div v-if="!hasOrgs && !isPendingOrgMember" class="flex flex-col gap-3">
-    <p class="text-[10px] uppercase tracking-widest text-text-secondary/50 font-semibold px-1">Organization</p>
-    <div class="rounded-xl border border-border bg-bg-card p-4">
-      <div class="flex items-center gap-2 mb-1.5">
-        <i class="fa-regular fa-building text-text-secondary text-[13px]"></i>
-        <p class="text-[12px] font-bold text-text-primary">No organization yet</p>
-      </div>
-      <p class="text-[11px] text-text-secondary leading-snug mb-3">
-        Create your organization to manage teams, members, and advanced settings.
-      </p>
-      <button
-        @click="router.push('/onboarding')"
-        class="w-full py-2 rounded-lg text-white text-[12px] cursor-pointer font-bold hover:opacity-90 active:scale-[0.97] transition-all"
-        style="background: linear-gradient(90deg, #7c3aed, #6c63ff)"
-      >
-        <i class="fa-solid fa-plus text-[10px] mr-1"></i>
-        Create organization
-      </button>
-    </div>
-  </div>
+          <p class="text-[10px] uppercase tracking-widest text-text-secondary/50 font-semibold px-1">Organization</p>
+          <div class="rounded-xl border border-border bg-bg-card p-4">
+            <div class="flex items-center gap-2 mb-1.5">
+              <i class="fa-regular fa-building text-text-secondary text-[13px]"></i>
+              <p class="text-[12px] font-bold text-text-primary">No organization yet</p>
+            </div>
+            <p class="text-[11px] text-text-secondary leading-snug mb-3">
+              Create your organization to manage teams, members, and advanced settings.
+            </p>
+            <button
+              @click="router.push({ path: '/onboarding', query: { mode: 'team', fromSettings: 'true' } })"
+              class="w-full py-2.5 rounded-lg text-white text-[12px] cursor-pointer font-bold hover:opacity-90 active:scale-[0.97] transition-all"
+              style="background: linear-gradient(90deg, #7c3aed, #6c63ff)"
+            >
+              <i class="fa-solid fa-plus text-[10px] mr-1"></i>
+              Create organization
+            </button>
+          </div>
+        </div>
+
         <div v-if="hasOrgs" class="flex flex-col gap-5">
 
           <!-- Org picker -->
@@ -324,29 +301,29 @@ function orgInitials(title: string) {
             <p class="text-[10px] uppercase tracking-widest text-text-secondary/50 font-semibold mb-2 px-1">Organization</p>
             <div class="space-y-1">
               <button
-  v-for="company in allCompanies"
-  :key="company._id"
-  @click="selectCompany(company)"
-  class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] transition-all border cursor-pointer"
-  :class="displayCompanyId === company._id
-    ? 'bg-accent/10 border-accent/20 text-text-primary'
-    : 'border-transparent hover:bg-bg-card text-text-secondary hover:text-text-primary'"
->
-  <div
-    class="w-7 h-7 rounded-lg flex items-center justify-center text-white text-[10px] font-bold shrink-0 overflow-hidden"
-    style="background: linear-gradient(135deg, #6c63ff 0%, #a78bfa 100%)"
-  >
-    <img v-if="company.logo" :src="company.logo" class="w-full h-full object-cover" alt="" />
-    <span v-else>{{ orgInitials(company.title) }}</span>
-  </div>
-  <div class="flex-1 min-w-0 text-left">
-    <p class="text-[12px] font-semibold truncate leading-tight">{{ company.title }}</p>
-    <p class="text-[10px] text-text-secondary capitalize leading-tight mt-0.5">{{ company?.role?.title }}</p>
-  </div>
-  <span v-if="isSwitching && selectedCompanyId === company._id" class="w-3 h-3 border border-accent border-t-transparent rounded-full animate-spin shrink-0"></span>
-  <span v-else-if="company.is_pending_deletion" class="text-[9px] font-medium px-1.5 py-0.5 rounded-full shrink-0" style="background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger-border);">Deleting</span>
-  <span v-else-if="displayCompanyId === company._id" class="w-1.5 h-1.5 rounded-full bg-accent shrink-0"></span>
-</button>
+                v-for="company in allCompanies"
+                :key="company._id"
+                @click="selectCompany(company)"
+                class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] transition-all border cursor-pointer"
+                :class="displayCompanyId === company._id
+                  ? 'bg-accent/10 border-accent/20 text-text-primary'
+                  : 'border-transparent hover:bg-bg-card text-text-secondary hover:text-text-primary'"
+              >
+                <div
+                  class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-[10px] font-bold shrink-0 overflow-hidden"
+                  style="background: linear-gradient(135deg, #6c63ff 0%, #a78bfa 100%)"
+                >
+                  <img v-if="company.logo" :src="company.logo" class="w-full h-full object-cover" alt="" />
+                  <span v-else>{{ orgInitials(company.title) }}</span>
+                </div>
+                <div class="flex-1 min-w-0 text-left">
+                  <p class="text-[12px] font-semibold truncate leading-tight">{{ company.title }}</p>
+                  <p class="text-[10px] text-text-secondary capitalize leading-tight mt-0.5">{{ company?.role?.title }}</p>
+                </div>
+                <span v-if="isSwitching && selectedCompanyId === company._id" class="w-3 h-3 border border-accent border-t-transparent rounded-full animate-spin shrink-0"></span>
+                <span v-else-if="company.is_pending_deletion" class="text-[9px] font-medium px-1.5 py-0.5 rounded-full shrink-0" style="background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger-border);">Deleting</span>
+                <span v-else-if="displayCompanyId === company._id" class="w-2 h-2 rounded-full bg-accent shrink-0"></span>
+              </button>
             </div>
           </div>
 
@@ -354,72 +331,69 @@ function orgInitials(title: string) {
           <div v-if="visibleOrgItems.length > 0">
             <p class="text-[10px] uppercase tracking-widest text-text-secondary/50 font-semibold mb-2 px-1">Settings</p>
             <nav class="space-y-0.5">
-  <button
-    v-for="item in visibleOrgItems"
-    :key="item.tab"
-    @click="!isPendingDeletion && selectTab(item.tab)"
-    class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] transition-all"
-    :class="isPendingDeletion
-      ? 'text-text-secondary/40 cursor-not-allowed'
-      : currentTab === item.tab
-        ? 'bg-accent/10 text-accent font-semibold cursor-pointer'
-        : 'text-text-secondary hover:bg-bg-card hover:text-text-primary cursor-pointer'"
-    :disabled="isPendingDeletion"
-    :title="isPendingDeletion ? 'Organization is pending deletion' : ''"
-  >
-    <i :class="[item.icon, 'w-4 text-center text-[13px] shrink-0']"></i>
-    {{ item.label }}
-    <i v-if="currentTab === item.tab && !isPendingDeletion" class="fa-solid fa-chevron-right text-[9px] ml-auto opacity-40"></i>
-    <i v-if="isPendingDeletion" class="fa-solid fa-lock text-[9px] ml-auto" style="color: var(--danger);"></i>
-  </button>
-</nav>
+              <button
+                v-for="item in visibleOrgItems"
+                :key="item.tab"
+                @click="!isPendingDeletion && selectTab(item.tab)"
+                class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] transition-all"
+                :class="isPendingDeletion
+                  ? 'text-text-secondary/40 cursor-not-allowed'
+                  : currentTab === item.tab
+                    ? 'bg-accent/10 text-accent font-semibold cursor-pointer'
+                    : 'text-text-secondary hover:bg-bg-card hover:text-text-primary cursor-pointer'"
+                :disabled="isPendingDeletion"
+                :title="isPendingDeletion ? 'Organization is pending deletion' : ''"
+              >
+                <i :class="[item.icon, 'w-4 text-center text-[13px] shrink-0']"></i>
+                {{ item.label }}
+                <i v-if="currentTab === item.tab && !isPendingDeletion" class="fa-solid fa-chevron-right text-[9px] ml-auto opacity-40"></i>
+                <i v-if="isPendingDeletion" class="fa-solid fa-lock text-[9px] ml-auto" style="color: var(--danger);"></i>
+              </button>
+            </nav>
           </div>
 
           <!-- Upgrade banner — org owners on free plan -->
           <div v-if="isOrgFree && canSeeUpgradeBanner">
-  <div
-    class="rounded-xl border p-4 transition-all"
-    :class="isPendingDeletion
-      ? 'border-border opacity-40 cursor-not-allowed pointer-events-none'
-      : 'border-purple-500/25 bg-gradient-to-b from-purple-500/10 to-purple-500/5'"
-  >
-    <div class="flex items-center gap-2 mb-2">
-      <i class="fa-solid fa-crown text-[11px]" :class="isPendingDeletion ? 'text-text-secondary' : 'text-purple-400'"></i>
-      <p class="text-[12px] font-bold text-text-primary">You're on the Free plan</p>
-    </div>
-
-    <p class="text-[11px] text-text-secondary leading-snug mb-3">
-      Upgrade to unlock the full power of your organization.
-    </p>
-
-    <ul class="mb-3 space-y-1.5">
-      <li class="flex items-start gap-2 text-[11px] text-text-secondary">
-        <i class="fa-solid fa-circle-check text-[10px] mt-0.5 shrink-0" :class="isPendingDeletion ? 'text-text-secondary' : 'text-purple-400'"></i>
-        <span>Unlimited workspaces &amp; team members</span>
-      </li>
-      <li class="flex items-start gap-2 text-[11px] text-text-secondary">
-        <i class="fa-solid fa-circle-check text-[10px] mt-0.5 shrink-0" :class="isPendingDeletion ? 'text-text-secondary' : 'text-purple-400'"></i>
-        <span>Org AI Token Pool — up to 25M tokens/month</span>
-      </li>
-      <li class="flex items-start gap-2 text-[11px] text-text-secondary">
-        <i class="fa-solid fa-circle-check text-[10px] mt-0.5 shrink-0" :class="isPendingDeletion ? 'text-text-secondary' : 'text-purple-400'"></i>
-        <span>Advanced controls, roles &amp; integrations</span>
-      </li>
-    </ul>
-
-    <button
-      @click="selectTab('org-packages')"
-      :disabled="isPendingDeletion"
-      class="w-full py-2 rounded-lg text-white text-[12px] font-bold transition-all"
-      :class="isPendingDeletion
-        ? 'cursor-not-allowed opacity-50 bg-border'
-        : 'cursor-pointer hover:opacity-90 active:scale-[0.97]'"
-      :style="isPendingDeletion ? '' : 'background: linear-gradient(90deg, #7c3aed, #6c63ff)'"
-    >
-      Upgrade organization →
-    </button>
-  </div>
-</div>
+            <div
+              class="rounded-xl border p-4 transition-all"
+              :class="isPendingDeletion
+                ? 'border-border opacity-40 cursor-not-allowed pointer-events-none'
+                : 'border-purple-500/25 bg-gradient-to-b from-purple-500/10 to-purple-500/5'"
+            >
+              <div class="flex items-center gap-2 mb-2">
+                <i class="fa-solid fa-crown text-[11px]" :class="isPendingDeletion ? 'text-text-secondary' : 'text-purple-400'"></i>
+                <p class="text-[12px] font-bold text-text-primary">You're on the Free plan</p>
+              </div>
+              <p class="text-[11px] text-text-secondary leading-snug mb-3">
+                Upgrade to unlock the full power of your organization.
+              </p>
+              <ul class="mb-3 space-y-1.5">
+                <li class="flex items-start gap-2 text-[11px] text-text-secondary">
+                  <i class="fa-solid fa-circle-check text-[10px] mt-0.5 shrink-0" :class="isPendingDeletion ? 'text-text-secondary' : 'text-purple-400'"></i>
+                  <span>Unlimited workspaces &amp; team members</span>
+                </li>
+                <li class="flex items-start gap-2 text-[11px] text-text-secondary">
+                  <i class="fa-solid fa-circle-check text-[10px] mt-0.5 shrink-0" :class="isPendingDeletion ? 'text-text-secondary' : 'text-purple-400'"></i>
+                  <span>Org AI Token Pool — up to 25M tokens/month</span>
+                </li>
+                <li class="flex items-start gap-2 text-[11px] text-text-secondary">
+                  <i class="fa-solid fa-circle-check text-[10px] mt-0.5 shrink-0" :class="isPendingDeletion ? 'text-text-secondary' : 'text-purple-400'"></i>
+                  <span>Advanced controls, roles &amp; integrations</span>
+                </li>
+              </ul>
+              <button
+                @click="selectTab('org-packages')"
+                :disabled="isPendingDeletion"
+                class="w-full py-2.5 rounded-lg text-white text-[12px] font-bold transition-all"
+                :class="isPendingDeletion
+                  ? 'cursor-not-allowed opacity-50 bg-border'
+                  : 'cursor-pointer hover:opacity-90 active:scale-[0.97]'"
+                :style="isPendingDeletion ? '' : 'background: linear-gradient(90deg, #7c3aed, #6c63ff)'"
+              >
+                Upgrade organization →
+              </button>
+            </div>
+          </div>
 
         </div>
       </template>
@@ -429,9 +403,36 @@ function orgInitials(title: string) {
 </template>
 
 <style scoped>
-.settings-sidebar { transition: transform 0.22s cubic-bezier(0.4,0,0.2,1); }
-@media (max-width: 768px) {
-  .settings-sidebar { position: fixed; top: 60px; left: 0; bottom: 0; z-index: 40; transform: translateX(-100%); }
-  .settings-sidebar.mobile-open { transform: translateX(0); }
+.settings-sidebar {
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Mobile: sidebar is a fixed drawer sliding in from the left */
+@media (max-width: 767px) {
+  .settings-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 40;
+    transform: translateX(-100%);
+    max-width: 300px;
+    width: 85vw;
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.25);
+  }
+
+  .settings-sidebar.mobile-open {
+    transform: translateX(0);
+  }
+}
+
+/* Backdrop fade transition */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.25s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>

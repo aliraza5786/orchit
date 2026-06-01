@@ -1,5 +1,5 @@
 <template>
-  <div class="border border-border rounded-xl bg-bg-card overflow-hidden">
+  <div class="border border-border rounded-[6px] bg-bg-card overflow-hidden">
 
     <!-- Header -->
     <div class="flex items-center gap-3 px-5 py-4 border-b border-border">

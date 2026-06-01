@@ -118,25 +118,43 @@
             <i class="fa-solid fa-times" aria-hidden="true" />
           </button>
         </div>
+       <!-- Save Status -->
+<div class="flex flex-col gap-1.5">
+  <label class="text-xs font-medium text-text-secondary uppercase tracking-wide">Save as</label>
 
-        <!-- Save Status Dropdown -->
-        <div class="flex flex-col gap-1.5">
-          <label class="text-xs font-medium text-text-secondary uppercase tracking-wide">Save as</label>
-          <div class="relative">
-            <select
-              v-model="saveStatus"
-              class="w-full h-9 bg-bg-input border border-border rounded-md px-3 pr-8 text-sm text-text-primary focus:ring-1 focus:ring-primary-color outline-none appearance-none cursor-pointer transition-all"
-            >
-              <option value="active">Active</option>
-              <option value="draft">Draft</option>
-            </select>
-            <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-xs text-text-secondary pointer-events-none" aria-hidden="true" />
-          </div>
-          <p class="text-[11px] text-text-secondary">
-            <template v-if="saveStatus === 'active'">This version will become the live workflow immediately.</template>
-            <template v-else>This version will be saved but not applied until activated.</template>
-          </p>
-        </div>
+  <!-- Readonly state for General Process -->
+  <template v-if="isGeneralProcess">
+    <div class="flex items-center gap-2 h-9 bg-bg-input border border-border rounded-md px-3 opacity-60 cursor-not-allowed">
+      <i class="fa-solid fa-lock text-xs text-text-secondary" aria-hidden="true" />
+      <span class="text-sm text-text-primary">Active</span>
+    </div>
+    <div class="flex items-start gap-2 p-2.5 rounded-lg bg-primary-color/5 border border-primary-color/15">
+      <i class="fa-solid fa-circle-info text-primary-color text-[11px] mt-0.5 shrink-0" aria-hidden="true" />
+      <p class="text-[11px] text-text-secondary leading-snug">
+        <span class="font-medium text-text-primary">General Processes</span> are always saved as
+        <span class="font-medium text-text-primary">Active</span>. Draft mode is not available for this process type.
+      </p>
+    </div>
+  </template>
+
+  <!-- Normal dropdown -->
+  <template v-else>
+    <div class="relative">
+      <select
+        v-model="saveStatus"
+        class="w-full h-9 bg-bg-input border border-border rounded-md px-3 pr-8 text-sm text-text-primary focus:ring-1 focus:ring-primary-color outline-none appearance-none cursor-pointer transition-all"
+      >
+        <option value="active">Active</option>
+        <option value="draft">Draft</option>
+      </select>
+      <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-xs text-text-secondary pointer-events-none" aria-hidden="true" />
+    </div>
+    <p class="text-[11px] text-text-secondary">
+      <template v-if="saveStatus === 'active'">This version will become the live workflow immediately.</template>
+      <template v-else>This version will be saved but not applied until activated.</template>
+    </p>
+  </template>
+</div>
 
         <!-- Comments -->
         <div class="flex flex-col gap-1.5">
@@ -212,6 +230,9 @@ const isOpen = computed(() => props.modelValue)
 const processId = computed(() => props.process?._id ?? props.process?.id ?? '')
 const processTitle = computed(() => props.process?.title ?? 'Process Workflow')
 const processTypeValue = computed(() => props.process?.type_value ?? '')
+const isGeneralProcess = computed(() => 
+  transitionData.value?.title?.toLocaleLowerCase() === 'general process'
+)
 const { workspaceId } = useRouteIds()
 
 /* Versioning State & Queries */
