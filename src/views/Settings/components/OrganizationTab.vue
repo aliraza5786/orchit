@@ -491,7 +491,7 @@
                 <template v-else-if="deleteModal.step === 1">
                   <h3 class="text-[15px] font-bold text-text-primary mb-1">Verify with OTP</h3>
                   <p class="text-[13px] text-text-secondary leading-relaxed mb-5">
-                    We sent a 6-digit code to <strong class="text-text-primary">{{ maskedEmail }}</strong>. Enter it below.
+                    We sent a 5-digit code to <strong class="text-text-primary">{{ maskedEmail }}</strong>. Enter it below.
                   </p>
                 </template>
                 <template v-else-if="deleteModal.step === 2">
@@ -558,7 +558,7 @@
               <!-- Step 1: OTP -->
               <template v-else-if="deleteModal.step === 1">
                 <div class="space-y-1.5 mb-4">
-                  <label class="text-[10px] font-bold uppercase tracking-wider text-text-secondary block text-center">6-digit code</label>
+                  <label class="text-[10px] font-bold uppercase tracking-wider text-text-secondary block text-center">5-digit code</label>
                   <div class="flex justify-center gap-2">
                     <input
                       v-for="(_, i) in 5" :key="i"
@@ -583,7 +583,7 @@
                 </p>
                 <p class="text-[12px] text-text-secondary text-center mt-1">
                   Didn't receive it?
-                  <button type="button" class="text-accent underline cursor-pointer ml-1 disabled:opacity-40 disabled:cursor-not-allowed" :disabled="deleteModal.timerSeconds > 240" @click="resendOtp">Resend code</button>
+                  <button type="button" class="text-accent underline cursor-pointer ml-1 disabled:opacity-40 disabled:cursor-not-allowed" :disabled="deleteModal.timerSeconds > 570" @click="resendOtp">Resend code</button>
                 </p>
                 <div class="flex gap-2 mt-5">
                   <button type="button" class="flex-1 rounded-xl border border-border/60 bg-transparent px-3 py-2.5 text-[13px] font-medium text-text-secondary hover:text-text-primary transition cursor-pointer" @click="goDeleteStep(0)">Back</button>
@@ -909,7 +909,8 @@ const deleteModal = reactive({
   open: false, step: 0, loading: false,
   password: '', showPassword: false,
   otpDigits: ['', '', '', '', ''],
-  timerSeconds: 299,
+  timerSeconds: 600,
+  expiresAt: 0,
   confirmName: '',
   errors: { password: '', otp: '', confirmName: '' },
 })
@@ -957,12 +958,28 @@ function handleBackdropClick() {
 
 function goDeleteStep(step: number) { deleteModal.step = step; if (step !== 1) stopTimer() }
 
-function startTimer() {
-  stopTimer(); deleteModal.timerSeconds = 299
-  timerInterval = setInterval(() => {
-    if (deleteModal.timerSeconds <= 0) { stopTimer(); return }
-    deleteModal.timerSeconds--
-  }, 1000)
+function startTimer(expiresAt?: number) {
+  stopTimer()
+
+  deleteModal.expiresAt =
+    expiresAt || Date.now() + 10 * 60 * 1000 // 10 minutes
+
+  const update = () => {
+    const remaining = Math.max(
+      0,
+      Math.floor((deleteModal.expiresAt - Date.now()) / 1000)
+    )
+
+    deleteModal.timerSeconds = remaining
+
+    if (remaining <= 0) {
+      stopTimer()
+      deleteModal.errors.otp = 'Verification code has expired.'
+    }
+  }
+
+  update()
+  timerInterval = setInterval(update, 1000)
 }
 
 function stopTimer() { if (timerInterval) { clearInterval(timerInterval); timerInterval = null } }
@@ -989,9 +1006,25 @@ function onOtpPaste(event: ClipboardEvent) {
 }
 
 async function resendOtp() {
-  deleteModal.otpDigits = ['', '', '', '', '']; deleteModal.errors.otp = ''
-  startTimer(); nextTick(() => otpRefs.value[0]?.focus())
-  toast.success('A new code has been sent to your email.')
+  try {
+    await request({
+      url: `profile/company/${selectedCompanyId.value}/resend-delete-otp`,
+      method: 'POST'
+    })
+
+    deleteModal.otpDigits = ['', '', '', '', '']
+    deleteModal.errors.otp = ''
+
+    startTimer()
+
+    nextTick(() => otpRefs.value[0]?.focus())
+
+    toast.success('A new code has been sent to your email.')
+  } catch (err: any) {
+    toast.error(
+      err?.response?.data?.message || 'Failed to resend verification code.'
+    )
+  }
 }
 
 async function doPasswordStep() {
@@ -1011,8 +1044,37 @@ async function doPasswordStep() {
 
 async function doOtpStep() {
   const code = deleteModal.otpDigits.join('')
-  if (code.length < 5) { deleteModal.errors.otp = 'Please enter all 5 digits.'; return }
-  stopTimer(); goDeleteStep(2)
+
+  if (code.length < 5) {
+    deleteModal.errors.otp = 'Please enter all 5 digits.'
+    return
+  }
+
+  if (deleteModal.timerSeconds <= 0) {
+    deleteModal.errors.otp = 'Verification code has expired.'
+    return
+  }
+
+  deleteModal.loading = true
+  deleteModal.errors.otp = ''
+
+  try {
+    await request({
+      url: `profile/company/${selectedCompanyId.value}/verify-delete-otp`,
+      method: 'POST',
+      data: {
+        otp: code
+      }
+    })
+
+    deleteModal.loading = false
+    stopTimer()
+    goDeleteStep(2)
+  } catch (err: any) {
+    deleteModal.loading = false
+    deleteModal.errors.otp =
+      err?.response?.data?.message || 'Invalid verification code.'
+  }
 }
 
 async function doConfirmStep() {
