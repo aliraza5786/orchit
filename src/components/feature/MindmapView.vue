@@ -1317,22 +1317,7 @@ interface MapTheme {
   edgeColor: string;
   textColor: string;
 }
-function getDefaultTheme(): MapTheme {
-  const dark = isDark.value
-  return {
-    id: 'default',
-    name: 'Default',
-    bg: dark ? '#1f1f1e' : '#f4f4f4',
-    nodeColors: {
-      root:  dark ? '#3b3a3a' : '#f1eeff',
-      sheet: dark ? '#2c2c2b' : '#ede9fb',
-      list:  dark ? '#1f1f1e' : '#f3f4f6',
-      card:  dark ? '#2c2c2b' : '#ffffff',
-    },
-    edgeColor: 'var(--primary-color)',
-    textColor: dark ? '#f5f5f5' : '#2b2c30',
-  }
-}
+
 const THEMES: MapTheme[] = [
   {
     id: "default",
