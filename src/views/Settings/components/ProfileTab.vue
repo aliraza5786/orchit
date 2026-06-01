@@ -2,7 +2,7 @@
   <div class="py-6" v-if="profileData">
     <div class="space-y-8">
       <!-- Profile Header Section -->
-      <div class="bg-bg-body/50 p-6 rounded-2xl border border-border/50 shadow-sm transition-all hover:shadow-md">
+      <div class="bg-bg-body/50 p-6 rounded-[6px] border border-border/50 shadow-sm transition-all hover:shadow-md">
         <div class="flex flex-col md:flex-row items-center md:items-start gap-4 md:gap-6 lg:gap-8">
           <!-- Avatar Section -->
           <div class="relative group">

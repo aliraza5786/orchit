@@ -99,7 +99,7 @@ const { mutate: generate, isPending } = useCreateWorkspaceWithAI({
   onSuccess: (aiResponse: any) => {
     if (!authStore.isAuthenticated) {
       localStorage.setItem('post_auth_intent', JSON.stringify({
-        path: '/create-workspace',
+        path: '/onboarding',
         aiResponse: aiResponse
       }));
       router.push('/login');
