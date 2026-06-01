@@ -368,13 +368,13 @@
       <section v-if="activeTab == 'tasks'" class="mt-3">
         <span class="text-base text-text-primary">Worked On</span>
         <ul
-          v-if="cardDetails?.assigned_cards?.length > 0"
+          v-if="hasAssignedTasks"
           class="border border-border space-y-1 p-2.5 mt-1 rounded-lg"
         >
           <li
             class="p-2"
-            v-for="(item, index) in cardDetails?.assigned_cards"
-            :key="index"
+            v-for="(item, index) in assignedTasks"
+            :key="item?._id ?? index"
           >
             <h1 class="text-sm text-text-primary">{{ item?.title }}</h1>
             <p class="text-xs text-text-secondary">
@@ -382,17 +382,24 @@
             </p>
           </li>
         </ul>
+        <EmptyState
+          v-else
+          icon="fa-regular fa-clipboard-list"
+          title="No tasks yet"
+          description="Tasks this person is assigned to will show up here."
+          container-class="px-2 py-10"
+        />
       </section>
       <section v-if="activeTab == 'history'" class="mt-3">
-        <span class="text-base text-text-primary">history</span>
+        <span class="text-base text-text-primary">History</span>
         <ul
-          v-if="cardDetails?.assignment_history?.length > 0"
+          v-if="hasHistoryItems"
           class="border border-border space-y-1 p-2.5 mt-1 rounded-lg"
         >
           <li
             class="p-2"
-            v-for="(item, index) in cardDetails?.assignment_history?.history"
-            :key="index"
+            v-for="(item, index) in historyList"
+            :key="item?._id ?? index"
           >
             <h1 class="text-sm text-text-primary">{{ item?.title }}</h1>
             <p class="text-xs text-text-secondary">
@@ -400,6 +407,13 @@
             </p>
           </li>
         </ul>
+        <EmptyState
+          v-else
+          icon="fa-regular fa-clock-rotate-left"
+          title="No history yet"
+          description="Role changes and assignment activity for this person will appear here."
+          container-class="px-2 py-10"
+        />
       </section>
     </div>
     <AddCustomRoleModal
@@ -511,6 +525,9 @@ const ConfirmModal = defineAsyncComponent(
 );
 const ManagePermissionsModal = defineAsyncComponent(
   () => import("../modals/ManagePermissionsModal.vue"),
+);
+const EmptyState = defineAsyncComponent(
+  () => import("../../../components/ui/EmptyState.vue"),
 );
 import { getInitials } from "../../../utilities";
 import { avatarColor } from "../../../utilities/avatarColor";
@@ -838,6 +855,19 @@ const progressPercentage = computed(() => {
   if (!totalTasks.value) return 0;
   return Math.round((completedTasks.value / totalTasks.value) * 100);
 });
+
+const assignedTasks = computed(() => cardDetails.value?.assigned_cards ?? []);
+
+const historyList = computed(() => {
+  const history = cardDetails.value?.assignment_history;
+  if (Array.isArray(history)) return history;
+  if (history?.history && Array.isArray(history.history)) return history.history;
+  return [];
+});
+
+const hasAssignedTasks = computed(() => assignedTasks.value.length > 0);
+
+const hasHistoryItems = computed(() => historyList.value.length > 0);
 
 const { mutate: deleteVarDef, isPending: isDeleting } = useDeletePeopleVarDef();
 const { mutate: updateVarDef } = useUpdatePeopleVarDef();

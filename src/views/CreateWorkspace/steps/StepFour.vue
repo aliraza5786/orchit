@@ -90,12 +90,12 @@
             </span>
             <div class="flex flex-col items-end gap-1">
               <span class="text-xs font-semibold bg-bg-surface border border-border px-2.5 py-0.5 rounded-md text-text-secondary shadow-sm">
-                {{ role.people.length }} / {{ role.max_num_people }}
+                {{ assignedPeopleCount(role) }} / {{ role.max_num_people }}
               </span>
               <div class="w-14 h-1 bg-bg-card rounded-full overflow-hidden">
                 <div 
                   class="h-full bg-accent/60 rounded-full"
-                  :style="`width: ${role.max_num_people > 0 ? Math.round((role.people.length / role.max_num_people) * 100) : 0}%`"
+                  :style="`width: ${role.max_num_people > 0 ? Math.round((assignedPeopleCount(role) / role.max_num_people) * 100) : 0}%`"
                 ></div>
               </div>
             </div>
@@ -148,7 +148,7 @@ const router = useRouter()
 const { mutate: createStep2, isPending } = useCreateLanes({
   onSuccess: (data: any) => {
     router.push(`/workspace/peak/${data.workspace_id}/${data.job_id}`)
-    workspaceStore.setWorkspace(null)
+    workspaceStore.clearWorkspaceDraft()
     // emits('back')
   },
 });
@@ -162,7 +162,7 @@ const { mutate: createWorkspace, isPending: createWorkspacePending } =
         createStep2({
           workspace_id: data._id,
         }); else router.push(`/workspace/peak/${data._id}`)
-      workspaceStore.setWorkspace(null)
+      workspaceStore.clearWorkspaceDraft()
     },
   });
 watch(()=>createWorkspacePending.value, (newVal) => {
@@ -188,14 +188,38 @@ onBeforeMount(() => {
     console.error("Error parsing workspace from localStorage", error);
   }
 });
+function getPersonEmail(person: unknown): string {
+  if (typeof person === "string") {
+    return person.includes("@") ? person.trim() : "";
+  }
+  if (person && typeof person === "object" && "email" in person) {
+    return String((person as { email?: string }).email || "").trim();
+  }
+  return "";
+}
+
+function assignedPeopleCount(role: { people?: unknown[] }): number {
+  return (role.people || []).filter((p) => !!getPersonEmail(p)).length;
+}
+
 const total_resorces_recommened = computed(() => {
-  return project.value.variables?.roles ? project.value.variables?.roles.reduce((el: any, e: any) => {
-    return e.max_num_people + el;
-  }, 0) : 0;
+  return project.value.variables?.roles
+    ? project.value.variables.roles.reduce(
+        (sum: number, role: { max_num_people?: number }) =>
+          sum + (role.max_num_people || 0),
+        0,
+      )
+    : 0;
 });
-const total_resorces = computed(() => project.value.variables?.roles ? project.value.variables?.roles.reduce((el: any, e: any) => {
-  return e.people.length + el;
-}, 0) : 0
+
+const total_resorces = computed(() =>
+  project.value.variables?.roles
+    ? project.value.variables.roles.reduce(
+        (sum: number, role: { people?: unknown[] }) =>
+          sum + assignedPeopleCount(role),
+        0,
+      )
+    : 0,
 );
 function createProjectHandler() {
   createWorkspace({

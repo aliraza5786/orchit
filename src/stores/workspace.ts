@@ -1,5 +1,10 @@
 import { defineStore } from "pinia";
 import api from "../libs/api";
+import {
+  saveCreateWorkspaceDraft,
+  clearCreateWorkspaceDraft,
+  loadCreateWorkspaceDraft,
+} from "../views/CreateWorkspace/workspaceDraft";
 
 // ─── Domain Verification Types ───────────────────────────────────────────────
 
@@ -165,6 +170,22 @@ export const useWorkspaceStore = defineStore("workspace", {
       if (i && i.lanes) {
         this.lanes = i.lanes;
       }
+      if (i) {
+        saveCreateWorkspaceDraft(i);
+      }
+    },
+    hydrateWorkspaceDraft() {
+      const draft = loadCreateWorkspaceDraft();
+      if (!draft?.workspace) return null;
+      this.workspace = draft.workspace;
+      if (draft.workspace && (draft.workspace as any).lanes) {
+        this.lanes = (draft.workspace as any).lanes;
+      }
+      return draft.meta ?? null;
+    },
+    clearWorkspaceDraft() {
+      clearCreateWorkspaceDraft();
+      this.workspace = null;
     },
     setSingleWorkspace(i: any) {
       this.singleWorkspace = i;

@@ -9,7 +9,7 @@
       <div
         class="absolute inset-0 rounded-[6px] bg-primary-color/5 blur-xl"
       />
-      <i :class="[icon, 'text-xl text-accent relative z-10']" />
+      <i :class="[icon, 'text-xl relative z-10 text-text-secondary']" />
     </div>
 
     <h4 class="text-[15px] font-bold text-text-primary font-manrope">
@@ -30,7 +30,7 @@ withDefaults(
     icon: string;
     title: string;
     description: string;
-    containerClass?: string;
+    containerClass?: string; 
   }>(),
   {
     containerClass: 'px-6 py-14',

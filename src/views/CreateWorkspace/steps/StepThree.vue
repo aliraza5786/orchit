@@ -86,13 +86,13 @@
           Team Members
           <span class="flex items-center gap-2">
             <span class="text-xs text-text-secondary">
-              {{ role.people.length }}/{{ role.max_num_people }}
+              {{ assignedMemberCount(role) }}/{{ role.max_num_people }}
             </span>
             <Button
               size="sm"
               variant="secondary"
               @click="openPeopleInput(role)"
-              :disabled="role.people.length >= role.max_num_people"
+              :disabled="!canAddMorePeople(role)"
               title="Add people by email"
             >
               Add people
@@ -101,30 +101,35 @@
         </p>
 
         <div
-          v-if="role.people.length === 0"
+          v-if="!ai && assignedMemberCount(role) === 0"
           class="text-sm text-text-secondary mb-3"
         >
           No team members assigned yet
         </div>
 
         <div
-          v-for="(member, idx) in role.people"
-          :key="idx"
+          v-for="slot in displaySlots(role)"
+          :key="`${role.id}-slot-${slot.idx}`"
           class="flex justify-between items-center mb-3 p-3 border border-border rounded-md"
+          :class="slot.isPlaceholder ? 'border-dashed opacity-80' : ''"
         >
           <div class="flex flex-col">
             <span
               class="text-sm font-semibold capitalize text-text-primary m-0 leading-tight"
-              >{{ member.name || `${role.title} ${Number(idx) + 1}` }}</span
+              >{{ slot.member.name }}</span
             >
-            <span class="text-xs text-text-secondary mt-1">{{
-              member.email
-            }}</span>
+            <span
+              v-if="slot.member.email"
+              class="text-xs text-text-secondary mt-1"
+              >{{ slot.member.email }}</span
+            >
           </div>
           <button
+            v-if="ai || (!slot.isPlaceholder && slot.member.email)"
             type="button"
-            @click="removeMember(role, idx as number)"
+            @click="removeMember(role, slot.idx)"
             class="text-text-secondary hover:text-red-400 transition-colors cursor-pointer w-8 h-8 flex items-center justify-end text-lg font-light leading-none"
+            :aria-label="`Remove ${slot.member.name}`"
           >
             ✕
           </button>
@@ -133,7 +138,8 @@
         <!-- Email chip input -->
         <div v-if="role.showInput" class="mt-2 space-y-2">
           <BaseEmailChip
-            v-model="role.emailList"
+            :model-value="role.emailList"
+            :maxEmails="role.max_num_people"
             :error="!!role.emailError || role.capacityWarning"
             :message="
               role.capacityWarning
@@ -143,8 +149,7 @@
             "
             showName
             @invalid="onEmailsInvalid(role, $event)"
-            @add="onEmailsAdd(role, $event)"
-            @remove="onEmailsRemove(role, $event)"
+            @update:model-value="onEmailListChange(role, $event)"
           />
 
           <div class="flex items-center justify-end gap-2">
@@ -252,7 +257,7 @@ const relevantIcons = [
   "people-carry",
 ];
 
-defineProps<{ ai: boolean }>();
+const props = defineProps<{ ai: boolean }>();
 interface TeamMember {
   name: string;
   email: string;
@@ -271,6 +276,12 @@ interface Role {
   capacityWarning: boolean;
 }
 
+type DisplaySlot = {
+  idx: number;
+  member: TeamMember;
+  isPlaceholder: boolean;
+};
+
 const addTeam = ref(false);
 const form = ref({ name: "", description: "", icon: null as any });
 const workspace = reactive<any>({ roles: [] });
@@ -278,65 +289,185 @@ const workspace = reactive<any>({ roles: [] });
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/i;
 const isValidEmail = (e: string) => EMAIL_RE.test(e);
 
+function normalizePersonEntry(
+  entry: string | TeamMember,
+  roleTitle: string,
+  index: number,
+): TeamMember {
+  if (typeof entry === "string") {
+    const trimmed = entry.trim();
+    if (!trimmed) {
+      return { name: `${roleTitle} ${index + 1}`, email: "" };
+    }
+    if (trimmed.includes("@")) {
+      return { name: trimmed.split("@")[0], email: trimmed };
+    }
+    return { name: trimmed, email: "" };
+  }
+  return {
+    name: entry.name?.trim() || `${roleTitle} ${index + 1}`,
+    email: entry.email?.trim() || "",
+  };
+}
+
+function normalizeRolePeople(role: Role): TeamMember[] {
+  return (role.people || []).map((p, i) =>
+    normalizePersonEntry(p as string | TeamMember, role.title, i),
+  );
+}
+
+function assignedMemberCount(role: Role): number {
+  return normalizeRolePeople(role).filter((p) => !!p.email?.trim()).length;
+}
+
+function canAddMorePeople(role: Role): boolean {
+  return assignedMemberCount(role) < role.max_num_people;
+}
+
+function displaySlots(role: Role): DisplaySlot[] {
+  const max = Math.max(1, role.max_num_people);
+  const normalized = normalizeRolePeople(role);
+  const slots: DisplaySlot[] = [];
+
+  for (let i = 0; i < max; i++) {
+    const person = normalized[i];
+    const hasAssignment = person && (person.email || person.name);
+    const slotName = `${role.title} ${i + 1}`;
+
+    if (props.ai) {
+      slots.push({
+        idx: i,
+        member: {
+          name: slotName,
+          email: person?.email || "",
+        },
+        isPlaceholder: !hasAssignment,
+      });
+      continue;
+    }
+
+    if (hasAssignment) {
+      slots.push({
+        idx: i,
+        member: {
+          name: person.name || slotName,
+          email: person.email,
+        },
+        isPlaceholder: false,
+      });
+    } else {
+      slots.push({
+        idx: i,
+        member: { name: slotName, email: "" },
+        isPlaceholder: true,
+      });
+    }
+  }
+  return slots;
+}
+
+function updateCapacityState(role: Role) {
+  if (role.emailList.length > role.max_num_people) {
+    role.emailList = role.emailList.slice(0, role.max_num_people);
+  }
+  role.capacityWarning = !canAddMorePeople(role);
+}
+
+function syncPeopleFromEmailList(role: Role) {
+  const capped = role.emailList
+    .filter((email) => isValidEmail(email))
+    .slice(0, role.max_num_people);
+  role.emailList = capped;
+
+  if (capped.length > 0) {
+    role.people = capped.map((email) => ({
+      name: email.split("@")[0],
+      email,
+    }));
+  } else if (props.ai) {
+    role.people = normalizeRolePeople(role).slice(0, role.max_num_people);
+  } else {
+    role.people = [];
+  }
+  updateCapacityState(role);
+}
+
+function onEmailListChange(role: Role, emails: string[]) {
+  role.emailList = emails;
+  syncPeopleFromEmailList(role);
+}
+
 function openPeopleInput(role: Role) {
   role.showInput = true;
-  role.capacityWarning = role.people.length >= role.max_num_people;
+  const fromPeople = normalizeRolePeople(role)
+    .map((p) => p.email)
+    .filter((email) => email && isValidEmail(email));
+  if (fromPeople.length) {
+    role.emailList = [...fromPeople];
+  }
+  updateCapacityState(role);
 }
 
 function enforceCapacity(role: Role) {
-  while (role.people.length > role.max_num_people) {
-    role.people.pop();
-  }
-  role.capacityWarning = role.people.length >= role.max_num_people;
+  role.people = normalizeRolePeople(role).slice(0, role.max_num_people);
+  role.emailList = role.emailList.slice(0, role.max_num_people);
+  updateCapacityState(role);
 }
 
-function addMemberEmail(role: Role, email: string) {
-  if (role.people.some((p) => p.email?.toLowerCase() === email?.toLowerCase()))
+function removeAiSlot(role: Role, index: number) {
+  const normalized = normalizeRolePeople(role);
+  const removed = normalized[index];
+
+  role.people = normalized.filter((_, i) => i !== index);
+
+  if (removed?.email) {
+    const chipIdx = role.emailList.findIndex(
+      (e) => e?.toLowerCase() === removed.email?.toLowerCase(),
+    );
+    if (chipIdx !== -1) role.emailList.splice(chipIdx, 1);
+  }
+
+  if (role.max_num_people <= 1) {
+    deleteRole(role.id);
     return;
-  role.people.push({ name: email?.split("@")[0], email });
+  }
+
+  role.max_num_people--;
+  role.emailList = role.emailList.slice(0, role.max_num_people);
+  updateCapacityState(role);
 }
 
 function removeMember(role: Role, index: number) {
-  const [removed] = role.people.splice(index, 1);
-  const idx = role.emailList.findIndex(
+  if (props.ai) {
+    removeAiSlot(role, index);
+    return;
+  }
+
+  const normalized = normalizeRolePeople(role);
+  const removed = normalized[index];
+  if (!removed?.email) return;
+
+  role.people = normalized.filter((_, i) => i !== index);
+  const chipIdx = role.emailList.findIndex(
     (e) => e?.toLowerCase() === removed.email?.toLowerCase(),
   );
-  if (idx !== -1) role.emailList.splice(idx, 1);
-  role.capacityWarning = role.people.length >= role.max_num_people;
+  if (chipIdx !== -1) role.emailList.splice(chipIdx, 1);
+  updateCapacityState(role);
 }
 
 function onEmailsInvalid(role: Role, invalids: string[]) {
   role.emailError = invalids.length ? `Invalid: ${invalids.join(", ")}` : "";
 }
 
-function onEmailsAdd(role: Role, added: string[]) {
-  added.forEach((email) => {
-    if (!isValidEmail(email)) return;
-    if (role.people.length < role.max_num_people) {
-      addMemberEmail(role, email);
-    } else {
-      role.capacityWarning = true;
-    }
-  });
-}
-
-function onEmailsRemove(role: Role, removedEmail: string) {
-  const idx = role.people.findIndex(
-    (p) => p.email?.toLowerCase() === removedEmail?.toLowerCase(),
-  );
-  if (idx !== -1) role.people.splice(idx, 1);
-  role.capacityWarning = role.people.length >= role.max_num_people;
-}
-
 function finalizeChips(role: Role) {
+  syncPeopleFromEmailList(role);
   role.showInput = false;
-  role.capacityWarning = role.people.length >= role.max_num_people;
 }
 
 function cancelChips(role: Role) {
   role.showInput = false;
   role.emailError = "";
-  role.capacityWarning = role.people.length >= role.max_num_people;
+  updateCapacityState(role);
 }
 
 const isAddTeamDisabled = computed(() => {
@@ -377,22 +508,41 @@ function saveToLocalStorage() {
   workspaceStore.setWorkspace(localWorkspace);
 }
 
+function mapStoredRole(r: Role): Role {
+  const people = normalizeRolePeople({
+    ...r,
+    people: r.people || [],
+    title: r.title,
+  } as Role);
+  const emailList =
+    r.emailList ??
+    people.map((p) => p.email).filter((email) => !!email);
+
+  const role: Role = {
+    ...r,
+    description: r.description || (r as any).descriptiion || "",
+    people,
+    showInput: r.showInput ?? false,
+    emailList,
+    emailError: "",
+    capacityWarning: false,
+    max_num_people:
+      typeof r.max_num_people === "number" ? r.max_num_people : 1,
+    role_emoji: r.role_emoji ?? "",
+    role_icon: r.role_icon ?? null,
+  };
+  updateCapacityState(role);
+  return role;
+}
+
 onMounted(() => {
   try {
     const savedWorkspace = workspaceStore.workspace;
     if (savedWorkspace) {
       const data = savedWorkspace;
-      workspace.roles = (data.variables.roles || []).map((r: Role) => ({
-        ...r,
-        showInput: r.showInput ?? false,
-        emailList: r.emailList ?? r.people?.map((p) => p.email) ?? [],
-        emailError: "",
-        capacityWarning: false,
-        max_num_people:
-          typeof r.max_num_people === "number" ? r.max_num_people : 1,
-        role_emoji: r.role_emoji ?? "",
-        role_icon: r.role_icon ?? null,
-      }));
+      workspace.roles = (data.variables.roles || []).map((r: Role) =>
+        mapStoredRole(r),
+      );
     }
   } catch (error) {
     console.error("Error parsing workspace from localStorage", error);
@@ -407,8 +557,8 @@ function decreaseMaxPeople(role: Role) {
 
 // Method to increase the max number of people
 function increaseMaxPeople(role: Role) {
-  role.max_num_people++; // Increase the max number of people
-  enforceCapacity(role); // Ensure the capacity is updated based on the new max value
+  role.max_num_people++;
+  syncPeopleFromEmailList(role);
 }
 function continueHandler() {
   saveToLocalStorage();
@@ -425,3 +575,7 @@ function deleteRole(roleId: string) {
 
 defineExpose({ continueHandler });
 </script>
+
+
+
+
