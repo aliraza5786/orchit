@@ -6,9 +6,12 @@ import { formatDate } from "../../../utilities/FormatDate";
 import Collaborators from "../../../components/ui/Collaborators.vue";
 import { useRouter } from "vue-router";
 import type { Row } from "../../../components/ui/Table.vue";
-
+import { useAuthStore } from "../../../stores/auth";
 const emit = defineEmits(["share", "archive", "delete", "invite"]);
-
+const userData = computed(() => {
+  const authStore = useAuthStore();
+  return authStore.user;
+});
 const router = useRouter();
 
 /* ------------ Column render helpers ------------ */
@@ -295,9 +298,18 @@ const renderCompanyPercentage = ({ row }: any) => {
   ]);
 };
 
-const renderProjectType = ({ value }: any) => {
-  const type = value?.["workspace-type"] || "personal";
-  const isTeam = type === "team";
+const renderProjectType = ({ value }: any, userData?: any) => {
+  const type = value?.["workspace-type"] || "personal"
+  const hasActiveCompany = !!userData?.data?.active_company_id
+
+  const isOrganization = type === "team" && hasActiveCompany
+  const isTeam = type === "team" && !hasActiveCompany
+
+  const label = isOrganization
+    ? "Organization"
+    : isTeam
+      ? "Team"
+      : "Personal"
 
   return h(
     "span",
@@ -308,9 +320,9 @@ const renderProjectType = ({ value }: any) => {
           : "bg-bg-card text-text-secondary border border-border"
       }`,
     },
-    isTeam ? "Organization" : type,
-  );
-};
+    label,
+  )
+}
 
 const renderPeople = ({ row, value }: any) =>
   h("div", { class: "flex items-center -space-x-3" }, [
@@ -461,6 +473,7 @@ const emptyDescription = computed(() => {
 <template>
   <div class="workspace-module-wrapper">
     <div class="workspace-list-container">
+      
       <Table
         v-if="isLoading || items.length"
         :columns="columns"
