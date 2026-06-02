@@ -59,22 +59,35 @@ const ONBOARDING_ROUTE_NAMES = new Set([
   'onboarding',
 ])
 
-function resolveOnboardingRedirect(auth: ReturnType<typeof useAuthStore>): string | null {
+function resolveOnboardingRedirect(
+  auth: ReturnType<typeof useAuthStore>,
+  to: any,
+): string | null {
+
   const hasToken = !!getToken()
- 
   if (!hasToken) return '/login'
-  if (!auth.user) return null // bootstrap still in progress — don't redirect yet
- 
-  // API wraps data under .data in some responses
+  if (!auth.user) return null
+
   const userData = auth.user?.data ?? auth.user
- 
-  if (isOnboardingComplete(userData)) {
+  const onboardingComplete = isOnboardingComplete(userData)
+
+  const fromSettings =
+    to?.query?.fromSettings === 'true' ||
+    to?.query?.fromSettings === true ||
+    to?.fullPath?.includes('fromSettings=true')
+
+  // 🚨 CRITICAL RULE
+  // If user came from settings → NEVER send to dashboard
+  if (fromSettings) {
+    return '/onboarding'
+  }
+
+  if (onboardingComplete) {
     clearOnboardingStorageKeys()
     return '/dashboard'
   }
 
-  // Onboarding incomplete: no company, no workspaces → return null (no forced redirection)
-  return null
+  return '/onboarding'
 }
 const routes: RouteRecordRaw[] = [
   {
@@ -199,18 +212,26 @@ api.interceptors.response.use(
 router.beforeEach(async (to, _from, next) => {
   const auth = useAuthStore()
 
-  // Cross-subdomain logout: clear session and show login (do not bounce to Home)
+  // ─────────────────────────────────────────────
+  // Logout handling
+  // ─────────────────────────────────────────────
   if (to.name === 'Login' && to.query.logout === 'true') {
     auth.logout()
     return next()
   }
 
-  // 1. Bootstrap auth state once per session
+  // ─────────────────────────────────────────────
+  // Bootstrap auth (MUST happen before decisions)
+  // ─────────────────────────────────────────────
   if (!auth.initialized) {
     await auth.bootstrap()
   }
 
-  // ── Subdomain logic (unchanged from your original) ──────────────────────
+  const hasToken = !!getToken()
+
+  // ─────────────────────────────────────────────
+  // Subdomain logic (unchanged)
+  // ─────────────────────────────────────────────
   const hostname = window.location.hostname
   let subdomain: string | null = null
 
@@ -230,40 +251,50 @@ router.beforeEach(async (to, _from, next) => {
   }
 
   if (subdomain && to.name === 'Login') {
-    const primary = import.meta.env.VITE_PRIMARY_DOMAIN || 'stagging.streamed.space'
-    window.location.href = `${window.location.protocol}//${primary}/login?logout=true`
+    const primary =
+      import.meta.env.VITE_PRIMARY_DOMAIN || 'stagging.streamed.space'
+
+    window.location.href =
+      `${window.location.protocol}//${primary}/login?logout=true`
     return
   }
-  // ── End subdomain logic ──────────────────────────────────────────────────
 
-  const hasToken = !!getToken()
-
-  // 1.5 Clean onboarding keys if onboarding is completed
+  // ─────────────────────────────────────────────
+  // Clean onboarding storage if completed
+  // ─────────────────────────────────────────────
   if (hasToken && auth.user) {
     const userData = auth.user?.data ?? auth.user
+
     if (isOnboardingComplete(userData)) {
       clearOnboardingStorageKeys()
     }
   }
 
+  // ─────────────────────────────────────────────
+  // Onboarding route protection
+  // ─────────────────────────────────────────────
   const requiresAuth = to.matched.some(r => r.meta.requiresAuth === true)
   const isOnboardingRoute = ONBOARDING_ROUTE_NAMES.has(to.name as string)
-  if (isOnboardingRoute && hasToken) {
-    const correctDestination = resolveOnboardingRedirect(auth)
-    if (correctDestination && correctDestination !== to.fullPath) {
-      // Use replace so we don't push another entry onto the history stack
-      return next({ path: correctDestination, replace: true })
+
+  if (hasToken && auth.user && isOnboardingRoute) {
+    const redirect = resolveOnboardingRedirect(auth, to)
+
+    if (redirect && redirect !== to.fullPath) {
+      return next({ path: redirect, replace: true })
     }
   }
 
-  // 3. ── STANDARD AUTH GATE ────────────────────────────────────────────────
+  // ─────────────────────────────────────────────
+  // Auth gate
+  // ─────────────────────────────────────────────
   if (requiresAuth && !hasToken) {
-    const redirected = redirectToLogin(undefined, to.fullPath)
-    if (redirected) return
-    return next({ name: 'Login' })
+    redirectToLogin(undefined, to.fullPath)
+    return
   }
 
-  // 4. ── ALREADY LOGGED IN → don't show login page ────────────────────────
+  // ─────────────────────────────────────────────
+  // Prevent logged-in users seeing login
+  // ─────────────────────────────────────────────
   if (to.name === 'Login' && hasToken && !subdomain) {
     return next({ name: 'Home' })
   }

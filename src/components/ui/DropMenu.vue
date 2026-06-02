@@ -52,8 +52,15 @@
                             <div
                                 v-else
                                 @click="select(item)"
-                                class="flex items-center gap-2 px-2.5 py-2 text-xs font-medium cursor-pointer transition-all duration-100"
-                                :class="item.danger ? 'text-red-400 hover:bg-red-500/10' : 'text-text-primary hover:bg-bg-dropdown-menu-hover'"
+                                class="flex items-center gap-2 px-2.5 py-2 text-xs font-medium transition-all duration-100"
+                                :class="[
+                                    disabled
+                                        ? 'opacity-50 cursor-not-allowed'
+                                        : 'cursor-pointer',
+                                    item.danger
+                                        ? 'text-red-400 hover:bg-red-500/10'
+                                        : 'text-text-primary hover:bg-bg-dropdown-menu-hover'
+                                ]"
                             >
                                 <i v-if="item.icon" :class="`${item?.icon?.prefix} ${item?.icon?.iconName} text-xs`"></i>
                                 <span>{{ item.label }}</span>
@@ -250,8 +257,6 @@ function closeAll() {
 }
 
 async function toggle() {
-    if (disabled) return
-
     open.value = !open.value
     activeSubmenu.value = null
 

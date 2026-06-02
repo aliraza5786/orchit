@@ -482,7 +482,7 @@
              STEP 51 — Super Admin Verification
              ONLY for Scenario 2 (gmail + team/school + custom domain)
         ════════════════════════════════════════════════════════════ -->
-        <div v-if="activeStep === 51" class="flex items-center justify-center w-full min-h-full py-3">
+        <div v-if="activeStep === 10" class="flex items-center justify-center w-full min-h-full py-3">
           <div class="w-full max-w-115">
             <div>
 
@@ -1278,6 +1278,10 @@ onMounted(async () => {
       router.replace('/associated-organization')
       return
     }
+    const isFromSettings = route.query.fromSettings === 'true'
+    if(isFromSettings){
+      activeStep.value = 2
+    }
   }
 
   try {
@@ -1294,7 +1298,7 @@ onMounted(async () => {
         const u_work_to_do = res.data?.u_work_to_do || ''
       const workspaces = res.data?.workspaces
       
-      const isFromSettings = route.query.fromSettings === 'true'
+      
       if (
   (
     (Array.isArray(workspaces) && workspaces.length > 0) ||
@@ -1312,7 +1316,7 @@ onMounted(async () => {
 
   if (route.query.step) {
     let s = Number(route.query.step)
-    if (s === 51) s = 8 // step 51 (super admin) disabled — resume at domain verify
+    if (s === 10) s = 8 // step 51 (super admin) disabled — resume at domain verify
     const minStep = isEmailLoaded.value && !isCompanyEmail.value ? 2 : 1
     activeStep.value = Math.max(minStep, s)
   }
@@ -1610,7 +1614,7 @@ const isCreateSiteDisabled = computed(() => {
 
 // ─── Computed: bottom nav visibility ──────────────────────────────────────────
 const showBottomNav = computed(() => {
-  if ([5, 6, 7, 8, 9, 51].includes(activeStep.value)) return false
+  if ([5, 6, 7, 8, 9, 10].includes(activeStep.value)) return false
   return true
 })
 
@@ -1671,7 +1675,7 @@ const displayStep = computed(() => {
   const shift = (isEmailLoaded.value && !isCompanyEmail.value) ? 1 : 0
   if (activeStep.value <= 4) return activeStep.value - shift
   if (activeStep.value === 5) return 5 - shift
-  if (activeStep.value === 51) return 5 - shift  // super admin sub-step shows as step 5
+  if (activeStep.value === 10) return 5 - shift  // super admin sub-step shows as step 5
   if (activeStep.value >= 6) return stepLabels.value.length
   return activeStep.value - shift
 })
@@ -1759,7 +1763,7 @@ watch(() => route.query.step, (step) => {
   const minStep = isEmailLoaded.value && !isCompanyEmail.value ? 2 : 1
   if (step) {
     let s = Number(step)
-    if (s === 51) s = 8 // step 51 (super admin) disabled
+    if (s === 10) s = 8 // step 10 (super admin) disabled
     const targetStep = Math.max(minStep, s)
     if (activeStep.value !== targetStep) {
       activeStep.value = targetStep

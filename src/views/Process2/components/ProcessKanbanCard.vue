@@ -1,6 +1,9 @@
 <template>
-  <div @click="$emit('click')" @dblclick="$emit('dblclick')" class="bg-bg-card rounded-lg p-2.5 shadow-sm cursor-pointer
-           hover:shadow-md transition-all duration-200 group">
+  <div
+  @click="$emit('click')"
+  @dblclick="isEnabled && $emit('dblclick')"
+  class="bg-bg-card rounded-lg p-2.5 shadow-sm cursor-pointer hover:shadow-md transition-all duration-200 group"
+>
     <div class="flex justify-between gap-1.5 items-start">
       <div class="flex items-start gap-2" style="width: 92%;">
         <div class="flex-1 min-w-0">
