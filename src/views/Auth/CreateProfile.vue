@@ -1270,6 +1270,7 @@ const filteredOptions = computed(() => {
 
 
 onMounted(async () => {
+  const isFromSettings = route.query.fromSettings === 'true'
   const storedUser = authStore.user?.data ?? authStore.user
   if (storedUser && storedUser.u_email) {
     profileData.value = storedUser
@@ -1278,8 +1279,7 @@ onMounted(async () => {
       router.replace('/associated-organization')
       return
     }
-    const isFromSettings = route.query.fromSettings === 'true'
-    if(isFromSettings){
+    if (isFromSettings) {
       activeStep.value = 2
     }
   }

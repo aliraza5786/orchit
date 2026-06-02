@@ -46,7 +46,11 @@ const allCompanies = computed(() => {
   return []
 })
 
-const hasOrgs         = computed(() => allCompanies.value.length > 0)
+const hasOrgs = computed(() =>
+  !!props.profile?.active_company?._id ||
+  !!props.profile?.active_company_id ||
+  hasAssociatedCompany.value
+)
 const activeCompanyId = computed(() => authStore.company_id ?? null)
 const selectedCompanyId = ref<string | null>(null)
 
@@ -103,7 +107,15 @@ const { data: profile } = useQuery({
   queryFn: getProfile,
   placeholderData: (prev) => prev,
 });
+const hasNoCompanyContext = computed(() => {
+  const active = profile.value?.active_company?._id
+  const associated = profile.value?.associated_company
 
+  const hasAssociated =
+    associated && Object.keys(associated || {}).length > 0
+
+  return !active && !hasAssociated
+})
 const profileData = computed(() => profile.value?.data ?? null);
 const isPendingOrgMember = computed(() =>
   !!profileData.value?.associated_company?._id && !profileData.value?.active_company?._id
@@ -140,10 +152,20 @@ const personalItems = [
   { label: 'Profile', tab: 'profile', icon: 'fa-regular fa-circle-user' },
   { label: 'Billing', tab: 'billing', icon: 'fa-regular fa-credit-card'  },
 ]
-
+const hasAssociatedCompany = computed(() =>
+  !!props.profile?.associated_company &&
+  Object.keys(props.profile.associated_company).length > 0
+)
 const visiblePersonalItems = computed(() =>
   personalItems.filter(item => {
-    if (item.tab === 'billing' && hasOrgs.value && !isMember.value && isCompanyEmail.value) return false
+    if (item.tab !== 'billing') return true
+
+    // Always show billing if user has no company context
+    if (hasNoCompanyContext.value) return true
+
+    // Existing restriction (only applies when org context exists)
+    if (hasOrgs.value && !isMember.value && isCompanyEmail.value) return false
+
     return true
   })
 )
@@ -273,7 +295,25 @@ function orgInitials(title: string) {
       <template v-if="isCompanyEmail || mode === 'org'">
 
         <!-- No org state -->
-        <div v-if="!hasOrgs && !isPendingOrgMember" class="flex flex-col gap-3">
+        <div v-if="!hasOrgs && !hasAssociatedCompany && !isPendingOrgMember" class="flex flex-col gap-3">
+          <div>
+    <p class="text-[10px] uppercase tracking-widest text-text-secondary/50 font-semibold mb-2 px-1">Account</p>
+    <nav class="space-y-0.5">
+      <button
+        v-for="item in visiblePersonalItems"
+        :key="item.tab"
+        @click="selectTab(item.tab)"
+        class="w-full flex items-center cursor-pointer gap-3 px-3 py-2.5 rounded-lg text-[13px] transition-all"
+        :class="currentTab === item.tab
+          ? 'bg-accent/10 text-accent font-semibold'
+          : 'text-text-secondary hover:bg-bg-card hover:text-text-primary'"
+      >
+        <i :class="[item.icon, 'w-4 text-center text-[13px] shrink-0']"></i>
+        {{ item.label }}
+        <i v-if="currentTab === item.tab" class="fa-solid fa-chevron-right text-[9px] ml-auto opacity-40"></i>
+      </button>
+    </nav>
+  </div>
           <p class="text-[10px] uppercase tracking-widest text-text-secondary/50 font-semibold px-1">Organization</p>
           <div class="rounded-xl border border-border bg-bg-card p-4">
             <div class="flex items-center gap-2 mb-1.5">

@@ -76,9 +76,9 @@ function resolveOnboardingRedirect(
     to?.query?.fromSettings === true ||
     to?.fullPath?.includes('fromSettings=true')
 
-  // 🚨 CRITICAL RULE
-  // If user came from settings → NEVER send to dashboard
+  // Settings "Create organization" — keep query (mode, fromSettings); do not strip URL
   if (fromSettings) {
+    if (to.name === 'onboarding') return null
     return '/onboarding'
   }
 

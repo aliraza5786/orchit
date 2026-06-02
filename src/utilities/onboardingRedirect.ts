@@ -50,7 +50,11 @@ export function hasCompanySetup(userData: Record<string, unknown> | null | undef
 /** Whether onboarding is finished for this user (company vs personal rules). */
 export function isOnboardingComplete(userData: Record<string, unknown> | null | undefined): boolean {
   if (!userData) return false
-  if (isCompanyUser(userData)) return hasCompanySetup(userData)
+  if (isCompanyUser(userData)) {
+    // Allow company-email users who completed personal profile fields
+    // to continue like personal (gmail) users, even without active company.
+    return hasCompanySetup(userData) || hasHeardAboutUs(userData)
+  }
   return hasHeardAboutUs(userData)
 }
 
