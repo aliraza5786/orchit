@@ -214,7 +214,7 @@
                           </div>
                         </div>
                       </div>
-                       {{ group }}
+
                       <!-- Footer Action -->
                       <div class="border-t border-border pt-3 mt-1">
                           <button

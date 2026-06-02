@@ -1162,7 +1162,10 @@ const lastCreatedFromCardId = ref<string | null>(null);
 
 // ── Format tab ────────────────────────────────────────────────────────────
 const activeFormatTab = ref<"theme" | "layout">("theme");
-
+function getComputedVar(name: string, fallback: string): string {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback
+}
+const activeEdgeColor = ref('var(--primary-color)')
 // ── Hint ─────────────────────────────────────────────────────────────────
 function showHint(label: string) {
   lastShortcutLabel.value = label;
@@ -1444,17 +1447,23 @@ const savedThemeDocId = ref<string | null>(null);
 }
 async function applyTheme(theme: MapTheme, persist = true) {
   activeThemeId.value = theme.id;
-  activeCanvasBg.value = theme.bg;
-  customBgColor.value = theme.bg;
+  activeCanvasBg.value = theme.bg.startsWith('var(')
+    ? getComputedVar(theme.bg.replace(/^var\((.+)\)$/, '$1'), '#dedfe3')
+    : theme.bg;
+  customBgColor.value = activeCanvasBg.value;
+
   const el = rootEl.value;
   if (!el) return;
-  el.style.setProperty("--mm-bg", theme.bg);
-  el.style.setProperty("--mm-node-root-bg", theme.nodeColors.root);
+
+  el.style.setProperty("--mm-bg",            theme.bg);
+  el.style.setProperty("--mm-node-root-bg",  theme.nodeColors.root);
   el.style.setProperty("--mm-node-sheet-bg", theme.nodeColors.sheet);
-  el.style.setProperty("--mm-node-list-bg", theme.nodeColors.list);
-  el.style.setProperty("--mm-node-card-bg", theme.nodeColors.card);
-  el.style.setProperty("--mm-edge-color", theme.edgeColor);
-  el.style.setProperty("--mm-text-color", theme.textColor);
+  el.style.setProperty("--mm-node-list-bg",  theme.nodeColors.list);
+  el.style.setProperty("--mm-node-card-bg",  theme.nodeColors.card);
+  el.style.setProperty("--mm-edge-color",    theme.edgeColor);
+  el.style.setProperty("--mm-text-color",    theme.textColor);
+  activeEdgeColor.value = theme.edgeColor;
+
   if (!persist) return;
 
   const stylePayload = {
@@ -1467,10 +1476,8 @@ async function applyTheme(theme: MapTheme, persist = true) {
     mm_node_list:  theme.nodeColors.list,
     mm_node_card:  theme.nodeColors.card,
   };
-
   await persistTheme(stylePayload);
 }
-
 async function applyCustomBg(color: string, persist = true) {
   activeCanvasBg.value = color;
   customBgColor.value = color;
@@ -1478,13 +1485,13 @@ async function applyCustomBg(color: string, persist = true) {
   const el = rootEl.value;
   if (!el) return;
   el.style.setProperty("--mm-bg", color);
+  activeEdgeColor.value = getComputedVar('--primary-color', '#7d68c8');
   if (!recentlyUsedColors.value.includes(color)) {
     recentlyUsedColors.value = [color, ...recentlyUsedColors.value].slice(0, 7);
   }
   if (!persist) return;
   await persistTheme({ mm_theme_id: "custom", mm_bg: color });
 }
-
 async function loadSavedTheme() {
   try {
     const type = "pin";
@@ -1496,27 +1503,51 @@ async function loadSavedTheme() {
       type
     );
 
-    if (match) {
-      savedThemeDocId.value = match._id ?? null;
-
-      // Ensure rootEl is mounted before applying CSS vars
+    if (match?._id && match?.style) {
+      savedThemeDocId.value = match._id;
       let attempts = 0;
-      while (!rootEl.value && attempts < 10) {
+      while (!rootEl.value && attempts < 20) {
         await nextTick();
         attempts++;
       }
-      if (!rootEl.value) await new Promise(resolve => setTimeout(resolve, 100));
-
-      applyStyleObject(match.style);
+      if (rootEl.value) {
+        applyStyleObject(match.style);
+      }
       return;
     }
   } catch (err) {
-    console.warn("Could not load theme from API, falling back", err);
+    console.warn("Could not load pin theme from API, falling back", err);
   }
 
-  // Fallback: read from listsData style
-  const style = props.listsData?.[0]?.style;
-  if (style?.mm_theme_id) applyStyleObject(style);
+  savedThemeDocId.value = null;
+  await nextTick();
+  if (rootEl.value) applyDefaultTheme();
+}
+function applyDefaultTheme() {
+  if (savedThemeDocId.value) return;
+
+  const dark = isDark.value;
+  const el = rootEl.value;
+  if (!el) return;
+
+  const bg      = dark ? '#1f1f1e' : getComputedVar('--bg-body', '#f4f4f4');
+  const primary = getComputedVar('--primary-color', dark ? '#9356c5' : '#7d68c8');
+  const surface = dark ? '#2c2c2b' : getComputedVar('--bg-surface', '#fefeff');
+  const card    = dark ? '#2c2c2b' : getComputedVar('--bg-card', '#ffffff');
+  const text    = dark ? '#f5f5f5' : getComputedVar('--text-primary', '#2b2c30');
+
+  el.style.setProperty('--mm-bg',            bg);
+  el.style.setProperty('--mm-node-root-bg',  dark ? '#2c2c2b' : primary);
+  el.style.setProperty('--mm-node-sheet-bg', dark ? '#2c2c2b' : surface);
+  el.style.setProperty('--mm-node-list-bg',  dark ? '#1f1f1e' : card);
+  el.style.setProperty('--mm-node-card-bg',  dark ? '#2c2c2b' : card);
+  el.style.setProperty('--mm-edge-color',    primary);
+  el.style.setProperty('--mm-text-color',    text);
+
+  activeEdgeColor.value = primary;
+  activeThemeId.value   = 'default';
+  activeCanvasBg.value  = bg;
+  customBgColor.value   = dark ? '#1f1f1e' : '#dedfe3';
 }
 function applyStyleObject(style: Record<string, any>) {
   if (!style?.mm_theme_id) return;
@@ -2590,7 +2621,7 @@ const visibleEdges = computed<Edge[]>(() => {
     edges.push({
       id: "__spine__",
       path: `M 300 ${root.y + root.h / 2} L ${root.x} ${root.y + root.h / 2}`,
-      color: "var(--primary-color)",
+      color: activeEdgeColor.value,
       dashed: false,
     });
   }
@@ -2605,7 +2636,7 @@ const visibleEdges = computed<Edge[]>(() => {
     edges.push({
       id: "__timeline_spine__",
       path: `M ${root.x + root.w} ${spineY} L ${endX} ${spineY}`,
-      color: "var(--primary-color)",
+      color: activeEdgeColor.value,
       dashed: false,
     });
   }
@@ -2665,7 +2696,7 @@ const visibleEdges = computed<Edge[]>(() => {
       }
     }
 
-    edges.push({ id: `root-${key}`, path: rootEdgePath, color: "var(--primary-color)", dashed: false });
+edges.push({ id: `root-${key}`, path: rootEdgePath, color: activeEdgeColor.value, dashed: false });
 
     // ── Sheet → Cards ────────────────────────────────────────────────────
     if (!isCollapsed(key)) {
@@ -2988,8 +3019,10 @@ onMounted(() => {
   document.addEventListener("fullscreenchange", handleFullscreenChange);
   nextTick(() => {
     runLayout();
-    nextTick(() => { centerView(); loadSavedTheme(); });
-    loadSavedTheme();
+    nextTick(async () => {
+      centerView();
+      await loadSavedTheme();
+    });
   });
 });
 onBeforeUnmount(() => {
@@ -3101,6 +3134,14 @@ watch(
   () => nextTick(runLayout),
   { deep: true },
 );
+watch(isDark, async () => {
+  await nextTick();
+  if (savedThemeDocId.value) {
+    await loadSavedTheme();
+  } else {
+    applyDefaultTheme();
+  }
+});
 </script>
 
 <style scoped>
@@ -4352,11 +4393,11 @@ watch(
   color: var(--text-primary, var(--text-primary));
 }
 .pin-mindmap-root[data-dark="true"] .pm-node--sheet {
-  background: var(--bg-surface, #2b2c30);
+  background: var(--mm-node-sheet-bg, #2c2c2b) !important;
   border-color: var(--border, #3e3e42);
 }
 .pin-mindmap-root[data-dark="true"] .pm-node--card {
-  background: var(--bg-surface, #2b2c30);
+  background: var(--mm-node-card-bg, #2c2c2b) !important;
   border-color: var(--border, #3e3e42);
 }
 .pin-mindmap-root[data-dark="true"] .sheet-title {
@@ -4537,5 +4578,14 @@ watch(
 .pin-mindmap-root[data-dark="true"] .layout-check {
   background: #1e293b;
   color: var(--primary-color);
+}
+.pm-node--sheet {
+  background: var(--mm-node-sheet-bg, #ede9fb) !important;
+}
+.pm-node--card {
+  background: var(--mm-node-card-bg, #ffffff) !important;
+}
+.pm-node--root {
+  background: var(--mm-node-root-bg, var(--primary-color)) !important;
 }
 </style>

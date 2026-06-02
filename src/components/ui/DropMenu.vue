@@ -102,35 +102,32 @@
 </template>
 
 <script setup lang="ts">
-/**
- * DropMenu Component
- * 
- * A robust, accessible dropdown utility that supports nested flyout submenus.
- * 
- * Technical Implementation:
- * - Teleports menu panels to `<body>` to prevent clipping within `overflow: hidden` parent containers.
- * - Utilizes `getBoundingClientRect` to dynamically position menus based on available screen bounds,
- *   falling back to inverted alignments if space is constrained.
- * - Employs a global, coordinate-based mouse tracker to reliably detect `mouseleave` across
- *   detached DOM nodes, automatically closing the menu when the cursor exits all active areas.
- */
 import { ref, nextTick, watch, onUnmounted, type CSSProperties } from 'vue'
 import { onClickOutside } from '@vueuse/core'
 
-defineProps<{
+const { items, disabled } = defineProps<{
     items: {
         label: string
         icon?: any
         danger?: boolean
         action?: () => void
-        children?: { label: string; icon?: any; danger?: boolean; action?: () => void }[]
+        children?: {
+            label: string
+            icon?: any
+            danger?: boolean
+            action?: () => void
+        }[]
     }[]
+    disabled?: boolean
 }>()
 
-const emit = defineEmits<{ (e: 'openChange', value: boolean): void }>()
+const emit = defineEmits<{
+    (e: 'openChange', value: boolean): void
+}>()
 
 const open = ref(false)
 const activeSubmenu = ref<number | null>(null)
+
 let submenuCloseTimer: ReturnType<typeof setTimeout> | null = null
 let outsideTimer: ReturnType<typeof setTimeout> | null = null
 
@@ -148,34 +145,23 @@ function setItemRef(el: HTMLElement | null, index: number) {
     itemRefs.value[index] = el
 }
 
-// ── Global mouse-leave detection ──────────────────────────────────────────────
-// Because menu + submenu are teleported to <body>, a normal mouseleave on the
-// card wrapper won't fire when the cursor moves into the floating panels.
-// Solution: on every mousemove (while open), we check if the cursor is inside
-// any of the three zones.  If it leaves ALL of them we close after 250 ms.
-
-/**
- * Evaluates whether a given X/Y coordinate falls within the bounding box of a specific Element.
- * 
- * @param x - The cursor's X coordinate
- * @param y - The cursor's Y coordinate
- * @param el - The DOM element to check against
- * @returns boolean True if the point is within the element's boundaries
- */
 function isPointOver(x: number, y: number, el: HTMLElement | null): boolean {
     if (!el) return false
+
     const r = el.getBoundingClientRect()
-    return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom
+
+    return (
+        x >= r.left &&
+        x <= r.right &&
+        y >= r.top &&
+        y <= r.bottom
+    )
 }
 
-/**
- * Global mouse move handler.
- * Continuously checks if the user's cursor is hovering over the trigger button, the main menu, 
- * or the submenu. If the cursor leaves all areas, a timeout is initiated to close the menu.
- */
 function onDocumentMouseMove(e: MouseEvent) {
     const x = e.clientX
     const y = e.clientY
+
     const over =
         isPointOver(x, y, wrapperRef.value) ||
         isPointOver(x, y, menuRef.value) ||
@@ -199,6 +185,7 @@ function startOutsideMonitor() {
 
 function stopOutsideMonitor() {
     document.removeEventListener('mousemove', onDocumentMouseMove)
+
     if (outsideTimer) {
         clearTimeout(outsideTimer)
         outsideTimer = null
@@ -214,14 +201,10 @@ watch(open, (isOpen) => {
 })
 
 onUnmounted(stopOutsideMonitor)
-// ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * Calculates and applies the X/Y coordinates for the primary dropdown menu.
- * Prefers opening downwards, but flips upwards if there isn't enough vertical space.
- */
 function computeMenuPosition() {
     if (!triggerRef.value) return
+
     const rect = triggerRef.value.getBoundingClientRect()
     const spaceBelow = window.innerHeight - rect.bottom
     const spaceAbove = rect.top
@@ -239,15 +222,11 @@ function computeMenuPosition() {
     }
 }
 
-/**
- * Calculates and applies the X/Y coordinates for a submenu (flyout).
- * Prefers extending to the right of the parent item, but flips to the left near screen edges.
- * 
- * @param index - The index of the menu item triggering the submenu
- */
 function computeSubmenuPosition(index: number) {
     const itemEl = itemRefs.value[index]
+
     if (!itemEl) return
+
     const rect = itemEl.getBoundingClientRect()
     const spaceRight = window.innerWidth - rect.right
 
@@ -271,9 +250,13 @@ function closeAll() {
 }
 
 async function toggle() {
+    if (disabled) return
+
     open.value = !open.value
     activeSubmenu.value = null
+
     emit('openChange', open.value)
+
     if (open.value) {
         await nextTick()
         computeMenuPosition()
@@ -281,18 +264,25 @@ async function toggle() {
 }
 
 function select(item: { action?: () => void }) {
-    if (item.action) item.action()
+    if (disabled) return
+
+    item.action?.()
     closeAll()
 }
 
 function selectChild(child: { action?: () => void }) {
-    if (child.action) child.action()
+    if (disabled) return
+
+    child.action?.()
     closeAll()
 }
 
 function openSubmenu(index: number) {
+    if (disabled) return
+
     cancelCloseSubmenu()
     activeSubmenu.value = index
+
     nextTick(() => computeSubmenuPosition(index))
 }
 
@@ -309,8 +299,13 @@ function cancelCloseSubmenu() {
     }
 }
 
-// Still keep click-outside for keyboard / tap users
-onClickOutside(wrapperRef, () => closeAll(), {
-    ignore: [menuRef, submenuRef],
-})
+onClickOutside(
+    wrapperRef,
+    () => {
+        closeAll()
+    },
+    {
+        ignore: [menuRef, submenuRef],
+    }
+)
 </script>
