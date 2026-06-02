@@ -4,7 +4,13 @@
     <div class="overflow-x-auto shrink-0 sticky top-0 z-20 bg-bg-surface border-b border-border">
       <div class="flex items-center justify-between gap-4 py-2 px-2">
        <div class="flex gap-4 ms-1.5">
-         <h2 class="text-md font-semibold text-foreground text-nowrap">All Processes</h2>
+        <div class="flex items-center gap-2">
+        <i class="fa-solid fa-diagram-project text-primary-color"></i>
+        <h2 class="text-sm font-semibold text-text-primary">All Processes</h2>
+        <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-primary-color/10 text-primary-color">
+          {{ filteredList?.reduce((acc, col) => acc + (col.transitions?.length || 0), 0) }}
+        </span>
+      </div>
 
           <div class="relative flex items-center gap-2">
             <button

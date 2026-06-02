@@ -1291,15 +1291,20 @@ onMounted(async () => {
         router.replace('/associated-organization')
         return
       }
-
-      // If user already has workspaces, skip onboarding and go to dashboard
-      // UNLESS they're explicitly creating an organization from Settings
+        const u_work_to_do = res.data?.u_work_to_do || ''
       const workspaces = res.data?.workspaces
+      
       const isFromSettings = route.query.fromSettings === 'true'
-      if (Array.isArray(workspaces) && workspaces.length > 0 && !isFromSettings) {
-        router.replace('/dashboard')
-        return
-      }
+      if (
+  (
+    (Array.isArray(workspaces) && workspaces.length > 0) ||
+    (u_work_to_do && u_work_to_do.trim() !== '')
+  ) &&
+  !isFromSettings
+) {
+  router.replace('/dashboard')
+  return
+}
     }
   } catch (error) {
     console.error('Failed to fetch profile', error)
@@ -1872,7 +1877,8 @@ function applyDnsCheckResult(result, mode = 'custom') {
 }
 
 async function runSubdomainDnsCheck(slug) {
-  const subdomain = `${slug}.streamed.space`
+  const baseDomain = siteSlug.value === 'orchit' ? 'orchit.ai' : 'streamed.space'
+  const subdomain = `${slug}.${baseDomain}`
   isCheckingDns.value = true
   isDnsAvailable.value = null
   dnsError.value = null
@@ -2173,6 +2179,8 @@ function setAuthCookie(token) {
     document.cookie = cookieString
   } else if (hostname.endsWith('.streamed.space') || hostname === 'streamed.space') {
     document.cookie = cookieString + '; domain=.streamed.space; Secure'
+  }else if (hostname.endsWith('.orchit.ai') || hostname === 'orchit.ai') {
+    document.cookie = cookieString + '; domain=.orchit.ai; Secure'
   }
 }
 

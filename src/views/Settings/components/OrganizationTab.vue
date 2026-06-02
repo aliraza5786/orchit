@@ -287,7 +287,9 @@
                 <option value="11–50">11–50 people</option>
                 <option value="51–200">51–200 people</option>
                 <option value="201–500">201–500 people</option>
-                <option value="500+">500+ people</option>
+                <option value="500-1000">501-1000</option>
+                <option value="1001-5000">1001-5000</option>
+                <option value="5001–10000">5001–10000 people</option>
               </select>
               <i v-if="!isMember && !isPendingDeletion" class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary text-[10px] pointer-events-none"></i>
             </div>
@@ -778,6 +780,8 @@ const isFormValid = computed(() => {
 })
 
 watch(currentCompany, (company) => {
+console.log("current company", company);
+
   if (!company) return
   orgName.value        = company.title ?? ''
   orgSlug.value        = company.custom_domain ?? company.slug ?? ''
