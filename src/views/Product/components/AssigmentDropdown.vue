@@ -1,7 +1,7 @@
 <template>
   <div class="relative" ref="wrapperRef" @keydown.esc="close">
     <!-- Trigger -->
-    <div v-if="displayUsers.length > 0" class="flex gap-2 items-center" :class="(disabled || !canAssignCard) ? 'cursor-not-allowed' : 'cursor-pointer'" @click="toggle">
+    <div v-if="displayUsers.length > 0" class="flex gap-2 items-center" :class="(disabled || (!canAssignCard && props.inSpace) ) ? 'cursor-not-allowed' : 'cursor-pointer'" @click="toggle">
       <div class="flex items-center -space-x-2">
         <template v-for="(u, index) in displayUsers.slice(0, 2)" :key="u._id || index">
           <img v-if="u?.avatar?.src || u?.u_profile_image || u?.user?.avatar"
@@ -29,7 +29,7 @@
 
     <button v-else type="button"
       class="inline-flex items-center gap-2 rounded-full border border-border px-1 py-1 text-xs bg-bg-dropdown  hover:bg-bg-dropdown-menu-hover transition"
-      @click="toggle" :disabled="disabled || !canAssignCard" :class="disabled || !canAssignCard ? 'cursor-not-allowed' : 'cursor-pointer'" >
+      @click="toggle" :disabled="disabled || (!canAssignCard && props.inSpace)" :class="disabled ||  (!canAssignCard && props.inSpace) ? 'cursor-not-allowed' : 'cursor-pointer'" >
       <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 opacity-70" viewBox="0 0 24 24" fill="currentColor">
         <path d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2h6z" />
       </svg>
@@ -102,6 +102,7 @@ const props = defineProps<{
   seat: any
   workspaceId?: any
   name?:any
+  inSpace?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -207,7 +208,7 @@ import { usePermissions } from '../../../composables/usePermissions';
 const { canAssignCard} = usePermissions();
 /** Open/close **/
 function toggle() {
-  if (props.disabled || !canAssignCard.value) return;
+  if (props.disabled || (!canAssignCard.value && props.inSpace)) return;
   open.value = !open.value
 }function close() { open.value = false }
 

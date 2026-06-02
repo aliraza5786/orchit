@@ -50,7 +50,11 @@ export function hasCompanySetup(userData: Record<string, unknown> | null | undef
 /** Whether onboarding is finished for this user (company vs personal rules). */
 export function isOnboardingComplete(userData: Record<string, unknown> | null | undefined): boolean {
   if (!userData) return false
-  if (isCompanyUser(userData)) return hasCompanySetup(userData)
+  if (isCompanyUser(userData)) {
+    // Allow company-email users who completed personal profile fields
+    // to continue like personal (gmail) users, even without active company.
+    return hasCompanySetup(userData) || hasHeardAboutUs(userData)
+  }
   return hasHeardAboutUs(userData)
 }
 
@@ -87,13 +91,22 @@ export function primeOnboardingTypeForEmail(email: string): void {
   }
 }
 
-/** Post-auth path after bootstrap (excludes invite/intent/query overrides). */
 export function getPostAuthRedirectPath(
   userData: Record<string, unknown> | null | undefined,
-  options?: PostAuthRedirectOptions,
+  options?: PostAuthRedirectOptions & { fromSettings?: boolean },
 ): '/dashboard' | '/onboarding' | '/associated-organization' {
+
+  const fromSettings = options?.fromSettings === true
+
   const associatedCompany = userData?.associated_company as { _id?: string } | undefined
   const hasAssociated = !!associatedCompany?._id
+
+  // ─────────────────────────────────────────────
+  // 🚨 HARD OVERRIDE (CRITICAL FIX)
+  // ─────────────────────────────────────────────
+  if (fromSettings) {
+    return '/onboarding'
+  }
 
   if (options?.isLogin) {
     if (hasAssociated || isOnboardingComplete(userData)) {
@@ -105,9 +118,11 @@ export function getPostAuthRedirectPath(
   if (shouldRedirectToAssociatedOrg(userData)) {
     return '/associated-organization'
   }
+
   if (isOnboardingComplete(userData)) {
     return '/dashboard'
   }
+
   return '/onboarding'
 }
 

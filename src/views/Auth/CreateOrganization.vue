@@ -28,7 +28,7 @@
               class="text-xs text-left rounded-[6px] px-3 py-2 mt-3 border"
               style="color: #b45309; background: color-mix(in srgb, #f59e0b 10%, transparent); border-color: color-mix(in srgb, #f59e0b 30%, transparent);"
             >
-              This organization name is already taken. Please choose a different name, then continue — we'll create your workspace and return you to where you left off.
+              This organization name is already taken. Please choose a different name, then continue — we'll create your space and return you to where you left off.
             </p>
           </div>
           <div class="space-y-3">
@@ -277,7 +277,7 @@
                 >
                   <input
                     v-model="adminPassword"
-                    type="password"
+                    :type="isAdminPasswordVisible ? 'text' : 'password'"
                     placeholder="Set password"
                     autocomplete="new-password"
                     class="flex-1 min-w-0 px-3.5 py-2.5 text-xs outline-none bg-transparent text-text-primary"
@@ -286,6 +286,43 @@
                     @blur="adminPasswordFocused = false"
                     @keyup.enter="handleSignup"
                   />
+                  <button
+                    type="button"
+                    class="px-3 inline-flex items-center justify-center text-text-secondary hover:opacity-80 focus:outline-none"
+                    :disabled="isSubmitPending"
+                    @click="isAdminPasswordVisible = !isAdminPasswordVisible"
+                    :aria-label="isAdminPasswordVisible ? 'Hide password' : 'Show password'"
+                  >
+                    <svg
+                      v-if="!isAdminPasswordVisible"
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      class="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      aria-hidden="true"
+                    >
+                      <path d="M2.25 12s3.75-6.75 9.75-6.75 9.75 6.75 9.75 6.75-3.75 6.75-9.75 6.75S2.25 12 2.25 12Z"/>
+                      <path d="M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z"/>
+                    </svg>
+                    <svg
+                      v-else
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      class="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M3 3l18 18" />
+                      <path d="M2.25 12s3.75-6.75 9.75-6.75S21.75 12 21.75 12 18 18.75 12 18.75 2.25 12 2.25 12Z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                  </button>
                 </div>
                 <p v-if="errors.adminPassword" class="text-xs text-red-500 font-medium">{{ errors.adminPassword }}</p>
               </div>
@@ -390,9 +427,9 @@
                   <svg class="w-5 h-5" viewBox="0 0 20 20" fill="none" style="color: #1d9e75;"><path d="M10 2l2.24 5.14L18 8.27l-4 3.86.94 5.87L10 15.4l-4.94 2.6.94-5.87-4-3.86 5.76-1.13L10 2z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
                 </div>
                 <div class="flex-1">
-                  <p class="text-sm font-semibold text-text-primary mb-0.5">Your workspace is ready!</p>
+                  <p class="text-sm font-semibold text-text-primary mb-0.5">Your organization is ready!</p>
                   <p class="text-xs leading-relaxed" style="color: var(--text-secondary);">
-                    Verify your custom domain <strong style="color: var(--text-primary);">{{ dnsInput.trim() }}</strong> to use it as your workspace URL. This step is optional but recommended.
+                    Verify your custom domain <strong style="color: var(--text-primary);">{{ dnsInput.trim() }}</strong> to use it as your organization URL. This step is optional but recommended.
                   </p>
                 </div>
               </div>
@@ -859,6 +896,7 @@ const adminPassword = ref('')
 const adminNameFocused = ref(false)
 const adminEmailFocused = ref(false)
 const adminPasswordFocused = ref(false)
+const isAdminPasswordVisible = ref(false)
 
 const otpCode = ref<string[]>(Array.from({ length: OTP_DIGITS }, () => ''))
 const otpError = ref('')

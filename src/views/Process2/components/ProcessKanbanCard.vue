@@ -1,6 +1,9 @@
 <template>
-  <div @click="$emit('click')" @dblclick="$emit('dblclick')" class="bg-bg-card rounded-lg p-2.5 shadow-sm cursor-pointer
-           hover:shadow-md transition-all duration-200 group">
+  <div
+  @click="$emit('click')"
+  @dblclick="isEnabled && $emit('dblclick')"
+  class="bg-bg-card rounded-lg p-2.5 shadow-sm cursor-pointer hover:shadow-md transition-all duration-200 group"
+>
     <div class="flex justify-between gap-1.5 items-start">
       <div class="flex items-start gap-2" style="width: 92%;">
         <div class="flex-1 min-w-0">
@@ -39,15 +42,21 @@
           </div>
         </div>
       </div>
-      <template class="hidden group-hover:block ">
-            <DropMenu @click.stop="" :items="getMenuItems()">
-           <template #trigger>
-                 <div class="w-5 py-0.5 px-1.5 h-5 flex justify-center items-center duration-100 ease-in-out bg-bg-surface/40 rounded-md">
-                   <i class="cursor-pointer text-xs fa-solid fa-ellipsis"></i>
-                 </div>
-              </template>
-            </DropMenu>
+     <template class="group-hover:block">
+  <div>
+    <DropMenu
+      @click.stop
+      :items="getMenuItems()"
+      :disabled="!isEnabled"
+    >
+      <template #trigger>
+        <div class="w-5 py-0.5 px-1.5 h-5 flex justify-center items-center duration-100 ease-in-out bg-bg-surface/40 rounded-md">
+          <i class="cursor-pointer text-xs fa-solid fa-ellipsis"></i>
+        </div>
       </template>
+    </DropMenu>
+  </div>
+</template>
      
     </div>
   </div>
@@ -67,7 +76,9 @@ import DropMenu from '../../../components/ui/DropMenu.vue'
 import { useDeleteTransition } from '../../../queries/useProcess2'
 import ConfirmDeleteModal from '../../Product/modals/ConfirmDeleteModal.vue'
 import { useRouteIds } from '../../../composables/useQueryParams'
-
+import { usePermissions } from '../../../composables/usePermissions';
+const { canDeleteCard, canEditCard } = usePermissions();
+const isEnabled = computed(() => canEditCard.value || canDeleteCard.value)
 const props = defineProps<{
   ticket: any
   index: any
@@ -120,11 +131,10 @@ const emit = defineEmits(['click', 'open-builder', 'dblclick'])
 const showDelete = ref(false)
 const queryClient = useQueryClient()
 const { workspaceId } = useRouteIds();
-import { usePermissions } from '../../../composables/usePermissions';
-const { canDeleteCard } = usePermissions();
+
 
 function getMenuItems() {
-  const items:any = [
+  return [
     {
       label: 'Open Workflow Builder',
       action: () => {
@@ -134,21 +144,19 @@ function getMenuItems() {
         prefix: 'fa-regular',
         iconName: 'fa-diagram-project'
       }
-    }
-  ]
-
-  if(canDeleteCard.value){
-     items.push({
-      label: 'Delete Process', danger: true, action: () => {
+    },
+    {
+      label: 'Delete Process',
+      danger: true,
+      action: () => {
         showDelete.value = true
       },
-       icon: {
+      icon: {
         prefix: 'fa-regular',
         iconName: 'fa-trash'
       }
-    })
-  }
-  return items
+    }
+  ]
 }
 
 const { mutate: deleteProcess, isPending: deletingProcess } = useDeleteTransition({

@@ -291,6 +291,7 @@
 
             <!-- Person Type -->
             <AssigmentDropdown
+              :inSpace="true"
               v-else-if="item.variable_type_id?.title === 'Person'"
               :disabled="!canEditUser"
               :seat="localVarValues[item._id]"

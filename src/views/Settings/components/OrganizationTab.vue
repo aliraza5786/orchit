@@ -287,7 +287,9 @@
                 <option value="11–50">11–50 people</option>
                 <option value="51–200">51–200 people</option>
                 <option value="201–500">201–500 people</option>
-                <option value="500+">500+ people</option>
+                <option value="500-1000">501-1000</option>
+                <option value="1001-5000">1001-5000</option>
+                <option value="5001–10000">5001–10000 people</option>
               </select>
               <i v-if="!isMember && !isPendingDeletion" class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary text-[10px] pointer-events-none"></i>
             </div>
@@ -296,29 +298,24 @@
           <!-- Industry -->
           <div class="space-y-1.5">
             <label class="text-[10px] font-bold text-text-secondary uppercase tracking-wider block">Industry</label>
-            <div class="relative">
-              <select
-                v-model="industry"
-                :disabled="isMember || isPendingDeletion"
-                class="w-full border rounded-xl px-4 py-2.5 pr-9 text-[13px] outline-none transition-all appearance-none"
-                :class="isMember
-                  ? 'border-border/40 bg-bg-body/60 text-text-secondary cursor-default opacity-75'
-                  : 'border-border/60 bg-bg-body focus:border-accent/50 focus:ring-2 focus:ring-accent/10 hover:border-border text-text-primary cursor-pointer'"
-              >
-                <option value="">Select an industry</option>
-                <option value="software_development">Software Development</option>
-                <option value="product_management">Product Management</option>
-                <option value="marketing">Marketing</option>
-                <option value="sales">Sales</option>
-                <option value="finance">Finance</option>
-                <option value="healthcare">Healthcare</option>
-                <option value="education">Education</option>
-                <option value="class_management">Class Management</option>
-                <option value="operations">Operations</option>
-                <option value="other">Other</option>
-              </select>
-              <i v-if="!isMember && !isPendingDeletion" class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary text-[10px] pointer-events-none"></i>
-            </div>
+            <div
+            class="relative"
+            :class="(isMember || isPendingDeletion) && 'opacity-50 pointer-events-none'"
+          >
+            <BaseMultiSelect
+              v-model="industries"
+              :options="industryOptions"
+              :disabled="isMember || isPendingDeletion"
+              size="md"
+              :allowCustom="true"
+              placeholder="Select Industries: e.g. Ecommerce, SaaS, Health"
+            />
+
+            <i
+              v-if="!isMember && !isPendingDeletion"
+              class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary text-[10px] pointer-events-none"
+            />
+          </div>
           </div>
 
           <!-- Description -->
@@ -675,9 +672,9 @@ import { useQueryClient } from '@tanstack/vue-query'
 import { uploadPrivateFile } from '../../../queries/useCommon'
 import { useAuthStore } from '../../../stores/auth'
 import { request } from '../../../libs/api'
-// import { useCompanyUsers } from '../../../queries/useCompanyUsers'
+import { useIndustries } from '../../../queries/useWorkspace'
 import { useRouter } from 'vue-router'
-
+import BaseMultiSelect from '../../../components/ui/BaseMultiSelect.vue'
 // ─── Props ────────────────────────────────────────────────────
 const props = defineProps<{
   forceCreate?: boolean
@@ -742,7 +739,7 @@ const canUpdateOrg = computed(() =>
 const orgName        = ref('')
 const orgSlug        = ref('')
 const orgSize        = ref('1–10')
-const industry       = ref('')
+const industries = ref<string[]>([])
 const orgDescription = ref('')
 const orgLogoPreview = ref<string | null>(null)
 const orgData        = ref({ logo: '' })
@@ -755,7 +752,7 @@ const saveError       = ref('')
 const errors          = ref({ orgName: '', orgSlug: '' })
 
 const originalValues = ref({
-  title: '', slug: '', company_size: '', work_to_do: '', logo: '', description: '',
+  title: '', slug: '', company_size: '',   industries: [] as string[], logo: '', description: '',
 })
 
 const hasChanges = computed(() => {
@@ -763,7 +760,7 @@ const hasChanges = computed(() => {
     orgName.value.trim()        !== originalValues.value.title.trim()        ||
     orgSlug.value.trim()        !== originalValues.value.slug.trim()         ||
     orgSize.value               !== originalValues.value.company_size        ||
-    industry.value              !== originalValues.value.work_to_do          ||
+    industries.value              !== originalValues.value.industries        ||
     orgDescription.value.trim() !== (originalValues.value.description || '').trim() ||
     (orgLogoPreview.value !== null && orgLogoPreview.value !== originalValues.value.logo)
   )
@@ -778,18 +775,20 @@ const isFormValid = computed(() => {
 })
 
 watch(currentCompany, (company) => {
+console.log("current company", company);
+
   if (!company) return
   orgName.value        = company.title ?? ''
   orgSlug.value        = company.custom_domain ?? company.slug ?? ''
   orgSize.value        = company.company_size ?? '1–10'
   orgData.value.logo   = company.logo ?? ''
-  industry.value       = company.work_to_do ?? ''
+  industries.value       = company.industries ?? ''
   orgDescription.value = company.description ?? ''
   originalValues.value = {
     title:        company.title ?? '',
     slug:         company.custom_domain ?? company.slug ?? '',
     company_size: company.company_size ?? '1–10',
-    work_to_do:   company.work_to_do ?? '',
+    industries:   company.industries ?? '',
     logo:         company.logo ?? '',
     description:  company.description ?? '',
   }
@@ -858,7 +857,7 @@ const { mutateAsync: updateCompany, isPending: isSaving } = useUpdateCompanyProf
     orgLogoPreview.value = null
     originalValues.value = {
       title: orgName.value, slug: orgSlug.value, company_size: orgSize.value,
-      work_to_do: industry.value, logo: orgData.value.logo, description: orgDescription.value,
+      industries: industries.value, logo: orgData.value.logo, description: orgDescription.value,
     }
     toast.success(payload?.message || 'Organization updated successfully')
     queryClient.invalidateQueries({ queryKey: ['profile'] })
@@ -893,7 +892,7 @@ async function saveOrg() {
         description:  orgDescription.value,
         slug:         orgSlug.value,
         company_size: orgSize.value,
-        work_to_do:   industry.value,
+        industries:   industries.value,
         logo:         orgLogoPreview.value ?? orgData.value.logo ?? null,
       }
     })
@@ -1125,4 +1124,18 @@ function countdownText(iso: string) {
   const d = Math.floor(diffH / 24), h = diffH % 24
   return d > 0 ? `${d}d ${h}h remaining` : `${diffH}h remaining`
 }
+const { data: industryData } = useIndustries()
+const industryOptions = computed(() => {
+  const raw = industryData.value
+  const list = Array.isArray(raw)
+    ? raw
+    : Array.isArray((raw as { data?: unknown })?.data)
+      ? (raw as { data: unknown[] }).data
+      : []
+  return list.map((item: string | { title?: string; name?: string; _id?: string }) => {
+    if (typeof item === 'string') return { title: item, _id: item }
+    const title = item.title ?? item.name ?? ''
+    return { title, _id: String(item._id ?? title) }
+  })
+})
 </script>

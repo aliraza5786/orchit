@@ -52,7 +52,7 @@
         </p> -->
         <!-- <div class="flex justify-between items-center mt-2"> -->
         <div @click.stop>
-            <AssigmentDropdown :users="members" @assign="assignHandle" :assigneeId="ticket.assigned_to" />
+            <AssigmentDropdown :inSpace="true" :users="members" @assign="assignHandle" :assigneeId="ticket.assigned_to" />
         </div>
         <!-- </div> -->
     </div>

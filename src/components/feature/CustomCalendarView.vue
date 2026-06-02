@@ -548,6 +548,7 @@ onMounted(() => {
                             @click.stop
                           >
                             <AssigmentDropdown
+                              :inSpace="true"
                               :seat="task.seats || task.seat"
                               :disabled="true"
                             />
@@ -619,6 +620,7 @@ onMounted(() => {
                 @click.stop
               >
                 <AssigmentDropdown
+                  :inSpace="true"
                   :seat="task.seats || task.seat"
                   :disabled="true"
                 />

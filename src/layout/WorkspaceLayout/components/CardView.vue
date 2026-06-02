@@ -225,6 +225,7 @@
                     Assign
                   </div>
                   <AssigmentDropdown
+                    :inSpace="true" 
                     :disabled="!canAssignCard"
                     @assign="(user:any) => assignHandle(user)"
                     :assigneeId="curentAssigne"
@@ -438,6 +439,7 @@
 
                     <!-- Person Type -->
                     <AssigmentDropdown
+                      :inSpace="true"
                       v-else-if="item.type === 'Person'"
                       :disabled="!canEditCard"
                       :seat="localVarValues[item.slug]"

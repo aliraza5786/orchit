@@ -70,7 +70,7 @@
         </div>
 
         <!-- ── Always-visible: Workflow Preview ── -->
-        <div v-if="processDetails?.raw_object?.flow_diagram" class="space-y-2">
+        <div v-if="processDetails?.raw_object?.flow_diagram && canEditCard" class="space-y-2">
           <div class="mb-2 text-base font-semibold tracking-wide px-1">Workflow Preview</div>
           <ProcessWorkflowPreview
             :workflow-data="processDetails.raw_object.flow_diagram"
@@ -405,7 +405,8 @@ import { useProcessGroupsWithTransitions, useProcessTransition, useUpdateTransit
 import { useRouteIds } from '../../../composables/useQueryParams'
 import BaseTextAreaField from '../../../components/ui/BaseTextAreaField.vue'
 import ProcessWorkflowPreview from './ProcessWorkflowPreview.vue'
-
+import { usePermissions } from "../../../composables/usePermissions";
+const { canEditCard} = usePermissions();
 const SwitchTab = defineAsyncComponent(
   () => import('../../../components/ui/SwitchTab.vue')
 )
