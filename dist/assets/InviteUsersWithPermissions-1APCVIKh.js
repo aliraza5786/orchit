@@ -1,1 +1,0 @@
-import{_ as o}from"./InviteUsersWithPermissions.vue_vue_type_script_setup_true_lang-CVRCsZaE.js";import"./index-BCqkIy_k.js";import"./BaseEmailChip.vue_vue_type_script_setup_true_lang-5XhQURIg.js";import"./usePeople-BauR_sO_.js";import"./usePackages-Clb9SeCO.js";import"./permissionUtils-DTPUF_JQ.js";export{o as default};
