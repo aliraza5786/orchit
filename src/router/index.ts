@@ -252,7 +252,7 @@ router.beforeEach(async (to, _from, next) => {
 
   if (subdomain && to.name === 'Login') {
     const primary =
-      import.meta.env.VITE_PRIMARY_DOMAIN || 'stagging.streamed.space'
+      import.meta.env.VITE_PRIMARY_DOMAIN || 'orchit.ai'
 
     window.location.href =
       `${window.location.protocol}//${primary}/login?logout=true`
