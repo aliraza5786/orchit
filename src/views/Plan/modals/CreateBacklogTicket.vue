@@ -51,7 +51,7 @@
             <div class="flex flex-col">
                 <label class="text-sm mb-1">Assignee</label>
                 <div class="mt-2">
-                    <AssigmentDropdown :name="true" :workspaceId="workspaceId" @assign="setAssignee"
+                    <AssigmentDropdown :inSpace="true" :name="true" :workspaceId="workspaceId" @assign="setAssignee"
                         @unassign="() => setAssignee([])" :assigneeId="form.assignees" :seat="null" :disabled="false"
                         :skipPermissionCheck="true" class="w-full" />
                 </div>

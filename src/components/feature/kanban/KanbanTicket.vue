@@ -40,7 +40,7 @@
         <div v-if="!footer" class="flex justify-between items-center mt-3 pt-3 border-t border-border/50">
             <div class="flex items-center gap-3 flex-1">
                 <div @click.stop>
-                    <AssigmentDropdown :disabled="!canAssignCard" :users="members" @assign="assignHandle" :assigneeId="ticket.seat_id"
+                    <AssigmentDropdown :inSpace="true" :disabled="!canAssignCard" :users="members" @assign="assignHandle" :assigneeId="ticket.seat_id"
                         :seat="ticket?.seats" />
                 </div>
 

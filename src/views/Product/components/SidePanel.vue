@@ -295,6 +295,7 @@
                       Assign
                     </div>
                     <AssigmentDropdown
+                      :inSpace="true"
                       :disabled="!canAssignCard"
                       @assign="(user) => assignHandle(user)"
                       :assigneeId="curentAssigne"
@@ -570,6 +571,7 @@
 
                     <!-- Person Type -->
                     <AssigmentDropdown
+                      :inSpace="true"
                       v-else-if="item.type === 'Person'"
                       :disabled="!canEditCard"
                       :seat="localVarValues[item.slug]"
@@ -2820,12 +2822,12 @@ function handleEditVar(item: any) {
 }
 /* Mentions */
 :global(.mention-highlight) {
-  background-color: rgba(var(--primary-color-rgb, 99, 102, 241), 0.15);
+  background-color: color-mix(in srgb, var(--primary-color) 15%, transparent);
   color: var(--primary-color, #6366f1);
   padding: 1px 0;
   border-radius: 4px;
   font-weight: 400; /* Must match textarea exactly to prevent width drift */
-  box-shadow: 0 0 0 1px rgba(var(--primary-color-rgb, 99, 102, 241), 0.2);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary-color) 20%, transparent);
   display: inline;
 }
 .word-break :deep(p) {

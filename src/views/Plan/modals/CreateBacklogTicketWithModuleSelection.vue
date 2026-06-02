@@ -126,6 +126,7 @@
              <label class="text-sm">Assignee</label>
              <div class="mt-2">
                 <AssigmentDropdown 
+                  :inSpace="true"
                   :name="true" 
                   :workspaceId="workspaceId" 
                   @assign="setAssignee" 

@@ -75,7 +75,7 @@
                 </div>
                 <div class="space-y-2">
                   <div class="text-xs uppercase tracking-wider text-text-secondary">Assign</div>
-                  <AssigmentDropdown :name="true" :workspaceId="cardDetails.workspace_id" @assign="assignHandle"
+                  <AssigmentDropdown  :name="true" :workspaceId="cardDetails.workspace_id" @assign="assignHandle"
                     :assigneeId="curentAssigne" :seat="cardDetails?.seats || cardDetails?.seat" />
                 </div>
                 <template v-if="!pin">
@@ -131,7 +131,7 @@
             <section v-else-if="activeTab === 'history'" key="tab-history">
               <div>
                 <h3 class="text-sm font-semibold tracking-wide mb-3">History</h3>
-                <ol class="relative border-l border-orchit-white/10 pl-5 space-y-4 ml-1">
+                <ol v-if="details.history?.length" class="relative border-l border-orchit-white/10 pl-5 space-y-4 ml-1">
                   <li v-for="(h, i) in details.history" :key="i" class="group">
                     <span
                       class="absolute -left-[5px] top-0 w-2 h-2 rounded-full bg-accent/70 ring-4 ring-accent/10"></span>
@@ -143,6 +143,16 @@
                     </div>
                   </li>
                 </ol>
+                <div
+                  v-else
+                  class="py-10 flex flex-col items-center justify-center border border-dashed border-orchit-white/10 rounded-2xl bg-orchit-white/2"
+                >
+                  <div class="w-14 h-14 rounded-xl bg-orchit-white/5 flex items-center justify-center mb-3">
+                    <i class="fa-regular fa-clock-rotate-left text-xl text-text-secondary opacity-50"></i>
+                  </div>
+                  <div class="text-sm font-medium text-text-primary">No history yet</div>
+                  <div class="text-xs text-text-secondary mt-1">Task activity will appear here</div>
+                </div>
               </div>
             </section>
 
@@ -152,10 +162,10 @@
                 <div class="flex items-center gap-3 mb-2">
                   <div
                     class="h-8 w-8 rounded-full bg-accent/15 text-accent flex items-center justify-center text-xs font-semibold">
-                    {{ initials(c.created_by?.u_full_name) }}
+                    {{ initials(c.created_by?.u_full_name || c.commented_by?.u_full_name) }}
                   </div>
                   <div class="flex-1">
-                    <div class="text-sm font-medium">{{ c.created_by?.u_full_name }}</div>
+                    <div class="text-sm font-medium">{{ c.created_by?.u_full_name || c.commented_by?.u_full_name }}</div>
                     <div class="text-xs text-text-secondary">{{ formatDateTime(c.created_at) }}</div>
                   </div>
                   <div class="flex items-center gap-2">
@@ -165,12 +175,34 @@
                   </div>
                 </div>
                 <Transition name="fade" mode="out-in">
-                  <p v-if="editingId !== c._id" :key="`c-view-${c._id}`" class="text-[15px] leading-6">
-                    {{ c.comment_text }}
-                  </p>
+                  <p
+                    v-if="editingId !== c._id"
+                    :key="`c-view-${c._id}`"
+                    class="text-[15px] leading-6"
+                    v-html="renderMentions(c.comment_text)"
+                  ></p>
                   <div v-else :key="`c-edit-${c._id}`" class="space-y-2">
-                    <textarea v-model="editText" rows="3" class="w-full p-3 rounded-lg bg-bg-input/80 border border-orchit-white/10
-                                   focus:ring-2 focus:ring-accent/40 outline-none" />
+                    <div class="relative w-full">
+                      <div
+                        :ref="(el) => { if (el) overlays[c._id] = el as HTMLElement }"
+                        class="absolute inset-0 pointer-events-none p-3 whitespace-pre-wrap break-words overflow-hidden text-sm z-10 leading-normal font-sans"
+                        aria-hidden="true"
+                        style="font-family: Inter, system-ui, -apple-system, sans-serif; line-height: 1.5; letter-spacing: normal; font-weight: 400; -webkit-font-smoothing: antialiased;"
+                        v-html="formatOverlay(editText)"
+                      ></div>
+                      <textarea
+                        :ref="(el) => { if (el) editCommentTextareas[c._id] = el as HTMLTextAreaElement }"
+                        v-model="editText"
+                        rows="3"
+                        spellcheck="false"
+                        @scroll="(e) => syncScroll(e, c._id)"
+                        @input="(e) => handleCommentInput(e, c._id)"
+                        @keydown="(e) => handleCommentKeydown(e, c._id)"
+                        @blur="handleCommentBlur"
+                        class="relative z-0 w-full p-3 rounded-lg bg-bg-input/80 border border-orchit-white/10 focus:ring-2 focus:ring-accent/40 outline-none text-sm leading-normal resize-none text-transparent caret-text-primary font-sans"
+                        style="font-family: Inter, system-ui, -apple-system, sans-serif; line-height: 1.5; letter-spacing: normal; font-weight: 400; -webkit-font-smoothing: antialiased;"
+                      />
+                    </div>
                     <div class="flex items-center gap-2 justify-end">
                       <Button variant="secondary" size="sm" @click="cancelEdit">Cancel</Button>
                       <Button class="btn" size="sm" @click="saveEdit(c)"
@@ -180,23 +212,111 @@
                     </div>
                   </div>
                 </Transition>
-                <div v-if="c?.attachments?.length" class="mt-3 grid grid-cols-2 gap-2">
-                  <a v-for="(file, index) in c.attachments" :key="index" :href="file.url" target="_blank" class="group flex items-center gap-2 rounded-lg border border-orchit-white/10 bg-orchit-white/5 px-2 py-1
-                                 hover:bg-orchit-white/10 transition">
-                    <i class="fa-regular fa-file text-text-secondary group-hover:text-text-primary transition"></i>
+                <div
+                  v-if="
+                    (editingId === c._id ? editAttachments : c.attachments)?.length
+                  "
+                  class="mt-3 grid grid-cols-2 gap-2"
+                >
+                  <a
+                    v-for="(file, index) in editingId === c._id ? editAttachments : c.attachments"
+                    :key="index"
+                    :href="file.url"
+                    target="_blank"
+                    class="group relative flex items-center gap-2 rounded-lg border border-orchit-white/10 bg-orchit-white/5 px-2 py-1 hover:bg-orchit-white/10 transition"
+                  >
+                    <div
+                      v-if="file.name?.match(/\.(jpg|jpeg|png|gif|webp|avif)$/i)"
+                      class="w-6 h-6 rounded overflow-hidden flex-shrink-0 border border-orchit-white/10"
+                    >
+                      <img :src="file.url" class="w-full h-full object-cover" />
+                    </div>
+                    <i
+                      v-else-if="file.name?.match(/\.pdf$/i)"
+                      class="fa-regular fa-file-pdf text-[11px] text-red-400"
+                    ></i>
+                    <i
+                      v-else-if="file.name?.match(/\.(doc|docx)$/i)"
+                      class="fa-regular fa-file-word text-[11px] text-blue-400"
+                    ></i>
+                    <i
+                      v-else
+                      class="fa-regular fa-file text-text-secondary group-hover:text-text-primary transition"
+                    ></i>
                     <span class="text-xs truncate">{{ file?.name }}</span>
+                    <button
+                      v-if="editingId === c._id"
+                      @click.prevent="removeEditAttachment(Number(index))"
+                      class="text-red-400 hover:text-red-500 p-1 transition-colors ml-auto"
+                      title="Remove attachment"
+                    >
+                      <i class="fa-solid fa-xmark text-[10px]"></i>
+                    </button>
                   </a>
                 </div>
               </div>
 
               <div class="rounded-xl border border-orchit-white/10 bg-orchit-white/5 overflow-hidden">
-                <textarea v-model="newComment" rows="3" class="w-full p-3 bg-transparent outline-none text-sm"
-                  placeholder="Write a comment" />
+                <div class="relative">
+                  <div
+                    :ref="(el) => { if (el) overlays['new'] = el as HTMLElement }"
+                    class="absolute inset-0 pointer-events-none p-3 whitespace-pre-wrap break-words overflow-hidden text-sm z-10 leading-normal font-sans"
+                    aria-hidden="true"
+                    style="font-family: Inter, system-ui, -apple-system, sans-serif; line-height: 1.5; letter-spacing: normal; font-weight: 400; -webkit-font-smoothing: antialiased;"
+                    v-html="formatOverlay(newComment)"
+                  ></div>
+                  <textarea
+                    ref="commentTextarea"
+                    v-model="newComment"
+                    rows="3"
+                    spellcheck="false"
+                    @scroll="(e) => syncScroll(e, 'new')"
+                    @input="(e) => handleCommentInput(e, 'new')"
+                    @keydown="(e) => handleCommentKeydown(e, 'new')"
+                    @blur="handleCommentBlur"
+                    class="relative z-0 w-full p-3 bg-transparent outline-none text-sm leading-normal resize-none text-transparent caret-text-primary font-sans"
+                    style="font-family: Inter, system-ui, -apple-system, sans-serif; line-height: 1.5; letter-spacing: normal; font-weight: 400; -webkit-font-smoothing: antialiased;"
+                    placeholder="Write a comment"
+                  />
+                </div>
+                <div
+                  v-if="commentAttachments.length"
+                  class="flex flex-wrap gap-2 p-2 px-3 border-t border-orchit-white/10 bg-orchit-white/2"
+                >
+                  <div
+                    v-for="file in commentAttachments"
+                    :key="file.id"
+                    class="group flex items-center gap-2 px-2 py-1 rounded-lg bg-orchit-white/5 border border-orchit-white/10 text-[11px] text-text-secondary transition-all hover:border-orchit-white/20"
+                  >
+                    <div
+                      v-if="(file.previewUrl || file.data?.url) && file.name.match(/\.(jpg|jpeg|png|gif|webp|avif)$/i)"
+                      class="w-6 h-6 rounded overflow-hidden flex-shrink-0 border border-orchit-white/10"
+                    >
+                      <img :src="file.previewUrl || file.data?.url" class="w-full h-full object-cover" />
+                    </div>
+                    <i v-else-if="file.name.match(/\.pdf$/i)" class="fa-regular fa-file-pdf text-[10px] text-red-400"></i>
+                    <i v-else-if="file.name.match(/\.(doc|docx)$/i)" class="fa-regular fa-file-word text-[10px] text-blue-400"></i>
+                    <i v-else class="fa-regular fa-file text-[10px]"></i>
+                    <span class="truncate max-w-[120px]">{{ file.name }}</span>
+                    <i v-if="file.loading" class="fa-solid fa-spinner animate-spin text-[10px] text-accent"></i>
+                    <button
+                      v-else
+                      @click="removeAttachment(file.id)"
+                      class="hover:text-red-400 transition-colors p-0.5"
+                      title="Remove attachment"
+                    >
+                      <i class="fa-solid fa-xmark text-[10px]"></i>
+                    </button>
+                  </div>
+                </div>
                 <div class="flex items-center justify-between p-2 border-t border-orchit-white/10">
-                  <input type="file" multiple @change="handleFileChange" class="text-xs text-text-secondary
-                                 file:mr-3 file:px-3 file:py-1.5 file:rounded-md
-                                 file:border file:border-orchit-white/10 file:bg-orchit-white/10
-                                 hover:file:bg-orchit-white/15 file:text-text-primary transition" />
+                  <input
+                    ref="fileInput"
+                    type="file"
+                    multiple
+                    @change="handleFileChange"
+                    class="text-ellipsis text-xs text-transparent file:mr-3 col-span-2 file:px-3 file:py-1.5 file:rounded-md file:border file:border-orchit-white/10 file:bg-orchit-white/10 hover:file:bg-orchit-white/15 file:text-text-primary transition inline-flex file:cursor-pointer max-w-[150px]"
+                  />
                   <Button variant="primary" size="sm" @click="postComment"
                     :disabled="!newComment.trim() && !commentAttachments.length">
                     {{ isPostingComment ? 'Posting…' : 'Post' }}
@@ -205,34 +325,125 @@
               </div>
             </section>
 
-            <section v-else key="tab-attachments" class="space-y-3">
-              <div class="text-xs text-text-secondary">
-                Files attached to this {{ details?.type ?? 'item' }}.
+            <section v-else key="tab-attachments" class="space-y-6">
+              <div class="flex items-center justify-between">
+                <div
+                  class="text-xs font-semibold text-text-secondary uppercase tracking-wider"
+                >
+                  Files attached to this {{ details?.type ?? "item" }}
+                </div>
+                <div
+                  class="text-[11px] text-text-secondary bg-orchit-white/5 px-2 py-0.5 rounded-full border border-border"
+                >
+                  {{ attachments.length }} files
+                </div>
               </div>
-              <div class="grid sm:grid-cols-2 gap-4">
-                <div v-for="file in attachments" :key="file._id"
-                  class="rounded-2xl overflow-hidden border border-orchit-white/10 bg-orchit-white/5 hover:bg-orchit-white/8 transition group">
-                  <div class="p-3">
-                    <div v-if="file.kind === 'image'" class="rounded-lg overflow-hidden">
-                      <img :src="file.url" class="w-full h-40 object-cover group-hover:scale-[1.02] transition" />
+
+              <div
+                v-if="attachments.length > 0"
+                class="grid grid-cols-1 sm:grid-cols-2 gap-4"
+              >
+                <div
+                  v-for="file in attachments"
+                  :key="file._id"
+                  class="group relative flex flex-col rounded-xl border border-border bg-orchit-white/5 hover:bg-orchit-white/8 transition-all duration-300 hover:shadow-lg hover:shadow-black/20 hover:-translate-y-0.5"
+                >
+                  <div
+                    class="aspect-[16/10] w-full relative rounded-t-xl overflow-hidden bg-bg-surface"
+                  >
+                    <img
+                      v-if="file.kind === 'image'"
+                      :src="file.url"
+                      class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <video
+                      v-else-if="file.kind === 'video'"
+                      :src="file.url"
+                      class="w-full h-full object-cover"
+                    ></video>
+                    <div
+                      v-else
+                      class="w-full h-full flex items-center justify-center bg-bg-surface"
+                    >
+                      <div class="relative">
+                        <i
+                          v-if="file.name.match(/\.pdf$/i)"
+                          class="fa-regular fa-file-pdf text-4xl text-red-400 opacity-80"
+                        ></i>
+                        <i
+                          v-else-if="file.name.match(/\.(doc|docx)$/i)"
+                          class="fa-regular fa-file-word text-4xl text-blue-400 opacity-80"
+                        ></i>
+                        <i
+                          v-else-if="file.name.match(/\.(xls|xlsx)$/i)"
+                          class="fa-regular fa-file-excel text-4xl text-green-400 opacity-80"
+                        ></i>
+                        <i
+                          v-else
+                          class="fa-regular fa-file-lines text-4xl text-text-secondary opacity-60"
+                        ></i>
+                      </div>
                     </div>
-                    <div v-else-if="file.kind === 'video'" class="rounded-lg overflow-hidden">
-                      <video :src="file.url" controls class="w-full h-40 object-cover"></video>
-                    </div>
-                    <div v-else class="h-40 rounded-lg bg-black/5 grid place-items-center">
-                      <i class="fa-regular fa-file text-3xl text-text-secondary"></i>
-                    </div>
-                    <div class="mt-3">
-                      <div class="font-medium truncate">{{ file.name }}</div>
-                      <div class="text-xs text-text-secondary capitalize">{{ file.kind }}</div>
+
+                    <div
+                      class="absolute top-3 left-3 px-2 py-1 bg-bg-body backdrop-blur-md rounded-lg text-[9px] font-bold text-text-primary uppercase tracking-tighter border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      {{ file.kind }}
                     </div>
                   </div>
-                  <div class="p-3 pt-0">
-                    <a :href="file.url" target="_blank" rel="noopener" class="w-full inline-flex items-center justify-center gap-2 h-9 rounded-lg
-                                   bg-accent text-orchit-white text-sm hover:opacity-90 transition">
-                      <i class="fa-regular fa-arrow-up-right-from-square"></i> View
-                    </a>
+
+                  <div class="p-3.5 flex flex-col flex-1 min-w-0">
+                    <div
+                      class="font-medium text-sm text-text-primary truncate mb-1"
+                      :title="file.name"
+                    >
+                      {{ file.name }}
+                    </div>
+                    <div class="flex items-center justify-between mt-auto pt-2">
+                      <div class="flex flex-col gap-0.5 min-w-0">
+                        <span
+                          v-if="file.author"
+                          class="text-[10px] text-text-secondary truncate opacity-80"
+                        >
+                          By {{ file.author }}
+                        </span>
+                        <span
+                          v-if="file.date"
+                          class="text-[9px] text-text-secondary opacity-60"
+                        >
+                          {{ new Date(file.date).toLocaleDateString() }}
+                        </span>
+                      </div>
+                      <a
+                        :href="file.url"
+                        target="_blank"
+                        rel="noopener"
+                        class="flex items-center justify-center w-8 h-8 rounded-[6px] bg-primary-color/10 hover:bg-primary-color text-primary-color hover:text-white transition-all duration-200 border border-primary-color/20"
+                        title="View Full File"
+                      >
+                        <i class="fa-regular fa-external-link text-xs"></i>
+                      </a>
+                    </div>
                   </div>
+                </div>
+              </div>
+
+              <div
+                v-else
+                class="py-12 flex flex-col items-center justify-center border border-dashed border-border rounded-3xl bg-orchit-white/2"
+              >
+                <div
+                  class="w-16 h-16 rounded-2xl bg-orchit-white/5 flex items-center justify-center mb-4"
+                >
+                  <i
+                    class="fa-regular fa-folder-open text-2xl text-text-secondary opacity-40"
+                  ></i>
+                </div>
+                <div class="text-sm font-medium text-text-primary">
+                  No attachments found
+                </div>
+                <div class="text-xs text-text-secondary mt-1">
+                  Files from comments will appear here
                 </div>
               </div>
             </section>
@@ -243,6 +454,48 @@
 
 
   </BaseModal>
+  <teleport to="body">
+    <div
+      v-if="mentionContext.active"
+      ref="mentionMenuRef"
+      class="z-[9999] fixed rounded-md border border-orchit-white/10 bg-bg-dropdown shadow-xl w-60 py-1"
+      :style="mentionStyles"
+      @mousedown.prevent
+    >
+      <ul class="max-h-60 overflow-auto">
+        <li
+          v-for="(u, idx) in filteredMentionUsers"
+          :key="u._id || idx"
+          @mousedown.prevent="insertMention(u)"
+          @mouseenter="mentionContext.selectedIndex = Number(idx)"
+          :class="[
+            'flex items-center gap-3 px-3 py-2 cursor-pointer transition min-w-0',
+            mentionContext.selectedIndex === Number(idx)
+              ? 'bg-bg-dropdown-menu-hover'
+              : 'hover:bg-bg-dropdown-menu-hover',
+          ]"
+        >
+          <div class="w-6 h-6 rounded-full bg-accent/15 text-accent flex items-center justify-center text-[10px] font-semibold">
+            {{ initials(u.u_full_name || u.name || u.title) }}
+          </div>
+          <div class="text-xs font-medium truncate flex-1">
+            {{ u.u_full_name || u.name || u.title }}
+          </div>
+        </li>
+        <li
+          @mousedown.prevent="mentionContext.active = false"
+          :class="[
+            'flex items-center gap-3 px-3 py-2 transition border-t border-orchit-white/10 mt-1',
+          ]"
+        >
+          <div class="h-6 w-6 rounded-full bg-accent/15 text-accent flex items-center justify-center">
+            <i class="fa-solid fa-at text-[10px]"></i>
+          </div>
+          <div class="text-[11px] text-text-secondary">Type to filter workspace users</div>
+        </li>
+      </ul>
+    </div>
+  </teleport>
 </template>
 
 <script setup lang="ts">
@@ -260,6 +513,8 @@ import Button from '../../../components/ui/Button.vue'
 import { usePrivateUploadFile } from '../../../queries/useCommon'
 import SwitchTab from '../../../components/ui/SwitchTab.vue'
 import { toast } from 'vue-sonner'
+import { useWorkspacesRoles } from '../../../queries/useWorkspace'
+import { computePosition, autoUpdate, flip, shift, offset } from '@floating-ui/dom'
 
 
 // const { workspaceId } = useRouteIds()
@@ -443,6 +698,8 @@ const { mutate: createComment, isPending: isPostingComment } = useCreateComment(
   onSuccess: (data: any) => {
     newComment.value = ''
     commentAttachments.value = []
+    currentMentions.value = []
+    if (fileInput.value) fileInput.value.value = ''
     comments.value = [...comments.value, data]
     queryClient.invalidateQueries({ queryKey: ["comments", commentId.value] })
     toast.success('Comment posted successfully')
@@ -456,21 +713,306 @@ const { mutate: createComment, isPending: isPostingComment } = useCreateComment(
 const newComment = ref('')
 const initials = (n?: string) => (n ?? '').split(' ').map(s => s[0]).filter(Boolean).slice(0, 2).join('').toUpperCase()
 const formatDateTime = (iso?: string) => iso ? new Date(iso).toLocaleString() : ''
+const fileInput = ref<HTMLInputElement | null>(null)
+const commentTextarea = ref<HTMLTextAreaElement | null>(null)
+const editCommentTextareas = ref<Record<string, HTMLTextAreaElement>>({})
+const overlays = ref<Record<string, HTMLElement>>({})
+const mentionMenuRef = ref<HTMLElement | null>(null)
+const mentionStyles = ref<any>({
+  position: 'fixed',
+  top: '-999px',
+  left: '-999px',
+})
+const mentionContext = ref<{
+  active: boolean
+  query: string
+  selectedIndex: number
+  startIndex: number
+  targetType: string
+}>({
+  active: false,
+  query: '',
+  selectedIndex: 0,
+  startIndex: -1,
+  targetType: 'new',
+})
+const currentMentions = ref<any[]>([])
+let cleanupMention: (() => void) | null = null
+const { data: workspaceRoles } = useWorkspacesRoles(computed(() => details.value?.workspace_id))
+const filteredMentionUsers = computed(() => {
+  if (!workspaceRoles.value) return []
+  const q = mentionContext.value.query.toLowerCase().trim()
+  if (!q) return workspaceRoles.value
+  return workspaceRoles.value.filter((u: any) => {
+    const name = u.title || u.name || u.u_full_name || ''
+    const email = u.email || ''
+    return name.toLowerCase().includes(q) || email.toLowerCase().includes(q)
+  })
+})
 
 const editingId = ref<string | null>(null)
 const editText = ref('')
+const editAttachments = ref<any[]>([])
 const { mutate: updateComment, isPending: isUpdatingComment } = useUpdateComment()
 const { mutate: deleteComment } = useDeleteComment()
 
-function beginEdit(c: any) { editingId.value = c._id; editText.value = c.comment_text ?? '' }
-function cancelEdit() { editingId.value = null; editText.value = ''; editingTitle.value = false }
+function beginEdit(c: any) {
+  editingId.value = c._id
+  currentMentions.value = []
+  const mentionRegex = /@\[([^\]]+)\]\(([^)]+)\)/g
+  const rawText = c.comment_text ?? ''
+  let match
+  while ((match = mentionRegex.exec(rawText)) !== null) {
+    const [, name, id] = match
+    const user = workspaceRoles.value?.find((u: any) => u._id === id || u.id === id)
+    currentMentions.value.push({ name, id, email: user?.email || '' })
+  }
+  editText.value = rawText.replace(mentionRegex, '@$1')
+  editAttachments.value = [...(c.attachments || [])]
+}
+
+function syncScroll(e: Event, type: string) {
+  const target = e.target as HTMLTextAreaElement
+  const overlay = overlays.value[type]
+  if (overlay) {
+    overlay.scrollTop = target.scrollTop
+    overlay.scrollLeft = target.scrollLeft
+  }
+}
+function cancelEdit() {
+  editingId.value = null
+  editText.value = ''
+  editAttachments.value = []
+  editingTitle.value = false
+}
+
+function removeEditAttachment(index: number) {
+  editAttachments.value.splice(index, 1)
+}
+watch(
+  () => mentionContext.value.active,
+  (val) => {
+    if (!val && cleanupMention) {
+      cleanupMention()
+      cleanupMention = null
+    }
+  },
+)
+
+function renderMentions(text: string) {
+  if (!text) return ''
+  return text.replace(
+    /@\[([^\]]+)\]\(([^)]+)\)/g,
+    '<span class="mention-highlight">@$1</span>',
+  )
+}
+
+function formatOverlay(text: string) {
+  if (!text) return ''
+  const escapedText = text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+
+  const users = workspaceRoles.value || []
+  const userNames = users
+    .flatMap((u: any) => [u.u_full_name, u.name, u.title])
+    .filter(Boolean) as string[]
+
+  if (userNames.length === 0) {
+    return `<div class="text-text-primary whitespace-pre-wrap break-words">${escapedText.replace(/@([a-zA-Z0-9_.-]+)/g, '<strong class="mention-highlight">@$1</strong>')}</div>`
+  }
+
+  userNames.sort((a, b) => b.length - a.length)
+  const escapedNames = [...new Set(userNames)].map((n: string) =>
+    n.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&'),
+  )
+  const regex = new RegExp(
+    `@(${escapedNames.join('|')}|[a-zA-Z0-9_.-]+)(?=\\s|[.,!?]|$)`,
+    'gi',
+  )
+  const formatted = escapedText.replace(
+    regex,
+    (match) => `<strong class="mention-highlight">${match}</strong>`,
+  )
+
+  return `<div class="text-text-primary whitespace-pre-wrap break-words">${formatted}</div>`
+}
+
+function updateMentionPosition(textarea: HTMLTextAreaElement) {
+  if (cleanupMention) {
+    cleanupMention()
+    cleanupMention = null
+  }
+  const virtualElement = {
+    getBoundingClientRect() {
+      const rect = textarea.getBoundingClientRect()
+      const div = document.createElement('div')
+      const computedStyle = window.getComputedStyle(textarea)
+      for (const prop of Array.from(computedStyle)) {
+        div.style.setProperty(prop, computedStyle.getPropertyValue(prop))
+      }
+      div.style.position = 'absolute'
+      div.style.visibility = 'hidden'
+      div.style.whiteSpace = 'pre-wrap'
+      div.style.wordWrap = 'break-word'
+      div.style.width = computedStyle.width
+      div.textContent = textarea.value.substring(0, textarea.selectionStart)
+      const span = document.createElement('span')
+      span.textContent = '.'
+      div.appendChild(span)
+      document.body.appendChild(div)
+      const spanTop = span.offsetTop
+      const spanLeft = span.offsetLeft
+      document.body.removeChild(div)
+      const top = rect.top + spanTop - textarea.scrollTop
+      const left = rect.left + spanLeft - textarea.scrollLeft
+      return {
+        width: 0,
+        height: 18,
+        top,
+        left,
+        right: left,
+        bottom: top + 18,
+        x: left,
+        y: top,
+      } as DOMRect
+    },
+  }
+  nextTick(() => {
+    if (mentionMenuRef.value) {
+      cleanupMention = autoUpdate(virtualElement, mentionMenuRef.value as HTMLElement, () => {
+        if (!mentionMenuRef.value) return
+        computePosition(virtualElement, mentionMenuRef.value as HTMLElement, {
+          placement: 'bottom-start',
+          strategy: 'fixed',
+          middleware: [offset(6), flip(), shift({ padding: 10 })],
+        }).then(({ x, y }) => {
+          mentionStyles.value = { position: 'fixed', left: `${x}px`, top: `${y}px` }
+        })
+      })
+    }
+  })
+}
+
+function handleCommentInput(e: Event, type: string) {
+  const target = e.target as HTMLTextAreaElement
+  const val = target.value
+  const cursor = target.selectionStart
+  const textBeforeCursor = val.slice(0, cursor)
+  const atIndex = textBeforeCursor.lastIndexOf('@')
+  if (atIndex !== -1) {
+    const textAfterAt = textBeforeCursor.slice(atIndex + 1)
+    if (!textAfterAt.includes(' ') && !textAfterAt.includes('\n')) {
+      const charBeforeAt = atIndex > 0 ? textBeforeCursor[atIndex - 1] : null
+      if (atIndex === 0 || charBeforeAt === ' ' || charBeforeAt === '\n') {
+        mentionContext.value.active = true
+        mentionContext.value.query = textAfterAt
+        mentionContext.value.startIndex = atIndex
+        mentionContext.value.targetType = type
+        mentionContext.value.selectedIndex = 0
+        updateMentionPosition(target)
+        return
+      }
+    }
+  }
+  mentionContext.value.active = false
+}
+
+function insertMention(user: any) {
+  const name = user.u_full_name || user.name || user.title
+  let currentVal = ''
+  let targetElement: HTMLTextAreaElement | null = null
+  if (mentionContext.value.targetType === 'new') {
+    currentVal = newComment.value
+    targetElement = commentTextarea.value
+  } else {
+    currentVal = editText.value
+    targetElement = editCommentTextareas.value[mentionContext.value.targetType] || null
+  }
+  if (!targetElement) return
+  const before = currentVal.slice(0, mentionContext.value.startIndex)
+  const after = currentVal.slice(targetElement.selectionStart)
+  const newVal = `${before}@${name} ${after}`
+  if (mentionContext.value.targetType === 'new') newComment.value = newVal
+  else editText.value = newVal
+  currentMentions.value.push({ name, id: user._id, email: user.email })
+  mentionContext.value.active = false
+  const newPos = before.length + name.length + 2
+  nextTick(() => {
+    targetElement?.focus()
+    targetElement?.setSelectionRange(newPos, newPos)
+  })
+}
+
+function handleCommentKeydown(e: KeyboardEvent, type: string) {
+  if (!mentionContext.value.active) {
+    if (e.key === 'Backspace' || e.key === 'Delete') {
+      const textarea = e.target as HTMLTextAreaElement
+      const cursor = textarea.selectionStart
+      if (cursor !== textarea.selectionEnd) return
+
+      const val = type === 'new' ? newComment.value : editText.value
+      const users = workspaceRoles.value || []
+      const userNames = users
+        .flatMap((u: any) => [u.u_full_name, u.name, u.title])
+        .filter(Boolean)
+      userNames.sort((a: string, b: string) => b.length - a.length)
+
+      for (const name of userNames) {
+        const mention = `@${name}`
+        const index = val.lastIndexOf(mention, cursor - 1)
+        if (index !== -1 && index + mention.length >= cursor) {
+          e.preventDefault()
+          const newVal = val.slice(0, index) + val.slice(index + mention.length)
+          if (type === 'new') newComment.value = newVal
+          else editText.value = newVal
+          textarea.value = newVal
+          textarea.setSelectionRange(index, index)
+          return
+        }
+      }
+    }
+    return
+  }
+  if (e.key === 'ArrowDown') {
+    e.preventDefault()
+    mentionContext.value.selectedIndex =
+      (mentionContext.value.selectedIndex + 1) % (filteredMentionUsers.value.length || 1)
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault()
+    mentionContext.value.selectedIndex =
+      (mentionContext.value.selectedIndex - 1 + (filteredMentionUsers.value.length || 1)) %
+      (filteredMentionUsers.value.length || 1)
+  } else if (e.key === 'Enter') {
+    e.preventDefault()
+    const selected = filteredMentionUsers.value[mentionContext.value.selectedIndex]
+    if (selected) insertMention(selected)
+  } else if (e.key === 'Escape') {
+    mentionContext.value.active = false
+  }
+}
+
+function handleCommentBlur() {
+  setTimeout(() => {
+    mentionContext.value.active = false
+  }, 150)
+}
 
 function saveEdit(c: any) {
-  const text = editText.value.trim()
+  let text = editText.value.trim()
   if (!text) return
+  const mentions: any[] = []
+  currentMentions.value.forEach((m) => {
+    const mentionToken = `@${m.name}`
+    if (text.includes(mentionToken)) {
+      text = text.replace(mentionToken, `@[${m.name}](${m.id})`)
+      mentions.push({ id: m.id, name: m.name, email: m.email, type: 'user' })
+    }
+  })
 
   updateComment(
-    { id: c._id, payload: { comment_text: text } },
+    { id: c._id, payload: { comment_text: text, mentions, attachments: editAttachments.value } },
     {
       onSuccess: () => {
         queryClient.invalidateQueries({
@@ -504,16 +1046,32 @@ function removeComment(c: any) {
   )
 }
 
-const attachments = computed(() =>
-  (details.value?.attachments ?? []).map((f: any) => ({
-    _id: f._id ?? f.id ?? crypto.randomUUID?.() ?? Math.random(),
+const attachments = computed(() => {
+  const cardFiles = details.value?.attachments || []
+  const commentFiles = (comments.value || []).flatMap((c: any) =>
+    (c.attachments || []).map((a: any) => ({
+      ...a,
+      author: c.created_by?.u_full_name || c.commented_by?.u_full_name,
+      date: c.created_at
+    }))
+  )
+
+  const all = [...cardFiles, ...commentFiles]
+  const unique = Array.from(new Map(all.map((item: any) => [item.url, item])).values())
+
+  return unique.map((f: any) => ({
+    _id: f._id ?? f.id ?? Math.random(),
     name: f.name ?? f.filename ?? 'file',
     url: f.url,
-    kind: (f.type ?? f.kind ?? '').toLowerCase().includes('image') ? 'image'
-      : (f.type ?? f.kind ?? '').toLowerCase().includes('video') ? 'video'
+    author: f.author,
+    date: f.date,
+    kind: f.url?.match(/\.(jpg|jpeg|png|gif|webp|avif)$/i)
+      ? 'image'
+      : f.url?.match(/\.(mp4|webm|ogg)$/i)
+        ? 'video'
         : 'file'
   }))
-)
+})
 
 const queryClient = useQueryClient()
 const moveCard = useMoveCard({
@@ -525,32 +1083,69 @@ const moveCard = useMoveCard({
   }
 })
 
-const commentAttachments = ref<File[]>([])
-const { mutate: uploadFile } = usePrivateUploadFile({
-  onSuccess: (data: any) => { commentAttachments.value = [data] }
-})
+const commentAttachments = ref<any[]>([])
+const { mutate: uploadFile } = usePrivateUploadFile()
 
-function handleFileChange(event: any) {
-  const files = event.target.files
-  Array.from(files).forEach((file: any) => {
-    const fd = new FormData()
-    fd.append('file', file)
-    uploadFile(fd)
+function removeAttachment(id: string) {
+  commentAttachments.value = commentAttachments.value.filter((a) => a.id !== id)
+}
+
+function uploadSingleFile(file: File) {
+  const tempId = Math.random().toString(36).substring(2, 9)
+  const isImage = file.type.startsWith('image/')
+  commentAttachments.value.push({
+    id: tempId,
+    name: file.name,
+    loading: true,
+    previewUrl: isImage ? URL.createObjectURL(file) : null
+  })
+
+  const fd = new FormData()
+  fd.append('file', file)
+
+  uploadFile(fd, {
+    onSuccess: (res: any) => {
+      const item = commentAttachments.value.find((a) => a.id === tempId)
+      if (item) {
+        item.loading = false
+        item.data = res.data
+      }
+    },
+    onError: () => {
+      removeAttachment(tempId)
+      toast.error(`Failed to upload ${file.name}`)
+    }
   })
 }
 
+function handleFileChange(event: any) {
+  const files = event.target.files
+  Array.from(files).forEach((file: any) => uploadSingleFile(file))
+}
+
 function postComment() {
-  const comment_text = newComment.value.trim()
+  let comment_text = newComment.value.trim()
+  const mentions: any[] = []
+  currentMentions.value.forEach((m) => {
+    const mentionToken = `@${m.name}`
+    if (comment_text.includes(mentionToken)) {
+      comment_text = comment_text.replace(mentionToken, `@[${m.name}](${m.id})`)
+      mentions.push({ id: m.id, name: m.name, email: m.email, type: 'user' })
+    }
+  })
   if (!comment_text && !commentAttachments.value.length) return
   if (details.value._id) {
     createComment({
       id: details.value._id,
       payload: {
         comment_text,
-        attachments: commentAttachments.value.map((file: any) => ({
-          name: file.data.name,
-          url: file.data.url
-        }))
+        mentions,
+        attachments: commentAttachments.value
+          .filter((a) => !a.loading && a.data)
+          .map((a: any) => ({
+            name: a.data.name,
+            url: a.data.url
+          }))
       }
     })
   }
@@ -629,6 +1224,9 @@ watch(activeTab, (tab) => {
     refetchComments()
   }
 })
+onBeforeUnmount(() => {
+  if (cleanupMention) cleanupMention()
+})
 </script>
 
 <style scoped>
@@ -685,5 +1283,14 @@ watch(activeTab, (tab) => {
 .section-enter-active,
 .section-leave-active {
   transition: opacity 160ms ease, transform 160ms ease;
+}
+:global(.mention-highlight) {
+  background-color: color-mix(in srgb, var(--color-accent, #6366f1) 15%, transparent);
+  color: var(--color-accent, #6366f1);
+  padding: 1px 0;
+  border-radius: 4px;
+  font-weight: 400;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-accent, #6366f1) 20%, transparent);
+  display: inline;
 }
 </style>

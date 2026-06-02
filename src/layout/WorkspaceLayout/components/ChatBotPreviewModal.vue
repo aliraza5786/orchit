@@ -340,6 +340,7 @@
       <div class="flex items-center gap-2 flex-1">
         <div @click.stop v-if="canAssignCard || canViewCard">
           <AssigmentDropdown
+            :inSpace="true" 
             :users="members"
             :assigneeId="card.seat_id"
             @assign="assignHandle(card)"
