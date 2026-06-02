@@ -298,9 +298,10 @@ const renderCompanyPercentage = ({ row }: any) => {
   ]);
 };
 
-const renderProjectType = ({ value }: any, userData?: any) => {
+const renderProjectType = ({ value }: any) => {
+  
   const type = value?.["workspace-type"] || "personal"
-  const hasActiveCompany = !!userData?.data?.active_company_id
+  const hasActiveCompany = !!userData.value?.data?.active_company_id
 
   const isOrganization = type === "team" && hasActiveCompany
   const isTeam = type === "team" && !hasActiveCompany
