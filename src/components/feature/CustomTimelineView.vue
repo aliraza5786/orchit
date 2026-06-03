@@ -625,7 +625,7 @@ const handleTaskClick = (task: any) => {
               ref="sidebarRef"
               @scroll="handleSidebarScroll"
             >
-              <template v-for="(row, rowIdx) in timelineRows" :key="row.type === 'group' ? 'g-' + row.title : row.task._id">
+              <template v-for="(row, _rowIdx) in timelineRows" :key="row.type === 'group' ? 'g-' + row.title : row.task._id">
                 <!-- Group header -->
                 <div
                   v-if="row.type === 'group'"
