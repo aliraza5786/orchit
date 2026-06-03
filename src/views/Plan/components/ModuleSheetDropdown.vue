@@ -105,8 +105,13 @@
            <div class="w-3 h-3 border-2 border-primary-color border-t-transparent animate-spin rounded-full"></div>
            <span class="text-xs text-text-secondary">Loading sheets...</span>
         </div>
-        <div v-else-if="!sheetsMap[hoveredModuleId] || sheetsMap[hoveredModuleId].length === 0" class="px-4 py-3 text-xs text-text-secondary italic">
-           No sheets found
+        <div v-else-if="!sheetsMap[hoveredModuleId] || sheetsMap[hoveredModuleId].length === 0" class="flex items-center justify-center px-2 py-4 w-full">
+          <EmptyState
+            icon="fa-regular fa-file-lines"
+            title="No sheets found"
+            description="This module has no sheets yet."
+            container-class="py-2"
+          />
         </div>
         <ul v-else>
            <!-- All Sheets Option -->
@@ -147,6 +152,7 @@ import { onClickOutside } from '@vueuse/core';
 import { useWorkspaceId } from '../../../composables/useQueryParams';
 import { computePosition, autoUpdate, flip, shift, offset } from '@floating-ui/dom';
 import type { CSSProperties } from 'vue';
+import EmptyState from '../../../components/ui/EmptyState.vue';
 
 const props = defineProps<{
   modules: any[];

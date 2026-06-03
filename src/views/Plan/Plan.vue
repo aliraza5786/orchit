@@ -709,42 +709,12 @@
                       "
                       class="w-full h-full min-h-[250px] flex flex-col items-center justify-center text-center gap-4 p-6"
                     >
-                      <!-- Icon -->
-                      <div
-                        class="w-16 h-16 flex items-center justify-center rounded-full bg-muted/10 text-primary-color"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          class="w-20 h-20"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          stroke-width="1.5"
-                        >
-                          <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                          />
-                        </svg>
-                      </div>
-
-                      <!-- Heading -->
-                      <h6
-                        class="text-sm text-text-primary font-semibold mb-1 text-center"
-                      >
-                        No {{ sprintType }}s available
-                      </h6>
-
-                      <!-- Description -->
-                      <p
-                        class="text-sm text-text-primary/90 mb-3 max-w-120 text-center"
-                      >
-                        You don’t have any {{ sprintType }}s yet. Create a new
-                        {{ sprintType }} to start planning and organizing your
-                        work. Click the <strong>plus (+)</strong> button to get
-                        started.
-                      </p>
+                      <EmptyState
+                        icon="fa-regular fa-calendar"
+                        :title="noSprintsTitle"
+                        :description="noSprintsDescription"
+                        container-class="py-0"
+                      />
                     </div>
                   </div>
                 </section>
@@ -838,6 +808,7 @@ import SprintModal from "./modals/SprintModal.vue";
 import ModuleSheetDropdown from "./components/ModuleSheetDropdown.vue";
 import PlanSelectDropdown from "./components/PlanSelectDropdown.vue"; 
 import ExpandableSearch from "../../components/ui/ExpandableSearch.vue";
+import EmptyState from "../../components/ui/EmptyState.vue";
 import { computed, ref, watch, onMounted, onUnmounted, nextTick, defineAsyncComponent } from "vue";
 import { useBacklogStore, type Ticket } from "./composables/useBacklogStore";
  
@@ -977,6 +948,11 @@ const selectedCardIdsForDelete = ref<string[]>([]);
 const elipseWrapperSprint = ref<HTMLElement | null>(null);
 const openElipseDropDown = ref(false);
 const sprintType = computed(() => selectedType.value.value);
+const noSprintsTitle = computed(() => `No ${sprintType.value}s available`);
+const noSprintsDescription = computed(
+  () =>
+    `You don't have any ${sprintType.value}s yet. Create a new ${sprintType.value} to start planning and organizing your work. Click the plus (+) button to get started.`,
+);
 const isStartingSprintLoading = ref(false);
 
 const selectedFilterLabelWithCount = computed(() => {

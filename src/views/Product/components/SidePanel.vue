@@ -1113,19 +1113,12 @@
                 v-else
                 class="py-12 flex flex-col items-center justify-center border border-dashed border-border rounded-3xl bg-orchit-white/2"
               >
-                <div
-                  class="w-16 h-16 rounded-2xl bg-orchit-white/5 flex items-center justify-center mb-4"
-                >
-                  <i
-                    class="fa-regular fa-folder-open text-2xl text-text-secondary opacity-40"
-                  ></i>
-                </div>
-                <div class="text-sm font-medium text-text-primary">
-                  No attachments found
-                </div>
-                <div class="text-xs text-text-secondary mt-1">
-                  Files from comments will appear here
-                </div>
+                <EmptyState
+                  icon="fa-regular fa-folder-open"
+                  title="No attachments found"
+                  description="Files from comments will appear here"
+                  container-class="py-0"
+                />
               </div>
             </section>
           </Transition>
@@ -1356,6 +1349,7 @@ const MentionProfileCard = defineAsyncComponent(
 );
 
 import CreateVariableModal from "../modals/CreateVariableModal.vue";
+import EmptyState from "../../../components/ui/EmptyState.vue";
 import EditVariableModal from "../modals/EditVariableModal.vue";
 const isCreateVar = ref(false);
 const isEditVar = ref(false);

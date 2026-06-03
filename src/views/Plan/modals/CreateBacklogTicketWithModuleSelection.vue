@@ -20,8 +20,13 @@
         <div v-if="loadingModules" class="flex items-center justify-center py-12">
           <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
-        <div v-else-if="!modules || modules.length === 0" class="text-center py-12 text-text-secondary">
-          No modules available
+        <div v-else-if="!modules || modules.length === 0" class="flex items-center justify-center py-12 w-full">
+          <EmptyState
+            icon="fa-regular fa-folder-open"
+            title="No modules available"
+            description="There are no modules to select for this ticket."
+            container-class="py-0"
+          />
         </div>
         
         <div v-else class="grid grid-cols-2 gap-3">
@@ -54,8 +59,13 @@
         <div v-if="loadingSheets" class="flex items-center justify-center py-12">
           <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
-        <div v-else-if="!sheets || sheets.length === 0" class="text-center py-12 text-text-secondary">
-          No sheets available for this module
+        <div v-else-if="!sheets || sheets.length === 0" class="flex items-center justify-center py-12 w-full">
+          <EmptyState
+            icon="fa-regular fa-file-lines"
+            title="No sheets available"
+            description="No sheets are available for this module."
+            container-class="py-0"
+          />
         </div>
         <div v-else class="grid grid-cols-2 gap-3">
           <button v-for="sheet in sheets" :key="sheet._id" @click="selectSheet(sheet)"
@@ -164,6 +174,7 @@
 <script setup lang="ts">
 import { reactive, computed, watch, ref } from 'vue'
 import BaseModal from '../../../components/ui/BaseModal.vue'
+import EmptyState from '../../../components/ui/EmptyState.vue'
 import BaseTextField from '../../../components/ui/BaseTextField.vue'
 import BaseSelectField from '../../../components/ui/BaseSelectField.vue'
 import Button from '../../../components/ui/Button.vue'

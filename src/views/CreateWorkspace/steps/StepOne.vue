@@ -62,6 +62,7 @@
 
     <div class="step-enter step-enter-5">
       <BaseSelectField
+        :noSearchAble="true"
         class=""
         v-model="form['workspace-type']"
         :options="workspaceTypeOptions"

@@ -159,11 +159,26 @@ watch(props, () => {
 })
 function validateManual() {
     const next: any = {}
-    if (!form.value.title.trim()) next.title = 'Please enter a sheet name.'
+    if (!form.value.title?.trim()) next.title = 'Please enter a sheet name.'
     if (!form.value.description?.trim()) next.description = 'Please enter a description.'
     errors.value = next
     return Object.keys(next).length === 0
 }
+
+function clearFieldError(field: 'title' | 'description') {
+    if (!errors.value[field]) return
+    const next = { ...errors.value }
+    delete next[field]
+    errors.value = next
+}
+
+watch(() => form.value.title, (val) => {
+    if ((val ?? '').trim()) clearFieldError('title')
+})
+
+watch(() => form.value.description, (val) => {
+    if ((val ?? '').trim()) clearFieldError('description')
+})
 
 const { mutate: createSheet, isPending: creatingSheet } = useCreateWorkspaceSheet({
     onSuccess: () => {

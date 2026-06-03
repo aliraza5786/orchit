@@ -88,14 +88,13 @@
           <!-- EMPTY STATE -->
           <tr v-else-if="(!isGrouped && tickets.length === 0) || (isGrouped && groups.length === 0)">
             <td :colspan="visibleColumns.length + 2" class="text-center py-20">
-              <div class="flex flex-col items-center justify-center gap-3">
-                <div class="w-10 h-10 rounded-full bg-bg-body/60 flex items-center justify-center border border-border/40 shadow-sm">
-                  <i class="fa-regular fa-folder-open text-xl text-text-secondary/60"></i>
-                </div>
-                <div class="text-sm font-medium text-text-primary">No tickets found</div>
-                <div class="text-[12px] text-text-secondary max-w-xs text-center">
-                   You can add a new ticket using the create button below.
-                </div>
+              <div class="flex items-center justify-center w-full">
+                <EmptyState
+                  icon="fa-regular fa-folder-open"
+                  title="No tickets found"
+                  description="You can add a new ticket using the create button below."
+                  container-class="py-0"
+                />
               </div>
             </td>
           </tr>
@@ -103,14 +102,13 @@
           <!-- IF NO VISIBLE COLUMN -->
            <tr v-else-if="visibleColumns.length === 0">
             <td :colspan="visibleColumns.length + 2" class="text-center py-20">
-              <div class="flex flex-col items-center justify-center gap-3">
-                <div class="w-10 h-10 rounded-full bg-bg-body/60 flex items-center justify-center border border-border/40 shadow-sm">
-                  <i class="fa-regular fa-folder-open text-xl text-text-secondary/60"></i>
-                </div>
-                <div class="text-sm font-medium text-text-primary">Configure your columns</div>
-                <div class="text-[12px] text-text-secondary max-w-xs text-center">
-                   You haven't configured any columns yet. Add fields as columns to see search results and their information.
-                </div>
+              <div class="flex items-center justify-center w-full">
+                <EmptyState
+                  icon="fa-regular fa-folder-open"
+                  title="Configure your columns"
+                  description="You haven't configured any columns yet. Add fields as columns to see search results and their information."
+                  container-class="py-0"
+                />
               </div>
             </td>
           </tr>
@@ -546,6 +544,7 @@ const CreateTaskModal = defineAsyncComponent(() => import('../../../views/Produc
 import { useRouteIds } from '../../../composables/useQueryParams';
 import { useSheets, useVariables } from '../../../queries/useSheets';
 import { useElementSize } from '@vueuse/core'
+import EmptyState from '../../ui/EmptyState.vue'
 
 // ─── State & Initialization ───────────────────────────────────────────────────
 const { workspaceId } = useRouteIds();

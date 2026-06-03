@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { ref, computed, onMounted } from 'vue';
 import Button from '../../../components/ui/Button.vue';
+import EmptyState from '../../../components/ui/EmptyState.vue';
 import { primeIcons } from '../../../data/primeIconsNames';
 
 type IconPrefix = 'fa';
@@ -62,6 +63,12 @@ const filteredIcons = computed(() => {
 
 const visibleIcons = computed(() => filteredIcons.value.slice(0, page.value * pageSize));
 
+const noIconsDescription = computed(() =>
+  query.value.trim()
+    ? `No icons match "${query.value.trim()}".`
+    : 'No icons available.',
+);
+
 function onScroll(e: Event) {
   const el = e.target as HTMLElement;
   if (el.scrollTop + el.clientHeight >= el.scrollHeight - 24) {
@@ -115,14 +122,19 @@ function openIconLibrary() {
           </button>
         </div>
 
-        <p v-if="!filteredIcons.length" class="text-sm text-neutral-400">
-          No icons match “{{ query }}”.
-        </p>
+        <div v-if="!filteredIcons.length" class="flex items-center justify-center col-span-full py-6">
+          <EmptyState
+            icon="fa-regular fa-icons"
+            title="No icons found"
+            :description="noIconsDescription"
+            container-class="py-4"
+          />
+        </div>
       </div>
     </div>
 
     <!-- Selected preview -->
-    <div v-if="modelValue" class="mt-4 p-3 bg-bg-input rounded-lg flex items-center gap-2">
+    <div v-if="modelValue" class="mt-1 p-3 bg-bg-input rounded-lg flex items-center gap-2">
       <i :class="[modelValue.prefix, modelValue.iconName]" class="text-xl" />
       <div class="min-w-0">
         <p class="font-medium truncate"> {{ modelValue.iconName }}</p>

@@ -181,7 +181,7 @@
             class="text-center text-[11px] text-text-secondary/60 mt-2.5 transition-opacity duration-500"
             :class="manualTypingDone ? 'opacity-100' : 'opacity-0'"
           >
-            Prefer full control? Set up lanes, roles, and details step by step.
+            Prefer full control? Set up tabs, roles, and details step by step.
           </p>
         </div>
       </Transition>

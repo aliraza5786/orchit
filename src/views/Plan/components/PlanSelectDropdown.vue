@@ -139,8 +139,13 @@
              <span class="truncate">{{ item.title }}</span>
            </li>
         </ul>
-        <div v-else class="px-6 py-4 text-center text-xs text-text-secondary italic opacity-60">
-          No {{ getCurrentGroup?.title.toLowerCase() }} created yet.
+        <div v-else class="flex items-center justify-center px-4 py-6 w-full">
+          <EmptyState
+            icon="fa-regular fa-calendar"
+            :title="planSelectEmptyTitle"
+            description="Create one using the add button to get started."
+            container-class="py-0"
+          />
         </div>
       </div>
     </Teleport>
@@ -152,6 +157,7 @@ import { ref, nextTick, onBeforeUnmount, computed } from 'vue';
 import { onClickOutside } from '@vueuse/core';
 import { computePosition, autoUpdate, flip, shift, offset } from '@floating-ui/dom';
 import type { CSSProperties } from 'vue';
+import EmptyState from '../../../components/ui/EmptyState.vue';
 
 const props = defineProps<{
   groups: any[]; // Array of { id, title, sprints: [] }
@@ -179,6 +185,11 @@ let cleanupNested: (() => void) | null = null;
 let hoverTimeout: any = null;
 
 const getCurrentGroup = computed(() => props.groups.find(g => g.id === hoveredGroupId.value));
+
+const planSelectEmptyTitle = computed(() => {
+  const title = getCurrentGroup.value?.title?.toLowerCase() || "items";
+  return `No ${title} created yet`;
+});
 const isSelectedItem = (id: string) => props.selectedIds.includes(id);
 computed(() => props.selectedIds.length === 0);
 

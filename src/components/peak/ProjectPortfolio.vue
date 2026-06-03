@@ -30,7 +30,7 @@
     <template v-else>
 
       <!-- Header -->
-      <div class="border-b border-border p-6">
+      <div class="border-b border-border p-4">
         <h3 class="font-semibold text-lg text-primary dark:text-slate-50">
           Project Portfolio
         </h3>
@@ -62,16 +62,13 @@
         </div>
 
         <!-- Empty State -->
-        <div v-else class="py-16 text-center text-text-secondary">
-          <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 mb-4">
-            <i class="fa-solid fa-chart-pie text-slate-400 dark:text-slate-500 text-2xl"></i>
-          </div>
-          <h3 class="text-base font-semibold text-text-primary dark:text-white mb-1">
-            No Project Data
-          </h3>
-          <p class="text-sm text-text-secondary">
-            You currently have no active projects to display.
-          </p>
+        <div v-else class="flex items-center justify-center py-16 w-full">
+          <EmptyState
+            icon="fa-solid fa-chart-pie"
+            title="No Project Data"
+            description="You currently have no active projects to display."
+            container-class="py-0"
+          />
         </div>
 
       </div>
@@ -83,6 +80,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, watch, computed, nextTick } from 'vue'
+import EmptyState from '../ui/EmptyState.vue'
 import { Chart, DoughnutController, ArcElement, Tooltip, Legend, Colors } from 'chart.js'
 Chart.register(DoughnutController, ArcElement, Tooltip, Legend, Colors)
 const props = defineProps<{
