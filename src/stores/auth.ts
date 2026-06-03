@@ -294,7 +294,7 @@ export const useAuthStore = defineStore('auth', {
         'onboarding_super_admin_email_prefix', 'onboarding_super_admin_name',
         'onboarding_domain_phase', 'onboarding_current_domain', 'onboarding_current_instructions',
         'onboarding_selected_verification_method',
-        'pending_invite_token'
+        'pending_invite_token',
       ]
       keys.forEach(k => localStorage.removeItem(k))
       clearCookies()

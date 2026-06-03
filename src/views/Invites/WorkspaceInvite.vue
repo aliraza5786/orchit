@@ -167,6 +167,12 @@ import { useAuthStore } from '../../stores/auth'
 import api from '../../libs/api'
 import { useRouteIds } from '../../composables/useQueryParams'
 import Button from '../../components/ui/Button.vue'
+import {
+  savePendingWorkspaceInvite,
+  clearPendingWorkspaceInvite,
+  getPendingWorkspaceInvite,
+  type WorkspaceInviteAction,
+} from '../../utilities/workspaceInvitePending'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -193,6 +199,7 @@ type Invite = {
 const error = ref<string | null>(null)
 const acting = ref(false)
 const actionType = ref<'accepted' | 'decline' | null>(null)
+const pendingActionRan = ref(false)
 const invite = ref<Invite | null>(null)
 const accepted = ref(false)
 const declined = ref(false) 
@@ -210,13 +217,19 @@ const isEmailMatch = computed(() => {
   return currentUserEmail.value === inviteEmail.value
 })
 
+function requireAuthForInviteAction(action: WorkspaceInviteAction): boolean {
+  if (isLoggedIn.value) return true
+  savePendingWorkspaceInvite(token.value, action)
+  error.value =
+    action === 'accepted'
+      ? 'Please log in to accept this invitation.'
+      : 'Please log in to decline this invitation.'
+  return false
+}
+
 async function accept() {
   if (!data.value || data.value.status == 'expired') return
-  
-  if (!isLoggedIn.value) {
-    goToLogin()
-    return
-  }
+  if (!requireAuthForInviteAction('accepted')) return
 
   acting.value = true
   actionType.value = 'accepted'
@@ -224,6 +237,7 @@ async function accept() {
   try {
     await api.post(`/common/invitation/accept/${encodeURIComponent(token.value)}`, { status: 'accepted' })
     accepted.value = true
+    clearPendingWorkspaceInvite()
   } catch (e: any) {
     error.value = e?.response?.data?.message || 'Could not accept the invitation.'
   } finally {
@@ -234,12 +248,15 @@ async function accept() {
 
 async function decline() {
   if (!data.value) return
+  if (!requireAuthForInviteAction('rejected')) return
+
   acting.value = true
   actionType.value = 'decline'
   error.value = null
   try {
     await api.post(`/common/invitation/accept/${encodeURIComponent(token.value)}`, { status: 'rejected' })
     declined.value = true
+    clearPendingWorkspaceInvite()
   } catch (e: any) {
     error.value = e?.response?.data?.message || 'Could not decline the invitation.'
   } finally {
@@ -253,9 +270,6 @@ function goHome() {
 }
 
 function goToLogin() {
-  // Save intent so we can auto-accept after login
-  auth.logout()
-  localStorage.setItem('pending_invite_token', token.value)
   router.push({ name: 'Login', query: { redirect: router.currentRoute.value.fullPath } })
 }
 
@@ -277,13 +291,27 @@ function goToWorkspace() {
   }
 }
 
+async function runPendingInviteAction() {
+  if (pendingActionRan.value || acting.value || !isLoggedIn.value) return
+
+  const pending = getPendingWorkspaceInvite()
+  if (!pending || pending.token !== token.value) return
+
+  pendingActionRan.value = true
+  if (pending.action === 'accepted') {
+    await accept()
+  } else {
+    await decline()
+  }
+  if (error.value) pendingActionRan.value = false
+}
+
 // Watch for auth + data being ready together
 watch(
   [() => data.value, isLoggedIn],
   ([newData, loggedIn]) => {
     if (!newData) return
 
-    // ADD THIS LINE
     invite.value = newData as any
 
     if (!loggedIn) return
@@ -291,11 +319,7 @@ watch(
     if (newData.status === 'rejected') { declined.value = true; return }
     if (newData.status === 'accepted') { accepted.value = true; return }
 
-    const pendingToken = localStorage.getItem('pending_invite_token')
-    if (pendingToken && pendingToken === token.value) {
-      localStorage.removeItem('pending_invite_token')
-      accept()
-    }
+    void runPendingInviteAction()
   },
   { immediate: true }
 )

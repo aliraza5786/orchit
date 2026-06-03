@@ -1159,6 +1159,7 @@ import { useIndustries } from '../../queries/useWorkspace'
 import { useTheme } from '../../composables/useTheme';
 import { isCompanyEmail as checkIsCompanyEmail } from '../../utilities/onboardingRedirect'
 import { clearOrgDraft } from '../../utilities/createOrganizationDraft'
+import { getPendingWorkspaceInviteRedirectPath } from '../../utilities/workspaceInvitePending'
 
 const { theme } = useTheme();
 defineOptions({ name: 'OnboardingFlow' })
@@ -2229,8 +2230,19 @@ function clearOnboardingState() {
   clearOrgDraft()
 }
 
+function maybeRedirectToPendingWorkspaceInvite() {
+  const invitePath = getPendingWorkspaceInviteRedirectPath()
+  if (invitePath) {
+    router.push(invitePath)
+    return true
+  }
+  return false
+}
+
 function routeToFinishProfile() {
   clearOnboardingState()
+  if (maybeRedirectToPendingWorkspaceInvite()) return
+
   const companyIdRaw = companyID.value ?? localStorage.getItem('company_id') ?? ''
   const token        = localStorage.getItem('token')
   if (token) setAuthCookie(token)
@@ -2248,6 +2260,8 @@ function routeToFinishProfile() {
 
 async function finishOnboarding() {
   clearOnboardingState()
+  if (maybeRedirectToPendingWorkspaceInvite()) return
+
   const companyIdRaw = companyID.value ?? localStorage.getItem('company_id') ?? ''
   const token        = localStorage.getItem('token')
   if (token) setAuthCookie(token)
@@ -2286,6 +2300,7 @@ function onProvisioningComplete() {
 
   if (selected.value === 'personal') {
     clearOnboardingState()
+    if (maybeRedirectToPendingWorkspaceInvite()) return
     router.push({ path: '/finish-profile', query: { welcome: '1', type: 'personal', theme: theme.value } })
     return
   }

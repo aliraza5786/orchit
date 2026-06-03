@@ -200,7 +200,14 @@ const router = createRouter({
 api.interceptors.response.use(
   (response: AxiosResponse) => response,
   (error: AxiosError) => {
-    if (error.response?.status === 401 && !isPublicAuthRequest(error.config)) {
+    const onWorkspaceInvite =
+      typeof window !== 'undefined' &&
+      window.location.pathname.startsWith('/workspace-invite/')
+    if (
+      error.response?.status === 401 &&
+      !isPublicAuthRequest(error.config) &&
+      !onWorkspaceInvite
+    ) {
       const auth = useAuthStore()
       auth.logout()
       redirectToLogin(router, window.location.pathname)
