@@ -3,14 +3,14 @@
         <div :class="['flex', displayData.overlap]">
             <!-- Visible Avatars -->
             <template v-for="(collaborator, index) in displayData.visible" :key="index">
-                <img v-if="image && (collaborator?.logo ?? collaborator?.image ?? collaborator?.profile_image)"
-                    :src="collaborator?.logo ?? collaborator?.image ?? collaborator?.profile_image"
-                    :alt="collaborator.name" loading="lazy" decoding="async" @click="collaborator.onclick?.()"
+                <img v-if="image && getCollaboratorImage(collaborator)"
+                    :src="getCollaboratorImage(collaborator)"
+                    :alt="getAvatarLabel(collaborator)" loading="lazy" decoding="async" @click="collaborator.onclick?.()"
                     :class="`w-${size} h-${size} rounded-full border-2 border-white shadow-md object-cover cursor-pointer`" />
 
-                <div v-else @click="collaborator.onclick?.()" :alt="collaborator.name || collaborator.full_name || collaborator.email"
-                    :style="{ backgroundColor: avatarColor({ email: collaborator?.email }) }"
-                    :class="`w-${size} h-${size} rounded-full text-text-primary flex justify-center items-center bg-amber-600 border-2 border-border shadow-md object-cover cursor-pointer`">
+                <div v-else @click="collaborator.onclick?.()"
+                    :style="{ backgroundColor: avatarColor({ email: getAvatarColorKey(collaborator) }) }"
+                    :class="`w-${size} h-${size} rounded-full text-text-primary flex justify-center items-center bg-amber-600 border-2 border-border shadow-md object-cover cursor-pointer text-[10px] font-bold`">
                     {{ getCachedInitials(collaborator) }}
                 </div>
             </template>
@@ -53,9 +53,20 @@ const props = defineProps({
 // Cache initials to avoid recomputation
 const initialsCache = new Map();
 
+const getCollaboratorImage = (collaborator) =>
+    collaborator?.logo ??
+    collaborator?.image ??
+    collaborator?.avatar ??
+    collaborator?.src ??
+    collaborator?.profile_image ??
+    null;
+
 const getAvatarLabel = (collaborator) => {
-    return collaborator?.name || collaborator?.full_name || collaborator?.email || '?';
+    return collaborator?.name || collaborator?.title || collaborator?.full_name || collaborator?.email || '?';
 };
+
+const getAvatarColorKey = (collaborator) =>
+    collaborator?.email || collaborator?.title || collaborator?.name || collaborator?.full_name || '?';
 
 const getCachedInitials = (collaborator) => {
     const label = getAvatarLabel(collaborator);

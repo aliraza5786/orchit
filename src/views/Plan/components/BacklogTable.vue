@@ -11,19 +11,14 @@
       <!-- Empty State -->
       <div
         v-if="!isBacklogListPending && filteredBacklog.length === 0"
-        class="empty-state flex flex-col justify-center items-center h-full"
+        class="empty-state flex flex-col justify-center items-center h-full gap-4"
       >
-        <img
-          src="../../../assets/emptyStates/plan-backlog.svg"
-          class="mb-4"
-          alt="backlog-plan"
+        <EmptyState
+          icon="fa-regular fa-list-check"
+          title="Get started in the backlog"
+          description="Plan and start a sprint to see issues here."
+          container-class="py-0"
         />
-        <h6 class="text-sm text-text-primary font-semibold mb-1">
-          Get started in the backlog
-        </h6>
-        <p class="text-sm text-text-primary/90 mb-4">
-          Plan and start a sprint to see issues here.
-        </p>
         <button
           :disabled="!canCreateCard"
           @click="$emit('open-create-ticket')"
@@ -161,6 +156,7 @@ import { useTheme } from "../../../composables/useTheme";
 const { isDark } = useTheme();
 
 import { usePermissions } from "../../../composables/usePermissions";
+import EmptyState from "../../../components/ui/EmptyState.vue";
 const { canCreateCard } = usePermissions();
 
 const emit = defineEmits([

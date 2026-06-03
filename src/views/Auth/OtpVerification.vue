@@ -173,13 +173,6 @@ async function verifyCode() {
       }
     }
 
-    // ✅ Check pending invite token → skip onboarding
-    const pendingToken = localStorage.getItem('pending_invite_token')
-    if (pendingToken) {
-      router.push(`/company-join/${pendingToken}`)
-      return
-    }
-
     if (hasCreateOrgPendingOnboarding()) {
       router.replace({ path: '/onboarding-organization', query: { step: '5', otpVerified: '1' } })
       return

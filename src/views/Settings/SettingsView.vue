@@ -53,7 +53,7 @@
       <!-- Main Content Area -->
       <main
         class="flex-1 min-w-0 flex flex-col overflow-hidden
-               md:mx-2 md:rounded-[6px] md:border border-border"
+               md:mx-2 md:border border-border"
         :class="isDark ? 'bg-bg-card/30' : 'bg-bg-card'"
       >
         <div class="flex-1 overflow-y-auto">

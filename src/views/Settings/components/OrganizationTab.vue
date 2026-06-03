@@ -224,17 +224,24 @@
               </div>
             </div>
           </div>
-
           <!-- Org Name -->
-          <div class="space-y-1.5">
+          <div class="space-y-1.5 ">
             <label class="text-[10px] font-bold text-text-secondary uppercase tracking-wider block">Organization Name</label>
             <input
               v-model="orgName"
               :readonly="isMember || isPendingDeletion"
-              class="w-full border rounded-xl px-4 py-2.5 text-[13px] outline-none transition-all placeholder:text-text-secondary/40"
-              :class="isMember
-                ? 'border-border/40 bg-bg-body/60 text-text-secondary cursor-default'
-                : 'border-border/60 bg-bg-body focus:border-accent/50 focus:ring-2 focus:ring-accent/10 hover:border-border text-text-primary'"
+              class="relative px-3 py-2 rounded-md overflow-x-auto w-full  text-sm h-10 bg-bg-input border border-border focus-within:ring-black"
+              :class="{
+              '!text-white placeholder-white/60': isDarkTheme && !isMember,
+              'text-text-primary placeholder-gray-400': !isDarkTheme && !isMember,
+
+              'border-border/40 bg-bg-body/60 text-text-secondary cursor-default': isMember && !isDarkTheme,
+              'border-border/60 bg-bg-body focus:border-accent/50 focus:ring-2 focus:ring-accent/10 hover:border-border text-text-primary':
+                !isMember && !isDarkTheme,
+
+              'border-border/40 bg-bg-body/60 text-text-secondary cursor-default dark:border-border/30 dark:bg-bg-body/40':
+                isMember && isDarkTheme
+            }"
               placeholder="Acme Corp"
               @blur="!isMember && validateOrgName()"
             />
@@ -246,26 +253,27 @@
           <!-- Domain -->
           <div class="space-y-1.5">
             <label class="text-[10px] font-bold text-text-secondary uppercase tracking-wider block">Domain / Slug</label>
-            <div
-              class="flex items-center border rounded-xl overflow-hidden transition-all"
-              :class="isMember
-                ? 'border-border/40 bg-bg-body/60'
-                : errors.orgSlug ? 'border-red-400/60 bg-bg-body focus-within:ring-2 focus-within:ring-red-400/10'
-                : isSlugAvailable === true ? 'border-green-500/50 bg-bg-body focus-within:ring-2 focus-within:ring-green-500/10'
-                : 'border-border/60 bg-bg-body focus-within:border-accent/50 focus-within:ring-2 focus-within:ring-accent/10'"
-            >
-              <input
-                v-model="orgSlug"
-                readonly
-                class="flex-1 px-4 py-2.5 text-[13px] bg-transparent outline-none"
-                :class="isMember ? 'text-text-secondary cursor-default' : 'text-text-primary'"
-                placeholder="acme"
-              />
+             <input
+              v-model="orgSlug"
+              readonly
+              class="relative px-3 py-2 rounded-md overflow-x-auto w-full  text-sm h-10 bg-bg-input border border-border focus-within:ring-black"
+              :class="{
+              '!text-white placeholder-white/60': isDarkTheme && !isMember,
+              'text-text-primary placeholder-gray-400': !isDarkTheme && !isMember,
+
+              'border-border/40 bg-bg-body/60 text-text-secondary cursor-default': isMember && !isDarkTheme,
+              'border-border/60 bg-bg-body focus:border-accent/50 focus:ring-2 focus:ring-accent/10 hover:border-border text-text-primary':
+                !isMember && !isDarkTheme,
+
+              'border-border/40 bg-bg-body/60 text-text-secondary cursor-default dark:border-border/30 dark:bg-bg-body/40':
+                isMember && isDarkTheme
+            }"
+              placeholder="acme-corp.com"
+            />
               <div class="px-3 flex items-center shrink-0">
                 <i v-if="isCheckingSlug" class="fa-solid fa-spinner fa-spin text-text-secondary text-xs"></i>
                 <i v-else-if="isSlugAvailable === true && orgSlug !== currentCompany?.slug" class="fa-solid fa-circle-check text-green-500 text-xs"></i>
               </div>
-            </div>
             <p v-if="errors.orgSlug" class="text-[11px] text-red-500 flex items-center gap-1">
               <i class="fa-solid fa-circle-exclamation text-[10px]"></i> {{ errors.orgSlug }}
             </p>
@@ -275,23 +283,16 @@
           <div class="space-y-1.5">
             <label class="text-[10px] font-bold text-text-secondary uppercase tracking-wider block">Team Size</label>
             <div class="relative">
-              <select
-                v-model="orgSize"
-                :disabled="isMember || isPendingDeletion"
-                class="w-full border rounded-xl px-4 py-2.5 pr-9 text-[13px] outline-none transition-all appearance-none"
-                :class="isMember
-                  ? 'border-border/40 bg-bg-body/60 text-text-secondary cursor-default opacity-75'
-                  : 'border-border/60 bg-bg-body focus:border-accent/50 focus:ring-2 focus:ring-accent/10 hover:border-border text-text-primary cursor-pointer'"
-              >
-                <option value="1–10">1–10 people</option>
-                <option value="11–50">11–50 people</option>
-                <option value="51–200">51–200 people</option>
-                <option value="201–500">201–500 people</option>
-                <option value="500-1000">501-1000</option>
-                <option value="1001-5000">1001-5000</option>
-                <option value="5001–10000">5001–10000 people</option>
-              </select>
-              <i v-if="!isMember && !isPendingDeletion" class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary text-[10px] pointer-events-none"></i>
+              <BaseSelectField
+              :noSearchAble="true"
+              :disabled="isMember || isPendingDeletion"
+              ref="companySizeRef"
+              v-model="orgSize"
+              :options="ORG_COMPANY_SIZE_OPTIONS"
+              placeholder="Select organization size"
+              size="md"
+            />
+            
             </div>
           </div>
 
@@ -325,10 +326,18 @@
               v-model="orgDescription"
               :disabled="isMember || isPendingDeletion"
               placeholder="Tell us about your organization…"
-              class="w-full border rounded-xl px-4 py-2.5 text-[13px] outline-none transition-all resize-none h-24"
-              :class="isMember
-                ? 'border-border/40 bg-bg-body/60 text-text-secondary cursor-default'
-                : 'border-border/60 bg-bg-body focus:border-accent/50 focus:ring-2 focus:ring-accent/10 hover:border-border text-text-primary'"
+              class="relative px-3 py-2 h-24 rounded-md overflow-x-auto w-full  text-sm h-10 bg-bg-input border border-border focus-within:ring-black"
+              :class="{
+              '!text-white placeholder-white/60': isDarkTheme && !isMember,
+              'text-text-primary placeholder-gray-400': !isDarkTheme && !isMember,
+
+              'border-border/40 bg-bg-body/60 text-text-secondary cursor-default': isMember && !isDarkTheme,
+              'border-border/60 bg-bg-body focus:border-accent/50 focus:ring-2 focus:ring-accent/10 hover:border-border text-text-primary':
+                !isMember && !isDarkTheme,
+
+              'border-border/40 bg-bg-body/60 text-text-secondary cursor-default dark:border-border/30 dark:bg-bg-body/40':
+                isMember && isDarkTheme
+            }"
             />
             <p class="text-[11px] text-text-secondary/60">{{ orgDescription.length }}/500 characters</p>
           </div>
@@ -675,6 +684,11 @@ import { request } from '../../../libs/api'
 import { useIndustries } from '../../../queries/useWorkspace'
 import { useRouter } from 'vue-router'
 import BaseMultiSelect from '../../../components/ui/BaseMultiSelect.vue'
+import { useTheme } from '../../../composables/useTheme';
+import { ORG_COMPANY_SIZE_OPTIONS } from '../../Auth/organizationOnboarding/constants.ts'
+const { isDark } = useTheme();
+import BaseSelectField from '../../../components/ui/BaseSelectField.vue'
+const isDarkTheme = computed(() => isDark.value);
 // ─── Props ────────────────────────────────────────────────────
 const props = defineProps<{
   forceCreate?: boolean

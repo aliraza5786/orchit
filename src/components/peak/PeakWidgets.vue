@@ -10,7 +10,7 @@
   </div>
   <div class="flex items-center gap-2">
     <button
-      class="inline-flex items-center gap-1.5 px-3.5 py-[7px] bg-[var(--bg-body)] text-[var(--text-primary)] border border-[var(--border)] rounded-[6px] text-[13px] cursor-pointer transition-colors hover:bg-[var(--bg-surface)] disabled:opacity-50 disabled:cursor-not-allowed"
+      class="inline-flex items-center gap-1.5 px-3.5 py-[10px] bg-[var(--bg-body)] text-[var(--text-primary)] border border-[var(--border)] rounded-[6px] text-[13px] cursor-pointer transition-colors hover:bg-[var(--bg-surface)] disabled:opacity-50 disabled:cursor-not-allowed"
       @click="fetchAllPinnedWidgetData"
       :disabled="store.isLoadingWidgets"
       title="Refresh all"
@@ -29,16 +29,15 @@
 <!-- Empty state -->
 <div
   v-if="!store.isLoadingWidgets && store.pinnedWidgets.length === 0 && !store.pendingProposal"
-  class="flex flex-col items-center justify-center py-16 px-6 text-center gap-3 bg-bg-surface rounded-b-[10px] border border-t-0 border-border"
+  class="flex flex-col items-center justify-center py-16 px-6 gap-3 bg-bg-surface rounded-b-[10px] border border-t-0 border-border"
   style="min-height: 260px"
 >
-  <div class="w-14 h-14 bg-[var(--bg-lavender)] rounded-2xl flex items-center justify-center text-[22px] text-[var(--primary-color)] mb-1">
-    <i class="fa-solid fa-chart-pie"></i>
-  </div>
-  <h3 class="text-[15px] font-semibold text-text-primary m-0">No widgets yet</h3>
-  <p class="text-[13px] text-text-secondary m-0 max-w-[280px] leading-relaxed">
-    Add widgets to track your workspace metrics in real time.
-  </p>
+  <EmptyState
+    icon="fa-solid fa-chart-pie"
+    title="No widgets yet"
+    description="Add widgets to track your workspace metrics in real time."
+    container-class="py-0"
+  />
   <button
     class="inline-flex items-center gap-2 mt-1 px-4 py-2 bg-primary-color text-white rounded-[6px] text-[13px] font-semibold cursor-pointer hover:bg-secondary-color transition-all active:scale-[0.97]"
     @click="openAddModal"
@@ -544,39 +543,14 @@
                 <!-- Empty state -->
                 <div
                   v-if="!resolveWidgetData(widget)?.data?.series?.length"
-                  class="flex-1 flex flex-col items-center justify-center gap-3 py-8"
+                  class="flex-1 flex items-center justify-center py-8 w-full min-h-0"
                 >
-                  <svg width="88" height="88" viewBox="0 0 88 88" fill="none">
-                    <circle
-                      cx="44"
-                      cy="44"
-                      r="32"
-                      stroke="var(--bg-surface)"
-                      stroke-width="16"
-                      fill="none"
-                    />
-                    <circle
-                      cx="44"
-                      cy="44"
-                      r="32"
-                      stroke="var(--border)"
-                      stroke-width="16"
-                      fill="none"
-                      stroke-dasharray="8 5"
-                    />
-                  </svg>
-                  <div class="text-center">
-                    <p
-                      class="text-[13px] font-semibold text-[var(--text-primary)] m-0"
-                    >
-                      No data
-                    </p>
-                    <p
-                      class="text-[11px] text-[var(--text-secondary)] m-0 mt-0.5"
-                    >
-                      Nothing found for this period
-                    </p>
-                  </div>
+                  <EmptyState
+                    icon="fa-solid fa-chart-pie"
+                    title="No data"
+                    description="Nothing found for this period"
+                    container-class="py-0"
+                  />
                 </div>
 
                 <!-- Filled pie -->
@@ -1038,17 +1012,13 @@
 
           <!-- No data -->
           <template v-else>
-            <div
-              class="flex-1 flex flex-col items-center justify-center gap-2 py-8 text-center"
-            >
-              <div
-                class="w-10 h-10 rounded-[6px] bg-[var(--bg-surface)] flex items-center justify-center text-[var(--text-secondary)] mb-1"
-              >
-                <i class="fa-solid fa-circle-info text-sm"></i>
-              </div>
-              <p class="text-[12px] text-[var(--text-secondary)] m-0">
-                No data yet
-              </p>
+            <div class="flex-1 flex flex-col items-center justify-center gap-2 py-8 w-full min-h-0">
+              <EmptyState
+                icon="fa-solid fa-circle-info"
+                title="No data yet"
+                description="Try refreshing to load widget data."
+                container-class="py-0"
+              />
               <button
                 class="text-[11px] text-[var(--primary-color)] bg-transparent border-none cursor-pointer p-0 hover:underline"
                 @click="refreshWidget(widget._id)"
@@ -1221,8 +1191,13 @@
                         {{ item.title || item["card-title"] }}
                       </div>
                     </div>
-                    <div v-else class="text-sm text-gray-500">
-                      No data found
+                    <div v-else class="flex items-center justify-center py-8 w-full">
+                      <EmptyState
+                        icon="fa-regular fa-folder-open"
+                        title="No data found"
+                        description="No items matched this query."
+                        container-class="py-4"
+                      />
                     </div>
                   </template>
 
@@ -1706,6 +1681,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, watch, computed } from "vue";
+import EmptyState from "../ui/EmptyState.vue";
 import { useWidgetStore } from "../../stores/widgets";
 import { useAgentStore } from "../../stores/agentStore";
 import { useAuthStore } from "../../stores/auth";

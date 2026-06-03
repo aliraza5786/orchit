@@ -63,8 +63,11 @@ api.interceptors.response.use(
     const isOrgOnboardingRoute =
       typeof window !== 'undefined' &&
       window.location.pathname.includes('/onboarding-organization');
+    const isWorkspaceInviteRoute =
+      typeof window !== 'undefined' &&
+      window.location.pathname.startsWith('/workspace-invite/');
 
-    if ((isUnauthorized || isNetworkOrCorsError) && !skipSessionRedirect && !isOrgOnboardingRoute) {
+    if ((isUnauthorized || isNetworkOrCorsError) && !skipSessionRedirect && !isOrgOnboardingRoute && !isWorkspaceInviteRoute) {
       console.warn(isUnauthorized ? "User not authorized." : "Backend down or CORS error.", "Clearing session and redirecting.");
       
       const logoutKeys = [

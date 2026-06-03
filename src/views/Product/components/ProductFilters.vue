@@ -114,9 +114,13 @@
                     </div>
                   </div>
                   
-                  <div v-if="currentPlanOptionsFiltered.length === 0" class="flex flex-col items-center justify-center h-full opacity-40 py-10">
-                    <i class="fa-solid fa-calendar-xmark text-3xl mb-2"></i>
-                    <span class="text-xs">No {{ selectedPlanType }}s found</span>
+                  <div v-if="currentPlanOptionsFiltered.length === 0" class="flex items-center justify-center h-full opacity-40 py-10 w-full">
+                    <EmptyState
+                      icon="fa-solid fa-calendar-xmark"
+                      :title="`No ${selectedPlanType}s found`"
+                      description="Try adjusting your search or filters."
+                      container-class="py-0"
+                    />
                   </div>
                 </div>
               </div>
@@ -150,9 +154,13 @@
                   </div>
                 </div>
                 
-                <div v-if="filteredOptions.length === 0" class="flex flex-col items-center justify-center h-full opacity-40 py-10">
-                  <i class="fa-solid fa-folder-open text-3xl mb-2"></i>
-                  <span class="text-xs">No matches found</span>
+                <div v-if="filteredOptions.length === 0" class="flex items-center justify-center h-full opacity-40 py-10 w-full">
+                  <EmptyState
+                    icon="fa-solid fa-folder-open"
+                    title="No matches found"
+                    description="Try a different search term."
+                    container-class="py-0"
+                  />
                 </div>
               </template>
             </div>
@@ -253,9 +261,13 @@
                           <span v-if="option.description" class="text-[10px] text-text-secondary truncate">{{ option.description }}</span>
                         </div>
                       </div>
-                      <div v-if="currentPlanOptionsFiltered.length === 0" class="flex flex-col items-center justify-center h-full opacity-40 py-10">
-                        <i class="fa-solid fa-calendar-xmark text-3xl mb-2"></i>
-                        <span class="text-xs">No {{ selectedPlanType }}s found</span>
+                      <div v-if="currentPlanOptionsFiltered.length === 0" class="flex items-center justify-center h-full opacity-40 py-10 w-full">
+                        <EmptyState
+                          icon="fa-solid fa-calendar-xmark"
+                          :title="`No ${selectedPlanType}s found`"
+                          description="Try adjusting your search or filters."
+                          container-class="py-0"
+                        />
                       </div>
                     </div>
                   </div>
@@ -285,9 +297,13 @@
                         <span v-if="option.description" class="text-[10px] text-text-secondary truncate">{{ option.description }}</span>
                       </div>
                     </div>
-                    <div v-if="filteredOptions.length === 0" class="flex flex-col items-center justify-center h-full opacity-40 py-10">
-                      <i class="fa-solid fa-folder-open text-3xl mb-2"></i>
-                      <span class="text-xs">No matches found</span>
+                    <div v-if="filteredOptions.length === 0" class="flex items-center justify-center h-full opacity-40 py-10 w-full">
+                      <EmptyState
+                        icon="fa-solid fa-folder-open"
+                        title="No matches found"
+                        description="Try a different search term."
+                        container-class="py-0"
+                      />
                     </div>
                   </template>
                 </div>
@@ -355,6 +371,7 @@ import { useGroupedSprints } from "../../../queries/usePlan";
 import { avatarColor } from "../../../utilities/avatarColor";
 import { getInitials } from "../../../utilities";
 import SwitchTab from "../../../components/ui/SwitchTab.vue";
+import EmptyState from "../../../components/ui/EmptyState.vue";
 
 const props = withDefaults(defineProps<{
   triggerRef: HTMLElement | null

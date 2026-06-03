@@ -200,7 +200,14 @@ const router = createRouter({
 api.interceptors.response.use(
   (response: AxiosResponse) => response,
   (error: AxiosError) => {
-    if (error.response?.status === 401 && !isPublicAuthRequest(error.config)) {
+    const onWorkspaceInvite =
+      typeof window !== 'undefined' &&
+      window.location.pathname.startsWith('/workspace-invite/')
+    if (
+      error.response?.status === 401 &&
+      !isPublicAuthRequest(error.config) &&
+      !onWorkspaceInvite
+    ) {
       const auth = useAuthStore()
       auth.logout()
       redirectToLogin(router, window.location.pathname)
@@ -252,7 +259,7 @@ router.beforeEach(async (to, _from, next) => {
 
   if (subdomain && to.name === 'Login') {
     const primary =
-      import.meta.env.VITE_PRIMARY_DOMAIN || 'orchit.ai'
+      import.meta.env.VITE_PRIMARY_DOMAIN || 'stagging.streamed.space'
 
     window.location.href =
       `${window.location.protocol}//${primary}/login?logout=true`

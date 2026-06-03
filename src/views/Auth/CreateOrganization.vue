@@ -829,6 +829,7 @@ import { useIndustries } from '../../queries/useWorkspace'
 import { useTheme } from '../../composables/useTheme'
 import { setAuthCookie } from '../../utilities/auth'
 import { getEmailDomain } from '../../utilities/onboardingRedirect'
+import { getPendingWorkspaceInviteRedirectPath } from '../../utilities/workspaceInvitePending'
 import {
   patchOrgDraft,
   getOrgDraft,
@@ -1731,6 +1732,12 @@ function onProvisioningComplete() {
 
 function routeToFinishProfile() {
   clearOrgDraft()
+  const invitePath = getPendingWorkspaceInviteRedirectPath()
+  if (invitePath) {
+    router.push(invitePath)
+    return
+  }
+
   const companyIdRaw = companyID.value ?? localStorage.getItem('company_id') ?? ''
   const token = localStorage.getItem('token')
   if (token) setAuthCookie(token)

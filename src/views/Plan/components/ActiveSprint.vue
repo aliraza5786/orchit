@@ -288,18 +288,12 @@
               v-if="!isPending && !filteredBoard?.length"
               class="flex flex-col items-center justify-center flex-1 h-full py-20 text-center"
             >
-              <div class="bg-bg-body p-6 rounded-full mb-4">
-                <i
-                  class="fa-solid fa-chart-kanban text-4xl text-text-secondary/20"
-                ></i>
-              </div>
-              <h3 class="text-lg font-semibold text-text-primary">
-                No columns to display
-              </h3>
-              <p class="text-sm text-text-secondary mt-1 max-w-[300px]">
-                There are no columns found for the current grouping or filter
-                selection.
-              </p>
+              <EmptyState
+                icon="fa-solid fa-chart-kanban"
+                title="No columns to display"
+                description="There are no columns found for the current grouping or filter selection."
+                container-class="py-0"
+              />
             </div>
 
             <div
@@ -606,6 +600,7 @@ import { useSingleWorkspace } from "../../../queries/useWorkspace";
 import { getInitials } from "../../../utilities";
 import { avatarColor } from "../../../utilities/avatarColor";
 import SearchBar from "../../../components/ui/SearchBar.vue";
+import EmptyState from "../../../components/ui/EmptyState.vue";
 import { useSidePanelStore } from "../../../stores/sidePanelStore";
 import { useUpdateSprint } from "../../../queries/usePlan";
 import {

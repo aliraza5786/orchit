@@ -2,17 +2,14 @@
   <div class="border border-border rounded-[6px] bg-bg-card overflow-hidden">
 
     <!-- Header -->
-    <div class="flex items-center gap-3 px-5 py-4 border-b border-border">
-      <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style="background: var(--bg-lavender)">
-        <i class="fa-regular fa-calendar-clock text-[13px] text-primary-color"></i>
-      </div>
+    <div class="flex items-center gap-3 px-5 py-4 border-b border-border"> 
       <div>
-        <h3 class="text-[14px] font-semibold text-text-primary leading-tight m-0">Upcoming Deadlines</h3>
-        <p class="text-[11px] text-text-secondary mt-0.5 m-0">Next milestones and due dates</p>
+        <h3 class="font-semibold text-lg text-primary dark:text-slate-50">Upcoming Deadlines</h3>
+        <p class="text-text-secondary text-sm mt-1">Next milestones and due dates</p>
       </div>
     </div>
 
-    <div class="p-4 flex flex-col gap-2">
+    <div class="p-4 flex flex-col gap-2 flex-1 min-h-0">
 
       <!-- Loading Skeleton -->
       <template v-if="isLoading">
@@ -36,16 +33,13 @@
 
       <!-- Empty State -->
       <template v-else-if="deadlines.length === 0">
-        <div class="flex flex-col items-center justify-center py-12 text-center gap-3" style="min-height: 280px">
-          <div class="w-12 h-12 rounded-2xl flex items-center justify-center" style="background: var(--bg-lavender)">
-            <i class="fa-regular fa-calendar-xmark text-[20px] text-primary-color"></i>
-          </div>
-          <div>
-            <p class="text-[14px] font-semibold text-text-primary m-0">No upcoming deadlines</p>
-            <p class="text-[12px] text-text-secondary mt-1 m-0 max-w-[200px] leading-relaxed">
-              No milestones or due dates at the moment.
-            </p>
-          </div>
+        <div class="flex flex-1 items-center justify-center w-full" style="min-height: 280px">
+          <EmptyState
+            icon="fa-regular fa-calendar-xmark"
+            title="No upcoming deadlines"
+            description="No milestones or due dates at the moment."
+            container-class="py-12"
+          />
         </div>
       </template>
 
@@ -128,6 +122,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import EmptyState from '../ui/EmptyState.vue'
 
 const props = defineProps<{
   data: any[]

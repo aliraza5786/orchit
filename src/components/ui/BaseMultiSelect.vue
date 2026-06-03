@@ -50,38 +50,29 @@
       </div>
     </div>
 
-    <!-- Dropdown -->
-    <ul
-      v-show="open && filteredOptions.length > 0"
-      ref="menuRef"
-      class="absolute left-0 z-10 rounded-md max-h-64 overflow-auto shadow border w-full"
-      :class="[
-        isDarkTheme ? 'bg-bg-body text-text-primary border-border' : 'bg-bg-body text-text-primary border-border',
-        dropUp ? 'bottom-full mb-2' : 'top-full mt-2'
-      ]"
-    >
-      <li
-        v-for="item in filteredOptions"
-        :key="item._id"
-        class="px-4 py-2 text-sm flex items-center gap-2 cursor-pointer hover:bg-bg-dropdown-menu-hover transition-all duration-150"
+    <!-- Dropdown (teleported so it isn't clipped by fixed footers / overflow parents) -->
+    <Teleport to="body">
+      <ul
+        v-show="open"
+        ref="menuRef"
+        class="fixed z-[9998] rounded-md max-h-64 overflow-auto shadow border"
+        :class="isDarkTheme ? 'bg-bg-body text-text-primary border-border' : 'bg-bg-body text-text-primary border-border'"
+        :style="menuStyle"
         @mousedown.prevent
-        @click.stop="select(item)"
       >
-        <span class="capitalize" v-html="item.title"></span>
-      </li>
-    </ul>
-
-    <!-- No Options Found -->
-    <ul
-      v-show="open && filteredOptions.length === 0"
-      class="absolute left-0 z-10 rounded-md max-h-64 overflow-auto shadow border w-full"
-      :class="[
-        isDarkTheme ? 'bg-bg-body text-text-primary border-border' : 'bg-bg-body text-text-primary border-border',
-        dropUp ? 'bottom-full mb-2' : 'top-full mt-2'
-      ]"
-    >
-      <li class="px-4 py-2 text-sm text-text-secondary text-center">No options found</li>
-    </ul>
+        <template v-if="filteredOptions.length > 0">
+          <li
+            v-for="item in filteredOptions"
+            :key="item._id"
+            class="px-4 py-2 text-sm flex items-center gap-2 cursor-pointer hover:bg-bg-dropdown-menu-hover transition-all duration-150"
+            @click.stop="select(item)"
+          >
+            <span class="capitalize" v-html="item.title"></span>
+          </li>
+        </template>
+        <li v-else class="px-4 py-2 text-sm text-text-secondary text-center">No options found</li>
+      </ul>
+    </Teleport>
 
     <!-- Help/Error Text -->
     <p
@@ -95,7 +86,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick, type CSSProperties } from 'vue'
 import { useTheme } from '../../composables/useTheme';
 
 const { isDark } = useTheme();
@@ -135,18 +126,20 @@ const inputRef   = ref<HTMLInputElement | null>(null)
 
 const search = ref('')
 const open = ref(false)
-const dropUp = ref(false)
+const menuStyle = ref<CSSProperties>({})
 
-const MENU_MAX_PX = 160   // matches max-h-40 (10rem)
-const MARGIN_PX   = 8
+const MENU_MAX_PX = 256   // matches max-h-64
+const ITEM_HEIGHT_PX = 40
+const MARGIN_PX = 8
+const FOOTER_RESERVE_PX = 88
 
 const isDarkTheme = computed(() => {
   return props.theme === 'dark' || (props.theme === 'system' && isDark.value);
 });
 
 const selectedOptions = computed(() => {
-  return props.modelValue.map((value) => {
-    const option = props.options.find((o) => o._id === value)
+  return props.modelValue?.map((value) => {
+    const option = props.options?.find((o) => o._id === value)
     return option || { title: String(value), _id: value }
   })
 })
@@ -164,6 +157,7 @@ function openDropdown() {
   if (!open.value) open.value = true
   nextTick(() => {
     computePlacement()
+    nextTick(computePlacement)
     inputRef.value?.focus()
   })
 }
@@ -210,9 +204,10 @@ function handleEnter() {
 
 /* ----- Outside click ----- */
 function handleClickOutside(e: MouseEvent) {
-  if (wrapperRef.value && !wrapperRef.value.contains(e.target as Node)) {
-    open.value = false
-  }
+  const target = e.target as Node
+  if (wrapperRef.value?.contains(target)) return
+  if (menuRef.value?.contains(target)) return
+  open.value = false
 }
 
 /* ----- Placement logic (flip up when bottom space is tight) ----- */
@@ -222,19 +217,23 @@ function computePlacement() {
 
   const rect = anchor.getBoundingClientRect()
   const viewportH = window.innerHeight
+  const optionCount = Math.max(filteredOptions.value.length, 1)
 
-  const bottomSpace = viewportH - rect.bottom
+  const estimatedHeight = Math.min(optionCount * ITEM_HEIGHT_PX, MENU_MAX_PX)
+  const menuHeight = Math.min(menuRef.value?.scrollHeight ?? estimatedHeight, MENU_MAX_PX)
+
+  const bottomSpace = viewportH - rect.bottom - FOOTER_RESERVE_PX
   const topSpace = rect.top
+  const needsFlip = bottomSpace < menuHeight + MARGIN_PX
+  const openUpward =
+    needsFlip && (topSpace > bottomSpace || filteredOptions.value.length > 1)
 
-  // Use actual menu height if available, else cap by MENU_MAX_PX
-  const menuHeight = Math.min(menuRef.value?.scrollHeight ?? MENU_MAX_PX, MENU_MAX_PX)
-
-  // Decide if the dropdown should open upwards or downwards
-  if (bottomSpace < (menuHeight + MARGIN_PX)) {
-    // If there is less space below, and more space above, flip it upwards
-    dropUp.value = topSpace > bottomSpace
-  } else {
-    dropUp.value = false  // Otherwise, open it downwards
+  menuStyle.value = {
+    left: `${rect.left}px`,
+    width: `${rect.width}px`,
+    ...(openUpward
+      ? { bottom: `${viewportH - rect.top + MARGIN_PX}px` }
+      : { top: `${rect.bottom + MARGIN_PX}px` }),
   }
 }
 

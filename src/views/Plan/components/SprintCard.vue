@@ -119,20 +119,12 @@
         v-else
         class="empty-state flex flex-col justify-center items-center border-dashed border-3 p-2 border-border h-[calc(100%-10px)] min-h-0"
       >
-        <img
-          src="../../../assets/emptyStates/sprint-plan.svg"
-          class="mb-4"
-          alt="backlog-plan"
+        <EmptyState
+          icon="fa-regular fa-calendar-days"
+          :title="sprintEmptyTitle"
+          :description="sprintEmptyDescription"
+          container-class="py-4"
         />
-        <h6 class="text-sm text-text-primary font-semibold mb-1 text-center">
-          Plan your {{ label }}
-        </h6>
-        <p class="text-sm text-text-primary/90 mb-3 max-w-120 text-center">
-          Drag work items from the
-          <span class="font-bold">Backlog</span> section or create new ones to
-          plan the work for this {{ label }}. Select
-          <span class="font-bold">Start {{ label }}</span> when you're ready.
-        </p>
       </div>
     </div>
   </div>
@@ -140,6 +132,7 @@
 
 <script setup lang="ts">
 import { ref, watch, computed } from "vue";
+import EmptyState from "../../../components/ui/EmptyState.vue";
 import { type Sprint, type Ticket } from "../composables/useBacklogStore";
 import { useMoveCard } from "../../../queries/usePlan";
 import { toast } from "vue-sonner";
@@ -148,7 +141,8 @@ import { avatarColor } from '../../../utilities/avatarColor';
 import { useTheme } from "../../../composables/useTheme";
 import { useQueryClient } from "@tanstack/vue-query";
 
-const { isDark } = useTheme(); 
+const { isDark } = useTheme();
+
 const props = defineProps<{
   sprint: Sprint | null;
   sprintId: any;
@@ -157,6 +151,12 @@ const props = defineProps<{
   searchedData?: SearchCard[];
   label?: string;
 }>();
+
+const sprintEmptyTitle = computed(() => `Plan your ${props.label || "sprint"}`);
+const sprintEmptyDescription = computed(() => {
+  const lbl = props.label || "sprint";
+  return `Drag work items from the Backlog section or create new ones to plan the work for this ${lbl}. Select Start ${lbl} when you're ready.`;
+});
 
 const emit = defineEmits([
   "edit-sprint",

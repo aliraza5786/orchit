@@ -133,7 +133,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import BaseModal from '../../../components/ui/BaseModal.vue'
 import BaseTextField from '../../../components/ui/BaseTextField.vue'
 import Button from '../../../components/ui/Button.vue'
@@ -168,6 +168,21 @@ function validateManual() {
     errors.value = next
     return Object.keys(next).length === 0
 }
+
+function clearFieldError(field: 'title' | 'description') {
+    if (!errors.value[field]) return
+    const next = { ...errors.value }
+    delete next[field]
+    errors.value = next
+}
+
+watch(() => form.value.title, (val) => {
+    if (val.trim()) clearFieldError('title')
+})
+
+watch(() => form.value.description, (val) => {
+    if (val.trim()) clearFieldError('description')
+})
 
 const { mutate: createModule, isPending: creatingModule } = useCreateModule({
     onSuccess: async () => {

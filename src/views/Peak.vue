@@ -95,9 +95,9 @@
         <ProjectPortfolio :data="projectPortfolio" :isLoading="isLoadingPortfolio" />
 
         <!-- Recent Activity -->
-        <div class="bg-bg-surface w-full p-5 max-h-full rounded-[6px] overflow-y-auto flex flex-col border border-border">
+        <div class="bg-bg-surface w-full max-h-full rounded-[6px] overflow-y-auto flex flex-col border border-border">
           <!-- Header -->
-          <div class="mb-2 flex items-start justify-between">
+          <div class="mb-2 p-4 border-b border-border flex items-center justify-between">
             <div>
               <h3 class="text-lg font-semibold text-text-primary">Recent activity</h3>
               <p class="text-sm text-text-secondary mt-1">
@@ -116,7 +116,7 @@
           </div>
 
           <!-- Activity List -->
-          <div class="space-y-4 overflow-y-auto flex-1" ref="activityItems">
+          <div class="space-y-4 p-4 overflow-y-auto flex-1 flex flex-col min-h-0" ref="activityItems">
             <!-- Loading State -->
             <template v-if="isLoadingActivities">
               <div
@@ -263,14 +263,15 @@
             </template>
 
             <!-- Empty State -->
-            <template v-else> 
-                <div class="flex flex-col items-center justify-center py-10 text-center text-text-secondary h-full">
-                  <i class="fas fa-clock text-4xl mb-3"></i>
-                  <h4 class="text-lg text-text-primary font-semibold mb-1">No recent activity</h4>
-                  <p class="text-sm text-text-secondary/80">
-                    Activities will appear here once your team starts making updates.
-                  </p>
-                </div> 
+            <template v-else>
+              <div class="flex flex-1 items-center justify-center h-full w-full min-h-0">
+                <EmptyState
+                  icon="fa-regular fa-clock"
+                  title="No recent activity"
+                  description="Activities will appear here once your team starts making updates."
+                  container-class="py-10"
+                />
+              </div>
             </template>
           </div>
 
@@ -278,7 +279,7 @@
           <div
             ref="paginationRef"
             v-if="pagination && pagination?.totalPages > 1"
-            class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 mt-4 border-t border-border"
+            class="flex px-4 flex-col sm:flex-row items-center justify-between gap-3 pt-4 mb-4 mt-4 border-t border-border"
           >
             <p class="text-xs text-text-secondary order-2 sm:order-1">
               Page {{ currentPage }} of {{ pagination.totalPages }}
@@ -352,8 +353,8 @@
     >
       <div class="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4 items-stretch">
         <!-- Team Workload -->
-        <div class="bg-bg-surface w-full max-h-full flex-auto p-5 rounded-[6px] border border-border">
-          <div class="mb-4">
+        <div class="bg-bg-surface w-full max-h-full flex-auto rounded-[6px] border border-border">
+          <div class="mb-4 p-4 border-border border-b">
             <h3 class="text-lg font-semibold text-text-primary">Team workload</h3>
             <p class="text-sm text-text-secondary mt-1">
               Monitor the capacity of your team.
@@ -361,7 +362,7 @@
             </p>
           </div>
 
-          <div class="space-y-4">
+          <div class="space-y-4 p-4">
             <div class="flex items-center justify-between text-sm font-medium text-text-secondary mb-2">
               <span>Assignee</span>
               <span>Work distribution</span>
@@ -385,9 +386,13 @@
             </div>
 
             <!-- Empty State -->
-            <div v-else-if="teamWorkload.length === 0" class="text-center py-8">
-              <i class="pi pi-users text-3xl text-text-secondary mb-2"></i>
-              <p class="text-sm text-text-secondary">No team members assigned yet</p>
+            <div v-else-if="teamWorkload.length === 0" class="flex items-center justify-center py-8 w-full">
+              <EmptyState
+                icon="fa-regular fa-users"
+                title="No team members assigned yet"
+                description="Team workload will appear here once members are assigned to tasks."
+                container-class="py-0"
+              />
             </div>
 
             <!-- Workload items with stagger -->
@@ -485,7 +490,7 @@
             </div>
 
             <!-- Scrollable content -->
-            <div class="flex-1 overflow-y-auto p-5 space-y-4">
+            <div class="flex-1 overflow-y-auto p-5 space-y-4 flex flex-col min-h-0">
               <template v-if="isLoadingActivities">
                 <div v-for="n in 10" :key="`skeleton-${n}`" class="flex gap-3 pb-2 border-b border-border last:border-0 animate-pulse">
                   <div class="w-8 h-8 rounded-full bg-bg-body flex-shrink-0"></div>
@@ -616,12 +621,14 @@
                   :initial="{ opacity: 0, scale: 0.95 }"
                   :animate="{ opacity: 1, scale: 1 }"
                   :transition="{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }"
+                  class="flex flex-1 items-center justify-center h-full w-full min-h-[200px]"
                 >
-                  <div class="flex flex-col items-center justify-center py-10 text-center text-text-secondary h-full">
-                    <i class="fas fa-clock text-4xl mb-3"></i>
-                    <h4 class="text-lg font-semibold mb-1">No recent activity</h4>
-                    <p class="text-sm text-text-secondary/80">Activities will appear here once your team starts making updates.</p>
-                  </div>
+                  <EmptyState
+                    icon="fa-regular fa-clock"
+                    title="No recent activity"
+                    description="Activities will appear here once your team starts making updates."
+                    container-class="py-10"
+                  />
                 </Motion>
               </template>
             </div>
@@ -715,6 +722,7 @@ import { useWorkspaceStore } from "../stores/workspace"
 import ProjectPortfolio from '../components/peak/ProjectPortfolio.vue'
 import ProjectUpcomingDeadlines from '../components/peak/UpcomingDeadlines.vue'
 import PeakWidgets from '../components/peak/PeakWidgets.vue'
+import EmptyState from '../components/ui/EmptyState.vue'
 
 const { isDark } = useTheme()
 const workspaceStore = useWorkspaceStore()

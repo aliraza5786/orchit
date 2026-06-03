@@ -182,6 +182,7 @@ import {
   tryRedirectToCompanyDomainDashboard,
   normalizeProfileUserData,
 } from "../../utilities/authRedirect";
+import { getPendingWorkspaceInviteRedirectPath } from "../../utilities/workspaceInvitePending";
 import { getProfile } from "../../services/user";
 const { isDark, theme } = useTheme();
 declare const AppleID: any;
@@ -374,12 +375,6 @@ async function handleSocialSignupSuccess(data: any, email: string) {
     }
   }
 
-  const pendingToken = localStorage.getItem("pending_invite_token");
-  if (pendingToken) {
-    router.push(`/company-join/${pendingToken}`);
-    return;
-  }
-
   let userData = normalizeProfileUserData(
     (authStore.user?.data ?? authStore.user) as Record<string, unknown> | undefined,
   );
@@ -439,9 +434,9 @@ async function handleLoginSuccess(data: any) {
     }
   }
 
-  const pendingToken = localStorage.getItem("pending_invite_token");
-  if (pendingToken) {
-    router.push(`/company-join/${pendingToken}`);
+  const pendingInvitePath = getPendingWorkspaceInviteRedirectPath();
+  if (pendingInvitePath) {
+    router.push(pendingInvitePath);
     return;
   }
 

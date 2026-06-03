@@ -3783,15 +3783,20 @@ onMounted(() => {
         ? agentModuleId.value
         : (moduleId.value ?? undefined),
     );
-
-    if (selectedAgentId.value) {
-      loadAgentSettings();
-    }
-
-    fetchAssignedAgents();
+if (agentStore.agentPassed) {
+  // agentPassed watcher will handle everything — skip route-based fetch
+} else {
+  if (selectedAgentId.value) {
+    loadAgentSettings();
+  }
+  if (!agentStore.agentPassed) {
+  fetchAssignedAgents();
+}
+}
   }
   scrollToBottom();
 });
+// REPLACE WITH:
 watch(
   [
     () => workspaceStore.showChatBotPanel,
@@ -3803,6 +3808,9 @@ watch(
     [_oldIsOpen, _oldModuleSelected, oldSelectedAgentId],
   ) => {
     if (!workspaceId.value || !isOpen) return;
+
+    // Skip if agentPassed watcher is actively handling a cross-module agent
+    if (agentStore.agentPassed || isHandlingAgentPassed.value) return;
 
     if (!activeSessionId.value) {
       const savedSessionId = localStorage.getItem("activeSessionId");
@@ -4001,26 +4009,12 @@ const selectedAgentName = computed(() => {
   if (!agent?.name) return "Select Agent";
   return agent.name.length > 20 ? agent.name.slice(0, 20) + "..." : agent.name;
 });
-
-// ✅ Simple — always select first agent on any route (but respect agentPassed if set)
 watch(
   () => agentsCreated.value?.data?.agents,
   (agents) => {
     if (!agents?.length) return;
-    
-    // If an agent was explicitly passed (clicked from People view), use that
-    if (agentStore.agentPassed && agentStore.agentPassed._id) {
-      // Only set if the agent exists in current list
-      const passedAgentExists = agents.some(
-        (a: any) => a._id === agentStore.agentPassed?._id,
-      );
-      if (passedAgentExists) {
-        selectedAgentId.value = agentStore.agentPassed._id;
-        return;
-      }
-    }
-    
-    // Otherwise, default to first agent
+    if (agentStore.agentPassed || isHandlingAgentPassed.value) return;
+
     if (!selectedAgentId.value) {
       selectedAgentId.value = agents[0]._id;
     } else {
@@ -4034,19 +4028,56 @@ watch(
   },
   { immediate: true },
 );
-
-// ✅ Watch for agentPassed from store — when user clicks "Chat with Agent"
+const isHandlingAgentPassed = ref(false);
 watch(
   () => agentStore.agentPassed,
-  (passedAgent) => {
-    if (passedAgent && passedAgent._id) {
-      selectedAgentId.value = passedAgent._id;
-      // Clear agentPassed after applying it to avoid conflicts
-      agentStore.agentPassed = null;
-    }
-  },
-);
+  async (passedAgent) => {
+    if (!passedAgent?._id || !workspaceId.value) return;
 
+    // Raise flag FIRST — before any state changes that trigger other watchers
+    isHandlingAgentPassed.value = true;
+
+    const passedModuleId = agentStore.module_id ?? undefined;
+    const passedModuleName = agentStore.moduleName ?? undefined;
+
+    // Inject agent immediately so dropdown shows correct name
+    agentStore.agentsCreated = {
+      data: {
+        agents: [passedAgent],
+      },
+    };
+
+    // Set ID — this triggers main watcher, but isHandlingAgentPassed blocks it
+    selectedAgentId.value = passedAgent._id;
+
+    // Now safe to clear agentPassed
+    agentStore.agentPassed = null;
+
+    // Fetch correct module agents
+    await agentStore.fetchSavedAgents(
+      workspaceId.value,
+      passedModuleId,
+      passedModuleName,
+    );
+
+    // Load settings with correct module context
+    isLoadingSettings.value = true;
+    await agentStore.fetchAgentSettings(
+      workspaceId.value,
+      passedModuleId,
+      passedModuleName,
+      passedAgent._id,
+    );
+    isLoadingSettings.value = false;
+    webSearch.value =
+      agentStore.agentSettings?.agent?.web_browsing_enabled ?? false;
+
+    // Lower flag only after everything is done
+    isHandlingAgentPassed.value = false;
+    scrollToBottom();
+  },
+  { immediate: true },
+);
 const availableAgentsLevels = [
   { _id: "1", title: "Expert", value: "EXPERT" },
   { _id: "2", title: "Lead", value: "LEAD" },
@@ -4123,6 +4154,8 @@ watch(
 watch(
   () => selectedAgentId.value,
   async (newId, oldId) => {
+    if (isHandlingAgentPassed.value) return; // agentPassed watcher handles this
+    if (agentStore.agentPassed) return;
     if (newId && workspaceId.value && newId !== oldId) {
       await loadAgentSettings();
     }
@@ -4639,26 +4672,7 @@ async function fetchAssignedAgents() {
     moduleId.value,
     selectedModule.value,
   );
-  const agents = agentStore.agentsCreated?.data?.agents;
-  if (agents?.length) {
-    // If an agent was explicitly passed, use that
-    if (agentStore.agentPassed && agentStore.agentPassed._id) {
-      const passedAgentExists = agents.some(
-        (a: any) => a._id === agentStore.agentPassed?._id,
-      );
-      if (passedAgentExists) {
-        selectedAgentId.value = agentStore.agentPassed._id;
-        // Clear after applying to prevent interference
-        agentStore.agentPassed = null;
-        return;
-      }
-    }
-    
-    // Otherwise, set to first agent if not already set
-    if (!selectedAgentId.value) {
-      selectedAgentId.value = agents[0]._id;
-    }
-  }
+  // Selection is handled by the agentsCreated watcher — do not set selectedAgentId here
 }
 async function fetchAgentsRolesPermissions() {
   await agentStore.fetchAgentsRolesPermissions(workspaceId.value);

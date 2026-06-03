@@ -28,7 +28,8 @@
               <div
                 v-if="canCreateSheet"
                 @click="createSheet()"
-                class="sticky bottom-0 bg-bg-dropdown shadow-border capitalize border-t border-border px-4 py-2 hover:bg-bg-dropdown-menu-hover cursor-pointer flex items-center gap-1 overflow-hidden overflow-ellipsis text-nowrap min-w-[150px]"
+                :class="transformedData.length ? 'border-t' : ''"
+                class="sticky bottom-0 bg-bg-dropdown shadow-border capitalize border-border px-4 py-2 hover:bg-bg-dropdown-menu-hover cursor-pointer flex items-center gap-1 overflow-hidden overflow-ellipsis text-nowrap min-w-[150px]"
               >
                 <i class="fa-solid fa-plus"></i> Add new
               </div>
@@ -283,18 +284,12 @@
         "
         class="flex flex-col items-center justify-center flex-1 h-full py-20 text-center"
       >
-        <div class="bg-bg-body p-6 rounded-full mb-4">
-          <i
-            class="fa-solid fa-chart-kanban text-4xl text-text-secondary/20"
-          ></i>
-        </div>
-        <h3 class="text-lg font-semibold text-text-primary">
-          No columns to display
-        </h3>
-        <p class="text-sm text-text-secondary mt-1 max-w-[300px]">
-          There are no columns found for the current grouping or filter
-          selection.
-        </p>
+        <EmptyState
+          icon="fa-solid fa-chart-kanban"
+          title="No columns to display"
+          description="There are no columns found for the current grouping or filter selection."
+          container-class="py-0"
+        />
       </div>
 
       <div
@@ -527,15 +522,13 @@
       <div
         class="bg-bg-card rounded-lg p-6 w-[420px] text-center shadow-md border border-border"
       >
-        <div class="flex items-center flex-col justify-center mb-4 gap-2">
-          <i class="fa-regular fa-file-lines text-2xl text-primary-color"></i>
-          <h3 class="text-lg font-semibold">No Sheets Created</h3>
-        </div>
-        <p class="text-sm text-text-secondary mb-6">
-          You don't have any sheets yet. Create a new sheet to start organizing
-          your tasks and managing projects efficiently.
-        </p>
-        <div class="flex justify-center gap-3">
+        <EmptyState
+          icon="fa-regular fa-file-lines"
+          title="No Sheets Created"
+          description="You don't have any sheets yet. Create a new sheet to start organizing your tasks and managing projects efficiently."
+          container-class="py-0"
+        />
+        <div class="flex justify-center gap-3 mt-6">
           <Button
             class="px-4 py-2 bg-primary-color text-white"
             @click="handleCreateSheetFromModal"
@@ -690,6 +683,7 @@ import {
   useCreateWorkspaceSheet,
 } from "../../queries/useSheets";
 import { useSidePanelStore } from "../../stores/sidePanelStore";
+import EmptyState from "../../components/ui/EmptyState.vue";
 import { useAgentStore } from "../../stores/agentStore";
 import {
   removeFromCacheStructure,
