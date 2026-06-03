@@ -171,10 +171,11 @@ export function tryRedirectToCompanyDomainDashboard(
 export function isOnSubdomain(): boolean {
   const primary = getPrimaryDomain()
   const current = window.location.hostname
-  return current !== primary && (
-    current.endsWith('.streamed.space') ||
-    current.endsWith('.localhost')
-  )
+
+  if (current === primary) return false
+
+  // Generic subdomain check: current host ends with ".{primary}"
+  return current.endsWith(`.${primary}`)
 }
 
 export function getMainDomainLoginUrl(redirectPath = '/dashboard'): string | null {
