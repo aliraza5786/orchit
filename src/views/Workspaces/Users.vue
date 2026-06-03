@@ -78,8 +78,7 @@
   />
 </template>
 <script setup lang="ts">
-import { defineAsyncComponent, h, ref } from "vue";
-import { useCompanyId } from "../../services/user";
+import { defineAsyncComponent, h, ref } from "vue"; 
 import Table from "../../components/ui/Table.vue";
 import { useUsers } from "../../queries/useWorkspace";
 import Button from "../../components/ui/Button.vue";
@@ -88,9 +87,8 @@ import Collaborators from "../../components/ui/Collaborators.vue";
 import { avatarColor } from "../../utilities/avatarColor";
 const InviteUsers = defineAsyncComponent(
   () => import("./Modals/InviteUsers.vue"),
-);
-const { data: companyId } = useCompanyId();
-const { data, isLoading } = useUsers(companyId);
+); 
+const { data, isLoading } = useUsers();
 
 const renderName = ({ row }: any) => {
   const initials = (row["u_full_name"] || "??")
@@ -184,7 +182,15 @@ const columns = [
     label: "Spaces",
     render: ({ row }: any) =>
       h(Collaborators, {
-        avatars: row.workspaces || [],
+        avatars: (row.workspaces || []).map((workspace: any) => ({
+          name: workspace.title,
+          title: workspace.title,
+          logo: workspace.logo,
+          image: workspace.logo,
+          avatar: workspace.logo,
+          src: workspace.logo,
+          email: workspace.title,
+        })),
         size: "6",
         maxVisible: 4,
       }),

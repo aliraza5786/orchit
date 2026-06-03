@@ -515,9 +515,8 @@ function getCompanyId(): string | null {
 
   return null
 }
-export const getUsers = (id: any) => {
-  const companyId = getCompanyId()
-  console.log(id);
+export const getUsers = () => {
+  const companyId = getCompanyId() 
   
   const url = companyId
     ? `workspace/team-users?company_id=${companyId}`
@@ -525,15 +524,13 @@ export const getUsers = (id: any) => {
 
   return api.get(url).then((r) => r.data)
 }
-export function useUsers(companyId: any) {
+export function useUsers() {
   return useQuery({
-    queryKey: computed(() => ["all-users", unref(companyId)]),
-    queryFn: async () => {
-      const id = unref(companyId)!;
+    queryKey: computed(() => ["all-users"]),
+    queryFn: async () => { 
       // your API call here
-      return await getUsers(id);
-    },
-    enabled: computed(() => !!unref(companyId)), // don't run until we have an id
+      return await getUsers();
+    }, 
   });
 }
 
@@ -617,4 +614,4 @@ export function useWorkspaceProcessFlow(workspaceId: Ref<string | undefined> | s
     refetchOnMount: true,
     enabled: computed(() => !!unref(workspaceId)),
   })
-}
+}

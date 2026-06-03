@@ -431,8 +431,7 @@ import {
   useWorkspaceModulesAndUsers,
 } from "../../../queries/useWorkspace";
 import { useRouteIds } from "../../../composables/useQueryParams";
-import { getInitials, generateAvatarColor } from "../../../utilities";
-import { useWorkspaceStore } from "../../../stores/workspace";
+import { getInitials, generateAvatarColor } from "../../../utilities"; 
 import { useAgentStore } from "../../../stores/agentStore";
 import { useWorkspaceRoles } from "../../../queries/usePeople";
 
@@ -486,8 +485,7 @@ const title = computed(() => {
 
 // ─── Queries setup ────────────────────────────────────────────────────────────
 const { workspaceId } = useRouteIds();
-const queryClient = useQueryClient();
-const workspaceStore = useWorkspaceStore();
+const queryClient = useQueryClient(); 
 const agentStore = useAgentStore();
 
 const workspaceResourceId = computed(() =>
@@ -682,8 +680,8 @@ const canSubmit = computed(() => {
 });
 
 // ─── Users for autocomplete ───────────────────────────────────────────────────
-const companyId = computed(() => workspaceStore.singleWorkspace?.company_id);
-const { data: allUsersData } = useUsers(companyId);
+// const companyId = computed(() => workspaceStore.singleWorkspace?.company_id);
+const { data: allUsersData } = useUsers();
 console.log(allUsersData);
 
 // const allUsers = computed(() => {
