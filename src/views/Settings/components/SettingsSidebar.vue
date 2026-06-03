@@ -170,13 +170,13 @@ const visiblePersonalItems = computed(() =>
   })
 )
 const orgItems = [
-  { label: 'Overview',        tab: 'org-setup',          icon: 'fa-regular fa-sliders',       perm: null,             ownerOnly: false },
-  { label: 'Domain',          tab: 'org-domain',          icon: 'fa-regular fa-globe',          perm: 'domain.read',    ownerOnly: false },
-  { label: 'Members',         tab: 'org-users',           icon: 'fa-regular fa-users',          perm: 'company_user.read', ownerOnly: false },
-  { label: 'Roles',           tab: 'org-roles',           icon: 'fa-regular fa-shield-halved',  perm: 'company_user.read', ownerOnly: false },
-  { label: 'Billing & Plans', tab: 'org-packages',        icon: 'fa-regular fa-credit-card',    perm: 'package.read',   ownerOnly: false },
-  { label: 'Token Allocation',tab: 'token-allocation',    icon: 'fa-regular fa-chart-bar',      perm: 'package.read',   ownerOnly: false },
-  { label: 'Transfer Owner',  tab: 'ownership-transfer',  icon: 'fa-regular fa-user-gear',      perm: null,             ownerOnly: true  },
+  { label: 'Overview', tab: 'org-setup', icon: 'fa-regular fa-gauge', perm: null, ownerOnly: false },
+  { label: 'Domain',           tab: 'org-domain',         icon: 'fa-regular fa-globe',           perm: 'domain.read',       ownerOnly: false },
+  { label: 'Members',          tab: 'org-users',          icon: 'fa-regular fa-users',           perm: 'company_user.read', ownerOnly: false },
+  { label: 'Roles',            tab: 'org-roles',          icon: 'fa-regular fa-shield-halved',   perm: 'company_user.read', ownerOnly: false },
+  { label: 'Tokens Allocation', tab: 'token-allocation',  icon: 'fa-regular fa-microchip-ai',    perm: 'package.read', ownerOnly: false },
+  { label: 'Billing & Plans',  tab: 'org-packages',     icon: 'fa-regular fa-credit-card',     perm: 'package.read', ownerOnly: false },
+  { label: 'Transfer Owner',   tab: 'ownership-transfer', icon: 'fa-regular fa-user-gear',       perm: null,                ownerOnly: true }
 ]
 
 const visibleOrgItems = computed(() => {

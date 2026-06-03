@@ -53,15 +53,17 @@
             :key="role._id"
             class="flex flex-col p-4 rounded-xl border border-border/40 bg-bg-body/50 hover:border-border/70 hover:shadow-sm transition-all"
           >
+
             <div class="flex items-start justify-between mb-2">
               <div class="min-w-0 flex-1">
                 <div class="flex items-center gap-2 flex-wrap">
                   <h5 class="font-semibold text-text-primary">{{ role.title }}</h5>
-                  <span v-if="role.is_admin" class="px-2 py-0.5 bg-purple-500/10 text-purple-600 text-xs font-medium rounded-full">Admin</span>
+                  <span v-if="role.is_admin && role?.slug ==='admin'" class="px-2 py-0.5 bg-purple-500/10 text-purple-600 text-xs font-medium rounded-full">Admin</span>
+                  <span v-if="role.is_admin && role?.slug ==='super_admin'" class="px-2 py-0.5 bg-purple-500/10 text-purple-600 text-xs font-medium rounded-full">Super Admin</span>
                   <span v-else-if="role.is_editor" class="px-2 py-0.5 bg-blue-500/10 text-blue-600 text-xs font-medium rounded-full">Editor</span>
                   <span v-else-if="role.is_viewer" class="px-2 py-0.5 bg-gray-500/10 text-gray-600 text-xs font-medium rounded-full">Viewer</span>
                 </div>
-                <p class="text-xs text-text-secondary mt-0.5 capitalize">{{ role.slug }}</p>
+                <!-- <p class="text-xs text-text-secondary mt-0.5 capitalize">{{ role.slug }}</p> -->
               </div>
               <span class="ml-2 flex-shrink-0 px-2 py-0.5 bg-blue-500/10 text-blue-600 text-xs font-medium rounded-full">
                 System
@@ -134,7 +136,7 @@
             Create custom roles to tailor permissions for different team members.
           </p>
           <button
-          v-if="hasOrgDomain && canCreateRole && hasOrgDomain"
+          v-if="hasOrgDomain && canCreateRole"
             @click="openCreateModal"
             :disabled="!isOwnerAdmin"
             class="px-4 py-2 bg-accent text-white text-sm cursor-pointer font-semibold rounded-lg hover:bg-accent/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
@@ -315,7 +317,7 @@ const props = defineProps<{
 
 const activeCompany = computed(() => props.profile?.active_company)
 const hasOrgDomain = computed(() => !!activeCompany.value?.custom_domain)
-// const hasSuperAdmin = computed(() => activeCompany.value?.membership_role === 'super_admin')
+const hasDomainVerified = computed(() => activeCompany.value?.has_domain_verified)
 const membershipRole = computed(() =>
   activeCompany.value?.membership_role || null
 )
@@ -388,6 +390,10 @@ const modalRole  = ref<CompanyRole | null>(null)
 function openCreateModal() {
   if (!isOwnerAdmin) {
     toast.error(`You don't have a permission to create a role.`)
+    return
+  }
+  if (!hasDomainVerified.value) {
+    toast.error(`Please verify your domain first before adding any role.`)
     return
   }
   modalMode.value = 'create'

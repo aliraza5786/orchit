@@ -138,8 +138,8 @@ const isDarkTheme = computed(() => {
 });
 
 const selectedOptions = computed(() => {
-  return props.modelValue.map((value) => {
-    const option = props.options.find((o) => o._id === value)
+  return props.modelValue?.map((value) => {
+    const option = props.options?.find((o) => o._id === value)
     return option || { title: String(value), _id: value }
   })
 })

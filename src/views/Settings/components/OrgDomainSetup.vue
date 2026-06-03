@@ -25,7 +25,7 @@
         </div>
         <h3 class="text-sm font-bold text-text-primary mb-1">Failed to load domains</h3>
         <p class="text-xs text-text-secondary mb-5 max-w-xs">There was a problem fetching your domain settings.</p>
-        <button @click="refetch()" class="px-4 py-2 text-sm font-semibold bg-accent text-white rounded-lg hover:bg-accent/90 transition-all">
+        <button @click="refetchDomains()" class="px-4 py-2 text-sm font-semibold bg-accent text-white rounded-lg hover:bg-accent/90 transition-all">
           Try again
         </button>
       </div>
@@ -413,15 +413,6 @@
               <i class="fa-solid fa-star text-amber-500 text-sm"></i>
               <span class="text-sm font-semibold text-amber-600">Primary domain</span>
             </div>
-
-            <!-- Go to super admin -->
-            <button
-              @click="wizardStep = 'superadmin'"
-              class="w-full py-2.5 rounded-xl bg-accent text-white text-sm font-semibold hover:bg-accent/90 transition-all shadow-lg shadow-accent/20"
-            >
-              Continue — set up super admin
-              <i class="fa-solid fa-arrow-right text-xs ml-1"></i>
-            </button>
           </div>
 
           <!-- Verification method tabs + DNS instructions -->
@@ -568,144 +559,6 @@
           </div>
         </div>
 
-        <!-- ── Step: Super Admin ─────────────────────────────────────── -->
-        <div v-else-if="wizardStep === 'superadmin'" class="max-w-lg mx-auto space-y-5">
-          <div class="text-center space-y-1.5">
-            <div class="w-12 h-12 rounded-2xl bg-accent/10 border border-accent/20 flex items-center justify-center mx-auto mb-4">
-              <i class="fa-solid fa-user-shield text-accent text-base"></i>
-            </div>
-            <h2 class="text-lg font-bold text-text-primary">Create super admin</h2>
-            <p class="text-sm text-text-secondary">Every verified domain needs a designated super admin account.</p>
-          </div>
-
-          <div class="rounded-2xl border border-border/50 bg-bg-body/50 p-6 space-y-4">
-            <div class="grid grid-cols-2 gap-3">
-              <div class="space-y-1.5">
-                <label class="text-[11px] font-semibold uppercase tracking-wider text-text-secondary block">Full name <span class="text-red-500">*</span></label>
-                <input
-                  v-model="adminName"
-                  placeholder="Jane Doe"
-                  class="w-full px-3.5 py-2.5 border border-border/60 bg-bg-body/80 rounded-xl text-sm focus:border-accent/60 focus:ring-2 focus:ring-accent/10 outline-none transition-all placeholder:text-text-tertiary"
-                />
-              </div>
-              <div class="space-y-1.5">
-                <label class="text-[11px] font-semibold uppercase tracking-wider text-text-secondary block">Job title</label>
-                <input
-                  v-model="adminJobTitle"
-                  placeholder="e.g. CTO"
-                  class="w-full px-3.5 py-2.5 border border-border/60 bg-bg-body/80 rounded-xl text-sm focus:border-accent/60 focus:ring-2 focus:ring-accent/10 outline-none transition-all placeholder:text-text-tertiary"
-                />
-              </div>
-            </div>
-
-            <div class="space-y-1.5">
-              <label class="text-[11px] font-semibold uppercase tracking-wider text-text-secondary block">Super admin email <span class="text-red-500">*</span></label>
-              <div class="flex items-stretch border border-border/60 rounded-xl overflow-hidden focus-within:border-accent/60 focus-within:ring-2 focus-within:ring-accent/10 transition-all">
-                <input
-                  v-model="emailPrefix"
-                  placeholder="admin"
-                  class="flex-1 px-3.5 py-2.5 bg-bg-body/80 text-sm outline-none placeholder:text-text-tertiary"
-                />
-                <div class="px-3.5 py-2.5 bg-bg-surface border-l border-border/40 text-xs font-semibold text-text-secondary flex items-center shrink-0">
-                  @{{ wizardDomain?.domain }}
-                </div>
-              </div>
-            </div>
-
-            <div class="space-y-1.5">
-              <label class="text-[11px] font-semibold uppercase tracking-wider text-text-secondary block">Password <span class="text-red-500">*</span></label>
-              <div class="relative">
-                <input
-                  v-model="adminPassword"
-                  :type="showAdminPassword ? 'text' : 'password'"
-                  placeholder="Min 6 characters"
-                  class="w-full px-3.5 py-2.5 pr-10 border border-border/60 bg-bg-body/80 rounded-xl text-sm focus:border-accent/60 focus:ring-2 focus:ring-accent/10 outline-none transition-all placeholder:text-text-tertiary"
-                />
-                <button
-                  type="button"
-                  @click="showAdminPassword = !showAdminPassword"
-                  class="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary transition-colors"
-                >
-                  <i :class="showAdminPassword ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'" class="text-xs"></i>
-                </button>
-              </div>
-            </div>
-
-            <p v-if="adminError" class="text-xs text-red-500 flex items-center gap-1">
-              <i class="fa-solid fa-circle-exclamation text-[10px]"></i>
-              {{ adminError }}
-            </p>
-
-            <button
-              @click="submitAdmin"
-              :disabled="isCreatingAdmin || !adminName.trim() || !emailPrefix.trim() || adminPassword.length < 6"
-              class="w-full py-2.5 rounded-xl bg-accent text-white text-sm font-semibold hover:bg-accent/90 active:scale-[0.99] transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-accent/20"
-            >
-              <i v-if="isCreatingAdmin" class="fa-solid fa-spinner animate-spin text-xs"></i>
-              {{ isCreatingAdmin ? 'Creating account…' : 'Send verification code' }}
-            </button>
-          </div>
-        </div>
-
-        <!-- ── Step: OTP ─────────────────────────────────────────────── -->
-        <div v-else-if="wizardStep === 'otp'" class="max-w-lg mx-auto space-y-5">
-          <div class="text-center space-y-1.5">
-            <div class="w-12 h-12 rounded-2xl bg-accent/10 border border-accent/20 flex items-center justify-center mx-auto mb-4">
-              <i class="fa-solid fa-envelope-open-text text-accent text-base"></i>
-            </div>
-            <h2 class="text-lg font-bold text-text-primary">Verify your account</h2>
-            <p class="text-sm text-text-secondary">
-              We sent a 5-digit code to
-              <strong class="text-text-primary">{{ emailPrefix }}@{{ wizardDomain?.domain }}</strong>
-            </p>
-          </div>
-
-          <div class="rounded-2xl border border-border/50 bg-bg-body/50 p-6 space-y-6">
-            <!-- OTP inputs -->
-            <div class="flex justify-center gap-2.5">
-              <input
-                v-for="(_, idx) in 5"
-                :key="idx"
-                :ref="el => otpInputs[idx] = el"
-                v-model="otpDigits[idx]"
-                type="text"
-                maxlength="1"
-                inputmode="numeric"
-                class="w-12 h-14 border-2 rounded-xl text-center text-xl font-bold outline-none transition-all bg-bg-body/80 text-text-primary"
-                :class="otpDigits[idx] ? 'border-accent bg-accent/5' : 'border-border/60 focus:border-accent'"
-                @input="handleOtpInput($event, idx)"
-                @keydown.delete="handleOtpDelete($event, idx)"
-                @paste="handleOtpPaste($event)"
-              />
-            </div>
-
-            <p v-if="otpError" class="text-xs text-red-500 text-center flex items-center justify-center gap-1">
-              <i class="fa-solid fa-circle-exclamation text-[10px]"></i>
-              {{ otpError }}
-            </p>
-
-            <button
-              @click="verifyOtp"
-              :disabled="isVerifyingOtp || otpDigits.join('').length < 5"
-              class="w-full py-2.5 rounded-xl bg-accent text-white text-sm font-semibold hover:bg-accent/90 active:scale-[0.99] transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-accent/20"
-            >
-              <i v-if="isVerifyingOtp" class="fa-solid fa-spinner animate-spin text-xs"></i>
-              {{ isVerifyingOtp ? 'Verifying…' : 'Complete setup' }}
-            </button>
-
-            <p class="text-xs text-text-secondary text-center">
-              Didn't receive it?
-              <button
-                @click="resendOtp"
-                :disabled="isSendingOtp"
-                class="text-accent font-semibold hover:underline ml-1 disabled:opacity-50"
-              >
-                {{ isSendingOtp ? 'Sending…' : 'Resend code' }}
-              </button>
-            </p>
-          </div>
-        </div>
-
       </div>
 
     </template>
@@ -792,9 +645,46 @@
               </div>
             </div>
             <div class="space-y-1.5">
-              <label class="text-[11px] font-semibold uppercase tracking-wider text-text-secondary block">Password <span class="text-red-500">*</span></label>
-              <input v-model="createUserForm.u_password" type="password" placeholder="Min 6 characters" class="w-full px-3.5 py-2.5 border border-border/60 bg-bg-body/80 rounded-xl text-sm focus:border-accent/60 focus:ring-2 focus:ring-accent/10 outline-none transition-all placeholder:text-text-tertiary" />
+              <label class="text-[11px] font-semibold uppercase tracking-wider text-text-secondary block">
+                Password <span class="text-red-500">*</span>
+              </label>
+              <div class="relative">
+                <input
+                  v-model="createUserForm.u_password"
+                  :type="showPassword ? 'text' : 'password'"
+                  placeholder="Min 6 characters"
+                  class="w-full px-3.5 py-2.5 pr-10 border border-border/60 bg-bg-body/80 rounded-xl text-sm focus:border-accent/60 focus:ring-2 focus:ring-accent/10 outline-none transition-all placeholder:text-text-tertiary"
+                />
+                <button
+                  type="button"
+                  @click="showPassword = !showPassword"
+                  class="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary/60 hover:text-text-primary transition-colors"
+                >
+                  <i :class="showPassword ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'" class="text-xs"></i>
+                </button>
+              </div>
             </div>
+            <div class="space-y-1.5">
+            <label class="text-[11px] font-semibold uppercase tracking-wider text-text-secondary block">
+              Role
+              <span class="normal-case font-normal text-text-tertiary ml-1">(default: {{ defaultRole?.title ?? 'Viewer' }})</span>
+            </label>
+            <div class="relative">
+              <select
+                v-model="createUserForm.company_role_id"
+                class="w-full appearance-none border border-border/60 bg-bg-body/80 rounded-xl pl-3.5 pr-8 py-2.5 text-sm focus:border-accent/60 focus:ring-2 focus:ring-accent/10 outline-none transition-all cursor-pointer text-text-primary"
+              >
+                <option v-for="role in allRoles" :key="role._id" :value="role._id">
+                  {{ role.title }}
+                </option>
+              </select>
+              <i class="fa-solid fa-chevron-down absolute right-2.5 top-1/2 -translate-y-1/2 text-text-secondary/60 text-[10px] pointer-events-none"></i>
+            </div>
+            <p class="text-[11px] text-text-secondary flex items-center gap-1.5">
+              <i class="fa-solid fa-shield-halved text-accent text-[10px]"></i>
+              Manage role permissions in <strong class="text-text-primary">Role Management</strong>.
+            </p>
+          </div>
             <p v-if="createUserError" class="text-xs text-red-500 flex items-center gap-1">
               <i class="fa-solid fa-circle-exclamation text-[10px]"></i>
               {{ createUserError }}
@@ -820,7 +710,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onUnmounted, nextTick } from 'vue'
+import { ref, computed, onUnmounted } from 'vue'
 import { toast } from 'vue-sonner'
 import {
   useListDomains,
@@ -830,14 +720,13 @@ import {
 } from '../../../queries/useCommon'
 import { useWorkspaceStore } from '../../../stores/workspace'
 import {
-  useCreateCompanyUser,
-  useSendSuperAdminOtp,
-  useVerifySuperAdminOtp,
+  useCreateCompanyUser
 } from '../../../queries/useCompanyUsers'
 import type { VerificationMethod } from '../../../stores/workspace'
+import { useCompanyRolesWithoutPermission } from '../../../queries/useCommon'
 // ── Props & permissions ───────────────────────────────────────────────────────
 const props = defineProps<{ profile?: any }>()
-
+const showPassword = ref(false)
 const activeCompany   = computed(() => props.profile?.active_company)
 const membershipRole  = computed(() => activeCompany.value?.membership_role || null)
 const permissions     = computed<string[]>(() => activeCompany.value?.permissions || [])
@@ -848,14 +737,22 @@ const canManageDomain     = computed(() => !isViewer.value && (isOwner.value || 
 const canAddDomain        = computed(() => !isViewer.value && (canManageDomain.value || can('company_domain.create')))
 const canVerifyDomain     = computed(() => !isViewer.value && (canManageDomain.value || can('company_domain.verify')))
 const canSetPrimaryDomain = computed(() => !isViewer.value && (canManageDomain.value || can('company_domain.set_primary')))
-
+const { data: rolesData } = useCompanyRolesWithoutPermission()
+const allRoles = computed(() => {
+  const raw = rolesData.value?.data ?? rolesData.value ?? []
+  return Array.isArray(raw) ? raw : []
+})
+const defaultRole = computed(() =>
+  allRoles.value.find((r: any) => r.slug?.toLowerCase().includes('viewer') || r.title?.toLowerCase().includes('viewer'))
+  ?? allRoles.value.find((r: any) => !r.is_admin)
+  ?? allRoles.value[0]
+  ?? null
+)
 // ── Queries ───────────────────────────────────────────────────────────────────
 const workspaceStore = useWorkspaceStore()
-const { data: domainsData, isLoading, isError: fetchError, refetch } = useListDomains()
+const { data: domainsData, isLoading, isError: fetchError, refetch: refetchDomains } = useListDomains()
 const { mutateAsync: setPrimaryMutation, isPending: isSettingPrimary } = useSetPrimaryDomain()
 const { mutateAsync: createUserMutation } = useCreateCompanyUser()
-const { mutateAsync: sendOtpMutation } = useSendSuperAdminOtp()
-const { mutateAsync: verifyOtpMutation } = useVerifySuperAdminOtp()
 
 const domains = computed<CompanyDomain[]>(() => domainsData.value?.domains ?? [])
 
@@ -893,22 +790,6 @@ const isDownloadingFile = ref(false)
 const retryCountdown = ref(0)
 const retryTotal     = ref(60)
 let countdownTimer: ReturnType<typeof setInterval> | null = null
-
-// ── Step 4: Super admin ───────────────────────────────────────────────────────
-const adminName         = ref('')
-const adminJobTitle     = ref('')
-const emailPrefix       = ref('')
-const adminPassword     = ref('')
-const showAdminPassword = ref(false)
-const isCreatingAdmin   = ref(false)
-const adminError        = ref('')
-const adminUserId       = ref('')
-
-// ── Step 5: OTP ───────────────────────────────────────────────────────────────
-const otpDigits      = ref(['', '', '', '', ''])
-const otpInputs      = ref<any[]>([])
-const isVerifyingOtp = ref(false)
-const isSendingOtp   = ref(false)
 const otpError       = ref('')
 
 // ── Domain users ──────────────────────────────────────────────────────────────
@@ -935,7 +816,7 @@ const createUserDomainId   = ref<string | null>(null)
 const domainForCreateUser  = ref('')
 const isCreatingDomainUser = ref(false)
 const createUserError      = ref('')
-const createUserForm       = ref({ u_full_name: '', emailPrefix: '', u_password: '' })
+const createUserForm = ref({ u_full_name: '', emailPrefix: '', u_password: '', company_role_id: '' })
 
 // ── Verification methods ──────────────────────────────────────────────────────
 const verificationMethods = [
@@ -947,7 +828,6 @@ const verificationMethods = [
 // ── Wizard navigation ─────────────────────────────────────────────────────────
 function startWizard(domain: CompanyDomain | null) {
   addError.value     = ''
-  adminError.value   = ''
   otpError.value     = ''
   recheckError.value = ''
 
@@ -976,10 +856,6 @@ function exitWizard() {
   stopCountdown()
 }
 
-// ── Add domain ────────────────────────────────────────────────────────────────
-// Uses workspaceStore.verifyDomain — same call the onboarding flow uses in
-// startDomainVerificationPhase (step 8). This both registers the domain AND
-// returns the DNS instructions in one shot.
 async function addDomain() {
   const raw = newDomainInput.value.trim().toLowerCase()
   if (!raw) return
@@ -991,9 +867,6 @@ async function addDomain() {
   isAddingDomain.value = true
   addError.value = ''
   try {
-    // workspaceStore.verifyDomain(domain, method) registers the domain and
-    // returns { domain, instructions, methodSwitched? } — identical to how
-    // startDomainVerificationPhase works in the onboarding component.
     const result = await workspaceStore.verifyDomain(raw, 'cname')
     wizardDomain.value       = result.domain
     wizardInstructions.value = result.instructions
@@ -1002,7 +875,7 @@ async function addDomain() {
     methodSwitched.value     = !!(result.methodSwitched) ||
                                (result.domain.verification_method !== 'cname')
     wizardStep.value = 'dns'
-    await refetch()
+    await refetchDomains()
   } catch (err: any) {
     addError.value = err?.response?.data?.message ?? 'Failed to add domain.'
   } finally {
@@ -1010,9 +883,6 @@ async function addDomain() {
   }
 }
 
-// ── Verify domain (recheck) ───────────────────────────────────────────────────
-// Uses workspaceStore.recheckDomain(id) — same call as recheckVerification in
-// the onboarding component. Handles the retryAfter rate-limit response.
 async function runVerification() {
   if (!wizardDomain.value || isVerifying.value || retryCountdown.value > 0) return
   isVerifying.value  = true
@@ -1029,7 +899,7 @@ async function runVerification() {
     if (data) {
       wizardDomain.value       = data.domain
       wizardInstructions.value = data.instructions
-
+      refetchDomains();
       if (data.domain.status === 'verified') {
         toast.success('Domain verified successfully!')
       } else {
@@ -1081,99 +951,10 @@ async function setPrimary(id: string) {
   try {
     await setPrimaryMutation(id)
     toast.success('Primary domain updated')
-    await refetch()
+    await refetchDomains()
   } catch {}
 }
 
-// ── Submit super admin ────────────────────────────────────────────────────────
-async function submitAdmin() {
-  if (isCreatingAdmin.value) return
-  isCreatingAdmin.value = true
-  adminError.value = ''
-  try {
-    const companyId = localStorage.getItem('company_id') || ''
-    const res = await createUserMutation({
-      u_full_name: adminName.value.trim(),
-      u_email:     `${emailPrefix.value.trim()}@${wizardDomain.value?.domain}`,
-      u_password:  adminPassword.value,
-      u_job_title: adminJobTitle.value.trim(),
-      company_id:  companyId,
-      role:        'super admin',
-    })
-    adminUserId.value = res?.user?._id || res?._id || ''
-
-    // Send OTP via workspaceStore sendOtp (same pattern as onboarding resendSuperAdminOtp)
-    await sendOtpMutation({ user_id: adminUserId.value, company_id: companyId })
-    otpDigits.value  = ['', '', '', '', '']
-    otpError.value   = ''
-    wizardStep.value = 'otp'
-    toast.success('Verification code sent to your email.')
-    await nextTick()
-    otpInputs.value[0]?.focus()
-  } catch (err: any) {
-    adminError.value = err?.response?.data?.message ?? 'Failed to create admin account.'
-  } finally {
-    isCreatingAdmin.value = false
-  }
-}
-
-// ── Verify OTP ────────────────────────────────────────────────────────────────
-async function verifyOtp() {
-  const code = otpDigits.value.join('')
-  if (code.length < 5 || isVerifyingOtp.value) return
-  isVerifyingOtp.value = true
-  otpError.value = ''
-  try {
-    const companyId = localStorage.getItem('company_id') || ''
-    await verifyOtpMutation({ user_id: adminUserId.value, otp: code, company_id: companyId })
-    toast.success('Domain setup completed successfully!')
-    exitWizard()
-    await refetch()
-  } catch (err: any) {
-    otpError.value = err?.response?.data?.message ?? 'Invalid verification code.'
-  } finally {
-    isVerifyingOtp.value = false
-  }
-}
-
-// ── Resend OTP ────────────────────────────────────────────────────────────────
-async function resendOtp() {
-  if (isSendingOtp.value) return
-  isSendingOtp.value = true
-  try {
-    const companyId = localStorage.getItem('company_id') || ''
-    await sendOtpMutation({ user_id: adminUserId.value, company_id: companyId })
-    otpDigits.value = ['', '', '', '', '']
-    toast.success('New code sent.')
-    await nextTick()
-    otpInputs.value[0]?.focus()
-  } catch (err: any) {
-    otpError.value = err?.response?.data?.message ?? 'Failed to resend code.'
-  } finally {
-    isSendingOtp.value = false
-  }
-}
-
-// ── OTP input helpers ─────────────────────────────────────────────────────────
-function handleOtpInput(event: Event, index: number) {
-  const val = (event.target as HTMLInputElement).value.replace(/\D/g, '')
-  otpDigits.value[index] = val.slice(-1)
-  otpError.value = ''
-  if (val && index < 4) nextTick(() => otpInputs.value[index + 1]?.focus())
-}
-
-function handleOtpDelete(event: KeyboardEvent, index: number) {
-  if (event.key === 'Backspace' && !otpDigits.value[index] && index > 0) {
-    nextTick(() => otpInputs.value[index - 1]?.focus())
-  }
-}
-
-function handleOtpPaste(event: ClipboardEvent) {
-  event.preventDefault()
-  const text = event.clipboardData?.getData('text').replace(/\D/g, '').slice(0, 5) ?? ''
-  text.split('').forEach((char, i) => { otpDigits.value[i] = char })
-  nextTick(() => { const last = Math.min(text.length, 4); otpInputs.value[last]?.focus() })
-}
 
 // ── Countdown ─────────────────────────────────────────────────────────────────
 function startCountdown(seconds: number) {
@@ -1270,21 +1051,25 @@ async function handleConfirmTransfer() {
     toast.success(`${ids.length} user${ids.length !== 1 ? 's' : ''} enrolled successfully.`)
     domainSelectedIds.value = { ...domainSelectedIds.value, [transferDomainId.value]: [] }
     showTransferModal.value = false
-    await refetch()
+    await refetchDomains()
   } catch (err: any) {
     toast.error(err?.response?.data?.message ?? 'Enrolment failed.')
   } finally {
     isTransferring.value = false
   }
 }
-
-// ── Create domain user ────────────────────────────────────────────────────────
 function openCreateUserModal(domainId: string) {
   createUserDomainId.value  = domainId
   const domain = domains.value.find(d => d._id === domainId)
   domainForCreateUser.value = domain?.domain ?? ''
-  createUserForm.value      = { u_full_name: '', emailPrefix: '', u_password: '' }
+  createUserForm.value      = {
+    u_full_name:     '',
+    emailPrefix:     '',
+    u_password:      '',
+    company_role_id: defaultRole.value?._id ?? '',   // ← seed viewer
+  }
   createUserError.value     = ''
+  showPassword.value        = false                  // ← reset eye toggle
   showCreateUserModal.value = true
 }
 
@@ -1299,11 +1084,11 @@ async function submitCreateUser() {
   try {
     const companyId = localStorage.getItem('company_id') ?? ''
     await createUserMutation({
-      u_full_name: createUserForm.value.u_full_name.trim(),
-      u_email:     `${createUserForm.value.emailPrefix.trim()}@${domainForCreateUser.value}`,
-      u_password:  createUserForm.value.u_password,
-      company_id:  companyId,
-      role:        'viewer',
+      u_full_name:     createUserForm.value.u_full_name.trim(),
+      u_email:         `${createUserForm.value.emailPrefix.trim()}@${domainForCreateUser.value}`,
+      u_password:      createUserForm.value.u_password,
+      company_id:      companyId,
+      company_role_id: createUserForm.value.company_role_id || defaultRole.value?._id,  // ← pass role
     })
     toast.success('User created successfully.')
     closeCreateUserModal()

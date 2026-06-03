@@ -39,7 +39,6 @@
           :viewBox="`0 0 ${svgW} ${svgH}`"
         >
           <defs></defs>
-          <!-- ✦ CHANGE 1: per-edge color + dashed (card edges use lane color, dashed) -->
           <g v-for="e in visibleEdges" :key="e.id">
             <path
               :d="e.path"
@@ -88,22 +87,6 @@
               <div class="node-sheet-header">
                 <i class="fa-solid fa-table-columns node-sheet-icon"></i>
                 <span class="node-sheet-title">{{ node.topic }}</span>
-                <div class="node-actions">
-                  <button
-                    v-if="node.children && node.children.length > 0"
-                    class="nact"
-                    @click.stop="toggleCollapse(node.id)"
-                    :title="isCollapsed(node.id) ? 'Expand' : 'Collapse'"
-                  >
-                    <i
-                      :class="
-                        isCollapsed(node.id)
-                          ? 'fa-solid fa-chevron-right'
-                          : 'fa-solid fa-chevron-down'
-                      "
-                    ></i>
-                  </button>
-                </div>
               </div>
               <div
                 class="node-sheet-meta"
@@ -138,22 +121,6 @@
               <div class="node-list-header">
                 <div class="node-list-dot"></div>
                 <span class="node-list-title">{{ node.topic }}</span>
-                <div class="node-actions">
-                  <button
-                    v-if="node.children && node.children.length > 0"
-                    class="nact"
-                    @click.stop="toggleCollapse(node.id)"
-                    :title="isCollapsed(node.id) ? 'Expand' : 'Collapse'"
-                  >
-                    <i
-                      :class="
-                        isCollapsed(node.id)
-                          ? 'fa-solid fa-chevron-right'
-                          : 'fa-solid fa-chevron-down'
-                      "
-                    ></i>
-                  </button>
-                </div>
               </div>
               <div
                 class="node-list-count"
@@ -227,93 +194,104 @@
           </template>
 
           <template v-else-if="node.uniqueName === 'card'">
-            <div class="node-card-wrapper">
-              <div
-                class="node-card-stripe"
-                :style="{
-                  background:
-                    node.variables?.lane?.variables?.['lane-color'] ||
-                    node.style?.borderColor ||
-                    node.style?.color ||
-                    'var(--primary-color)',
-                }"
-              ></div>
+  <div class="node-card-wrapper">
+    <div
+      class="node-card-stripe"
+      :style="{
+        background:
+          node.variables?.lane?.variables?.['lane-color'] ||
+          node.style?.borderColor ||
+          node.style?.color ||
+          'var(--primary-color)',
+      }"
+    ></div>
+    <div class="node-card-body">
+      <div class="node-card-badges">
+        <span v-if="node.variables?.['card-type']" class="card-badge card-badge--type">
+          {{ node.variables["card-type"] || "General" }}
+        </span>
+        <span v-if="node.variables?.['card-status']" class="card-badge card-badge--status">
+          {{ node.variables["card-status"] }}
+        </span>
+        <span
+          v-if="node.variables?.priority"
+          class="card-badge"
+          :class="`card-badge--${node.variables.priority}`"
+        >
+          <i class="fa-solid fa-flag" style="font-size: 8px"></i>
+          {{ node.variables.priority }}
+        </span>
+      </div>
+      <div class="node-card-title-block">
+  <span class="node-card-title">
+  {{ node.topic?.length > 30 ? node.topic.slice(0, 30) + '...' : node.topic }}
+</span>
 
-              <div class="node-card-body py-2">
-                <div class="node-card-badges mt-1.5">
-                  <span
-                    v-if="node.variables?.['card-type']"
-                    class="card-badge card-badge--type"
-                    >{{ node.variables["card-type"] || "General" }}</span
-                  >
-                  <span
-                    v-if="node.variables?.['card-status']"
-                    class="card-badge card-badge--status"
-                    >{{ node.variables["card-status"] }}</span
-                  >
-                  <span
-                    v-if="node.variables?.priority"
-                    class="card-badge"
-                    :class="`card-badge--${node.variables.priority}`"
-                  >
-                    <i class="fa-solid fa-flag" style="font-size: 8px"></i>
-                    {{ node.variables.priority }}
-                  </span>
-                </div>
-                <div class="relative inline-block group">
-                  <span class="node-card-title mt-1">
-                    {{ node.topic }}
-                  </span>
+</div>
 
-                  <div
-                    v-if="node?.topic?.length > 30"
-                    class="absolute -right-32 z-100 -top-6 mt-1 hidden group-hover:block bg-bg-card text-accent text-xs px-2 py-1 rounded shadow"
-                  >
-                    {{ node.topic }}
-                  </div>
-                </div>
-                <div class="node-card-actions-row">
-                  <button
-                    v-if="canCreateCard && !asTalent"
-                    class="nact nact--add bg-primary-color"
-                    @click.stop="
-                      node.parent && createCardDirectly(node.parent, node)
-                    "
-                    title="Add sibling card"
-                  >
-                    <i class="fa-solid fa-plus"></i>
-                  </button>
-                  <button
-                    v-if="canAssignCard && canEditCard && !asTalent"
-                    class="nact"
-                    @click.stop="openFormatSidebar(node.id)"
-                    title="Format"
-                  >
-                    <i class="fa-solid fa-palette"></i>
-                  </button>
-                  <button
-                    class="nact nact--open"
-                    @click.stop="handleOpenNode(node)"
-                    title="Open card"
-                  >
-                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
-                  </button>
-                  <button
-                    v-if="canDeleteCard"
-                    class="nact nact--danger"
-                    @click.stop="openDeleteModal(node)"
-                    title="Delete"
-                  >
-                    <i class="fa-solid fa-trash-can"></i>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </template>
+<div
+  class="node-card-actions-row"
+  @click.stop
+  @mousedown.stop
+>
+  <button
+    v-if="canCreateCard && !asTalent"
+    class="nact nact--add"
+    @click.stop="node.parent && createCardDirectly(node.parent, node)"
+    title="Add sibling card"
+  >
+    <i class="fa-solid fa-plus"></i>
+  </button>
+
+  <button
+    v-if="canAssignCard && canEditCard && !asTalent"
+    class="nact"
+    @click.stop="openFormatSidebar(node.id)"
+    title="Format"
+  >
+    <i class="fa-solid fa-palette"></i>
+  </button>
+
+  <button
+    class="nact nact--open"
+    @click.stop="handleOpenNode(node)"
+    title="Open card"
+  >
+    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+  </button>
+
+  <button
+    v-if="canDeleteCard"
+    class="nact nact--danger"
+    @click.stop="openDeleteModal(node)"
+    title="Delete"
+  >
+    <i class="fa-solid fa-trash-can"></i>
+  </button>
+</div>
+    </div>
+  </div>
+
+  
+</template>
         </div>
+
+        <!-- ✦ External collapse toggle buttons (outside node cards) -->
+        <template v-for="node in allNodes" :key="`collapse-${node.id}`">
+          <button
+            v-if="(node.uniqueName === 'sheet' || node.uniqueName === 'List') && node.children && node.children.length > 0"
+            class="collapse-toggle me-5 border-2 border-accent text-accent-hover me-4 rounded-full flex justify-around items-center absolute w-5 h-5 text-[10px]"
+            :class="{ 'collapse-toggle--collapsed': isCollapsed(node.id) }"
+            :style="collapseToggleStyle(node)"
+            @click.stop="toggleCollapse(node.id)"
+            :title="isCollapsed(node.id) ? 'Expand' : 'Collapse'"
+          >
+            <i :class="isCollapsed(node.id) ? 'fa-solid fa-plus' : 'fa-solid fa-minus'"></i>
+          </button>
+        </template>
       </div>
 
-      <!-- ✦ CHANGE 2: controls panel with fit/reset/center added -->
+      <!-- ✦ controls panel -->
       <div class="canvas-controls">
         <button class="ctrl-btn" @click="handleZoomIn" title="Zoom In (+)">
           <i class="fa-solid fa-plus"></i>
@@ -399,10 +377,7 @@
           </button>
         </div>
 
-        <!-- ✦ Theme panel shown when no node selected -->
-        <!-- ✦ Theme panel shown when no node selected -->
         <div v-if="!selectedNodeId" class="theme-panel">
-          <!-- Tab bar -->
           <div class="fs-tabs">
             <button
               class="fs-tab"
@@ -425,9 +400,7 @@
             </button>
           </div>
 
-          <!-- ── THEME TAB ──────────────────────────────────────────── -->
           <template v-if="activeFormatTab === 'theme'">
-            <!-- Background Color -->
             <div class="fs-section">
               <div class="fs-section-label">Canvas Background</div>
               <div class="bg-color-grid">
@@ -483,7 +456,6 @@
               </div>
             </div>
 
-            <!-- Color Themes -->
             <div class="fs-section">
               <div class="fs-section-label">Color Theme</div>
               <div class="theme-grid">
@@ -554,8 +526,6 @@
             </div>
           </template>
 
-          <!-- ── LAYOUT TAB ─────────────────────────────────────────── -->
-          <!-- ── LAYOUT TAB ─────────────────────────────────────────── -->
           <template v-else>
             <div
               v-for="group in LAYOUT_GROUPS"
@@ -740,8 +710,6 @@
                   @change="onStyleChange('font_family', $event)"
                 >
                   <option value="inherit">Default</option>
-
-                  <!-- Modern UI Fonts -->
                   <option value="Inter, sans-serif">Inter</option>
                   <option value="'Segoe UI', sans-serif">Segoe UI</option>
                   <option value="'Roboto', sans-serif">Roboto</option>
@@ -752,15 +720,11 @@
                   <option value="'Nunito', sans-serif">Nunito</option>
                   <option value="'Work Sans', sans-serif">Work Sans</option>
                   <option value="'Montserrat', sans-serif">Montserrat</option>
-
-                  <!-- System Font Stack (Best Performance) -->
                   <option
                     value="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
                   >
                     System UI
                   </option>
-
-                  <!-- Classic Web Safe Fonts -->
                   <option value="Arial, sans-serif">Arial</option>
                   <option
                     value="'Helvetica Neue', Helvetica, Arial, sans-serif"
@@ -772,8 +736,6 @@
                   </option>
                   <option value="Georgia, serif">Georgia</option>
                   <option value="'Courier New', monospace">Courier New</option>
-
-                  <!-- Designer / Premium Feel -->
                   <option value="'Playfair Display', serif">
                     Playfair Display
                   </option>
@@ -781,15 +743,11 @@
                   <option value="'Raleway', sans-serif">Raleway</option>
                   <option value="'Oswald', sans-serif">Oswald</option>
                   <option value="'Ubuntu', sans-serif">Ubuntu</option>
-
-                  <!-- Fun / Stylized -->
                   <option value="'Pacifico', cursive">Pacifico</option>
                   <option value="'Dancing Script', cursive">
                     Dancing Script
                   </option>
                   <option value="'Fira Code', monospace">Fira Code</option>
-
-                  <!-- Generic -->
                   <option value="sans-serif">Sans-serif</option>
                   <option value="serif">Serif</option>
                   <option value="monospace">Monospace</option>
@@ -998,7 +956,6 @@
             <span class="ctx-header-title">{{ ctxMenuNode?.topic }}</span>
           </div>
 
-          <!-- Add card below -->
           <button
             v-if="canCreateCard && !asTalent"
             class="ctx-item bg-primary-color"
@@ -1009,7 +966,6 @@
             <kbd class="ctx-kbd">Enter</kbd>
           </button>
 
-          <!-- Add child card (Tab) -->
           <button
             v-if="canCreateCard && !asTalent"
             class="ctx-item"
@@ -1022,7 +978,6 @@
             <kbd class="ctx-kbd">Tab</kbd>
           </button>
 
-          <!-- Open card -->
           <button class="ctx-item" @click="ctxOpenCard">
             <i
               class="fa-solid fa-arrow-up-right-from-square ctx-item-icon ctx-icon--open"
@@ -1031,7 +986,6 @@
             <kbd class="ctx-kbd">Space</kbd>
           </button>
 
-          <!-- Duplicate -->
           <button v-if="canCreateCard" class="ctx-item" @click="ctxDuplicate">
             <i class="fa-solid fa-clone ctx-item-icon ctx-icon--duplicate"></i>
             <span>Duplicate</span>
@@ -1040,7 +994,6 @@
 
           <div class="ctx-divider"></div>
 
-          <!-- Format -->
           <button
             v-if="canAssignCard && canEditCard"
             class="ctx-item"
@@ -1050,7 +1003,6 @@
             <span>Format</span>
           </button>
 
-          <!-- Copy Style -->
           <button
             v-if="canAssignCard && canEditCard"
             class="ctx-item"
@@ -1063,7 +1015,6 @@
             <kbd class="ctx-kbd">Alt+Ctrl+C</kbd>
           </button>
 
-          <!-- Paste Style -->
           <button
             v-if="canAssignCard && canEditCard && styleClipboard"
             class="ctx-item"
@@ -1076,7 +1027,6 @@
             <kbd class="ctx-kbd">Alt+Ctrl+V</kbd>
           </button>
 
-          <!-- Reset Style -->
           <button
             v-if="canAssignCard && canEditCard"
             class="ctx-item"
@@ -1091,7 +1041,6 @@
 
           <div class="ctx-divider"></div>
 
-          <!-- Delete -->
           <button
             v-if="canDeleteCard"
             class="ctx-item ctx-item--danger"
@@ -1282,7 +1231,6 @@ interface MindNode {
   collapsed: boolean;
 }
 
-// ✦ CHANGE 3: Edge interface gets color + dashed fields
 interface Edge {
   id: string;
   path: string;
@@ -1293,7 +1241,11 @@ interface Edge {
 
 const nodeStore = reactive<Record<string, MindNode>>({});
 const rootNodeId = ref<string>("");
+// ✦ FIX: Separate collapse tracking from layout trigger
+// collapseVersion only updates allNodes/visibleEdges (not watchEffect layout)
 const collapseVersion = ref(0);
+// layoutTrigger is what watchEffect watches - we do NOT increment it on collapse
+const layoutTrigger = ref(0);
 const collapsedIds = ref<string[]>([]);
 const showTicketDelete = ref(false);
 const ticketToDelete = ref<any>(null);
@@ -1308,7 +1260,7 @@ const shortcutHintTimer = ref<ReturnType<typeof setTimeout> | null>(null);
 const lastShortcutLabel = ref("");
 const activeFormatTab = ref<"theme" | "layout">("theme");
 const isTreeMap = computed(() => layoutDirection.value === "tree-map");
-// ✦ Theme system
+
 interface MapTheme {
   id: string;
   name: string;
@@ -1332,19 +1284,6 @@ const THEMES: MapTheme[] = [
     edgeColor: "var(--primary-color)",
     textColor: "var(--text-primary)",
   },
-  // {
-  //   id: "default",
-  //   name: "Default",
-  //   bg: "#dedfe3",
-  //   nodeColors: {
-  //     root: "#f1eeff",
-  //     sheet: "#ede9fb",
-  //     list: "#f3f4f6",
-  //     card: "#ffffff",
-  //   },
-  //   edgeColor: "#7D68C8",
-  //   textColor: "#2b2c30",
-  // },
   {
     id: "ocean",
     name: "Ocean",
@@ -1673,7 +1612,6 @@ const activeThemeId = ref<string>("default");
 const activeCanvasBg =  ref("var(--bg-body)");
 const recentlyUsedColors = ref<string[]>([]);
 const activeEdgeColor = ref('var(--primary-color)')
-// const themeColorPickerOpen = ref(false);
 const customBgColor = ref("#dedfe3");
 async function persistTheme(stylePayload: Record<string, any>) {
   const { type, type_id } = resolveThemeContext();
@@ -1688,10 +1626,8 @@ async function persistTheme(stylePayload: Record<string, any>) {
   };
 
   if (savedThemeDocId.value) {
-    // UPDATE
     await themeStore.updateMindmapTheme(savedThemeDocId.value, payload);
   } else {
-    // CREATE
     await themeStore.saveMindmapTheme(payload);
     const theme = await themeStore.getMindmapThemeByWorkflow(
       props.workspaceId,
@@ -1787,7 +1723,6 @@ function applyStyleObject(style: Record<string, any>, persist = false) {
   }
 }
 
-// AFTER
 async function loadSavedTheme() {
   try {
     const { type, type_id } = resolveThemeContext();
@@ -1795,7 +1730,7 @@ async function loadSavedTheme() {
       props.workspaceId, type_id, type,
     );
     if (match?._id && match?.style) {
-      savedThemeDocId.value = match._id;  // keep the ID — don't clear it
+      savedThemeDocId.value = match._id;
       let tries = 0;
       while (!rootEl.value && tries < 20) {
         await nextTick();
@@ -1809,14 +1744,13 @@ async function loadSavedTheme() {
   } catch (err) {
     console.warn("Could not load theme from API:", err);
   }
-  // No saved theme found — clear the ID and apply defaults
   savedThemeDocId.value = null;
   await nextTick()
   if (rootEl.value) {
     applyDefaultTheme();
   }
 }
-// REPLACE with a single correct watcher:
+
 watch(
   () => {
     const { type, type_id } = resolveThemeContext();
@@ -1839,7 +1773,6 @@ let themeRequestId = 0;
 watch(
   themeContext,
   async (newCtx, oldCtx) => {
-    // Skip if nothing actually changed
     if (newCtx.type === oldCtx?.type && newCtx.type_id === oldCtx?.type_id)
       return;
 
@@ -1847,7 +1780,6 @@ watch(
 
     try {
       await loadSavedTheme();
-      // Ignore if a newer request came in while we were awaiting
       if (requestId !== themeRequestId) return;
     } catch (err) {
       console.warn("Theme watcher load failed:", err);
@@ -2007,22 +1939,19 @@ const DEFAULT_BACKEND_STYLE = {
 };
 
 const LAYOUT_VIEWS = [
-  // Mind Map group
   { id: "right", name: "Right", group: "mindmap" },
   { id: "left", name: "Left", group: "mindmap" },
   { id: "center", name: "Centered", group: "mindmap" },
   { id: "top", name: "Top down", group: "mindmap" },
   { id: "bottom", name: "Bottom up", group: "mindmap" },
   { id: "radial", name: "Radial", group: "mindmap" },
-  { id: "zigzag", name: "Zigzag", group: "mindmap" }, // added
-  { id: "staggered", name: "Staggered", group: "mindmap" }, // added
-  { id: "split-horizontal", name: "Split Horizontal", group: "mindmap" }, // added
-  { id: "ladder", name: "Ladder", group: "mindmap" }, // added
-  // Logic Chart group
+  { id: "zigzag", name: "Zigzag", group: "mindmap" },
+  { id: "staggered", name: "Staggered", group: "mindmap" },
+  { id: "split-horizontal", name: "Split Horizontal", group: "mindmap" },
+  { id: "ladder", name: "Ladder", group: "mindmap" },
   { id: "logic-right", name: "Logic Right", group: "logic" },
   { id: "logic-left", name: "Logic Left", group: "logic" },
   { id: "fishbone", name: "Fishbone", group: "logic" },
-  // Structure group
   { id: "org-chart", name: "Org Chart", group: "structure" },
   { id: "timeline", name: "Timeline", group: "structure" },
   { id: "tree-map", name: "Tree Map", group: "structure" },
@@ -2332,7 +2261,6 @@ const H_GAP = 80;
 const V_GAP = 16;
 const CARD_V_GAP = 44;
 
-// Returns the total horizontal width a node's subtree occupies in top/bottom layout
 function getSubtreeWidth(node: MindNode, dir: string): number {
   const w = NODE_W[node.uniqueName] ?? 180;
   if (isCollapsed(node.id) || !node.children || node.children.length === 0) {
@@ -2360,7 +2288,6 @@ function layoutTree(
     node.y = y;
     return node.height;
   }
-  // ── Center layout ─────────────────────────────────────────────────────
   if (d === "center") {
     const kids = node.children;
     if (kids.length === 0) {
@@ -2369,23 +2296,20 @@ function layoutTree(
       return node.height;
     }
 
-    // For root with a single sheet child: center the sheet and split its lists
     if (node.uniqueName === "root" && kids.length === 1) {
       const sheet = kids[0];
-      nodeSides.set(sheet.id, "right"); // side doesn't matter, sheet is centered
+      nodeSides.set(sheet.id, "right");
       sheet.width = NODE_W[sheet.uniqueName] ?? 180;
       sheet.height = nodeHeight(sheet);
 
       const lists = sheet.children || [];
       if (lists.length === 0) {
-        // No lists — just place sheet to the right of root normally
         const h = layoutTree(sheet, x + node.width + H_GAP, y, "right");
         node.x = x;
         node.y = sheet.y + sheet.height / 2 - node.height / 2;
         return h;
       }
 
-      // Split lists: even → right of sheet, odd → left of sheet
       const rightLists: MindNode[] = [];
       const leftLists: MindNode[] = [];
       lists.forEach((l, i) => {
@@ -2398,9 +2322,8 @@ function layoutTree(
         }
       });
 
-      // Sheet x is centered between root and its children
       const sheetX = x + node.width + H_GAP;
-      const sheetY = y; // will be recomputed after children are laid out
+      const sheetY = y;
       console.log(sheetY);
       let ry = y;
       for (const l of rightLists) {
@@ -2415,20 +2338,17 @@ function layoutTree(
         ly += h + V_GAP;
       }
 
-      // Center sheet vertically among all its laid-out list children
       const allLists = [...rightLists, ...leftLists];
       const minLY = Math.min(...allLists.map((l) => l.y));
       const maxLY = Math.max(...allLists.map((l) => l.y + l.height));
       sheet.x = sheetX;
       sheet.y = minLY + (maxLY - minLY) / 2 - sheet.height / 2;
 
-      // Center root vertically to the sheet
       node.x = x;
       node.y = sheet.y + sheet.height / 2 - node.height / 2;
       return maxLY - minLY;
     }
 
-    // For root/sheet with multiple children: original split logic
     if (node.uniqueName === "root" || node.uniqueName === "sheet") {
       const rightKids: MindNode[] = [];
       const leftKids: MindNode[] = [];
@@ -2464,7 +2384,6 @@ function layoutTree(
     }
   }
 
-  // ── Top / Bottom layout ───────────────────────────────────────────────
   if (d === "top" || d === "bottom") {
     const sign = d === "top" ? 1 : -1;
     const childGapH = V_GAP;
@@ -2493,7 +2412,6 @@ function layoutTree(
     return totalW;
   }
 
-  // ── Radial layout ─────────────────────────────────────────────────────
   if (d === "radial") {
     const radius = 320;
     const count = node.children.length;
@@ -2517,7 +2435,6 @@ function layoutTree(
     return node.height;
   }
 
-  // ── Zigzag layout ─────────────────────────────────────────────────────
   if (d === "zigzag") {
     const colLeft = x + node.width + H_GAP;
     const colRight = x + node.width + H_GAP * 2 + (NODE_W.sheet ?? 180);
@@ -2534,7 +2451,6 @@ function layoutTree(
     return rowY - y;
   }
 
-  // ── Staggered layout ──────────────────────────────────────────────────
   if (d === "staggered") {
     const baseX = x + node.width + H_GAP;
     const staggerOffset = 40;
@@ -2553,7 +2469,6 @@ function layoutTree(
     return childY - y;
   }
 
-  // ── Split-Horizontal layout ────────────────────────────────────────────
   if (d === "split-horizontal") {
     const topKids: MindNode[] = [];
     const bottomKids: MindNode[] = [];
@@ -2562,7 +2477,6 @@ function layoutTree(
       else bottomKids.push(c);
     });
 
-    // top row
     const topGap = V_GAP;
     const topWidths = topKids.map((c) => NODE_W[c.uniqueName] ?? 180);
     const totalTopW =
@@ -2575,7 +2489,6 @@ function layoutTree(
       tx += topWidths[i] + topGap;
     }
 
-    // bottom row
     const botWidths = bottomKids.map((c) => NODE_W[c.uniqueName] ?? 180);
     const totalBotW =
       botWidths.reduce((a, b) => a + b, 0) + topGap * (bottomKids.length - 1);
@@ -2592,7 +2505,6 @@ function layoutTree(
     return node.height;
   }
 
-  // ── Ladder layout ─────────────────────────────────────────────────────
   if (d === "ladder") {
     const ladderX = x + node.width + H_GAP;
     let runningY = y;
@@ -2605,7 +2517,7 @@ function layoutTree(
     node.y = y;
     return runningY - y;
   }
-  // ── Logic Right layout (flush left, bracket connector) ───────────────
+
   if (d === "logic-right") {
     const childX = x + node.width + 60;
     let runY = y;
@@ -2616,7 +2528,6 @@ function layoutTree(
       child.x = childX;
       child.y = runY;
       nodeMap.set(child.id, child);
-      // Layout grandchildren (cards) further to the right
       if (child.children?.length) {
         const gcX = childX + child.width + H_GAP;
         let gcY = runY;
@@ -2642,7 +2553,6 @@ function layoutTree(
     return runY - y;
   }
 
-  // ── Logic Left layout (flush right, bracket connector) ───────────────
   if (d === "logic-left") {
     const childW = NODE_W.List ?? 180;
     const childX = x - H_GAP - childW;
@@ -2680,15 +2590,11 @@ function layoutTree(
     return runY - y;
   }
   if (d === "fishbone") {
-    // Constants
-    const SPINE_STEP = 240; // horizontal spacing between list attach-points on spine
-    const BRANCH_H = 150; // vertical distance from spine-Y to list node centre
-    const CARD_GAP = 12; // vertical gap between cards stacked on a list branch
-    const LIST_TO_CARD_GAP = 20; // gap between list bottom/top and first card
+    const SPINE_STEP = 240;
+    const BRANCH_H = 150;
+    const CARD_GAP = 12;
+    const LIST_TO_CARD_GAP = 20;
 
-    // The root node data-structure is: root → sheets → lists → cards
-    // For fishbone we flatten: take first sheet's lists as the branches
-    // (if multiple sheets exist, merge all their lists into one set of branches)
     const allLists: MindNode[] = [];
     for (const sheet of node.children ?? []) {
       for (const list of sheet.children ?? []) {
@@ -2698,27 +2604,23 @@ function layoutTree(
 
     const listCount = allLists.length;
     const spineLen = (listCount + 1) * SPINE_STEP;
-    const spineY = y; // y IS the spine centre Y
+    const spineY = y;
 
-    // ── 1. Place ROOT at far RIGHT end of spine ──────────────────────────
     node.width = NODE_W[node.uniqueName] ?? 220;
     node.height = nodeHeight(node);
     node.x = x + spineLen;
     node.y = spineY - node.height / 2;
     nodeMap.set(node.id, node);
 
-    // ── 2. Place SHEET(S) just left of root, centred on spine ────────────
-    //    Sheet acts as the neck between root and the spine branches
     for (const sheet of node.children ?? []) {
       sheet.width = NODE_W[sheet.uniqueName] ?? 200;
       sheet.height = nodeHeight(sheet);
-      sheet.x = node.x - sheet.width - 24; // just left of root
-      sheet.y = spineY - sheet.height / 2; // centred on spine
+      sheet.x = node.x - sheet.width - 24;
+      sheet.y = spineY - sheet.height / 2;
       nodeSides.set(sheet.id, "right");
       nodeMap.set(sheet.id, sheet);
     }
 
-    // ── 3. Distribute LISTS along the spine, alternating above/below ─────
     const topLists: MindNode[] = [];
     const bottomLists: MindNode[] = [];
     allLists.forEach((list, i) => {
@@ -2726,7 +2628,6 @@ function layoutTree(
       else bottomLists.push(list);
     });
 
-    // top lists — above spine, stacked from right to left (closest to root first)
     topLists.forEach((list, i) => {
       const attachX = x + SPINE_STEP * (i + 1);
       list.width = NODE_W[list.uniqueName] ?? 180;
@@ -2736,13 +2637,12 @@ function layoutTree(
       nodeSides.set(list.id, "right");
       nodeMap.set(list.id, list);
 
-      // Cards stack UPWARD from list top
       const cards = list.children ?? [];
       let nextCardBottom = list.y - LIST_TO_CARD_GAP;
       cards.forEach((card) => {
         card.width = NODE_W[card.uniqueName] ?? 210;
         card.height = nodeHeight(card);
-        card.x = list.x + list.width / 2 - card.width / 2; // centred on list
+        card.x = list.x + list.width / 2 - card.width / 2;
         card.y = nextCardBottom - card.height;
         nextCardBottom = card.y - CARD_GAP;
         nodeSides.set(card.id, "right");
@@ -2750,7 +2650,6 @@ function layoutTree(
       });
     });
 
-    // bottom lists — below spine
     bottomLists.forEach((list, i) => {
       const attachX = x + SPINE_STEP * (i + 1);
       list.width = NODE_W[list.uniqueName] ?? 180;
@@ -2760,7 +2659,6 @@ function layoutTree(
       nodeSides.set(list.id, "right");
       nodeMap.set(list.id, list);
 
-      // Cards stack DOWNWARD from list bottom
       const cards = list.children ?? [];
       let nextCardTop = list.y + list.height + LIST_TO_CARD_GAP;
       cards.forEach((card) => {
@@ -2777,9 +2675,7 @@ function layoutTree(
     return spineLen + node.width;
   }
 
-  // ── Org Chart layout (top-down with straight elbow connectors) ────────
   if (d === "org-chart") {
-    // Same as top but we flag it separately so edges can use elbow style
     const childGapH = V_GAP * 2;
     const childWidths = node.children.map((c) => getSubtreeWidth(c, d));
     const totalW =
@@ -2824,7 +2720,6 @@ function layoutTree(
     node.y = SPINE_Y - node.height / 2;
     nodeMap.set(node.id, node);
 
-    // ── pass 2: place sheets + their lists + cards ───────────────────────
     let cursorX = x + node.width + H_GAP;
 
     for (let i = 0; i < node.children.length; i++) {
@@ -2833,7 +2728,6 @@ function layoutTree(
       sheet.width = NODE_W[sheet.uniqueName] ?? 200;
       sheet.height = nodeHeight(sheet);
 
-      // Sheet centred horizontally in its column, vertically on spine
       sheet.x = cursorX + (colW - SHEET_PAD_X - sheet.width) / 2;
       sheet.y = SPINE_Y - sheet.height / 2;
       nodeSides.set(sheet.id, "right");
@@ -2841,14 +2735,10 @@ function layoutTree(
 
       const lists = sheet.children ?? [];
 
-      // Split lists: evens above spine, odds below spine
       const aboveLists = lists.filter((_, j) => j % 2 === 0);
       const belowLists = lists.filter((_, j) => j % 2 !== 0);
 
-      // ── place above lists (stack upward from spine) ──────────────────
-      // All above-lists share columns starting at sheet.x, side by side
-      let aboveCursorY = SPINE_Y - SPINE_TO_LIST; // bottom edge of next list slot
-      // Group all above lists in a single upward stack, centred on sheet
+      let aboveCursorY = SPINE_Y - SPINE_TO_LIST;
       const aboveTotalW =
         aboveLists.length * LIST_COL_W +
         Math.max(0, aboveLists.length - 1) * V_GAP;
@@ -2863,7 +2753,6 @@ function layoutTree(
         nodeSides.set(list.id, "right");
         nodeMap.set(list.id, list);
 
-        // Cards stack upward from list top
         const cards = list.children ?? [];
         let cardY = list.y - LIST_GAP;
         for (let k = cards.length - 1; k >= 0; k--) {
@@ -2879,12 +2768,11 @@ function layoutTree(
         }
       }
 
-      // ── place below lists (stack downward from spine) ────────────────
       const belowTotalW =
         belowLists.length * LIST_COL_W +
         Math.max(0, belowLists.length - 1) * V_GAP;
       let belowStartX = sheet.x + sheet.width / 2 - belowTotalW / 2;
-      let belowCursorY = SPINE_Y + SPINE_TO_LIST; // top edge of next list slot
+      let belowCursorY = SPINE_Y + SPINE_TO_LIST;
 
       for (let j = 0; j < belowLists.length; j++) {
         const list = belowLists[j];
@@ -2895,7 +2783,6 @@ function layoutTree(
         nodeSides.set(list.id, "right");
         nodeMap.set(list.id, list);
 
-        // Cards stack downward from list bottom
         const cards = list.children ?? [];
         let cardY = list.y + list.height + LIST_GAP;
         for (let k = 0; k < cards.length; k++) {
@@ -2921,12 +2808,12 @@ function layoutTree(
     const TILE_PAD_X = 20;
     const TILE_PAD_Y = 24;
     const TILE_INNER = 10;
-    const HDR_H = 40; // sheet header height
-    const LIST_H = 28; // list row height
+    const HDR_H = 40;
+    const LIST_H = 28;
     const LIST_GAP = 4;
-    const CARD_H = 60; // card height inside tile
+    const CARD_H = 60;
     const CARD_GAP = 4;
-    const CARD_INDENT = 8; // indent cards under list
+    const CARD_INDENT = 8;
 
     node.width = NODE_W[node.uniqueName] ?? 220;
     node.height = nodeHeight(node);
@@ -2937,7 +2824,6 @@ function layoutTree(
     const startX = x;
     const startY = y + node.height + TILE_PAD_Y * 2;
 
-    // Pass 1: compute each tile's natural height based on its content
     const tileHeights: number[] = node.children.map((sheet) => {
       const lists = sheet.children ?? [];
       let h = HDR_H + TILE_INNER;
@@ -2948,22 +2834,19 @@ function layoutTree(
           h += cardCount * (CARD_H + CARD_GAP) + TILE_INNER;
         }
       }
-      h += TILE_INNER; // bottom padding
+      h += TILE_INNER;
       return Math.max(h, 120);
     });
 
-    // Pass 2: lay out every sheet, list, and card
     for (let i = 0; i < node.children.length; i++) {
       const sheet = node.children[i];
       const col = i % COLS;
       const row = Math.floor(i / COLS);
 
-      // Row height = tallest tile in this row (so tiles align horizontally)
       const rowStart = row * COLS;
       const rowEnd = Math.min(rowStart + COLS, node.children.length);
       const rowH = Math.max(...tileHeights.slice(rowStart, rowEnd));
 
-      // Cumulative Y: sum all previous row heights
       let tileY = startY;
       for (let r = 0; r < row; r++) {
         const rStart = r * COLS;
@@ -2983,7 +2866,6 @@ function layoutTree(
       let curY = sheet.y + HDR_H + TILE_INNER;
 
       for (const list of lists) {
-        // List row — full tile width minus padding
         list.width = TILE_W - TILE_INNER * 2;
         list.height = LIST_H;
         list.x = sheet.x + TILE_INNER;
@@ -2992,7 +2874,6 @@ function layoutTree(
         nodeSides.set(list.id, "right");
         nodeMap.set(list.id, list);
 
-        // Cards — indented under each list
         const cards = list.children ?? [];
         for (const card of cards) {
           card.width = TILE_W - TILE_INNER * 2 - CARD_INDENT;
@@ -3003,11 +2884,10 @@ function layoutTree(
           nodeSides.set(card.id, "right");
           nodeMap.set(card.id, card);
         }
-        if (cards.length > 0) curY += TILE_INNER; // gap after card group
+        if (cards.length > 0) curY += TILE_INNER;
       }
     }
 
-    // Return total bounding height
     const totalRows = Math.ceil(node.children.length / COLS);
     let totalH = startY - y;
     for (let r = 0; r < totalRows; r++) {
@@ -3018,7 +2898,7 @@ function layoutTree(
     }
     return totalH;
   }
-  // ── Left / Right layout (default) ────────────────────────────────────
+
   let childY = y;
   let total = 0;
   for (const child of node.children) {
@@ -3048,7 +2928,7 @@ function layoutTree(
 }
 type LayoutDirection = (typeof LAYOUT_VIEWS)[number]["id"];
 function setLayout(dir: LayoutDirection) {
-  layoutDirection.value = dir; // reactive
+  layoutDirection.value = dir;
 
   const root = nodeMap.get(rootNodeId.value);
   if (!root) return;
@@ -3108,11 +2988,9 @@ function setLayout(dir: LayoutDirection) {
       break;
   }
 
-  // Schedule layout after DOM update
   nextTick(() => {
     layoutTree(root, startX, startY, dir);
 
-    // Update SVG bounds
     let minX = Infinity,
       maxX = -Infinity,
       maxY = 0;
@@ -3125,7 +3003,7 @@ function setLayout(dir: LayoutDirection) {
     svgW.value = Math.max(maxX + 300, 5000);
     svgH.value = Math.max(maxY + 300, 3000);
 
-    centerView(); // safe, called after layout
+    centerView();
   });
 }
 const sheetCardMap = ref<Record<string, any[]>>({});
@@ -3147,7 +3025,7 @@ function buildTree(sheets: any[]): MindNode {
   };
 
   const varMap: Record<string, MindNode> = {};
-  sheetCardMap.value = {}; // reset
+  sheetCardMap.value = {};
 
   sheets.forEach((sheet) => {
     const title =
@@ -3157,12 +3035,11 @@ function buildTree(sheets: any[]): MindNode {
       "Sheet";
 
     const link = sheet.style?.hyperLink || "";
-    // create sheet node
     if (!varMap[title]) {
       varMap[title] = {
         id: `${instancePrefix}_sheet_${sheet._id}`,
         real_id: sheet._id,
-        sheet_id: sheet?.sheet_id, // <-- sheet_id here
+        sheet_id: sheet?.sheet_id,
         topic: title,
         variables: sheet?.variables,
         children: [],
@@ -3179,7 +3056,6 @@ function buildTree(sheets: any[]): MindNode {
       root.children.push(varMap[title]);
     }
 
-    // create list node
     const listTitle = sheet.title || sheet.variables?.["sheet-title"] || title;
     const safeTitle = (listTitle || "")
       .toLowerCase()
@@ -3188,7 +3064,7 @@ function buildTree(sheets: any[]): MindNode {
 
     const listNode: MindNode = {
       id: `${instancePrefix}_list_${sheet._id}_${safeTitle}_${sheet.sort_order ?? 0}`,
-      sheet_id: sheet?.cards[0]?.sheet_id, // <-- propagate sheet_id to list node
+      sheet_id: sheet?.cards[0]?.sheet_id,
       topic: listTitle,
       children: [],
       style: mapBackendStyle(sheet?.style),
@@ -3202,13 +3078,12 @@ function buildTree(sheets: any[]): MindNode {
       collapsed: false,
     };
 
-    // add cards
-    sheetCardMap.value[sheet._id] = []; // initialize array
+    sheetCardMap.value[sheet._id] = [];
     (sheet.cards || []).forEach((card: any, i: number) => {
       const cn: MindNode = {
         id: `${instancePrefix}_card_${card._id || i}`,
         real_id: card._id,
-        sheet_id: sheet._id, // <-- important, same as sheet
+        sheet_id: sheet._id,
         seat_id: Array.isArray(card.seat_id)
           ? card.seat_id.map((s: any) => s._id || s)
           : card.seat_id,
@@ -3233,7 +3108,6 @@ function buildTree(sheets: any[]): MindNode {
       cn.parent = listNode;
       listNode.children.push(cn);
 
-      // save card to reactive ref
       sheetCardMap.value[sheet._id].push(cn);
     });
 
@@ -3273,6 +3147,43 @@ const allNodes = computed<MindNode[]>(() => {
   });
 });
 
+// ✦ Compute positions for external collapse toggle buttons
+function collapseToggleStyle(node: MindNode): Record<string, string> {
+  const dir = layoutDirection.value;
+  const btnSize = 16;
+  let left: number;
+  let top: number;
+
+  const side = nodeSides.get(node.id) ?? 'right';
+
+  if (dir === 'top' || dir === 'org-chart') {
+    // Place toggle at bottom-center of node
+    left = node.x + node.width / 2 - btnSize / 2;
+    top = node.y + node.height;
+  } else if (dir === 'bottom') {
+    // Place toggle at top-center of node
+    left = node.x + node.width / 2 - btnSize / 2;
+    top = node.y - btnSize;
+  } else if (dir === 'left' || side === 'left') {
+    // Place toggle at left edge of node
+    left = node.x - btnSize;
+    top = node.y + node.height / 2 - btnSize / 2;
+  } else {
+    // Default: right edge of node
+    left = node.x + node.width;
+    top = node.y + node.height / 2 - btnSize / 2;
+  }
+
+  return {
+    position: 'absolute',
+    left: `${left}px`,
+    top: `${top}px`,
+    width: `${btnSize}px`,
+    height: `${btnSize}px`,
+    zIndex: '10',
+  };
+}
+
 function nodeLevel(node: MindNode): number {
   let l = 0,
     cur: MindNode | undefined = node;
@@ -3297,13 +3208,11 @@ const visibleEdges = computed<Edge[]>(() => {
     for (const child of node.children) {
       if (!vis.has(child.id)) continue;
 
-      // Midpoints
       const nMidX = node.x + node.width / 2;
       const nMidY = node.y + node.height / 2;
       const cMidX = child.x + child.width / 2;
       const cMidY = child.y + child.height / 2;
 
-      // Edge points of nodes
       const nRight = node.x + node.width;
       const nLeft = node.x;
       const nTop = node.y;
@@ -3316,15 +3225,12 @@ const visibleEdges = computed<Edge[]>(() => {
       let path = "";
 
       if (dir === "tree-map") {
-        // Skip zero-size (hidden) nodes
         if (child.width === 0 || child.height === 0) continue;
         if (node.uniqueName === "root") {
-          // Curved line from root bottom → sheet tile top
           const tx = child.x + 20;
           const ty = child.y;
           path = `M ${nMidX} ${nBottom} C ${nMidX} ${ty - 30} ${tx} ${ty - 30} ${tx} ${ty}`;
         } else {
-          // No SVG edges inside the tile — lists/cards are implicit by position
           continue;
         }
       } else if (dir === "logic-right") {
@@ -3339,17 +3245,13 @@ const visibleEdges = computed<Edge[]>(() => {
         const spineY = rootNode.y + rootNode.height / 2;
 
         if (node.uniqueName === "root") {
-          // Root → Sheet: horizontal line along spine from root left-edge to sheet right-edge
           path = `M ${nLeft} ${spineY} L ${cRight} ${spineY}`;
         } else if (node.uniqueName === "sheet") {
-          // Sheet → List: diagonal line from spine (at list's attach X) to list near-edge
-          // The attach point on the spine is directly above/below the list centre
           const isAbove = cMidY < spineY;
-          const attachX = cMidX; // list centre X = attach X on spine
-          const toY = isAbove ? cBottom : cTop; // nearest edge of list node
+          const attachX = cMidX;
+          const toY = isAbove ? cBottom : cTop;
           path = `M ${attachX} ${spineY} L ${attachX} ${toY}`;
         } else if (node.uniqueName === "List") {
-          // List → Card: straight vertical line between closest edges
           const isAbove = cMidY < nMidY;
           const fromY = isAbove ? nTop : nBottom;
           const toY = isAbove ? cBottom : cTop;
@@ -3360,60 +3262,45 @@ const visibleEdges = computed<Edge[]>(() => {
       } else if (dir === "timeline") {
         const spineY = node.y + node.height / 2;
         if (node.uniqueName === "root") {
-          // Horizontal spine line: root right edge → sheet left edge, both on spine Y
           path = `M ${nRight} ${nMidY} L ${cLeft} ${cMidY}`;
         } else if (node.uniqueName === "sheet") {
-          // Sheet → List: vertical line from sheet top or bottom to list edge
           const isAbove = cMidY < spineY;
           const fromY = isAbove ? nTop : nBottom;
           const toY = isAbove ? cBottom : cTop;
-          // Use child mid X so line goes straight down from sheet centre
           path = `M ${cMidX} ${fromY} L ${cMidX} ${toY}`;
         } else {
-          // List → Card: straight vertical line
           const isAbove = cMidY < nMidY;
           const fromY = isAbove ? nTop : nBottom;
           const toY = isAbove ? cBottom : cTop;
           path = `M ${cMidX} ${fromY} L ${cMidX} ${toY}`;
         }
       } else if (dir === "org-chart") {
-        // Elbow: parent bottom → horizontal bar → child top
         const midY = nBottom + (cTop - nBottom) / 2;
         path = `M ${nMidX} ${nBottom} L ${nMidX} ${midY} L ${cMidX} ${midY} L ${cMidX} ${cTop}`;
       } else if (dir === "top") {
-        // Parent bottom → child top
         const midY = nBottom + (cTop - nBottom) / 2;
         path = `M ${nMidX} ${nBottom} C ${nMidX} ${midY} ${cMidX} ${midY} ${cMidX} ${cTop}`;
       } else if (dir === "bottom") {
-        // Parent top → child bottom
         const midY = nTop - (nTop - cBottom) / 2;
         path = `M ${nMidX} ${nTop} C ${nMidX} ${midY} ${cMidX} ${midY} ${cMidX} ${cBottom}`;
       } else if (dir === "left") {
-        // Parent left edge → child right edge (flowing leftward)
         const midX = nLeft - (nLeft - cRight) / 2;
         path = `M ${nLeft} ${nMidY} C ${midX} ${nMidY} ${midX} ${cMidY} ${cRight} ${cMidY}`;
       } else if (dir === "radial") {
-        // Center of parent → nearest edge of child (direction-aware)
         const dx = cMidX - nMidX;
         const dy = cMidY - nMidY;
         const angle = Math.atan2(dy, dx);
-        // Find child edge point closest to parent
         const cEdgeX = cMidX - Math.cos(angle) * (child.width / 2);
         const cEdgeY = cMidY - Math.sin(angle) * (child.height / 2);
-        // Find parent edge point closest to child
         const nEdgeX = nMidX + Math.cos(angle) * (node.width / 2);
         const nEdgeY = nMidY + Math.sin(angle) * (node.height / 2);
         path = `M ${nEdgeX} ${nEdgeY} L ${cEdgeX} ${cEdgeY}`;
       } else {
-        // Default: right-flowing layouts (right, center, zigzag, staggered, split-horizontal, ladder)
-        // Determine side from nodeSides map
         const side = nodeSides.get(child.id) ?? "right";
         if (side === "left") {
-          // Parent left → child right, cubic bezier
           const cpX = nLeft - (nLeft - cRight) / 2;
           path = `M ${nLeft} ${nMidY} C ${cpX} ${nMidY} ${cpX} ${cMidY} ${cRight} ${cMidY}`;
         } else {
-          // Parent right → child left, cubic bezier
           const cpX = nRight + (cLeft - nRight) / 2;
           path = `M ${nRight} ${nMidY} C ${cpX} ${nMidY} ${cpX} ${cMidY} ${cLeft} ${cMidY}`;
         }
@@ -3433,7 +3320,11 @@ const visibleEdges = computed<Edge[]>(() => {
 
   return edges;
 });
+
+// ✦ FIX: watchEffect ONLY watches layoutTrigger (not collapseVersion)
+// This prevents collapse from resetting the map position
 watchEffect(() => {
+  void layoutTrigger.value; // only this triggers re-layout from watchEffect
   const root = nodeMap.get(rootNodeId.value);
   if (!root) return;
   const dir = layoutDirection.value;
@@ -3527,7 +3418,6 @@ function nodeInlineStyle(node: MindNode): Record<string, string> {
     return base;
   }
 
-  // Only apply background if it's a real custom value (not a default)
   if (s.background !== undefined) base.background = s.background;
   if (s.color !== undefined) base.color = s.color;
   if (s.fontFamily) base.fontFamily = s.fontFamily;
@@ -3569,7 +3459,6 @@ const isFirstLoad = ref(true);
 watchEffect(() => {
   if (!props.listsData) return;
   nextTick(() => {
-    // Snapshot current pan/zoom BEFORE clearing the tree
     const savedPanX = panX.value;
     const savedPanY = panY.value;
     const savedZoom = zoom.value;
@@ -3591,11 +3480,9 @@ watchEffect(() => {
 
     nextTick(() => {
       if (wasFirstLoad) {
-        // Only center on the very first load
         isFirstLoad.value = false;
         centerView();
       } else {
-        // Restore the saved position so the viewport doesn't jump
         panX.value = savedPanX;
         panY.value = savedPanY;
         zoom.value = savedZoom;
@@ -3650,10 +3537,8 @@ function handleResetView() {
   zoom.value = 0.85;
   nextTick(() => centerView());
 }
-// ✦ Navigate to sibling/parent/child nodes by arrow keys
 function navigateNode(direction: "up" | "down" | "left" | "right") {
   if (!selectedNodeId.value) {
-    // Select root if nothing selected
     const root = nodeMap.get(rootNodeId.value);
     if (root) selectedNodeId.value = root.id;
     return;
@@ -3662,7 +3547,6 @@ function navigateNode(direction: "up" | "down" | "left" | "right") {
   if (!node) return;
 
   if (direction === "right") {
-    // Go to first child
     const visibleChildren = (node.children || []).filter((c) =>
       allNodes.value.some((n) => n.id === c.id),
     );
@@ -3674,7 +3558,6 @@ function navigateNode(direction: "up" | "down" | "left" | "right") {
   }
 
   if (direction === "left") {
-    // Go to parent
     if (node.parent) {
       selectedNodeId.value = node.parent.id;
       scrollToNode(node.parent);
@@ -3682,7 +3565,6 @@ function navigateNode(direction: "up" | "down" | "left" | "right") {
     return;
   }
 
-  // Up / Down: navigate among siblings
   const parent = node.parent;
   if (!parent) return;
   const siblings = (parent.children || []).filter((c) =>
@@ -3712,7 +3594,6 @@ function scrollToNode(node: MindNode) {
   }
 }
 
-// ✦ Duplicate card
 async function duplicateNode(nodeId: string) {
   const node = nodeMap.get(nodeId);
   if (!node || node.uniqueName !== "card") return;
@@ -3728,7 +3609,6 @@ async function duplicateNode(nodeId: string) {
   );
 }
 
-// ✦ Copy node style
 function copyStyle(nodeId: string) {
   const node = nodeMap.get(nodeId);
   if (!node) return;
@@ -3737,7 +3617,6 @@ function copyStyle(nodeId: string) {
   toast.success("Style copied");
 }
 
-// ✦ Paste style to selected node
 function pasteStyle(nodeId: string) {
   if (!styleClipboard.value) {
     toast.info("No style in clipboard");
@@ -3750,7 +3629,6 @@ function pasteStyle(nodeId: string) {
   toast.success("Style pasted — click Save Style to persist");
 }
 
-// ✦ Reset style of selected node (Alt+Ctrl+0)
 function resetStyle(nodeId: string) {
   const node = nodeMap.get(nodeId);
   if (!node) return;
@@ -3759,7 +3637,6 @@ function resetStyle(nodeId: string) {
   toast.success("Style reset");
 }
 
-// ✦ Collapse/expand selected node subtopic (Ctrl+/)
 function toggleCollapseSelected() {
   if (!selectedNodeId.value) return;
   const node = nodeMap.get(selectedNodeId.value);
@@ -3768,7 +3645,6 @@ function toggleCollapseSelected() {
   showHint(isCollapsed(selectedNodeId.value) ? "Collapsed" : "Expanded");
 }
 
-// ✦ Collapse ALL nodes (Alt+Ctrl+/)
 function collapseAll() {
   const root = nodeMap.get(rootNodeId.value);
   if (!root) return;
@@ -3780,17 +3656,16 @@ function collapseAll() {
     }
   }
   collapseVersion.value++;
-  const startX =
-    layoutDirection.value === "left"
-      ? 4000 - NODE_W.root
-      : layoutDirection.value === "center"
-        ? 2500 - NODE_W.root / 2
-        : 60;
-  layoutTree(root, startX, 60, layoutDirection.value);
+  // ✦ FIX: Re-layout collapsed tree preserving current pan/zoom (no centerView)
+  const root2 = nodeMap.get(rootNodeId.value);
+  if (root2) {
+    const startX = _getLayoutStartX();
+    const startY = _getLayoutStartY();
+    layoutTree(root2, startX, startY, layoutDirection.value);
+  }
   showHint("All Collapsed");
 }
 
-// ✦ Expand ALL nodes
 function expandAll() {
   const root = nodeMap.get(rootNodeId.value);
   if (!root) return;
@@ -3802,17 +3677,42 @@ function expandAll() {
     }
   }
   collapseVersion.value++;
-  const startX =
-    layoutDirection.value === "left"
-      ? 4000 - NODE_W.root
-      : layoutDirection.value === "center"
-        ? 2500 - NODE_W.root / 2
-        : 60;
-  layoutTree(root, startX, 60, layoutDirection.value);
+  // ✦ FIX: Re-layout expanded tree preserving current pan/zoom (no centerView)
+  const root2 = nodeMap.get(rootNodeId.value);
+  if (root2) {
+    const startX = _getLayoutStartX();
+    const startY = _getLayoutStartY();
+    layoutTree(root2, startX, startY, layoutDirection.value);
+  }
   showHint("All Expanded");
 }
 
-// ✦ Show brief shortcut feedback toast in top-right of canvas
+function _getLayoutStartX(): number {
+  const dir = layoutDirection.value;
+  if (dir === "left") return 4000 - NODE_W.root;
+  if (dir === "center" || dir === "logic-right" || dir === "logic-left" ||
+      ["radial", "zigzag", "staggered", "split-horizontal", "ladder"].includes(dir))
+    return 2500 - NODE_W.root / 2;
+  if (dir === "top" || dir === "bottom" || dir === "org-chart") return 2000;
+  if (dir === "fishbone") return 300;
+  if (dir === "timeline") return 200;
+  if (dir === "tree-map") return 400;
+  return 60;
+}
+
+function _getLayoutStartY(): number {
+  const dir = layoutDirection.value;
+  if (dir === "bottom") return 3000;
+  if (dir === "logic-right" || dir === "logic-left" ||
+      ["radial", "zigzag", "staggered", "split-horizontal", "ladder"].includes(dir))
+    return 1500;
+  if (dir === "fishbone") return 1400;
+  if (dir === "org-chart") return 200;
+  if (dir === "timeline") return 1000;
+  if (dir === "tree-map") return 400;
+  return 60;
+}
+
 function showHint(label: string) {
   lastShortcutLabel.value = label;
   showShortcutHint.value = true;
@@ -3822,7 +3722,6 @@ function showHint(label: string) {
   }, 900);
 }
 
-// ✦ Select all cards (Ctrl+A)
 function selectFirstNode() {
   const root = nodeMap.get(rootNodeId.value);
   if (root) {
@@ -3934,6 +3833,7 @@ function handleDeleteNode(nodeId: string) {
   emit("delete:ticket", node?.real_id || nodeId);
 }
 
+// ✦ FIX: toggleCollapse now does layout in-place WITHOUT resetting pan/zoom
 function toggleCollapse(nodeId: string) {
   const n = nodeMap.get(nodeId);
   if (!n) return;
@@ -3944,16 +3844,24 @@ function toggleCollapse(nodeId: string) {
     collapseNode(nodeId);
     n.collapsed = true;
   }
+  // Increment collapseVersion to update allNodes/visibleEdges computed
   collapseVersion.value++;
+  
+  // Re-layout from the root but do NOT call centerView - preserve current pan/zoom
   const root = nodeMap.get(rootNodeId.value);
   if (root) {
-    const startX =
-      layoutDirection.value === "left"
-        ? 4000 - NODE_W.root
-        : layoutDirection.value === "center"
-          ? 2500 - NODE_W.root / 2
-          : 60;
-    layoutTree(root, startX, 60, layoutDirection.value);
+    const startX = _getLayoutStartX();
+    const startY = _getLayoutStartY();
+    layoutTree(root, startX, startY, layoutDirection.value);
+    
+    // Update SVG bounds to accommodate expanded/collapsed tree
+    let mx = 0, my = 0;
+    for (const node of flattenTree(root)) {
+      mx = Math.max(mx, node.x + node.width);
+      my = Math.max(my, node.y + node.height);
+    }
+    svgW.value = Math.max(mx + 300, 3000);
+    svgH.value = Math.max(my + 300, 3000);
   }
 }
 
@@ -4185,26 +4093,14 @@ async function _doCreateCard(
     };
     listNode.children.push(tempCard);
     nodeMap.set(tempId, tempCard);
-    // Don't re-center — just re-layout in place preserving current pan/zoom
     const root = nodeMap.get(rootNodeId.value);
     if (root) {
-      const startX =
-        layoutDirection.value === "left"
-          ? 4000 - NODE_W.root
-          : [
-                "center",
-                "radial",
-                "zigzag",
-                "staggered",
-                "split-horizontal",
-                "ladder",
-              ].includes(layoutDirection.value)
-            ? 2500 - NODE_W.root / 2
-            : 60;
-      layoutTree(root, startX, 60, layoutDirection.value);
+      const startX = _getLayoutStartX();
+      const startY = _getLayoutStartY();
+      layoutTree(root, startX, startY, layoutDirection.value);
     }
     selectedNodeId.value = tempId;
-    toast.success(`Card "${title}" created`);
+    // toast.success(`Card "${title}" created`);
   } catch (err) {
     console.error(err);
     toast.error("Failed to create card");
@@ -4264,35 +4160,7 @@ function startInlineCardCreation(listNode: MindNode) {
     listNode.collapsed = false;
     const root = nodeMap.get(rootNodeId.value);
     if (root) {
-      const startX =
-        layoutDirection.value === "left"
-          ? 4000 - NODE_W.root
-          : [
-                "center",
-                "radial",
-                "zigzag",
-                "staggered",
-                "split-horizontal",
-                "ladder",
-              ].includes(layoutDirection.value)
-            ? 2500 - NODE_W.root / 2
-            : layoutDirection.value === "top" ||
-                layoutDirection.value === "bottom"
-              ? 2000
-              : 60;
-      const startY =
-        layoutDirection.value === "bottom"
-          ? 3000
-          : [
-                "radial",
-                "zigzag",
-                "staggered",
-                "split-horizontal",
-                "ladder",
-              ].includes(layoutDirection.value)
-            ? 1500
-            : 60;
-      layoutTree(root, startX, startY, layoutDirection.value);
+      layoutTree(root, _getLayoutStartX(), _getLayoutStartY(), layoutDirection.value);
     }
   }
   selectedNodeId.value = listNode.id;
@@ -4501,7 +4369,6 @@ function handleKeyDown(e: KeyboardEvent) {
   const inInput =
     t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable;
 
-  // Escape always works
   if (e.key === "Escape") {
     if (creatingCardForListId.value) {
       cancelInlineCreation();
@@ -4520,12 +4387,10 @@ function handleKeyDown(e: KeyboardEvent) {
     return;
   }
 
-  // When typing in inputs, only allow Escape above
   if (inInput) return;
 
   const sel = selectedNodeId.value ? nodeMap.get(selectedNodeId.value) : null;
 
-  // ── Navigation ───────────────────────────────────────────────────────
   if (e.key === "ArrowRight") {
     e.preventDefault();
     navigateNode("right");
@@ -4547,7 +4412,6 @@ function handleKeyDown(e: KeyboardEvent) {
     return;
   }
 
-  // ── View shortcuts ───────────────────────────────────────────────────
   if (!e.ctrlKey && !e.altKey && !e.metaKey) {
     if (e.key === "c" || e.key === "C") {
       centerView();
@@ -4578,7 +4442,6 @@ function handleKeyDown(e: KeyboardEvent) {
     }
   }
 
-  // ── Zoom with Ctrl ───────────────────────────────────────────────────
   if (e.ctrlKey && (e.key === "=" || e.key === "+")) {
     e.preventDefault();
     handleZoomIn();
@@ -4590,14 +4453,12 @@ function handleKeyDown(e: KeyboardEvent) {
     return;
   }
 
-  // ── Space → Open card ────────────────────────────────────────────────
   if (e.key === " " && sel?.uniqueName === "card") {
     e.preventDefault();
     handleOpenNode(sel);
     return;
   }
 
-  // ── Tab → Add child card (from List or card) ─────────────────────────
   if (e.key === "Tab" && !e.shiftKey && props.canCreateCard) {
     e.preventDefault();
     if (!sel) return;
@@ -4609,7 +4470,6 @@ function handleKeyDown(e: KeyboardEvent) {
     return;
   }
 
-  // ── Enter → Add sibling card ─────────────────────────────────────────
   if (e.key === "Enter" && props.canCreateCard) {
     e.preventDefault();
     if (!sel) return;
@@ -4621,7 +4481,6 @@ function handleKeyDown(e: KeyboardEvent) {
     return;
   }
 
-  // ── Delete / Backspace → Delete selected card ────────────────────────
   if (
     (e.key === "Delete" || e.key === "Backspace") &&
     sel?.uniqueName === "card" &&
@@ -4632,56 +4491,48 @@ function handleKeyDown(e: KeyboardEvent) {
     return;
   }
 
-  // ── Ctrl+D → Duplicate ───────────────────────────────────────────────
   if (e.ctrlKey && e.key === "d" && !e.altKey) {
     e.preventDefault();
     if (sel?.uniqueName === "card") duplicateNode(sel.id);
     return;
   }
 
-  // ── Ctrl+/ → Toggle collapse selected ───────────────────────────────
   if (e.ctrlKey && e.key === "/") {
     e.preventDefault();
     toggleCollapseSelected();
     return;
   }
 
-  // ── Alt+Ctrl+/ → Collapse all ────────────────────────────────────────
   if (e.altKey && e.ctrlKey && e.key === "/") {
     e.preventDefault();
     collapseAll();
     return;
   }
 
-  // ── Alt+Ctrl+= → Expand all ──────────────────────────────────────────
   if (e.altKey && e.ctrlKey && (e.key === "=" || e.key === "+")) {
     e.preventDefault();
     expandAll();
     return;
   }
 
-  // ── Alt+Ctrl+C → Copy Style ──────────────────────────────────────────
   if (e.altKey && e.ctrlKey && e.key === "c") {
     e.preventDefault();
     if (sel) copyStyle(sel.id);
     return;
   }
 
-  // ── Alt+Ctrl+V → Paste Style ─────────────────────────────────────────
   if (e.altKey && e.ctrlKey && e.key === "v") {
     e.preventDefault();
     if (sel) pasteStyle(sel.id);
     return;
   }
 
-  // ── Alt+Ctrl+0 → Reset Style ─────────────────────────────────────────
   if (e.altKey && e.ctrlKey && e.key === "0") {
     e.preventDefault();
     if (sel) resetStyle(sel.id);
     return;
   }
 
-  // ── Ctrl+A → Select root / focus map ─────────────────────────────────
   if (e.ctrlKey && e.key === "a") {
     e.preventDefault();
     selectFirstNode();
@@ -4699,7 +4550,6 @@ function handleGlobalClick(e: MouseEvent) {
     if (!target.closest(".card-ctx-menu")) closeCtxMenu();
   }
 }
-// ✦ NEW: Fullscreen API
 async function toggleFullscreen() {
   const el = rootEl.value as HTMLElement | null;
   if (!el) return;
@@ -4708,7 +4558,6 @@ async function toggleFullscreen() {
     try {
       await el.requestFullscreen();
     } catch (err) {
-      // Fallback: some browsers might block — silently ignore
       console.warn("Fullscreen request denied:", err);
     }
   } else {
@@ -4718,10 +4567,8 @@ async function toggleFullscreen() {
 const rootEl = ref<HTMLElement | null>(null);
 function handleFullscreenChange() {
   isFullscreen.value = !!document.fullscreenElement;
-  // Re-center after fullscreen transition so content is properly positioned
   nextTick(() => centerView());
 }
-// Replace your entire onMounted with this:
 onMounted(async () => {
   document.addEventListener("mousemove", handleGlobalMouseMove);
   document.addEventListener("mouseup", handleGlobalMouseUp);
@@ -4732,12 +4579,10 @@ onMounted(async () => {
   });
   document.addEventListener("fullscreenchange", handleFullscreenChange);
 
-  // Wait for DOM + props to stabilize
   await nextTick();
   await nextTick();
   await loadSavedTheme();
 });
-// AFTER — resolve CSS vars from the actual document root so the values are real hex
 function getComputedVar(name: string, fallback: string): string {
   const el = document.documentElement
   return getComputedStyle(el).getPropertyValue(name).trim() || fallback
@@ -4769,16 +4614,11 @@ function applyDefaultTheme() {
   activeCanvasBg.value  = bg;
   customBgColor.value   = dark ? '#1f1f1e' : '#dedfe3';
 }
-// AFTER the existing themeContext watcher — add this:
 watch(isDark, async () => {
-  // When global dark/light mode changes, re-apply the mindmap theme
   await nextTick()
   if (savedThemeDocId.value) {
-    // A persisted theme is loaded — re-apply it with the new mode context
-    // (colors like 'var(--primary-color)' will now resolve differently)
     await loadSavedTheme()
   } else {
-    // No persisted theme — re-apply the default which respects isDark
     applyDefaultTheme()
   }
 }, { immediate: false })
@@ -4799,7 +4639,6 @@ function resolveThemeContext(): { type: string; type_id: string | null } {
     };
   }
 
-  // Default: regular board / sheet view
   return {
     type: "sheet",
     type_id:
@@ -4817,6 +4656,7 @@ onBeforeUnmount(() => {
   document.removeEventListener("click", handleGlobalClick);
   document.removeEventListener("fullscreenchange", handleFullscreenChange);
 });
+
 </script>
 
 <style scoped>
@@ -4829,7 +4669,7 @@ onBeforeUnmount(() => {
   flex: 1;
   position: relative;
   overflow: hidden;
-  background: var(--mm-bg, var(--bg-surface, #dedfe3)); /* ← add --mm-bg */
+  background: var(--mm-bg, var(--bg-surface, #dedfe3));
   background-image:
     linear-gradient(
       var(--mindmap-grid, rgba(0, 0, 0, 0.05)) 1px,
@@ -4848,14 +4688,13 @@ onBeforeUnmount(() => {
   top: 0;
   left: 0;
 }
-/* ── Fullscreen mode ─────────────────────────────────────────────────── */
+
 :fullscreen .mindmap-root,
 :-webkit-full-screen .mindmap-root {
   width: 100vw !important;
   height: 100vh !important;
 }
 
-/* When the root itself is the fullscreen element */
 .mindmap-root:fullscreen,
 .mindmap-root:-webkit-full-screen {
   width: 100vw !important;
@@ -4863,6 +4702,7 @@ onBeforeUnmount(() => {
   max-width: 100vw !important;
   max-height: 100vh !important;
 }
+
 .connections-svg {
   position: absolute;
   top: 0;
@@ -4871,6 +4711,7 @@ onBeforeUnmount(() => {
   z-index: 1;
   overflow: visible;
 }
+
 .edge-path {
   opacity: 0.65;
   transition: opacity 0.2s;
@@ -4918,6 +4759,7 @@ onBeforeUnmount(() => {
   background: var(--mm-node-card-bg, var(--bg-card, #ffffff));
   color: var(--mm-text-color, var(--text-primary, #2b2c30));
 }
+
 .mm-node--root {
   border-radius: 28px;
   border-color: var(--primary-color);
@@ -4938,7 +4780,6 @@ onBeforeUnmount(() => {
   color: var(--primary-color, #6e3b96);
 }
 .node-root-title {
-  color: inherit;
   font-size: 15px;
   font-weight: 700;
   white-space: nowrap;
@@ -5023,45 +4864,33 @@ onBeforeUnmount(() => {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-
 .mm-node--card {
-  border-color: var(--primary-color);
-  border-radius: 8px;
-  overflow: hidden;
-  transition: overflow 0s;
+  height: auto !important;
+  transition: all 0.2s ease;
 }
 .mm-node--card:hover {
-  overflow: visible;
-}
-.node-card-wrapper {
-  position: relative;
-  width: 100%;
-  height: 100%;
-}
-.node-card-inner {
-  display: flex;
-  flex-direction: column;
+  z-index: 10;
 }
 .node-card-stripe {
   height: 4px;
   flex-shrink: 0;
   border-radius: 6px 6px 0 0;
 }
+
 .node-card-body {
-  position: relative;
   display: flex;
   flex-direction: column;
-  padding: 4px 8px 4px;
-  gap: 2px;
-  overflow: visible;
+  padding: 6px 8px;
+  gap: 4px;
+  background: var(--mm-node-card-bg, var(--bg-card, #ffffff));
 }
 .node-card-badges {
   display: flex;
   flex-wrap: wrap;
   gap: 3px;
-  align-items: center;
   min-height: 14px;
 }
+
 .card-badge {
   font-size: 9.5px;
   font-weight: 500;
@@ -5081,115 +4910,90 @@ onBeforeUnmount(() => {
   background: rgba(125, 104, 200, 0.12);
   color: var(--primary-color);
 }
-.card-badge--low {
-  background: #dcfce7;
-  color: #16a34a;
-}
-.card-badge--medium {
-  background: #fef9c3;
-  color: #a16207;
-}
-.card-badge--high {
-  background: #fee2e2;
-  color: #dc2626;
-}
-.card-badge--critical {
-  background: #2b2c30;
-  color: #f5f5f5;
-}
+.card-badge--low     { background: #dcfce7; color: #16a34a; }
+.card-badge--medium  { background: #fef9c3; color: #a16207; }
+.card-badge--high    { background: #fee2e2; color: #dc2626; }
+.card-badge--critical{ background: #2b2c30; color: #f5f5f5; }
 .card-badge--process {
   background: rgba(125, 104, 200, 0.1);
   color: var(--primary-color);
 }
 
+.node-card-title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
 .node-card-title {
-  font-size: 12.5px;
-  font-weight: 500;
-  color: inherit;
-  line-height: 1.25;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.35;
+
   display: -webkit-box;
-  -webkit-line-clamp: 1;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
-  line-clamp: 1;
+
   overflow: hidden;
+  word-break: break-word;
+}
+.node-card-title--expanded {
+  display: block;
+  overflow: visible;
+  -webkit-line-clamp: unset;
 }
 
-.node-card-desc {
-  font-size: 10.5px;
-  color: inherit;
-  opacity: 0.6;
-  line-height: 1.4;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  line-clamp: 2;
-  overflow: hidden;
-}
-
-.node-card-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: auto;
-  padding-top: 5px;
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
-}
-.node-card-footer-left {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-.node-card-footer-right {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-.node-card-dates {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 9.5px;
-  color: inherit;
-  opacity: 0.6;
-}
-.card-link {
-  font-size: 9.5px;
+.node-card-more-btn {
+  margin-top: 3px;
+  border: none;
+  background: transparent;
   color: var(--primary-color);
-  text-decoration: none;
-  display: flex;
-  align-items: center;
-  gap: 3px;
+  font-size: 10px;
+  cursor: pointer;
+  padding: 0;
+  align-self: flex-start;
 }
-.card-link:hover {
+.node-card-more-btn:hover {
+  opacity: 1;
   text-decoration: underline;
 }
-.card-seat {
-  opacity: 0.4;
-}
-
 .node-card-actions-row {
-  position: absolute;
-  bottom: -28px;
-  left: 0;
-  right: 0;
   display: flex;
   align-items: center;
-  gap: 2px;
-  padding: 4px 8px;
-  background: var(--mm-node-card-bg, var(--bg-card, #ffffff));
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-top: none;
-  border-radius: 0 0 8px 8px;
+  gap: 4px;
+
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(0,0,0,.06);
+
   opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.15s ease;
-  z-index: 10;
+  max-height: 0;
+
+  overflow: hidden;
+
+  transition:
+    opacity .15s ease,
+    max-height .15s ease,
+    margin-top .15s ease;
 }
 .mm-node--card:hover .node-card-actions-row {
   opacity: 1;
-  pointer-events: auto;
+  max-height: 40px;
 }
+.node-card-wrapper {
+  display: flex;
+  flex-direction: column;
+  border-radius: 8px;
+  overflow: hidden;
+  height: 80%;
+}
+
+/* Dark mode */
+.mindmap-root[data-dark="true"] .node-card-actions-row {
+  background: var(--mm-node-card-bg, #2c2c2b);
+  border-color: var(--primary-color);
+  border-top-color: rgba(255, 255, 255, 0.08);
+}
+/* ── END CARD NODE FIXES ─────────────────────────────────────────────── */
 
 .node-list-count {
   font-size: 10px;
@@ -5209,6 +5013,7 @@ onBeforeUnmount(() => {
 .mm-node:hover .node-actions {
   opacity: 1;
 }
+
 .nact {
   width: 22px;
   height: 22px;
@@ -5222,9 +5027,11 @@ onBeforeUnmount(() => {
   font-size: 10px;
   color: inherit;
   opacity: 0.65;
+  flex-shrink: 0;
   transition:
     background 0.12s,
-    opacity 0.12s;
+    opacity 0.12s,
+    color 0.12s;
 }
 .nact:hover {
   background: rgba(125, 104, 200, 0.1);
@@ -5232,6 +5039,7 @@ onBeforeUnmount(() => {
 }
 .nact--danger:hover {
   color: #ef4444 !important;
+  background: rgba(239, 68, 68, 0.08) !important;
 }
 .nact--open:hover {
   color: var(--primary-color) !important;
@@ -5240,11 +5048,15 @@ onBeforeUnmount(() => {
   background: var(--primary-color) !important;
   color: #ffffff !important;
   border-radius: 4px;
+  height: 15px;
+  width:15px;
+  padding: 7px;
+  font-size: 9px;
+  opacity: 1 !important;
 }
-
 .nact--add:hover {
-  opacity: 0.85;
-  background: var(--secondary-color) !important;
+  opacity: 0.85 !important;
+  background: var(--secondary-color, var(--primary-color)) !important;
   color: #ffffff !important;
 }
 
@@ -5500,18 +5312,11 @@ onBeforeUnmount(() => {
   font-size: 10px;
   flex-shrink: 0;
 }
-.fs-icon--root {
-  color: var(--primary-color);
-}
-.fs-icon--sheet {
-  color: var(--primary-color);
-}
-.fs-icon--List {
-  color: var(--primary-color);
-}
-.fs-icon--card {
-  color: var(--primary-color);
-}
+.fs-icon--root { color: var(--primary-color); }
+.fs-icon--sheet { color: var(--primary-color); }
+.fs-icon--List { color: var(--primary-color); }
+.fs-icon--card { color: var(--primary-color); }
+
 .fs-node-label {
   flex: 1;
   font-size: 12px !important;
@@ -6029,18 +5834,11 @@ onBeforeUnmount(() => {
   text-align: center;
   flex-shrink: 0;
 }
-.ctx-icon--add {
-  color: #22c55e;
-}
-.ctx-icon--open {
-  color: var(--primary-color);
-}
-.ctx-icon--format {
-  color: var(--primary-color);
-}
-.ctx-item--danger .ctx-item-icon {
-  color: #ef4444;
-}
+.ctx-icon--add { color: #22c55e; }
+.ctx-icon--open { color: var(--primary-color); }
+.ctx-icon--format { color: var(--primary-color); }
+.ctx-item--danger .ctx-item-icon { color: #ef4444; }
+
 .ctx-kbd {
   margin-left: auto;
   flex-shrink: 0;
@@ -6131,7 +5929,6 @@ onBeforeUnmount(() => {
 .mindmap-root[data-dark="true"] .mm-node:hover {
   box-shadow: 0 4px 20px rgba(147, 86, 197, 0.2);
 }
-
 .mindmap-root[data-dark="true"] .node-root-icon {
   color: var(--primary-color);
 }
@@ -6144,7 +5941,6 @@ onBeforeUnmount(() => {
 .mindmap-root[data-dark="true"] .node-list-dot {
   background: var(--primary-color);
 }
-
 .mindmap-root[data-dark="true"] .card-badge--status {
   background: var(--bg-surface);
   color: var(--text-primary);
@@ -6178,9 +5974,13 @@ onBeforeUnmount(() => {
 .mindmap-root[data-dark="true"] .node-card-footer {
   border-color: rgba(255, 255, 255, 0.07);
 }
+.mindmap-root[data-dark="true"] .node-card-body {
+  background: var(--mm-node-card-bg, #2c2c2b);
+}
 .mindmap-root[data-dark="true"] .node-card-actions-row {
-  background: var(--bg-card, #2b2c30);
-  border-color: var(--border, rgba(255, 255, 255, 0.08));
+  background: var(--mm-node-card-bg, #2c2c2b);
+  border-color: var(--primary-color);
+  border-top-color: rgba(255, 255, 255, 0.08);
 }
 .mindmap-root[data-dark="true"] .canvas-controls {
   background: var(--bg-card, #2b2c30);
@@ -6203,17 +6003,14 @@ onBeforeUnmount(() => {
 .mindmap-root[data-dark="true"] .zoom-label {
   color: #b0b0b0 !important;
 }
-
 .mindmap-root[data-dark="true"] .canvas-stats {
   background: rgba(13, 13, 13, 0.85);
   border-color: #3e3e42;
   color: #b0b0b0;
 }
-
 .mindmap-root[data-dark="true"] .nact:hover {
   background: rgba(147, 86, 197, 0.15);
 }
-
 .mindmap-root[data-dark="true"] .inline-card-input {
   background: var(--bg-card, #2b2c30);
   color: var(--text-primary, #f5f5f5);
@@ -6237,7 +6034,6 @@ onBeforeUnmount(() => {
   background: var(--primary-color);
   border: 1px dashed var(--primary-color);
 }
-
 .mindmap-root[data-dark="true"] .format-sidebar {
   background: var(--bg-card, #2b2c30) !important;
   border-color: var(--border, #3e3e42) !important;
@@ -6370,6 +6166,7 @@ onBeforeUnmount(() => {
   border-color: var(--border, #3e3e42);
   color: var(--text-primary, #f5f5f5);
 }
+
 /* ── Shortcut hint ───────────────────────────────────────────────────── */
 .shortcut-hint {
   position: absolute;
@@ -6434,8 +6231,6 @@ onBeforeUnmount(() => {
   color: var(--text-primary, #2b2c30);
   white-space: nowrap;
 }
-
-/* Dark mode for legend */
 .mindmap-root[data-dark="true"] .shortcuts-legend {
   background: rgba(27, 27, 32, 0.9);
   border-color: #3e3e42;
@@ -6445,6 +6240,7 @@ onBeforeUnmount(() => {
   border-color: #555;
   color: #f5f5f5;
 }
+
 /* ── Theme Panel ─────────────────────────────────────────────────────── */
 .theme-panel {
   flex: 1;
@@ -6458,7 +6254,6 @@ onBeforeUnmount(() => {
   border-radius: 3px;
 }
 
-/* Background swatches */
 .bg-color-grid {
   display: flex;
   flex-wrap: wrap;
@@ -6521,7 +6316,6 @@ onBeforeUnmount(() => {
   padding: 1px 5px;
   white-space: nowrap;
 }
-
 .bg-recent {
   margin-top: 8px;
 }
@@ -6534,7 +6328,6 @@ onBeforeUnmount(() => {
   margin-bottom: 6px;
 }
 
-/* Theme cards grid */
 .theme-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -6566,8 +6359,6 @@ onBeforeUnmount(() => {
   box-shadow: 0 0 0 2px
     color-mix(in srgb, var(--primary-color), transparent 70%) !important;
 }
-
-/* Mini mindmap preview inside each theme card */
 .theme-preview {
   position: relative;
   width: 100%;
@@ -6624,7 +6415,6 @@ onBeforeUnmount(() => {
   border-radius: 50%;
   padding: 1px;
 }
-
 .theme-hint {
   padding: 10px 12px 14px;
   display: flex;
@@ -6634,7 +6424,6 @@ onBeforeUnmount(() => {
   color: var(--text-secondary, #94a3b8);
 }
 
-/* Dark mode for theme panel */
 .mindmap-root[data-dark="true"] .bg-custom-row {
   background: var(--bg-surface, #1a1a1a);
   border-color: #3e3e42;
@@ -6659,6 +6448,7 @@ onBeforeUnmount(() => {
 .mindmap-root[data-dark="true"] .theme-panel::-webkit-scrollbar-thumb {
   background: #3e3e42;
 }
+
 /* ── Format sidebar tabs ─────────────────────────────────────────────── */
 .fs-tabs {
   display: flex;
@@ -6757,7 +6547,6 @@ onBeforeUnmount(() => {
   padding: 1px;
 }
 
-/* Dark mode for tabs + layout cards */
 .mindmap-root[data-dark="true"] .fs-tabs {
   border-color: #3e3e42;
 }
@@ -6784,21 +6573,17 @@ onBeforeUnmount(() => {
   background: #2b2c30;
   color: var(--primary-color);
 }
-/* Add these rules to ensure --mm-* vars always cascade into node backgrounds
-   even when no inline background style is set */
+
 .mm-node--root:not([style*="background"]) .node-root-inner {
   background: var(--mm-node-root-bg, var(--primary-color)) !important;
 }
-
 .mm-node--sheet:not([style*="background"]) {
   background: var(--mm-node-sheet-bg, var(--bg-surface)) !important;
 }
-
 .mm-node--List:not([style*="background"]) {
   background: var(--mm-node-list-bg, var(--bg-card)) !important;
 }
-
-.mm-node--card:not([style*="background"]) {
+.mm-node--card:not([style*="background"]) .node-card-body {
   background: var(--mm-node-card-bg, var(--bg-card)) !important;
 }
 </style>
