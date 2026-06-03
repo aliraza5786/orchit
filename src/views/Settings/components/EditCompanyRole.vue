@@ -49,7 +49,8 @@
                 <div class="flex items-center gap-2 flex-wrap mb-1">
                   <h4 class="font-semibold text-text-primary text-base">{{ role?.title }}</h4>
                   <span v-if="role?.is_system" class="px-2 py-0.5 bg-blue-500/10 text-blue-600 text-xs font-medium rounded-full">System</span>
-                  <span v-if="role?.is_admin" class="px-2 py-0.5 bg-purple-500/10 text-purple-600 text-xs font-medium rounded-full">Admin</span>
+                  <span v-if="role?.is_admin && role?.slug === 'admin'" class="px-2 py-0.5 bg-purple-500/10 text-purple-600 text-xs font-medium rounded-full">Admin</span>
+                  <span v-if="role?.is_admin && role?.slug === 'super_admin'" class="px-2 py-0.5 bg-purple-500/10 text-purple-600 text-xs font-medium rounded-full">Super Admin</span>
                   <span v-else-if="role?.is_editor" class="px-2 py-0.5 bg-blue-500/10 text-blue-600 text-xs font-medium rounded-full">Editor</span>
                   <span v-else-if="role?.is_viewer" class="px-2 py-0.5 bg-gray-500/10 text-gray-600 text-xs font-medium rounded-full">Viewer</span>
                 </div>

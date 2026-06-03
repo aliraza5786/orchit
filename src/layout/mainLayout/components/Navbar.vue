@@ -152,7 +152,7 @@
 
                 <!-- Managed badge — only for company emails -->
                 <div
-                v-if="isOrgUser && !isPendingOrgMember"
+                v-if="isOrgUser && !isPendingOrgMember && hasVerifiedDomain"
                 class="mt-1 inline-flex cursor-default items-center gap-1.5 rounded-full border border-accent/22 bg-accent/[0.08] px-2.5 py-1 text-[11px] font-medium text-accent"
               >
                 <i class="fa-solid fa-shield-check text-[10px]"></i>
@@ -490,7 +490,9 @@ const visibleLinks = computed(() => {
     !(isOrgContext && link.to === "/dashboard/users")
   );
 });
-
+const hasVerifiedDomain = computed(() =>
+  !!profileData.value?.active_company?.has_domain_verified
+);
 const isPendingOrgMember = computed(() =>
   !!profileData.value?.associated_company?._id && !profileData.value?.active_company?._id
 );

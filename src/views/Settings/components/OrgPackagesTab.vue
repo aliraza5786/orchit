@@ -343,10 +343,13 @@ if (currentInterval.value === 'year') {
                 </div>
 
                 <!-- Free plan label -->
-                <div v-if="plan.packageType === 'free'" class="mt-1">
-                  <span class="text-[12px] text-green-500 font-medium bg-green-500/10 px-2 py-0.5 rounded-full">
+                <div v-if="plan.packageType === 'free'" class="mt-1 flex flex-col items-center gap-1">
+                  <span class="text-[12px] text-green-500 mx-auto font-medium bg-green-500/10 px-2 py-0.5 rounded-full">
                     Enjoy free plan
                   </span>
+                  <span class="text-[13px] text-text-secondary px-2 py-0.5 text-center mt-2">
+                  Org free plan: 15 workspaces, 25GB storage, 500K AI tokens/month
+                </span>
                 </div>
               </div>
             </div>

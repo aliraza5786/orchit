@@ -32,7 +32,7 @@
             @click="hasOrgDomain && profile?.active_company?.has_domain_verified
               ? handleAddMember()
               : !profile?.active_company?.has_domain_verified
-                ? toast.warning('Please verify your domain first before adding members.')
+                ? toast.error('Please verify your domain first before adding members.')
                 : undefined"
             :disabled="!hasOrgDomain || !isUserVerified"
             class="flex items-center gap-2 px-4 py-2 text-white text-sm font-semibold rounded-lg transition-all shadow-sm whitespace-nowrap cursor-pointer"
@@ -69,7 +69,7 @@
   <input
     v-model="searchQuery"
     placeholder="Search by name or email…"
-    class="w-full pl-9 pr-10 py-2.5 border border-border/60 bg-bg-body/80 rounded-lg text-sm focus:border-accent/50 focus:ring-2 focus:ring-accent/10 outline-none transition-all placeholder:text-text-tertiary"
+    class="relative px-7.5 py-2 rounded-md overflow-x-auto w-full  text-sm h-10 bg-bg-input border border-border focus-within:ring-black"
   />
 
   <!-- Search Icon -->
@@ -88,31 +88,25 @@
   </button>
 </div>
 
-      <div class="relative">
-        <select
-          v-model="statusFilter"
-          class="pl-3 pr-8 py-2.5 border border-border/60 bg-bg-body/80 rounded-lg text-sm focus:border-accent/50 outline-none transition-all appearance-none cursor-pointer text-text-primary"
-        >
-          <option value="">All status</option>
-          <option value="active">Active</option>
-          <option value="suspended">Suspended</option>
-          <option value="deactivated">Deactivated</option>
-        </select>
-        <i class="fa-solid fa-chevron-down absolute right-2.5 top-1/2 -translate-y-1/2 text-text-secondary/60 text-[10px] pointer-events-none"></i>
-      </div>
+     <div class="relative">
+  <BaseSelectField
+    v-model="statusFilter"
+    :noSearchAble="true"
+    :options="STATUS_FILTER_OPTIONS"
+    placeholder="All status"
+    size="md"
+  />
+</div>
 
       <div class="relative">
-        <select
-          v-model="roleFilter"
-          class="pl-3 pr-8 py-2.5 border border-border/60 bg-bg-body/80 rounded-lg text-sm focus:border-accent/50 outline-none transition-all appearance-none cursor-pointer text-text-primary"
-        >
-          <option value="">All roles</option>
-          <option v-for="role in allRoles" :key="role._id" :value="role._id">
-            {{ role.title }}
-          </option>
-        </select>
-        <i class="fa-solid fa-chevron-down absolute right-2.5 top-1/2 -translate-y-1/2 text-text-secondary/60 text-[10px] pointer-events-none"></i>
-      </div>
+  <BaseSelectField
+    v-model="roleFilter"
+    :noSearchAble="true"
+    :options="allRoles"
+    placeholder="All roles"
+    size="md"
+  />
+</div>
     </div>
 
     <!-- ── Bulk action bar ── -->
@@ -213,7 +207,7 @@
     <div v-else class="space-y-1.5">
 
       <!-- Select-all header -->
-      <div class="flex items-center gap-3 px-4 py-1.5" v-if="canUpdateUsers">
+      <div class="flex items-center gap-3 px-4 py-1.5" v-if="canUpdateUsers && paginatedMembers?.length > 1">
         <button
           @click="toggleBulkSelectAll"
           class="w-4 h-4 rounded border flex items-center justify-center transition-all shrink-0"
@@ -241,7 +235,7 @@
       >
         <!-- Checkbox -->
         <button
-          v-if="isBulkSelectable(member)"
+          v-if="isBulkSelectable(member) && !member.is_owner"
           @click="toggleBulkMember(member._id)"
           class="w-4 h-4 rounded border flex items-center justify-center transition-all shrink-0"
           :class="bulkSelectedIds.includes(member._id) ? 'bg-accent border-accent' : 'border-border/60 hover:border-accent/50'"
@@ -281,8 +275,7 @@
         <!-- Action buttons -->
         <div
           class="flex items-center gap-1.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
-          v-if="!isSuperAdminMember(member) && (canUpdateUsers || canDeleteUsers)"
-        >
+          v-if="!isSuperAdminMember(member) && !member.is_owner && (canUpdateUsers || canDeleteUsers)">
           <button
             v-if="canUpdateUsers && (
             member.membership_status === 'active' ||
@@ -327,10 +320,10 @@
 
         <!-- Role select -->
         <div
-          v-if="canUpdateUsers && !isSuperAdminMember(member)"
-          class="relative shrink-0"
-          @click.stop
-        >
+        v-if="canUpdateUsers && !isSuperAdminMember(member) && !member.is_owner && member.membership_status === 'active'"
+        class="relative shrink-0"
+        @click.stop
+      >
           <select
             :value="member.company_role_id"
             @change.stop="handleInlineRoleUpdate(member, ($event.target as HTMLSelectElement).value)"
@@ -392,74 +385,135 @@
       </p>
     </div>
   </div>
+     <!-- ══ STATUS CONFIRM MODAL ══ -->
+<Teleport to="body">
+  <Transition enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="transition duration-150 ease-in" leave-from-class="opacity-100" leave-to-class="opacity-0">
+    <div
+      v-if="showStatusModal && statusModalMember"
+      class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+      @click.self="showStatusModal = false"
+    >
+      <Transition enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0 scale-95 translate-y-2" enter-to-class="opacity-100 scale-100 translate-y-0" appear>
+        <div class="w-full max-w-md bg-bg-body rounded-2xl border border-border shadow-2xl overflow-hidden">
 
-  <!-- ══ STATUS CONFIRM MODAL ══ -->
-  <Teleport to="body">
-    <Transition enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="transition duration-150 ease-in" leave-from-class="opacity-100" leave-to-class="opacity-0">
-      <div
-        v-if="showStatusModal && statusModalMember"
-        class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-        @click.self="showStatusModal = false"
-      >
-        <Transition enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0 scale-95 translate-y-2" enter-to-class="opacity-100 scale-100 translate-y-0" appear>
-          <div class="w-full max-w-sm bg-bg-body rounded-2xl border border-border shadow-2xl overflow-hidden">
+          <!-- Top gradient section -->
+          <div
+            class="px-6 pt-6 pb-5"
+            :class="statusModalMember.membership_status === 'active' ? 'bg-gradient-to-br from-yellow-500/8 to-bg-body' : 'bg-gradient-to-br from-green-500/8 to-bg-body'"
+          >
             <div
-              class="px-6 pt-6 pb-5"
-              :class="statusModalMember.membership_status === 'active' ? 'bg-gradient-to-br from-yellow-500/8 to-bg-body' : 'bg-gradient-to-br from-green-500/8 to-bg-body'"
+              class="w-14 h-14 rounded-4xl flex items-center justify-center mb-4 border"
+              :class="statusModalMember.membership_status === 'active' ? 'bg-yellow-500/10 border-yellow-500/20' : 'bg-green-500/10 border-green-500/20'"
             >
-              <div
-                class="w-14 h-14 rounded-2xl flex items-center justify-center mb-4 border"
-                :class="statusModalMember.membership_status === 'active' ? 'bg-yellow-500/10 border-yellow-500/20' : 'bg-green-500/10 border-green-500/20'"
-              >
-                <i class="text-xl" :class="statusModalMember.membership_status === 'active' ? 'fa-solid fa-ban text-yellow-500' : 'fa-solid fa-circle-check text-green-500'"></i>
+              <i class="text-xl" :class="statusModalMember.membership_status === 'active' ? 'fa-solid fa-ban text-yellow-500' : 'fa-solid fa-circle-check text-green-500'"></i>
+            </div>
+
+            <h3 class="text-base font-bold text-text-primary">
+              {{ statusModalMember.membership_status === 'active' ? 'Deactivate member?' : 'Activate member?' }}
+            </h3>
+
+            <p class="text-sm text-text-secondary mt-1 leading-relaxed">
+              <template v-if="statusModalMember.membership_status === 'active'">
+                <strong class="text-text-primary">{{ statusModalMember.u_full_name }}</strong>
+                will lose access to all organization resources. You can re-activate them anytime.
+              </template>
+              <template v-else-if="isFirstTimeActivation(statusModalMember)">
+                <strong class="text-text-primary">{{ statusModalMember.u_full_name }}</strong>
+                will be granted access to the organization for the first time. Make sure their role and permissions are correct before proceeding.
+              </template>
+              <template v-else>
+                <strong class="text-text-primary">{{ statusModalMember.u_full_name }}</strong>
+                will regain access to the organization and all assigned resources.
+              </template>
+            </p>
+          </div>
+
+          <!-- Member preview card + role selector -->
+          <div class="px-6 pb-4 space-y-3">
+
+            <!-- Member preview -->
+            <div class="flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-bg-card/50">
+              <div class="w-9 h-9 rounded-full bg-gradient-to-br from-accent/30 to-accent/10 flex items-center justify-center text-xs font-bold text-accent shrink-0 overflow-hidden">
+                <img v-if="statusModalMember.u_profile_image" :src="statusModalMember.u_profile_image" class="w-full h-full object-cover" />
+                <span v-else>{{ getInitials(statusModalMember.u_full_name) }}</span>
               </div>
-              <h3 class="text-base font-bold text-text-primary">
-                {{ statusModalMember.membership_status === 'active' ? 'Deactivate member?' : 'Activate member?' }}
-              </h3>
-              <p class="text-sm text-text-secondary mt-1 leading-relaxed">
-                <template v-if="statusModalMember.membership_status === 'active'">
-                  <strong class="text-text-primary">{{ statusModalMember.u_full_name }}</strong> will lose access to all organization resources. You can re-activate them anytime.
-                </template>
-                <template v-else>
-                  <strong class="text-text-primary">{{ statusModalMember.u_full_name }}</strong> will regain access to the organization and all assigned resources.
-                </template>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-semibold text-text-primary truncate">{{ statusModalMember.u_full_name }}</p>
+                <p class="text-xs text-text-secondary truncate">{{ statusModalMember.u_email }}</p>
+              </div>
+              <span
+                class="text-[10px] font-semibold px-2 py-1 rounded-full shrink-0"
+                :class="getStatusBadgeClass(statusModalMember.membership_status)"
+              >
+                {{ statusModalMember.membership_status ?? 'pending' }}
+              </span>
+            </div>
+
+            <!-- Role selector -->
+            <div>
+              <label class="text-[11px] font-semibold text-text-secondary uppercase tracking-wider flex items-center gap-1.5 mb-1.5">
+                <i class="fa-solid fa-shield-halved text-accent text-[10px]"></i>
+                Role
+                <span
+                  v-if="statusModalMember.membership_status !== 'active'"
+                  class="normal-case font-normal text-text-tertiary ml-0.5"
+                >(assigned on activation)</span>
+              </label>
+              <div class="relative">
+                <select
+                  v-model="statusModalRole"
+                  class="w-full appearance-none border border-border/60 bg-bg-body/80 rounded-lg pl-3 pr-8 py-2.5 text-sm focus:border-accent/60 focus:ring-2 focus:ring-accent/10 outline-none transition-all cursor-pointer text-text-primary"
+                >
+                  <option v-for="role in allRoles" :key="role._id" :value="role._id">
+                    {{ role.title }}
+                  </option>
+                </select>
+                <i class="fa-solid fa-chevron-down absolute right-2.5 top-1/2 -translate-y-1/2 text-text-secondary/60 text-[10px] pointer-events-none"></i>
+              </div>
+              <p
+                v-if="statusModalRole !== statusModalMember.company_role_id"
+                class="text-[11px] text-amber-600 mt-1.5 flex items-center gap-1"
+              >
+                <i class="fa-solid fa-circle-info text-[10px]"></i>
+                Role will be updated when you confirm.
               </p>
             </div>
-            <div class="px-6 pb-5">
-              <div class="flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-bg-card/50">
-                <div class="w-9 h-9 rounded-full bg-gradient-to-br from-accent/30 to-accent/10 flex items-center justify-center text-xs font-bold text-accent shrink-0 overflow-hidden">
-                  <img v-if="statusModalMember.u_profile_image" :src="statusModalMember.u_profile_image" class="w-full h-full object-cover" />
-                  <span v-else>{{ getInitials(statusModalMember.u_full_name) }}</span>
-                </div>
-                <div class="flex-1 min-w-0">
-                  <p class="text-sm font-semibold text-text-primary truncate">{{ statusModalMember.u_full_name }}</p>
-                  <p class="text-xs text-text-secondary truncate">{{ statusModalMember.u_email }}</p>
-                </div>
-                <span class="text-[10px] font-semibold px-2 py-1 rounded-full shrink-0" :class="getStatusBadgeClass(statusModalMember.membership_status)">
-                  {{ statusModalMember.membership_status }}
-                </span>
-              </div>
-            </div>
-            <div class="px-6 pb-5 flex gap-3">
-              <button @click="showStatusModal = false" class="flex-1 px-4 py-2.5 text-sm font-medium rounded-xl border border-border hover:bg-bg-card transition-all">Cancel</button>
-              <button
-                @click="handleStatusConfirm"
-                :disabled="togglingUserId === statusModalMember._id"
-                class="flex-1 px-4 py-2.5 text-white text-sm font-bold rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-                :class="statusModalMember.membership_status === 'active' ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-green-500 hover:bg-green-600'"
-              >
-                <i v-if="togglingUserId === statusModalMember._id" class="fa-solid fa-spinner animate-spin text-xs"></i>
-                <i v-else-if="statusModalMember.membership_status === 'active'" class="fa-solid fa-ban text-xs"></i>
-                <i v-else class="fa-solid fa-circle-check text-xs"></i>
-                {{ togglingUserId === statusModalMember._id ? 'Processing…' : statusModalMember.membership_status === 'active' ? 'Yes, deactivate' : 'Yes, activate' }}
-              </button>
-            </div>
           </div>
-        </Transition>
-      </div>
-    </Transition>
-  </Teleport>
 
+          <!-- Action buttons -->
+          <div class="px-6 pb-5 flex gap-3">
+            <button
+              @click="showStatusModal = false"
+              class="flex-1 px-4 py-2.5 text-sm font-medium rounded-xl border border-border hover:bg-bg-card transition-all"
+            >
+              Cancel
+            </button>
+            <button
+  @click="handleStatusConfirm"
+  :disabled="togglingUserId === statusModalMember._id"
+  class="flex-1 px-4 py-2.5 text-white text-sm font-bold rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+  :class="statusModalMember.membership_status === 'active' ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-green-500 hover:bg-green-600'"
+>
+  <i v-if="togglingUserId === statusModalMember._id" class="fa-solid fa-spinner animate-spin text-xs shrink-0"></i>
+  <i v-else-if="statusModalMember.membership_status === 'active'" class="fa-solid fa-ban text-xs shrink-0"></i>
+  <i v-else class="fa-solid fa-circle-check text-xs shrink-0"></i>
+  <span>{{
+    togglingUserId === statusModalMember._id
+      ? 'Processing…'
+      : statusModalMember.membership_status === 'active'
+        ? 'Yes, deactivate'
+        : isFirstTimeActivation(statusModalMember)
+          ? 'Activate member'
+          : 'Yes, reactivate'
+  }}</span>
+</button>
+          </div>
+
+        </div>
+      </Transition>
+    </div>
+  </Transition>
+</Teleport>
   <!-- ══ INVITE LINK MODAL ══ -->
   <Teleport to="body">
     <Transition enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="transition duration-150 ease-in" leave-from-class="opacity-100" leave-to-class="opacity-0">
@@ -754,7 +808,7 @@ import {
   type CompanyUser,
 } from '../../../queries/useCompanyUsers'
 import { useCompanyRolesWithoutPermission } from '../../../queries/useCommon'
-
+import BaseSelectField from '../../../components/ui/BaseSelectField.vue'
 type MembershipStatus =
   | 'active'
   | 'deactivated'
@@ -766,7 +820,12 @@ type MembershipStatus =
 interface Permission {
   _id: string; slug: string; title: string; description: string; action: string; category: string; scope: string;
 }
-
+const STATUS_FILTER_OPTIONS = [
+  { title: 'All status', _id: '' },
+  { title: 'Active', _id: 'active' },
+  { title: 'Suspended', _id: 'suspended' },
+  { title: 'Deactivated', _id: 'deactivated' },
+];
 interface CompanyRole {
   _id: string; title: string; slug: string; description: string; company_id: string | null;
   is_admin: boolean; is_editor: boolean; is_viewer: boolean; is_system: boolean; is_trash: boolean;
@@ -880,25 +939,53 @@ const isUserVerified = computed(() => {
 
   return false
 })
+const currentUserIsOwner = computed(() => {
+  // Cross-reference the owner member from API against the logged-in user's _id
+  const currentUserId =
+    props.profile?.data?._id ??
+    props.profile?._id ??
+    props.profile?.data?.user?._id ??
+    props.profile?.user?._id
+
+  const ownerMember = members.value.find(m => m.is_owner)
+
+  // Most reliable: check if logged-in user IS the owner member
+  if (currentUserId && ownerMember && currentUserId === ownerMember._id) return true
+
+  // Fallback: check role string
+  const role = membershipRole.value
+  return (
+    role === 'owner' ||
+    activeCompany.value?.is_owner === true ||
+    activeCompany.value?.membership_role === 'owner' ||
+    props.profile?.data?.is_owner === true ||
+    props.profile?.is_owner === true ||
+    props.profile?.data?.active_company?.is_owner === true ||
+    props.profile?.active_company?.is_owner === true
+  )
+})
 
 function isSuperAdminMember(member: CompanyUser): boolean {
+  // Owner has full access — never hide anything
+  if (currentUserIsOwner.value) return false
+
+  // Non-owners cannot touch the owner row
   if (member.is_owner) return true
+
+  // Non-owners cannot touch super admin role members
   const role = allRoles.value.find((r: CompanyRole) => r._id === member.company_role_id)
   if (!role) return false
   const slug  = role.slug?.toLowerCase()  || ''
   const title = role.title?.toLowerCase() || ''
   return slug.includes('super') || title === 'super admin'
 }
-
 const BULK_SELECTABLE_STATUSES: MembershipStatus[] = ['active', 'deactivated', 'suspended']
 
 function isBulkSelectable(member: CompanyUser): boolean {
+  if (isSuperAdminMember(member)) return false
   return (
-    !isSuperAdminMember(member) &&
-    (
-      BULK_SELECTABLE_STATUSES.includes(member.membership_status as MembershipStatus) ||
-      member.membership_status == null // ← newly registered, no status yet
-    )
+    BULK_SELECTABLE_STATUSES.includes(member.membership_status as MembershipStatus) ||
+    member.membership_status == null
   )
 }
 // ─── Members data (unchanged) ─────────────────────────────────
@@ -912,7 +999,12 @@ const { data: usersData, isLoading } = useCompanyUsers(companyUsersParams)
 
 const members = computed<CompanyUser[]>(() => {
   const raw = usersData.value?.data?.users ?? usersData.value?.users ?? []
-  return Array.isArray(raw) ? raw : []
+  if (!Array.isArray(raw)) return []
+  return [...raw].sort((a, b) => {
+    if (a.is_owner && !b.is_owner) return -1
+    if (!a.is_owner && b.is_owner) return 1
+    return 0
+  })
 })
 
 const isViewer = computed(() => membershipRole.value === 'viewer')
@@ -1077,28 +1169,53 @@ function handleInlineRoleUpdate(member: CompanyUser, roleId: string) {
 // ─── Status modal ─────────────────────────────────────────────
 const showStatusModal   = ref(false)
 const statusModalMember = ref<CompanyUser | null>(null)
-
+const statusModalRole   = ref<string>('')
+  function isFirstTimeActivation(member: CompanyUser): boolean {
+  const neverActiveStatuses = [null, undefined, 'pending', 'pending_super_admin_otp', 'invited']
+  return neverActiveStatuses.includes(member.membership_status as any)
+}
 function openStatusModal(member: CompanyUser) {
   if (!canUpdateUsers.value) { toast.error('No permission to update members'); return }
   statusModalMember.value = member
+  statusModalRole.value   = member.company_role_id ?? defaultRole.value?._id ?? ''  // ← seed role
   showStatusModal.value   = true
 }
-
 function handleStatusConfirm() {
   if (!statusModalMember.value) return
   togglingUserId.value = statusModalMember.value._id
-  toggleActive(statusModalMember.value._id, {
-    onSuccess: (data: any) => {
-      toast.success((data?.data ?? data)?.message || 'Status updated')
-      togglingUserId.value    = null
-      showStatusModal.value   = false
-      statusModalMember.value = null
-    },
-    onError: (error: any) => {
-      toast.error(error?.response?.data?.message || 'Failed to update status')
-      togglingUserId.value = null
-    },
-  })
+
+  const roleChanged =
+    statusModalRole.value &&
+    statusModalRole.value !== statusModalMember.value.company_role_id
+
+  const doStatusToggle = () =>
+    toggleActive(statusModalMember.value!._id, {
+      onSuccess: (data: any) => {
+        toast.success((data?.data ?? data)?.message || 'Status updated')
+        togglingUserId.value    = null
+        showStatusModal.value   = false
+        statusModalMember.value = null
+      },
+      onError: (error: any) => {
+        toast.error(error?.response?.data?.message || 'Failed to update status')
+        togglingUserId.value = null
+      },
+    })
+
+  if (roleChanged) {
+    updateUser(
+      { userId: statusModalMember.value._id, payload: { company_role_id: statusModalRole.value } },
+      {
+        onSuccess: () => doStatusToggle(),
+        onError: (error: any) => {
+          toast.error(error?.response?.data?.message || 'Failed to update role')
+          togglingUserId.value = null
+        },
+      }
+    )
+  } else {
+    doStatusToggle()
+  }
 }
 
 // ─── Helpers ──────────────────────────────────────────────────
