@@ -79,7 +79,7 @@
               @close="showFilterBar = false"
             />
           </div>
-          <div v-if="view != 'table'" class="relative flex items-center gap-2">
+          <div v-if="view !== 'table' && view !== 'timeline' && view !== 'gantt'" class="relative flex items-center gap-2">
             <button
               ref="variableTriggerRef"
               @click="toggleVariableDropdown"
@@ -118,8 +118,11 @@
               "
             />
           </div>
-          <!-- Group button for Table View -->
-          <div v-if="view === 'table'" class="relative flex items-center gap-3">
+          <!-- Group button for Table, Timeline & Gantt views -->
+          <div
+            v-if="view === 'table' || view === 'timeline' || view === 'gantt'"
+            class="relative flex items-center gap-3"
+          >
             <button
               ref="groupTriggerRef"
               @click="toggleGroupDropdown"
@@ -495,10 +498,16 @@
     <template v-if="view === 'gantt'">
       <CustomGanttChart
         :data="filteredBoard"
-        :loading="isAddingTableTicket"
+        :groups="tableGroups"
+        :isGrouped="!!selectedGroup"
+        :selectedGroup="selectedGroup"
+        :canCreate="canCreateCard"
+        :data-loading="!!selectedGroup && isTablePending"
+        :creating="isAddingTableTicket"
         @select:ticket="selectCardHandler"
         @create:ticket="handleCreateTicket"
         @update:ticket="handleUpdateTicket"
+        @quickCreate="handleQuickCreate"
       />
     </template>
 
@@ -506,10 +515,16 @@
     <template v-if="view === 'timeline'">
       <CustomTimelineView
         :data="filteredBoard"
-        :loading="isAddingTableTicket"
+        :groups="tableGroups"
+        :isGrouped="!!selectedGroup"
+        :selectedGroup="selectedGroup"
+        :canCreate="canCreateCard"
+        :data-loading="!!selectedGroup && isTablePending"
+        :creating="isAddingTableTicket"
         @select:ticket="selectCardHandler"
         @create:ticket="handleCreateTicket"
         @update:ticket="handleUpdateTicket"
+        @quickCreate="handleQuickCreate"
       />
     </template>
 
