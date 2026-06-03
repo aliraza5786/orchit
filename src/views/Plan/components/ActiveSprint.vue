@@ -76,7 +76,9 @@
             </div>
 
             <div
-              v-if="view != 'table'"
+              v-if="
+                view !== 'table' && view !== 'timeline' && view !== 'gantt'
+              "
               class="relative flex items-center gap-3"
             >
               <button
@@ -120,9 +122,9 @@
               />
             </div>
 
-            <!-- Group button for Table View -->
+            <!-- Group button for Table, Timeline & Gantt views -->
             <div
-              v-if="view === 'table'"
+              v-if="view === 'table' || view === 'timeline' || view === 'gantt'"
               class="relative flex items-center gap-3"
             >
               <button
@@ -476,10 +478,16 @@
           <template v-if="view === 'gantt'">
             <CustomGanttChart
               :data="filteredBoard"
-              :loading="isAddingTableTicket"
+              :groups="tableGroups"
+              :isGrouped="!!selectedGroup"
+              :selectedGroup="selectedGroup"
+              :canCreate="canCreateCard"
+              :data-loading="!!selectedGroup && isTablePending"
+              :creating="isAddingTableTicket"
               @select:ticket="selectCardHandler"
               @create:ticket="handleCreateTicket"
               @update:ticket="handleUpdateTicket"
+              @quickCreate="handleQuickCreate"
             />
           </template>
 
@@ -487,10 +495,16 @@
           <template v-if="view === 'timeline'">
             <CustomTimelineView
               :data="filteredBoard"
-              :loading="isAddingTableTicket"
+              :groups="tableGroups"
+              :isGrouped="!!selectedGroup"
+              :selectedGroup="selectedGroup"
+              :canCreate="canCreateCard"
+              :data-loading="!!selectedGroup && isTablePending"
+              :creating="isAddingTableTicket"
               @select:ticket="selectCardHandler"
               @create:ticket="handleCreateTicket"
               @update:ticket="handleUpdateTicket"
+              @quickCreate="handleQuickCreate"
             />
           </template>
 

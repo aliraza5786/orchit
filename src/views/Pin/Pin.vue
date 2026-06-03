@@ -29,8 +29,13 @@
           </template>
         </Dropdown>
         <div class="flex gap-3">
-          <!-- Grouping -->
-          <div v-if="view != 'table'" class="relative flex items-center gap-2">
+          <!-- Kanban / Mindmap grouping -->
+          <div
+            v-if="
+              view !== 'table' && view !== 'timeline' && view !== 'gantt'
+            "
+            class="relative flex items-center gap-2"
+          >
             <button
               ref="variableTriggerRef"
               @click="toggleVariableDropdown"
@@ -69,8 +74,11 @@
               "
             />
           </div>
-          <!-- Group button for Table View -->
-          <div v-if="view === 'table'" class="relative flex items-center gap-2">
+          <!-- Group button for Table, Timeline & Gantt views -->
+          <div
+            v-if="view === 'table' || view === 'timeline' || view === 'gantt'"
+            class="relative flex items-center gap-2"
+          >
             <button
               ref="groupTriggerRef"
               @click="toggleGroupDropdown"
@@ -403,10 +411,16 @@
     <template v-if="view === 'gantt'">
       <CustomGanttChart
         :data="timelineData"
-        :loading="isAddingTicket"
+        :groups="timelineGroups"
+        :isGrouped="!!selectedGroup"
+        :selectedGroup="selectedGroup"
+        :canCreate="canCreateCard"
+        :data-loading="!!selectedGroup && isTablePending"
+        :creating="isAddingTicket"
         @select:ticket="selectCardHandler"
         @create:ticket="handleCreateTicket"
         @update:ticket="handleUpdateTicket"
+        @quickCreate="handleQuickCreate"
       />
     </template>
 
@@ -414,10 +428,16 @@
     <template v-if="view === 'timeline'">
       <CustomTimelineView
         :data="timelineData"
-        :loading="isAddingTicket"
+        :groups="timelineGroups"
+        :isGrouped="!!selectedGroup"
+        :selectedGroup="selectedGroup"
+        :canCreate="canCreateCard"
+        :data-loading="!!selectedGroup && isTablePending"
+        :creating="isAddingTicket"
         @select:ticket="selectCardHandler"
         @create:ticket="handleCreateTicket"
         @update:ticket="handleUpdateTicket"
+        @quickCreate="handleQuickCreate"
       />
     </template>
 
@@ -1268,31 +1288,39 @@ const filteredBoard = computed(() => {
   });
 });
 
+const normalizeTimelineCard = (card: any) => {
+  let start = card.variables?.["start-date"] || card["start-date"];
+  let end = card.variables?.["end-date"] || card["end-date"];
+
+  if (!start) {
+    start = card.createdAt || new Date().toISOString();
+  }
+  if (!end) {
+    const startDate = new Date(start);
+    startDate.setDate(startDate.getDate() + 2);
+    end = startDate.toISOString();
+  }
+
+  return {
+    ...card,
+    "start-date": start,
+    "end-date": end,
+  };
+};
+
 const timelineData = computed(() => {
-  return filteredBoard.value.map((column: any) => {
-    return {
-      ...column,
-      cards: column.cards?.map((card: any) => {
-        let start = card.variables?.["start-date"] || card["start-date"];
-        let end = card.variables?.["end-date"] || card["end-date"];
+  return filteredBoard.value.map((column: any) => ({
+    ...column,
+    cards: column.cards?.map(normalizeTimelineCard),
+  }));
+});
 
-        if (!start) {
-          start = card.createdAt || new Date().toISOString();
-        }
-        if (!end) {
-          const startDate = new Date(start);
-          startDate.setDate(startDate.getDate() + 2);
-          end = startDate.toISOString();
-        }
-
-        return {
-          ...card,
-          "start-date": start,
-          "end-date": end,
-        };
-      }),
-    };
-  });
+const timelineGroups = computed(() => {
+  if (!selectedGroup.value) return [];
+  return tableGroups.value.map((group: any) => ({
+    ...group,
+    cards: (group.cards || []).map(normalizeTimelineCard),
+  }));
 });
 
 const tableRows = computed(() => {

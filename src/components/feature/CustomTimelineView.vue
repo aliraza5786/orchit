@@ -2,6 +2,7 @@
 import {
   ref,
   computed,
+  reactive,
   onMounted,
   onUnmounted,
   watch,
@@ -18,13 +19,38 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
-  loading: {
+  groups: {
+    type: Array,
+    default: () => [],
+  },
+  isGrouped: {
     type: Boolean,
     default: false,
   },
+  dataLoading: {
+    type: Boolean,
+    default: false,
+  },
+  creating: {
+    type: Boolean,
+    default: false,
+  },
+  selectedGroup: {
+    type: [String, Object],
+    default: "",
+  },
+  canCreate: {
+    type: Boolean,
+    default: true,
+  },
 });
 
-const emit = defineEmits(["select:ticket", "update:ticket", "create:ticket"]);
+const emit = defineEmits([
+  "select:ticket",
+  "update:ticket",
+  "create:ticket",
+  "quickCreate",
+]);
 
 // --- State ---
 const zoomLevel = ref("week");
@@ -97,17 +123,50 @@ const formatDate = (date: Date) => {
   });
 };
 
-// --- Data Normalization ---
-const allTasks = computed(() => {
-  const tasks: any[] = [];
-  if (!props.data) return tasks;
+// --- Group expand/collapse (same pattern as TableView) ---
+const expandedGroups = reactive<Record<string, boolean>>({});
 
+watch(
+  () => props.groups,
+  (newGroups) => {
+    if (newGroups && props.isGrouped) {
+      newGroups.forEach((g: any) => {
+        const key = g.title ?? "";
+        if (expandedGroups[key] === undefined) expandedGroups[key] = true;
+      });
+    }
+  },
+  { immediate: true, deep: true },
+);
+
+const toggleGroup = (title: string) => {
+  expandedGroups[title] = !expandedGroups[title];
+};
+
+const groupLabel = (title: string) =>
+  title || "Clear selection / Empty";
+
+// --- Data Normalization ---
+const rawCards = computed(() => {
+  const tasks: any[] = [];
+  if (props.isGrouped) {
+    (props.groups as any[]).forEach((g) => {
+      if (g.cards?.length) tasks.push(...g.cards);
+    });
+    return tasks;
+  }
+  if (!props.data) return tasks;
   props.data.forEach((item: any) => {
     if (item.cards && Array.isArray(item.cards)) tasks.push(...item.cards);
     else if (item._id || item.id || item["card-title"]) tasks.push(item);
   });
+  return tasks;
+});
 
-  return Array.from(new Map(tasks.map((t) => [t._id || t.id, t])).values()).map(
+const allTasks = computed(() => {
+  return Array.from(
+    new Map(rawCards.value.map((t) => [t._id || t.id, t])).values(),
+  ).map(
     (task: any) => {
       const startStr =
         task["start-date"] ||
@@ -135,6 +194,81 @@ const allTasks = computed(() => {
       };
     },
   );
+});
+
+type TimelineRow =
+  | { type: "group"; title: string; groupKey: string; count: number; group: any }
+  | { type: "task"; task: any };
+
+const isOwnerGroup = computed(() => {
+  const sg = props.selectedGroup;
+  if (!sg) return false;
+  if (sg === "owner") return true;
+  if (typeof sg === "object") {
+    const id = (sg as any)._id ?? (sg as any).slug;
+    return id === "owner";
+  }
+  return false;
+});
+
+const showGroupQuickCreate = computed(
+  () => props.isGrouped && props.canCreate && !isOwnerGroup.value,
+);
+
+const inlineQuickCreate = reactive({
+  active: false,
+  groupKey: "",
+  group: null as any,
+  title: "",
+});
+const groupCreateInput = ref<HTMLInputElement | null>(null);
+
+const startGroupQuickCreate = (groupKey: string, group: any) => {
+  expandedGroups[groupKey] = true;
+  inlineQuickCreate.groupKey = groupKey;
+  inlineQuickCreate.group = group;
+  inlineQuickCreate.active = true;
+  inlineQuickCreate.title = "";
+  nextTick(() => groupCreateInput.value?.focus());
+};
+
+const submitGroupQuickCreate = () => {
+  if (!inlineQuickCreate.title.trim() || props.creating) return;
+  emit("quickCreate", inlineQuickCreate.title.trim(), inlineQuickCreate.group);
+};
+
+const cancelGroupQuickCreate = () => {
+  inlineQuickCreate.active = false;
+  inlineQuickCreate.title = "";
+};
+
+const isGroupCreateActive = (groupKey: string) =>
+  inlineQuickCreate.active && inlineQuickCreate.groupKey === groupKey;
+
+const timelineRows = computed((): TimelineRow[] => {
+  if (!props.isGrouped) {
+    return allTasks.value.map((task) => ({ type: "task" as const, task }));
+  }
+  const taskById = new Map(
+    allTasks.value.map((t) => [t._id || t.id, t]),
+  );
+  const rows: TimelineRow[] = [];
+  (props.groups as any[]).forEach((group) => {
+    const groupKey = group.title ?? "";
+    rows.push({
+      type: "group",
+      title: groupLabel(groupKey),
+      groupKey,
+      count: group.cards?.length || 0,
+      group,
+    });
+    if (!expandedGroups[groupKey]) return;
+    (group.cards || []).forEach((card: any) => {
+      const task = taskById.get(card._id || card.id);
+      if (task) rows.push({ type: "task", task });
+    });
+  });
+  return rows;
 });
 
 // --- Smart Packing (kept for row count stat in header) ---
@@ -375,7 +509,7 @@ const startCreating = () => {
 };
 
 const handleCreate = () => {
-  if (newEpicTitle.value.trim() && !props.loading) {
+  if (newEpicTitle.value.trim() && !props.creating) {
     emit("create:ticket", { "card-title": newEpicTitle.value.trim() });
     newEpicTitle.value = "";
   }
@@ -386,9 +520,12 @@ const handleCreateBlur = () => {
 };
 
 watch(
-  () => props.loading,
+  () => props.creating,
   (newVal, oldVal) => {
-    if (oldVal === true && newVal === false) isCreating.value = false;
+    if (oldVal === true && newVal === false) {
+      isCreating.value = false;
+      cancelGroupQuickCreate();
+    }
   },
 );
 
@@ -423,7 +560,11 @@ const handleTaskClick = (task: any) => {
           class="flex items-center min-w-max text-nowrap gap-1.5 px-3 text-[11px] text-text-secondary font-semibold border-l border-border h-4"
         >
           <i class="fa-regular fa-layer-group text-[10px]"></i>
-          <span>{{ allTasks.length }} tasks · {{ packedTracks.length }} rows</span>
+          <span>
+            <template v-if="isGrouped">{{ groups.length }} groups · </template>
+            {{ allTasks.length }} tasks
+            <template v-if="!isGrouped"> · {{ packedTracks.length }} rows</template>
+          </span>
         </div>
       </div>
 
@@ -445,9 +586,9 @@ const handleTaskClick = (task: any) => {
       </div>
     </div>
 
-    <!-- Loading State -->
+    <!-- Loading State (group/data fetch only — not while creating a ticket) -->
     <div
-      v-if="loading"
+      v-if="dataLoading"
       class="flex-1 flex flex-col items-center justify-center gap-3"
     >
       <div
@@ -484,35 +625,99 @@ const handleTaskClick = (task: any) => {
               ref="sidebarRef"
               @scroll="handleSidebarScroll"
             >
-              <div
-                v-for="task in allTasks"
-                :key="task._id"
-                class="h-10 group border-b border-border hover:bg-bg-surface transition-all duration-150 cursor-pointer relative flex items-center px-4 gap-2.5"
-                :class="{
-                  'bg-bg-surface !border-l-[3px] !border-l-primary-color z-10':
-                    selectedTaskId === (task._id || task.id),
-                  'bg-bg-surface/50 z-20': hoveredTaskId === task._id,
-                }"
-                @click="handleTaskClick(task)"
-                @mouseenter="hoveredTaskId = task._id"
-                @mouseleave="hoveredTaskId = null"
-              >
+              <template v-for="(row, _rowIdx) in timelineRows" :key="row.type === 'group' ? 'g-' + row.title : row.task._id">
+                <!-- Group header -->
+                <div
+                  v-if="row.type === 'group'"
+                  class="h-9 border-b border-border bg-bg-body hover:bg-bg-surface/80 transition-colors cursor-pointer flex items-center px-3 gap-2 group/header"
+                  @click="toggleGroup(row.groupKey)"
+                >
+                  <i
+                    class="fa-solid fa-chevron-right text-[10px] text-text-secondary transition-transform shrink-0"
+                    :class="{ 'rotate-90': expandedGroups[row.groupKey] }"
+                  ></i>
+                  <span class="text-[11px] font-bold text-text-primary capitalize truncate flex-1">
+                    {{ row.title }}
+                  </span>
+                  <span class="text-[10px] text-text-secondary font-medium shrink-0">
+                    {{ row.count }}
+                  </span>
+                  <button
+                    v-if="showGroupQuickCreate"
+                    type="button"
+                    class="w-5 h-5 flex items-center justify-center rounded-md border border-border bg-bg-surface hover:border-primary-color hover:text-primary-color opacity-0 group-hover/header:opacity-100 transition-all text-[10px] shrink-0"
+                    title="Add ticket to this group"
+                    @click.stop="startGroupQuickCreate(row.groupKey, row.group)"
+                  >
+                    <i class="fa-solid fa-plus font-bold"></i>
+                  </button>
+                </div>
+                <div
+                  v-if="row.type === 'group' && isGroupCreateActive(row.groupKey)"
+                  class="h-10 px-2 border-b border-border bg-bg-surface flex items-center pl-7"
+                >
+                  <div
+                    class="relative flex-1 flex items-center border border-primary-color rounded overflow-hidden bg-bg-card shadow-sm h-7"
+                  >
+                    <div class="pl-2 text-primary-color">
+                      <i class="fa-solid fa-bolt text-[9px]"></i>
+                    </div>
+                    <input
+                      v-model="inlineQuickCreate.title"
+                      ref="groupCreateInput"
+                      @keyup.enter="submitGroupQuickCreate"
+                      @keyup.esc="cancelGroupQuickCreate"
+                      @blur="
+                        () => {
+                          if (!inlineQuickCreate.title.trim())
+                            cancelGroupQuickCreate();
+                        }
+                      "
+                      placeholder="What needs to be done?"
+                      :disabled="creating"
+                      class="flex-1 bg-transparent border-none outline-none px-2 text-[10px] font-medium text-text-primary placeholder:text-text-secondary/50 disabled:opacity-50"
+                    />
+                    <button
+                      type="button"
+                      @click.stop="submitGroupQuickCreate"
+                      :disabled="creating || !inlineQuickCreate.title.trim()"
+                      class="px-2 h-full bg-primary-color text-white text-[9px] font-bold hover:brightness-110 transition-all flex items-center gap-1 disabled:opacity-50"
+                    >
+                      <i v-if="creating" class="fa-solid fa-spinner fa-spin"></i>
+                      <span v-else>Create</span>
+                    </button>
+                  </div>
+                </div>
+                <!-- Task row -->
+                <div
+                  v-else-if="row.type === 'task'"
+                  class="h-10 group border-b border-border hover:bg-bg-surface transition-all duration-150 cursor-pointer relative flex items-center px-4 gap-2.5"
+                  :class="{
+                    'bg-bg-surface !border-l-[3px] !border-l-primary-color z-10':
+                      selectedTaskId === (row.task._id || row.task.id),
+                    'bg-bg-surface/50 z-20': hoveredTaskId === row.task._id,
+                    'pl-7': isGrouped,
+                  }"
+                  @click="handleTaskClick(row.task)"
+                  @mouseenter="hoveredTaskId = row.task._id"
+                  @mouseleave="hoveredTaskId = null"
+                >
                 <div
                   class="w-1 h-1 rounded-full shrink-0"
-                  :style="{ backgroundColor: task._color }"
+                  :style="{ backgroundColor: row.task._color }"
                 ></div>
                 <div class="flex items-center gap-2 flex-1 min-w-0">
                   <i class="fa-solid fa-bolt text-primary-color text-[10px] shrink-0"></i>
                   <span class="text-[11px] font-medium text-text-secondary whitespace-nowrap opacity-70 shrink-0">
-                    {{ task._code }}
+                    {{ row.task._code }}
                   </span>
                   <span class="text-[11px] font-semibold text-text-primary truncate flex-1">
-                    {{ task._title }}
+                    {{ row.task._title }}
                   </span>
                 </div>
                 <Collaborators
-                  v-if="task._assignees?.length"
-                  :avatars="task._assignees"
+                  v-if="row.task._assignees?.length"
+                  :avatars="row.task._assignees"
                   size="5"
                   class="opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
                 />
@@ -520,41 +725,42 @@ const handleTaskClick = (task: any) => {
                 <!-- Hover details as an absolute tooltip so it doesn't break row height -->
                 <Transition name="fade-scale">
                   <div
-                    v-if="hoveredTaskId === task._id || task._id === selectedTask?._id"
+                    v-if="hoveredTaskId === row.task._id || row.task._id === selectedTask?._id"
                     class="absolute top-full left-0 w-full z-50 px-4 py-2 flex items-center gap-2 text-[10px] text-text-secondary bg-bg-surface border border-border shadow-xl rounded-b-md"
                   >
                     <div class="flex items-center gap-1.5">
                       <i class="fa-regular fa-calendar text-[9px]"></i>
-                      <span class="font-medium">{{ formatDate(task._start) }}</span>
+                      <span class="font-medium">{{ formatDate(row.task._start) }}</span>
                     </div>
                     <i class="fa-solid fa-arrow-right text-[8px] opacity-40"></i>
                     <div class="flex items-center gap-1.5">
                       <i class="fa-regular fa-calendar-check text-[9px]"></i>
-                      <span class="font-medium">{{ formatDate(task._end) }}</span>
+                      <span class="font-medium">{{ formatDate(row.task._end) }}</span>
                     </div>
                     <div class="ml-auto flex items-center gap-2">
                       <span class="font-bold text-primary-color">
-                        {{ diffDays(task._end, task._start) }}d
+                        {{ diffDays(row.task._end, row.task._start) }}d
                       </span>
                       <div
-                        v-if="task._progress > 0"
+                        v-if="row.task._progress > 0"
                         class="px-1.5 py-0.5 rounded text-[9px] font-bold"
                         :class="
-                          task._progress === 100
+                          row.task._progress === 100
                             ? 'text-green-500 bg-green-500/10 border border-green-500/30'
                             : 'text-text-secondary bg-bg-surface border border-border'
                         "
                       >
-                        {{ task._progress }}%
+                        {{ row.task._progress }}%
                       </div>
                     </div>
                   </div>
                 </Transition>
-              </div>
+                </div>
+              </template>
 
-              <!-- Create Epic row -->
+              <!-- Create Epic row (ungrouped only) -->
               <div
-                v-if="!isCreating"
+                v-if="!isGrouped && !isCreating"
                 class="h-10 px-4 flex items-center gap-2 text-primary-color text-[11px] font-bold cursor-pointer hover:bg-primary-color/5 transition-colors border-b border-border"
                 @click="startCreating"
               >
@@ -562,7 +768,7 @@ const handleTaskClick = (task: any) => {
                 <span>Create Epic</span>
               </div>
               <div
-                v-else
+                v-else-if="!isGrouped"
                 class="h-10 px-2 border-b border-border bg-bg-surface flex items-center"
               >
                 <div
@@ -581,10 +787,10 @@ const handleTaskClick = (task: any) => {
                   />
                   <button
                     @click.stop="handleCreate"
-                    :disabled="props.loading"
+                    :disabled="creating"
                     class="px-2 h-full bg-primary-color text-white text-[9px] font-bold hover:brightness-110 transition-all rounded-l-sm shadow-sm flex items-center gap-1 disabled:opacity-50"
                   >
-                    <i v-if="props.loading" class="fa-solid fa-spinner fa-spin"></i>
+                    <i v-if="creating" class="fa-solid fa-spinner fa-spin"></i>
                     <span v-else>Create</span>
                   </button>
                 </div>
@@ -677,112 +883,118 @@ const handleTaskClick = (task: any) => {
                   ></div>
                 </div>
 
-                <!-- Track rows — one row per task, aligned 1:1 with sidebar -->
+                <!-- Track rows — aligned 1:1 with sidebar -->
                 <div class="relative z-10">
-                  <div
-                    v-for="(task, taskIdx) in allTasks"
-                    :key="'track-' + task._id"
-                    class="h-10 border-b border-border relative transition-colors hover:bg-bg-body bg-bg-surface group/row"
+                  <template
+                    v-for="(row, rowIdx) in timelineRows"
+                    :key="row.type === 'group' ? 'tg-' + row.groupKey : 'track-' + row.task._id"
                   >
-                    <!-- Task bar wrapper -->
+                    <!-- Group spacer row -->
                     <div
-                      class="absolute top-0 h-full flex items-center"
-                      :style="{
-                        left: getTaskPosition(task).left,
-                        width: getTaskPosition(task).width,
-                      }"
-                      @mouseenter="hoveredTaskId = task._id"
-                      @mouseleave="hoveredTaskId = null"
+                      v-if="row.type === 'group'"
+                      class="h-9 border-b border-border bg-bg-body/60 relative"
+                    ></div>
+                    <div
+                      v-if="row.type === 'group' && isGroupCreateActive(row.groupKey)"
+                      class="h-10 border-b border-border bg-bg-surface/40 relative"
+                    ></div>
+                    <!-- Task track row -->
+                    <div
+                      v-else-if="row.type === 'task'"
+                      class="h-10 border-b border-border relative transition-colors hover:bg-bg-body bg-bg-surface group/row"
                     >
-                      <!-- Off-screen navigation arrow -->
                       <div
-                        v-if="getTaskNavigation(task)"
-                        class="absolute z-50 opacity-0 group-hover/row:opacity-100 transition-opacity cursor-pointer group/nav"
+                        class="absolute top-0 h-full flex items-center"
                         :style="{
-                          left:
-                            getTaskNavigation(task) === 'left'
-                              ? `calc(-${getTaskPosition(task).left} + ${scrollLeft + 8}px)`
-                              : `calc(-${getTaskPosition(task).left} + ${scrollLeft + containerWidth - 32}px)`,
-                          top: '50%',
-                          transform: 'translateY(-50%)',
+                          left: getTaskPosition(row.task).left,
+                          width: getTaskPosition(row.task).width,
                         }"
-                        @click.stop="scrollToTask(task)"
+                        @mouseenter="hoveredTaskId = row.task._id"
+                        @mouseleave="hoveredTaskId = null"
                       >
                         <div
-                          class="bg-primary-color text-white w-6 h-6 rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform ring-2 ring-bg-surface"
-                        >
-                          <i
-                            class="fa-solid text-[9px]"
-                            :class="
-                              getTaskNavigation(task) === 'left'
-                                ? 'fa-chevron-left'
-                                : 'fa-chevron-right'
-                            "
-                          ></i>
-                        </div>
-
-                        <!-- Navigation Tooltip -->
-                        <div
-                          class="absolute bg-[#1e1e1e] text-white text-[9px] font-bold px-2 py-1 rounded shadow-2xl whitespace-nowrap opacity-0 group-hover/nav:opacity-100 pointer-events-none transition-all border border-white/10 z-[70]"
-                          :class="[
-                            getTaskNavigation(task) === 'left' ? 'left-0' : 'right-0',
-                            taskIdx === 0 ? 'top-full mt-2' : 'bottom-full mb-2',
-                          ]"
-                        >
-                          Go to: {{ formatDate(task._start) }}
-                        </div>
-                      </div>
-
-                      <!-- Task Bar -->
-                      <div
-                        class="absolute h-[24px] rounded-sm flex items-center cursor-pointer transition-all top-1/2 -translate-y-1/2 w-full"
-                        @click="handleTaskClick(task)"
-                      >
-                        <div
-                          class="relative w-full h-full rounded-sm bg-primary-color hover:brightness-110 group/bar transition-all"
-                          :style="{ backgroundColor: task._color }"
-                          @mousedown="handleInteractionStart($event, task, 'drag')"
+                          v-if="getTaskNavigation(row.task)"
+                          class="absolute z-50 opacity-0 group-hover/row:opacity-100 transition-opacity cursor-pointer group/nav"
+                          :style="{
+                            left:
+                              getTaskNavigation(row.task) === 'left'
+                                ? `calc(-${getTaskPosition(row.task).left} + ${scrollLeft + 8}px)`
+                                : `calc(-${getTaskPosition(row.task).left} + ${scrollLeft + containerWidth - 32}px)`,
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                          }"
+                          @click.stop="scrollToTask(row.task)"
                         >
                           <div
-                            class="handle left"
-                            @mousedown.stop="handleInteractionStart($event, task, 'left')"
-                          ></div>
-                          <div
-                            class="handle right"
-                            @mousedown.stop="handleInteractionStart($event, task, 'right')"
-                          ></div>
-                        </div>
-                      </div>
-
-                      <!-- Hover tooltip -->
-                      <Transition name="fade-scale">
-                        <div
-                          v-if="hoveredTaskId === task._id || activeTask?._id === task._id"
-                          class="absolute left-1/2 -translate-x-1/2 z-[110] pointer-events-none whitespace-nowrap"
-                          :class="taskIdx === 0 ? 'top-full mt-2' : 'bottom-full mb-2'"
-                        >
-                          <div
-                            class="bg-[#1e1e1e] border border-white/10 text-white text-[10px] px-2.5 py-1.5 rounded-md shadow-2xl flex items-center gap-2 ring-1 ring-black"
+                            class="bg-primary-color text-white w-6 h-6 rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform ring-2 ring-bg-surface"
                           >
-                            <div class="flex flex-col leading-tight">
-                              <span class="text-[8px] uppercase opacity-50 font-bold tracking-tighter">Start</span>
-                              <span class="font-medium">{{ formatDate(task._start) }}</span>
-                            </div>
-                            <div class="w-px h-4 bg-white/10 mx-1"></div>
-                            <div class="flex flex-col leading-tight">
-                              <span class="text-[8px] uppercase opacity-50 font-bold tracking-tighter">End</span>
-                              <span class="font-medium">{{ formatDate(task._end) }}</span>
-                            </div>
-                            <div
-                              class="ml-1 px-1.5 py-0.5 bg-primary-color/20 text-primary-color rounded text-[9px] font-black border border-primary-color/30"
-                            >
-                              {{ diffDays(task._end, task._start) }}d
-                            </div>
+                            <i
+                              class="fa-solid text-[9px]"
+                              :class="
+                                getTaskNavigation(row.task) === 'left'
+                                  ? 'fa-chevron-left'
+                                  : 'fa-chevron-right'
+                              "
+                            ></i>
+                          </div>
+                          <div
+                            class="absolute bg-[#1e1e1e] text-white text-[9px] font-bold px-2 py-1 rounded shadow-2xl whitespace-nowrap opacity-0 group-hover/nav:opacity-100 pointer-events-none transition-all border border-white/10 z-[70]"
+                            :class="[
+                              getTaskNavigation(row.task) === 'left' ? 'left-0' : 'right-0',
+                              rowIdx === 0 ? 'top-full mt-2' : 'bottom-full mb-2',
+                            ]"
+                          >
+                            Go to: {{ formatDate(row.task._start) }}
                           </div>
                         </div>
-                      </Transition>
+                        <div
+                          class="absolute h-[24px] rounded-sm flex items-center cursor-pointer transition-all top-1/2 -translate-y-1/2 w-full"
+                          @click="handleTaskClick(row.task)"
+                        >
+                          <div
+                            class="relative w-full h-full rounded-sm bg-primary-color hover:brightness-110 group/bar transition-all"
+                            :style="{ backgroundColor: row.task._color }"
+                            @mousedown="handleInteractionStart($event, row.task, 'drag')"
+                          >
+                            <div
+                              class="handle left"
+                              @mousedown.stop="handleInteractionStart($event, row.task, 'left')"
+                            ></div>
+                            <div
+                              class="handle right"
+                              @mousedown.stop="handleInteractionStart($event, row.task, 'right')"
+                            ></div>
+                          </div>
+                        </div>
+                        <Transition name="fade-scale">
+                          <div
+                            v-if="hoveredTaskId === row.task._id || activeTask?._id === row.task._id"
+                            class="absolute left-1/2 -translate-x-1/2 z-[110] pointer-events-none whitespace-nowrap"
+                            :class="rowIdx === 0 ? 'top-full mt-2' : 'bottom-full mb-2'"
+                          >
+                            <div
+                              class="bg-[#1e1e1e] border border-white/10 text-white text-[10px] px-2.5 py-1.5 rounded-md shadow-2xl flex items-center gap-2 ring-1 ring-black"
+                            >
+                              <div class="flex flex-col leading-tight">
+                                <span class="text-[8px] uppercase opacity-50 font-bold tracking-tighter">Start</span>
+                                <span class="font-medium">{{ formatDate(row.task._start) }}</span>
+                              </div>
+                              <div class="w-px h-4 bg-white/10 mx-1"></div>
+                              <div class="flex flex-col leading-tight">
+                                <span class="text-[8px] uppercase opacity-50 font-bold tracking-tighter">End</span>
+                                <span class="font-medium">{{ formatDate(row.task._end) }}</span>
+                              </div>
+                              <div
+                                class="ml-1 px-1.5 py-0.5 bg-primary-color/20 text-primary-color rounded text-[9px] font-black border border-primary-color/30"
+                              >
+                                {{ diffDays(row.task._end, row.task._start) }}d
+                              </div>
+                            </div>
+                          </div>
+                        </Transition>
+                      </div>
                     </div>
-                  </div>
+                  </template>
 
                   <!-- Breathing space -->
                   <div class="h-20"></div>
