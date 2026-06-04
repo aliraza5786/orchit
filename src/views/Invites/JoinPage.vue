@@ -39,7 +39,6 @@ watch(
     if (newVal) {
       const inviteData = newVal.data || newVal
 
-      // Check if invite is expired
       if (inviteData?.is_expired || inviteData?.is_expire) {
         step.value = 'error'
         error.value = 'Invitation link expired'
@@ -47,11 +46,10 @@ watch(
         return
       }
 
-      // Check if invite is accepted
       if (inviteData?.status === 'accepted') {
         step.value = 'error'
         error.value = 'Invitation already accepted'
-        errorDetail.value = 'You have already accepted this invitation. Please log in to your account to access the workspace.'
+        errorDetail.value = 'You have already accepted this invitation. Please log in to your account to access the Organization.'
         return
       }
 
@@ -62,16 +60,21 @@ watch(
         companyName.value = inviteData.workspace.name
       }
 
-      // Set domain to the invitee's email domain because they must sign up with that domain
+      // ── Personal invite: email is known, lock the prefix ──────────
       if (inviteData?.email) {
         const emailVal = inviteData.email.trim()
         const parts = emailVal.split('@')
-        domain.value = parts[1] || ''
-        emailLocal.value = parts[0] || ''
-        lockedLocal.value = parts[0] || '' // Locks the prefix so they can only submit the exact email invited
+        domain.value      = parts[1] || ''
+        emailLocal.value  = parts[0] || ''
+        lockedLocal.value = parts[0] || ''   // prefix locked to the invited address
+
+      // ── Join-link invite: only domain is known, user picks prefix ──
+      } else if (inviteData?.company?.custom_domain) {
+        domain.value      = inviteData.company.custom_domain
+        emailLocal.value  = ''
+        lockedLocal.value = null              // user is free to type their prefix
       }
 
-      // Pre-fill full name if available in invite data
       if (inviteData?.name && !name.value) {
         name.value = inviteData.name
       }
@@ -119,10 +122,24 @@ function validate(): boolean {
   const e: Record<string, string> = {}
   if (!name.value.trim() || name.value.trim().length < 2)
     e.name = 'Please enter your full name.'
-  if (!emailLocal.value.trim())
-    e.email = domain.value ? 'Enter the part before @' + domain.value : 'Please enter your email.'
-  else if (domain.value && !/^[a-zA-Z0-9._%+-]+$/.test(emailLocal.value.trim()))
-    e.email = 'Only letters, numbers and . _ % + - are allowed.'
+
+  if (!emailLocal.value.trim()) {
+    e.email = domain.value
+      ? 'Enter the part before @' + domain.value
+      : 'Please enter your email.'
+  } else if (domain.value) {
+    // Split-input mode: only validate the local prefix
+    if (!/^[a-zA-Z0-9._%+-]+$/.test(emailLocal.value.trim()))
+      e.email = 'Only letters, numbers and . _ % + - are allowed.'
+    else if (emailLocal.value.includes('@'))
+      e.email = `Use only your username — the @${domain.value} part is already added.`
+  } else {
+    // Plain email input: validate full email AND enforce no domain switching
+    const fullVal = emailLocal.value.trim()
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fullVal))
+      e.email = 'Please enter a valid email address.'
+  }
+
   if (password.value.length < 8)
     e.password = 'Password must be at least 8 characters.'
   else if (passwordStrength.value < 2)
@@ -179,7 +196,13 @@ function onOtpKeydown(i: number, ev: KeyboardEvent) {
     otpRefs.value[i + 1]?.focus()
   }
 }
-
+function onEmailLocalInput(e: Event) {
+  const input = e.target as HTMLInputElement
+  // Strip @ and anything after — prevents constructing a different domain
+  const clean = input.value.replace(/@.*/, '')
+  emailLocal.value = clean
+  input.value = clean
+}
 function onOtpPaste(ev: ClipboardEvent) {
   const text = ev.clipboardData?.getData('text')?.replace(/\D/g, '') ?? ''
   if (!text) return
@@ -331,7 +354,7 @@ function backToForm() {
           <div class="w-9 h-9 rounded-full border-[3px] border-t-transparent animate-spin mx-auto"
             style="border-color: var(--border); border-top-color: var(--accent);" />
           <h1 class="text-xl font-medium" style="color: var(--text-primary);">
-            Joining workspace...
+            Joining Organization...
           </h1>
           <p class="text-sm" style="color: var(--text-secondary);">
             Setting up your access. This only takes a moment.
@@ -379,27 +402,31 @@ function backToForm() {
             <label for="emailLocal" class="block text-xs font-medium" style="color: var(--text-secondary);">
               Work email
             </label>
-
             <!-- Split input: username + @domain -->
             <div v-if="domain"
               class="flex items-stretch rounded-[10px] border overflow-hidden"
               :class="errors.email ? 'ring-1 ring-red-400' : ''"
               style="background: var(--bg-surface); border-color: var(--border);">
               <input
-                id="emailLocal"
-                v-model="emailLocal"
-                type="text"
-                autocomplete="email"
-                spellcheck="false"
-                :readonly="!!lockedLocal"
-                placeholder="your.name"
-                class="flex-1 min-w-0 h-11 px-3.5 text-sm outline-none bg-transparent"
-                style="color: var(--text-primary);"
-              />
-              <div class="flex items-center px-3 text-sm select-none border-l"
-                style="background: var(--bg-lavender); color: var(--accent); border-color: var(--border);">
-                @{{ domain }}
-              </div>
+              id="emailLocal"
+              v-model="emailLocal"
+              type="text"
+              autocomplete="email"
+              spellcheck="false"
+              :readonly="!!lockedLocal"
+              placeholder="your.name"
+              class="flex-1 min-w-0 h-11 px-3.5 text-sm outline-none bg-transparent"
+              style="color: var(--text-primary);"
+              @input="onEmailLocalInput"
+              @keydown="(e) => { if (e.key === '@') e.preventDefault() }"
+            />
+             <div
+              class="flex items-center px-3 text-sm select-none border-l"
+              style="background: var(--bg-lavender); color: var(--accent); border-color: var(--border);"
+              title="You must use this domain"
+            >
+              @{{ domain }}
+            </div>
             </div>
 
             <!-- Plain email input when no domain is set -->
@@ -419,6 +446,9 @@ function backToForm() {
             <p v-if="errors.email" class="text-xs text-red-500">{{ errors.email }}</p>
             <p v-else-if="lockedLocal" class="text-xs" style="color: var(--text-secondary);">
               This invite is for {{ fullEmail }}.
+            </p>
+            <p v-else-if="domain" class="text-xs" style="color: var(--text-secondary);">
+              You must use your <strong>{{ domain }}</strong> email address.
             </p>
           </div>
 
@@ -509,7 +539,7 @@ function backToForm() {
           <p v-if="errors._global" class="text-sm text-red-500 text-center">{{ errors._global }}</p>
 
           <button type="submit" :disabled="submitting"
-            class="w-full h-11 rounded-[10px] text-sm font-medium transition-all flex items-center justify-center gap-2 disabled:opacity-60"
+            class="w-full h-11 rounded-[10px] cursor-pointer text-sm font-medium transition-all flex items-center justify-center gap-2 disabled:opacity-60"
             style="background: var(--accent); color: var(--accent-text);">
             <span v-if="submitting" class="w-4 h-4 rounded-full border-2 border-t-transparent animate-spin"
               style="border-color: var(--accent-text);" />
@@ -518,7 +548,7 @@ function backToForm() {
 
           <p class="text-xs text-center" style="color: var(--text-secondary);">
             Already have an account?
-            <button type="button" class="font-medium" style="color: var(--accent);" @click="goToLogin">
+            <button type="button" class="font-medium cursor-pointer" style="color: var(--accent);" @click="goToLogin">
               Log in
             </button>
           </p>
@@ -545,7 +575,7 @@ function backToForm() {
           </p>
         </div>
 
-        <div class="flex justify-between gap-2" @paste="onOtpPaste">
+        <div class="flex justify-center gap-6" @paste="onOtpPaste">
           <input
             v-for="(_, i) in otp"
             :key="i"
@@ -565,7 +595,7 @@ function backToForm() {
         <p v-if="otpError" class="text-xs text-red-500 text-center">{{ otpError }}</p>
 
         <button type="button" :disabled="!otpComplete || verifying"
-          class="w-full h-11 rounded-[10px] text-sm font-medium transition-all flex items-center justify-center gap-2 disabled:opacity-60"
+          class="w-full h-11 rounded-[10px] cursor-pointer text-sm font-medium transition-all flex items-center justify-center gap-2 disabled:opacity-60"
           style="background: var(--accent); color: var(--accent-text);"
           @click="onVerifyOtp">
           <span v-if="verifying" class="w-4 h-4 rounded-full border-2 border-t-transparent animate-spin"
@@ -574,11 +604,11 @@ function backToForm() {
         </button>
 
         <div class="flex items-center justify-between text-xs" style="color: var(--text-secondary);">
-          <button type="button" class="font-medium hover:underline" @click="backToForm">
+          <button type="button" class="font-medium cursor-pointer hover:underline" @click="backToForm">
             ← Edit details
           </button>
           <button type="button" :disabled="resendCooldown > 0"
-            class="font-medium disabled:opacity-50"
+            class="font-medium cursor-pointer disabled:opacity-50"
             :style="resendCooldown > 0 ? '' : 'color: var(--accent);'"
             @click="onResendOtp">
             {{ resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend code' }}

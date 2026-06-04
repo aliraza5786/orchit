@@ -9,8 +9,8 @@
       ref="viewportEl"
       @wheel.prevent="handleWheel"
       @mousedown="handleViewportMouseDown"
+      @contextmenu.prevent="handleViewportContextMenu"
       @click="handleCanvasClick"
-      @contextmenu.prevent
     >
       <div
         ref="canvasEl"
@@ -32,7 +32,11 @@
             Add sheets and cards to see your mindmap
           </p>
         </div>
-
+         <!-- ✦ Drag ghost indicator -->
+        <div v-if="dragGhostStyle" class="drag-ghost" :style="dragGhostStyle">
+          <i class="fa-solid fa-grip-vertical"></i>
+          {{ draggingCard?.topic?.slice(0, 20) }}...
+        </div>
         <svg
           class="connections-svg"
           :style="{ width: svgW + 'px', height: svgH + 'px' }"
@@ -57,238 +61,179 @@
             />
           </g>
         </svg>
-
-        <div
-          v-for="node in allNodes"
-          :key="node.id"
-          class="mm-node"
-          :class="[
-            `mm-node--${node.uniqueName}`,
-            { 'mm-node--selected': selectedNodeId === node.id },
-          ]"
-          :style="nodeInlineStyle(node)"
-          @mousedown.stop="handleNodeMouseDown($event, node.id)"
-          @click.stop="handleNodeClick(node.id)"
-          @contextmenu.stop.prevent="handleNodeContextMenu($event, node)"
-        >
-          <template v-if="node.uniqueName === 'root'">
-            <div class="node-root-inner">
-              <img
-                :src="localWorkspace.logo ?? dp"
-                class="w-10 h-10 rounded-full"
-                alt="logo"
-              />
-              <span class="node-root-title">{{ node.topic }}</span>
-            </div>
-          </template>
-
-          <template v-else-if="node.uniqueName === 'sheet'">
-            <div class="node-sheet-inner">
-              <div class="node-sheet-header">
-                <i class="fa-solid fa-table-columns node-sheet-icon"></i>
-                <span class="node-sheet-title">{{ node.topic }}</span>
-              </div>
-              <div
-                class="node-sheet-meta"
-                v-if="node.children && !isCollapsed(node.id)"
-              >
-                <span class="meta-pill">
-                  <i class="fa-solid fa-list me-1"></i
-                  >{{ node.children.length }} lists
-                </span>
-              </div>
-              <div
-                v-if="isCollapsed(node.id) && node.children?.length"
-                class="node-collapsed-badge"
-              >
-                <i class="fa-solid fa-layer-group me-1"></i
-                >{{ node.children.length }} hidden
-              </div>
-              <a
-                v-if="node.hyperLink"
-                :href="node.hyperLink"
-                target="_blank"
-                class="node-link"
-                @click.stop
-              >
-                <i class="fa-solid fa-link"></i>
-              </a>
-            </div>
-          </template>
-
-          <template v-else-if="node.uniqueName === 'List'">
-            <div class="node-list-inner">
-              <div class="node-list-header">
-                <div class="node-list-dot"></div>
-                <span class="node-list-title">{{ node.topic }}</span>
-              </div>
-              <div
-                class="node-list-count"
-                v-if="node.children && !isCollapsed(node.id)"
-              >
-                {{ node.children.length }} card{{
-                  node.children.length !== 1 ? "s" : ""
-                }}
-              </div>
-              <div
-                v-if="isCollapsed(node.id) && node.children?.length"
-                class="node-collapsed-badge"
-              >
-                <i class="fa-solid fa-layer-group me-1"></i
-                >{{ node.children.length }} hidden
-              </div>
-
-              <div
-                v-if="creatingCardForListId === node.id"
-                class="inline-create-card"
-                @click.stop
-                @mousedown.stop
-              >
-                <input
-                  v-model="newCardTitle"
-                  class="inline-card-input"
-                  placeholder="Card title…"
-                  @keydown.enter.prevent="submitInlineCard"
-                  @keydown.escape.prevent="cancelInlineCreation"
-                  @blur="
-                    () => {
-                      if (!newCardTitle.trim()) cancelInlineCreation();
-                    }
-                  "
-                  autofocus
-                />
-                <div class="inline-card-actions">
-                  <button
-                    class="inline-btn inline-btn--confirm"
-                    :disabled="!newCardTitle.trim() || isCreatingCard"
-                    @click.stop="submitInlineCard(node?.topic)"
-                  >
-                    <i
-                      v-if="isCreatingCard"
-                      class="fa-solid fa-spinner fa-spin"
-                    ></i>
-                    <i v-else class="fa-solid fa-check"></i>
-                  </button>
-                  <button
-                    class="inline-btn inline-btn--cancel"
-                    @click.stop="cancelInlineCreation"
-                  >
-                    <i class="fa-solid fa-xmark"></i>
-                  </button>
-                </div>
-              </div>
-
-              <button
-                v-if="
-                  canCreateCard &&
-                  !asTalent &&
-                  creatingCardForListId !== node.id
-                "
-                class="list-add-card-btn"
-                @click.stop="startInlineCardCreation(node)"
-                title="Add card (Enter)"
-              >
-                <i class="fa-solid fa-plus"></i> Add card
-              </button>
-            </div>
-          </template>
-
-          <template v-else-if="node.uniqueName === 'card'">
-  <div class="node-card-wrapper">
-    <div
-      class="node-card-stripe"
-      :style="{
-        background:
-          node.variables?.lane?.variables?.['lane-color'] ||
-          node.style?.borderColor ||
-          node.style?.color ||
-          'var(--primary-color)',
-      }"
-    ></div>
-    <div class="node-card-body">
-      <div class="node-card-badges">
-        <span v-if="node.variables?.['card-type']" class="card-badge card-badge--type">
-          {{ node.variables["card-type"] || "General" }}
-        </span>
-        <span v-if="node.variables?.['card-status']" class="card-badge card-badge--status">
-          {{ node.variables["card-status"] }}
-        </span>
-        <span
-          v-if="node.variables?.priority"
-          class="card-badge"
-          :class="`card-badge--${node.variables.priority}`"
-        >
-          <i class="fa-solid fa-flag" style="font-size: 8px"></i>
-          {{ node.variables.priority }}
-        </span>
-      </div>
-      <div class="node-card-title-block">
-  <span class="node-card-title">
-  {{ node.topic?.length > 30 ? node.topic.slice(0, 30) + '...' : node.topic }}
-</span>
-
-</div>
-
-<div
-  class="node-card-actions-row"
-  @click.stop
-  @mousedown.stop
+          <div
+  v-for="node in allNodes"
+  :key="node.id"
+  class="mm-node-group"
+  :style="nodeGroupStyle(node)"
+  @mouseenter="hoveredNodeId = node.id"
+  @mouseleave="hoveredNodeId = null"
 >
+  <!-- Collapse / expand toggle – shown only on hover -->
   <button
-    v-if="canCreateCard && !asTalent"
-    class="nact nact--add"
-    @click.stop="node.parent && createCardDirectly(node.parent, node)"
-    title="Add sibling card"
+    v-if="
+      (node.uniqueName === 'sheet' || node.uniqueName === 'List') &&
+      node.children &&
+      node.children.length > 0
+    "
+    class="collapse-toggle"
+    :class="[
+      { 'collapse-toggle--collapsed': isCollapsed(node.id) },
+      { 'collapse-toggle--visible': hoveredNodeId === node.id },
+    ]"
+    :style="collapseToggleLocalStyle(node)"
+    @click.stop="toggleCollapse(node.id)"
+    :title="isCollapsed(node.id) ? 'Expand' : 'Collapse'"
   >
-    <i class="fa-solid fa-plus"></i>
+    <i :class="isCollapsed(node.id) ? 'fa-solid fa-plus' : 'fa-solid fa-minus'"></i>
   </button>
 
-  <button
-    v-if="canAssignCard && canEditCard && !asTalent"
-    class="nact"
-    @click.stop="openFormatSidebar(node.id)"
-    title="Format"
+  <!-- The actual node card -->
+  <div
+    class="mm-node"
+    :class="[
+      `mm-node--${node.uniqueName}`,
+      { 'mm-node--selected': selectedNodeId === node.id },
+      { 'mm-node--multi-selected': selectedNodeIds.has(node.id) },
+    ]"
+    :style="nodeInlineStyle(node)"
+    @mousedown.stop="handleNodeMouseDown($event, node.id)"
+    @click.stop="handleNodeClick($event, node.id)"
+    @contextmenu.stop.prevent="handleNodeContextMenu($event, node)"
+    :draggable="node.uniqueName === 'card'"
+    @dragstart.stop="handleCardDragStart($event, node)"
+    @dragend.stop="handleCardDragEnd"
   >
-    <i class="fa-solid fa-palette"></i>
-  </button>
+    <!-- ROOT -->
+    <template v-if="node.uniqueName === 'root'">
+      <div class="node-root-inner">
+        <img :src="localWorkspace.logo ?? dp" class="w-10 h-10 rounded-full" alt="logo" />
+        <span class="node-root-title">{{ node.topic }}</span>
+      </div>
+    </template>
 
-  <button
-    class="nact nact--open"
-    @click.stop="handleOpenNode(node)"
-    title="Open card"
-  >
-    <i class="fa-solid fa-arrow-up-right-from-square"></i>
-  </button>
-
-  <button
-    v-if="canDeleteCard"
-    class="nact nact--danger"
-    @click.stop="openDeleteModal(node)"
-    title="Delete"
-  >
-    <i class="fa-solid fa-trash-can"></i>
-  </button>
-</div>
-    </div>
-  </div>
-
-  
-</template>
+    <!-- SHEET -->
+    <template v-else-if="node.uniqueName === 'sheet'">
+      <div class="node-sheet-inner">
+        <div class="node-sheet-header">
+          <i class="fa-solid fa-table-columns node-sheet-icon"></i>
+          <span class="node-sheet-title">{{ node.topic }}</span>
         </div>
+        <div class="node-sheet-meta" v-if="node.children && !isCollapsed(node.id)">
+          <span class="meta-pill">
+            <i class="fa-solid fa-list me-1"></i>{{ node.children.length }} lists
+          </span>
+        </div>
+        <div v-if="isCollapsed(node.id) && node.children?.length" class="node-collapsed-badge">
+          <i class="fa-solid fa-layer-group me-1"></i>{{ node.children.length }} hidden
+        </div>
+        <a v-if="node.hyperLink" :href="node.hyperLink" target="_blank" class="node-link" @click.stop>
+          <i class="fa-solid fa-link"></i>
+        </a>
+      </div>
+    </template>
 
-        <!-- ✦ External collapse toggle buttons (outside node cards) -->
-        <template v-for="node in allNodes" :key="`collapse-${node.id}`">
-          <button
-            v-if="(node.uniqueName === 'sheet' || node.uniqueName === 'List') && node.children && node.children.length > 0"
-            class="collapse-toggle me-5 border-2 border-accent text-accent-hover me-4 rounded-full flex justify-around items-center absolute w-5 h-5 text-[10px]"
-            :class="{ 'collapse-toggle--collapsed': isCollapsed(node.id) }"
-            :style="collapseToggleStyle(node)"
-            @click.stop="toggleCollapse(node.id)"
-            :title="isCollapsed(node.id) ? 'Expand' : 'Collapse'"
-          >
-            <i :class="isCollapsed(node.id) ? 'fa-solid fa-plus' : 'fa-solid fa-minus'"></i>
-          </button>
-        </template>
+    <!-- LIST -->
+    <template v-else-if="node.uniqueName === 'List'">
+      <div
+          class="node-list-inner"
+          :class="{ 'node-list--drag-over': dragOverListId === node.id }"
+          @dragover.prevent="handleListDragOver($event, node)"
+          @dragleave="handleListDragLeave(node)"
+          @drop.prevent="handleCardDrop($event, node)"
+        >
+        <div class="node-list-header">
+          <div class="node-list-dot"></div>
+          <span class="node-list-title">{{ node.topic }}</span>
+        </div>
+        <div class="node-list-count" v-if="node.children && !isCollapsed(node.id)">
+          {{ node.children.length }} card{{ node.children.length !== 1 ? "s" : "" }}
+        </div>
+        <div v-if="isCollapsed(node.id) && node.children?.length" class="node-collapsed-badge">
+          <i class="fa-solid fa-layer-group me-1"></i>{{ node.children.length }} hidden
+        </div>
+        <div v-if="creatingCardForListId === node.id" class="inline-create-card" @click.stop @mousedown.stop>
+          <input
+            v-model="newCardTitle"
+            class="inline-card-input"
+            placeholder="Card title…"
+            @keydown.enter.prevent="submitInlineCard"
+            @keydown.escape.prevent="cancelInlineCreation"
+            @blur="() => { if (!newCardTitle.trim()) cancelInlineCreation(); }"
+            autofocus
+          />
+          <div class="inline-card-actions">
+            <button class="inline-btn inline-btn--confirm" :disabled="!newCardTitle.trim() || isCreatingCard" @click.stop="submitInlineCard(node?.topic)">
+              <i v-if="isCreatingCard" class="fa-solid fa-spinner fa-spin"></i>
+              <i v-else class="fa-solid fa-check"></i>
+            </button>
+            <button class="inline-btn inline-btn--cancel" @click.stop="cancelInlineCreation">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+        </div>
+        <button
+          v-if="canCreateCard && !asTalent && creatingCardForListId !== node.id"
+          class="list-add-card-btn"
+          @click.stop="startInlineCardCreation(node)"
+          title="Add card (Enter)"
+        >
+          <i class="fa-solid fa-plus"></i> Add card
+        </button>
+      </div>
+    </template>
+
+    <!-- CARD -->
+    <template v-else-if="node.uniqueName === 'card'">
+      <div class="node-card-wrapper">
+        <div
+          class="node-card-stripe"
+          :style="{
+            background:
+              node.variables?.lane?.variables?.['lane-color'] ||
+              node.style?.borderColor ||
+              node.style?.color ||
+              'var(--primary-color)',
+          }"
+        ></div>
+        <div class="node-card-body">
+          <div class="node-card-badges">
+            <span v-if="node.variables?.['card-type']" class="card-badge card-badge--type">
+              {{ node.variables["card-type"] || "General" }}
+            </span>
+            <span v-if="node.variables?.['card-status']" class="card-badge card-badge--status">
+              {{ node.variables["card-status"] }}
+            </span>
+            <span v-if="node.variables?.priority" class="card-badge" :class="`card-badge--${node.variables.priority}`">
+              <i class="fa-solid fa-flag" style="font-size: 8px"></i>
+              {{ node.variables.priority }}
+            </span>
+          </div>
+          <div class="node-card-title-block">
+            <span class="node-card-title">
+              {{ node.topic?.length > 30 ? node.topic.slice(0, 30) + '...' : node.topic }}
+            </span>
+          </div>
+          <div class="node-card-actions-row" @click.stop @mousedown.stop>
+            <button v-if="canCreateCard && !asTalent" class="nact nact--add" @click.stop="node.parent && createCardDirectly(node.parent, node)" title="Add sibling card">
+              <i class="fa-solid fa-plus"></i>
+            </button>
+            <button v-if="canAssignCard && canEditCard && !asTalent" class="nact" @click.stop="openFormatSidebar(node.id)" title="Format">
+              <i class="fa-solid fa-palette"></i>
+            </button>
+            <button class="nact nact--open" @click.stop="handleOpenNode(node)" title="Open card">
+              <i class="fa-solid fa-arrow-up-right-from-square"></i>
+            </button>
+            <button v-if="canDeleteCard" class="nact nact--danger" @click.stop="openDeleteModal(node)" title="Delete">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </template>
+  </div><!-- end .mm-node -->
+</div><!-- end .mm-node-group loop -->
+        
       </div>
 
       <!-- ✦ controls panel -->
@@ -335,6 +280,16 @@
         >
           <i class="fa-solid fa-sliders"></i>
         </button>
+        <button
+          v-if="selectedNodeIds.size > 1"
+          class="ctrl-btn ctrl-btn--multi"
+          @click="showMultiFormatPanel = !showMultiFormatPanel"
+          :title="`Format ${selectedNodeIds.size} selected cards`"
+        >
+          <i class="fa-solid fa-object-group"></i>
+          <span class="multi-count">{{ selectedNodeIds.size }}</span>
+        </button>
+        
       </div>
 
       <div class="canvas-stats">
@@ -940,7 +895,101 @@
         </div>
       </div>
     </transition>
-
+    <!-- ✦ Multi-select format panel -->
+    <transition name="slide-sidebar">
+      <div v-if="showMultiFormatPanel && selectedNodeIds.size > 1" class="multi-format-panel">
+        <div class="fs-header">
+          <div class="fs-header-left">
+            <i class="fa-solid fa-object-group" style="color: var(--primary-color)"></i>
+            <span>{{ selectedNodeIds.size }} Cards Selected</span>
+          </div>
+          <button class="fs-close" @click="showMultiFormatPanel = false; clearMultiSelect()">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <div class="fs-body">
+          <div class="fs-section">
+            <div class="fs-section-label">Quick Presets</div>
+            <div class="fs-presets">
+              <button
+                v-for="p in colorPresets"
+                :key="p.bg"
+                class="preset-swatch"
+                :style="{ background: p.bg, borderColor: p.border }"
+                :title="p.name"
+                @click="applyMultiPreset(p)"
+              ></button>
+            </div>
+          </div>
+          <div class="fs-section space-y-2">
+            <div class="fs-section-label">Colors</div>
+            <div class="fs-field mt-1">
+              <label>Background</label>
+              <div class="color-row">
+                <div class="color-swatch" :style="{ background: multiStyle.background || '#fff' }">
+                  <input type="color" :value="multiStyle.background || '#ffffff'" @input="onMultiStyleChange('bg_color', $event)" />
+                </div>
+                <input class="color-hex" :value="multiStyle.background || ''" placeholder="#ffffff" readonly />
+              </div>
+            </div>
+            <div class="fs-field mt-1">
+              <label>Border Color</label>
+              <div class="color-row">
+                <div class="color-swatch" :style="{ background: multiStyle.borderColor || '#d9d9d9' }">
+                  <input type="color" :value="multiStyle.borderColor || '#d9d9d9'" @input="onMultiStyleChange('border_color', $event)" />
+                </div>
+                <input class="color-hex" :value="multiStyle.borderColor || ''" placeholder="#d9d9d9" readonly />
+              </div>
+            </div>
+          </div>
+          <div class="fs-section space-y-2">
+            <div class="fs-section-label">Typography</div>
+            <div class="fs-row">
+              <div class="fs-field">
+                <label>Font Size</label>
+                <div class="input-with-unit">
+                  <input type="number" min="8" max="32" step="1" :value="parsePx(multiStyle.fontSize) || 13" @input="onMultiStyleChange('font_size', $event)" class="fs-input" />
+                  <span class="unit">px</span>
+                </div>
+              </div>
+              <div class="fs-field">
+                <label>Weight</label>
+                <select class="fs-select" :value="multiStyle.fontWeight || 'normal'" @change="onMultiStyleChange('font_weight', $event)">
+                  <option value="300">Light</option>
+                  <option value="normal">Normal</option>
+                  <option value="500">Medium</option>
+                  <option value="600">Semibold</option>
+                  <option value="bold">Bold</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="fs-section">
+            <div class="fs-section-label">Shadow</div>
+            <div class="shadow-presets">
+              <button v-for="s in shadowPresets" :key="s.label" class="shadow-btn"
+                :class="{ 'shadow-btn--active': (multiStyle as any).boxShadow === s.value }"
+                :style="{ boxShadow: s.value || 'none' }"
+                @click="onMultiStyleChangeDirect('box_shadow', s.value)">
+                {{ s.label }}
+              </button>
+            </div>
+          </div>
+          <div class="fs-section" style="border:none;padding-bottom:0">
+            <button class="fs-reset-btn" @click="resetMultiStyle">
+              <i class="fa-solid fa-rotate me-1"></i> Reset all to default
+            </button>
+          </div>
+        </div>
+        <div class="fs-footer">
+          <button class="fs-save-btn" :disabled="isSavingNodeStyle" @click="saveMultiStyle">
+            <span v-if="isSavingNodeStyle" class="spinner"></span>
+            <i v-else class="fa-solid fa-floppy-disk me-1"></i>
+            {{ isSavingNodeStyle ? "Saving..." : `Save ${selectedNodeIds.size} Cards` }}
+          </button>
+        </div>
+      </div>
+    </transition>
     <Teleport to="body">
       <transition name="fade">
         <div
@@ -1145,6 +1194,7 @@ import ConfirmDeleteModal from "../../views/Product/modals/ConfirmDeleteModal.vu
 import { useWorkspaceStore } from "../../stores/workspace";
 import dp from "../../assets/global/dummy.jpeg";
 import { useThemeStore } from "../../stores/theme";
+import { ReOrderCard} from "../../queries/useSheets.ts"
 const props = defineProps<{
   listsData: any[];
   style?: object;
@@ -1238,13 +1288,13 @@ interface Edge {
   color: string;
   dashed: boolean;
 }
-
+const reOrderCard = ReOrderCard();
 const nodeStore = reactive<Record<string, MindNode>>({});
 const rootNodeId = ref<string>("");
 // ✦ FIX: Separate collapse tracking from layout trigger
 // collapseVersion only updates allNodes/visibleEdges (not watchEffect layout)
 const collapseVersion = ref(0);
-// layoutTrigger is what watchEffect watches - we do NOT increment it on collapse
+const hoveredNodeId = ref<string | null>(null);
 const layoutTrigger = ref(0);
 const collapsedIds = ref<string[]>([]);
 const showTicketDelete = ref(false);
@@ -1260,7 +1310,20 @@ const shortcutHintTimer = ref<ReturnType<typeof setTimeout> | null>(null);
 const lastShortcutLabel = ref("");
 const activeFormatTab = ref<"theme" | "layout">("theme");
 const isTreeMap = computed(() => layoutDirection.value === "tree-map");
+const isCollapseLayout = ref(false)
+// ── Multi-select ──────────────────────────────────────────────────────
+const selectedNodeIds = ref<Set<string>>(new Set())
+const showMultiFormatPanel = ref(false)
+const multiStyle = ref<NodeStyle>({})
 
+// ── Drag & Drop ───────────────────────────────────────────────────────
+const draggingCard = ref<MindNode | null>(null)
+const dragOverListId = ref<string | null>(null)
+const dragGhostStyle = ref<Record<string, string> | null>(null)
+
+// ── Right-click pan ───────────────────────────────────────────────────
+const isRightPanning = ref(false)
+const rightPanStart = ref({ x: 0, y: 0 })
 interface MapTheme {
   id: string;
   name: string;
@@ -1835,7 +1898,7 @@ const zoomStep = 0.1;
 const panX = ref(0);
 const panY = ref(0);
 const isPanning = ref(false);
-const panStart = ref({ x: 0, y: 0 });
+// const panStart = ref({ x: 0, y: 0 });
 const svgW = ref(8000);
 const svgH = ref(8000);
 
@@ -3146,44 +3209,90 @@ const allNodes = computed<MindNode[]>(() => {
     return true;
   });
 });
-
-// ✦ Compute positions for external collapse toggle buttons
-function collapseToggleStyle(node: MindNode): Record<string, string> {
+function collapseButtonSide(node: MindNode): 'left' | 'right' | 'top' | 'bottom' {
   const dir = layoutDirection.value;
-  const btnSize = 16;
-  let left: number;
-  let top: number;
-
+  if (dir === 'top' || dir === 'org-chart') return 'bottom';
+  if (dir === 'bottom') return 'top';
   const side = nodeSides.get(node.id) ?? 'right';
+  return side === 'left' ? 'left' : 'right';
+}
 
-  if (dir === 'top' || dir === 'org-chart') {
-    // Place toggle at bottom-center of node
-    left = node.x + node.width / 2 - btnSize / 2;
-    top = node.y + node.height;
-  } else if (dir === 'bottom') {
-    // Place toggle at top-center of node
-    left = node.x + node.width / 2 - btnSize / 2;
-    top = node.y - btnSize;
-  } else if (dir === 'left' || side === 'left') {
-    // Place toggle at left edge of node
-    left = node.x - btnSize;
-    top = node.y + node.height / 2 - btnSize / 2;
-  } else {
-    // Default: right edge of node
-    left = node.x + node.width;
-    top = node.y + node.height / 2 - btnSize / 2;
+// The group is positioned at node coords; node inside is at (0,0) relative to group
+function nodeGroupStyle(node: MindNode): Record<string, string> {
+  const BTN = 20; // button size
+  const PAD = 6;  // space between node edge and button center
+  // const dir = layoutDirection.value;
+  const side = collapseButtonSide(node);
+  const hasToggle =
+    (node.uniqueName === 'sheet' || node.uniqueName === 'List') &&
+    node.children &&
+    node.children.length > 0;
+
+  // Extra space so the button doesn't overflow the group bounding box
+  const extra = hasToggle ? BTN / 2 + PAD : 0;
+
+  let left = node.x;
+  let top = node.y;
+  let width = node.width;
+  let height = node.height;
+
+  if (hasToggle) {
+    if (side === 'right') { width += extra; }
+    else if (side === 'left') { left -= extra; width += extra; }
+    else if (side === 'bottom') { height += extra; }
+    else if (side === 'top') { top -= extra; height += extra; }
   }
 
   return {
     position: 'absolute',
     left: `${left}px`,
     top: `${top}px`,
-    width: `${btnSize}px`,
-    height: `${btnSize}px`,
-    zIndex: '10',
+    width: `${width}px`,
+    height: `${height}px`,
+    zIndex: '2',
+    pointerEvents: 'auto',
   };
 }
 
+// Position of button *relative to the mm-node-group div*
+function collapseToggleLocalStyle(node: MindNode): Record<string, string> {
+  const BTN = 20;
+  const side = collapseButtonSide(node);
+  const hasToggle =
+    (node.uniqueName === 'sheet' || node.uniqueName === 'List') &&
+    node.children &&
+    node.children.length > 0;
+  if (!hasToggle) return { display: 'none' };
+
+  // const PAD = 6;
+  // const extra = BTN / 2 + PAD;
+
+  let btnLeft = 0;
+  let btnTop = 0;
+
+  if (side === 'right') {
+    btnLeft = node.width - BTN / 2;
+    btnTop = node.height / 2 - BTN / 2;
+  } else if (side === 'left') {
+    btnLeft = 0;
+    btnTop = node.height / 2 - BTN / 2;
+  } else if (side === 'bottom') {
+    btnLeft = node.width / 2 - BTN / 2;
+    btnTop = node.height - BTN / 2;
+  } else {
+    btnLeft = node.width / 2 - BTN / 2;
+    btnTop = 0;
+  }
+
+  return {
+    position: 'absolute',
+    left: `${btnLeft}px`,
+    top: `${btnTop}px`,
+    width: `${BTN}px`,
+    height: `${BTN}px`,
+    zIndex: '20',
+  };
+}
 function nodeLevel(node: MindNode): number {
   let l = 0,
     cur: MindNode | undefined = node;
@@ -3320,13 +3429,15 @@ const visibleEdges = computed<Edge[]>(() => {
 
   return edges;
 });
-
-// ✦ FIX: watchEffect ONLY watches layoutTrigger (not collapseVersion)
-// This prevents collapse from resetting the map position
 watchEffect(() => {
-  void layoutTrigger.value; // only this triggers re-layout from watchEffect
+  void layoutTrigger.value;
   const root = nodeMap.get(rootNodeId.value);
   if (!root) return;
+
+  // ── If collapse triggered this re-run, skip — toggleCollapse already
+  //    called layoutTree directly and we must NOT move nodes again.
+  if (isCollapseLayout.value) return;
+
   const dir = layoutDirection.value;
   let startX = 60,
     startY = 60;
@@ -3355,9 +3466,7 @@ watchEffect(() => {
     startX = 400;
     startY = 400;
   } else if (
-    ["radial", "zigzag", "staggered", "split-horizontal", "ladder"].includes(
-      dir,
-    )
+    ["radial", "zigzag", "staggered", "split-horizontal", "ladder"].includes(dir)
   ) {
     startX = 2500 - NODE_W.root / 2;
     startY = 1500;
@@ -3370,8 +3479,9 @@ function nodeInlineStyle(node: MindNode): Record<string, string> {
   const ext = s as any;
 
   const base: Record<string, string> = {
-    left: `${node.x}px`,
-    top: `${node.y}px`,
+    position: 'relative',
+    left: 'unset',
+    top: 'unset',
     width: `${node.width}px`,
     height: `${node.height}px`,
   };
@@ -3655,14 +3765,21 @@ function collapseAll() {
       n.collapsed = true;
     }
   }
-  collapseVersion.value++;
-  // ✦ FIX: Re-layout collapsed tree preserving current pan/zoom (no centerView)
+ collapseVersion.value++;
+  const _savedPX = panX.value;
+  const _savedPY = panY.value;
+  const _savedZ  = zoom.value;
+  isCollapseLayout.value = true;
   const root2 = nodeMap.get(rootNodeId.value);
   if (root2) {
-    const startX = _getLayoutStartX();
-    const startY = _getLayoutStartY();
-    layoutTree(root2, startX, startY, layoutDirection.value);
+    layoutTree(root2, root2.x, root2.y, layoutDirection.value);
   }
+  nextTick(() => {
+    panX.value = _savedPX;
+    panY.value = _savedPY;
+    zoom.value = _savedZ;
+    isCollapseLayout.value = false;
+  });
   showHint("All Collapsed");
 }
 
@@ -3676,14 +3793,21 @@ function expandAll() {
       n.collapsed = false;
     }
   }
-  collapseVersion.value++;
-  // ✦ FIX: Re-layout expanded tree preserving current pan/zoom (no centerView)
+ collapseVersion.value++;
+  const _savedPX = panX.value;
+  const _savedPY = panY.value;
+  const _savedZ  = zoom.value;
+  isCollapseLayout.value = true;
   const root2 = nodeMap.get(rootNodeId.value);
   if (root2) {
-    const startX = _getLayoutStartX();
-    const startY = _getLayoutStartY();
-    layoutTree(root2, startX, startY, layoutDirection.value);
+    layoutTree(root2, root2.x, root2.y, layoutDirection.value);
   }
+  nextTick(() => {
+    panX.value = _savedPX;
+    panY.value = _savedPY;
+    zoom.value = _savedZ;
+    isCollapseLayout.value = false;
+  });
   showHint("All Expanded");
 }
 
@@ -3767,64 +3891,336 @@ function zoomAt(cx: number, cy: number, delta: number) {
 }
 
 function handleViewportMouseDown(e: MouseEvent) {
-  if (e.target !== viewportEl.value && e.target !== canvasEl.value) return;
-  if (e.button !== 0) return;
-  isPanning.value = true;
-  panStart.value = { x: e.clientX - panX.value, y: e.clientY - panY.value };
-  e.preventDefault();
+  // Right-click (button 2) = pan
+  if (e.button === 2) {
+    isRightPanning.value = true
+    rightPanStart.value = { x: e.clientX - panX.value, y: e.clientY - panY.value }
+    e.preventDefault()
+    return
+  }
+  // Left-click on canvas background only (not on nodes) = deselect
+  if (e.button !== 0) return
+  if (e.target !== viewportEl.value && e.target !== canvasEl.value) return
+  // Left drag on canvas = rubber-band or just deselect; NOT pan anymore
+  isPanning.value = false
+}
+
+function handleViewportContextMenu(e: MouseEvent) {
+  // Prevent default context menu when right-clicking on blank canvas
+  if (e.target === viewportEl.value || e.target === canvasEl.value) {
+    e.preventDefault()
+  }
 }
 
 function handleGlobalMouseMove(e: MouseEvent) {
-  if (draggedNodeId.value) {
-    const x = (e.clientX - panX.value) / zoom.value - dragOffset.value.x;
-    const y = (e.clientY - panY.value) / zoom.value - dragOffset.value.y;
-    const n = nodeMap.get(draggedNodeId.value);
-    if (n) {
-      n.x = x;
-      n.y = y;
-    }
-    return;
+  // Right-click panning
+  if (isRightPanning.value) {
+    panX.value = e.clientX - rightPanStart.value.x
+    panY.value = e.clientY - rightPanStart.value.y
+    return
   }
-  if (!isPanning.value) return;
-  panX.value = e.clientX - panStart.value.x;
-  panY.value = e.clientY - panStart.value.y;
+  // Node dragging (left-click drag on a node)
+  if (draggedNodeId.value) {
+    const x = (e.clientX - panX.value) / zoom.value - dragOffset.value.x
+    const y = (e.clientY - panY.value) / zoom.value - dragOffset.value.y
+    const n = nodeMap.get(draggedNodeId.value)
+    if (n) { n.x = x; n.y = y }
+    return
+  }
 }
-
-function handleGlobalMouseUp() {
-  isPanning.value = false;
-  draggedNodeId.value = null;
+function handleGlobalMouseUp(e: MouseEvent) {
+  console.log(e);
+  
+  isPanning.value = false
+  isRightPanning.value = false
+  draggedNodeId.value = null
 }
 
 function handleNodeMouseDown(e: MouseEvent, nodeId: string) {
-  const n = nodeMap.get(nodeId);
-  if (!n) return;
-  draggedNodeId.value = nodeId;
-  const cx = (e.clientX - panX.value) / zoom.value;
-  const cy = (e.clientY - panY.value) / zoom.value;
-  dragOffset.value = { x: cx - n.x, y: cy - n.y };
-  e.preventDefault();
-  e.stopPropagation();
+  // Right click on node starts viewport panning (not node drag)
+  if (e.button === 2) {
+    isRightPanning.value = true
+    rightPanStart.value = { x: e.clientX - panX.value, y: e.clientY - panY.value }
+    e.preventDefault()
+    return
+  }
+  if (e.button !== 0) return
+  const n = nodeMap.get(nodeId)
+  if (!n) return
+  // Don't drag cards — they use HTML5 drag-and-drop
+  if (n.uniqueName === 'card') return
+  draggedNodeId.value = nodeId
+  const cx = (e.clientX - panX.value) / zoom.value
+  const cy = (e.clientY - panY.value) / zoom.value
+  dragOffset.value = { x: cx - n.x, y: cy - n.y }
+  e.preventDefault()
+  e.stopPropagation()
 }
 
-function handleNodeClick(nodeId: string) {
-  selectedNodeId.value = nodeId;
+function handleNodeClick(e: MouseEvent, nodeId: string) {
   const node = nodeMap.get(nodeId);
   if (!node) return;
-  hyperlinkInput.value = node.hyperLink || node.style?.hyperLink || "";
+
+  // Multi-select: Shift+Click adds to selection, Ctrl/Cmd+Click toggles
+  if ((e.shiftKey || e.ctrlKey || e.metaKey) && node.uniqueName === 'card') {
+    const newSet = new Set(selectedNodeIds.value)
+    if (newSet.has(nodeId)) {
+      newSet.delete(nodeId)
+    } else {
+      newSet.add(nodeId)
+    }
+    selectedNodeIds.value = newSet
+    // If 2+ selected, open multi-format panel
+    if (newSet.size > 1) {
+      showMultiFormatPanel.value = true
+      selectedNodeId.value = null
+    }
+    return
+  }
+
+  // Normal single click
+  clearMultiSelect()
+  selectedNodeId.value = nodeId
+  hyperlinkInput.value = node.hyperLink || node.style?.hyperLink || ''
+}
+
+function clearMultiSelect() {
+  selectedNodeIds.value = new Set()
+  showMultiFormatPanel.value = false
+  multiStyle.value = {}
 }
 
 function handleCanvasClick(e: MouseEvent) {
   if (ctxMenu.visible) {
-    const target = e.target as HTMLElement;
-    if (!target.closest(".card-ctx-menu")) closeCtxMenu();
-    return;
+    const target = e.target as HTMLElement
+    if (!target.closest(".card-ctx-menu")) closeCtxMenu()
+    return
   }
   if (e.target === viewportEl.value || e.target === canvasEl.value) {
-    selectedNodeId.value = null;
-    sheetSelector.visible = false;
+    selectedNodeId.value = null
+    sheetSelector.visible = false
+    clearMultiSelect()
+  }
+}
+// ── Drag & Drop card between lists ────────────────────────────────────
+function handleCardDragStart(e: DragEvent, node: MindNode) {
+  if (node.uniqueName !== 'card') return
+  draggingCard.value = node
+  if (e.dataTransfer) {
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/plain', node.id)
+    // Suppress default ghost image
+    const ghost = document.createElement('div')
+    ghost.style.cssText = 'position:absolute;top:-9999px;left:-9999px;width:1px;height:1px'
+    document.body.appendChild(ghost)
+    e.dataTransfer.setDragImage(ghost, 0, 0)
+    setTimeout(() => document.body.removeChild(ghost), 0)
   }
 }
 
+function handleCardDragEnd() {
+  draggingCard.value = null
+  dragOverListId.value = null
+  dragGhostStyle.value = null
+}
+
+function handleListDragOver(e: DragEvent, listNode: MindNode) {
+  if (!draggingCard.value) return
+  if (draggingCard.value.parent?.id === listNode.id) {
+    dragOverListId.value = null
+    return
+  }
+  e.preventDefault()
+  dragOverListId.value = listNode.id
+  // Update ghost position in canvas coords
+  const vp = viewportEl.value
+  if (vp) {
+    const rect = vp.getBoundingClientRect()
+    const x = (e.clientX - rect.left - panX.value) / zoom.value
+    const y = (e.clientY - rect.top  - panY.value) / zoom.value
+    dragGhostStyle.value = {
+      left: `${x + 8}px`,
+      top:  `${y + 8}px`,
+    }
+  }
+}
+
+function handleListDragLeave(listNode: MindNode) {
+  if (dragOverListId.value === listNode.id) {
+    dragOverListId.value = null
+  }
+}
+
+async function handleCardDrop(e: DragEvent, targetListNode: MindNode) {
+  e.preventDefault();
+  const card = draggingCard.value;
+  if (!card) return;
+  const sourceList = card.parent;
+  if (!sourceList || sourceList.id === targetListNode.id) {
+    dragOverListId.value = null;
+    draggingCard.value = null;
+    return;
+  }
+
+  // Remove card from source list
+  sourceList.children = sourceList.children.filter((c) => c.id !== card.id);
+
+  // Add to target list
+  card.parent = targetListNode;
+  card.variables = { ...card.variables, "card-status": targetListNode.topic };
+  targetListNode.children.push(card);
+  nodeMap.set(card.id, card);
+
+  // Build new_index as position in target list
+  const newIndex = targetListNode.children.length - 1;
+try {
+  await reOrderCard.mutateAsync({
+    payload: {
+      workspace_id: props.workspaceId,
+      card_id: card.real_id || card.id,
+      group_value: targetListNode.topic,
+      group_variable_id: props.selectedViewBy,
+      new_index: newIndex,
+      sheet_id:
+        props.selectedSheetId === "all"
+          ? props.sheetId
+          : props.selectedSheetId,
+    },
+  });
+} catch (err) {
+  console.error("Failed to reorder card:", err);
+  toast.error("Failed to move card");
+
+  // Rollback: move card back to source list
+  targetListNode.children = targetListNode.children.filter(
+    (c) => c.id !== card.id
+  );
+  card.parent = sourceList;
+  card.variables = { ...card.variables, "card-status": sourceList.topic };
+  sourceList.children.push(card);
+  nodeMap.set(card.id, card);
+}
+
+  // Also emit for parent component awareness (optional, non-blocking)
+  emit("reorder:card", {
+    card_id: card.real_id || card.id,
+    from_list: sourceList.topic,
+    to_list: targetListNode.topic,
+    sheet_id: targetListNode.sheet_id || card.sheet_id,
+    workspace_id: props.workspaceId,
+    variables: card.variables,
+  });
+
+  // Re-layout preserving pan/zoom
+  const savedPX = panX.value;
+  const savedPY = panY.value;
+  const savedZ = zoom.value;
+  isCollapseLayout.value = true;
+  const root = nodeMap.get(rootNodeId.value);
+  if (root) {
+    layoutTree(root, root.x, root.y, layoutDirection.value);
+    let mx = 0,
+      my = 0;
+    for (const n of flattenTree(root)) {
+      mx = Math.max(mx, n.x + n.width);
+      my = Math.max(my, n.y + n.height);
+    }
+    svgW.value = Math.max(mx + 300, 3000);
+    svgH.value = Math.max(my + 300, 3000);
+  }
+  nextTick(() => {
+    panX.value = savedPX;
+    panY.value = savedPY;
+    zoom.value = savedZ;
+    isCollapseLayout.value = false;
+  });
+
+  dragOverListId.value = null;
+  draggingCard.value = null;
+  dragGhostStyle.value = null;
+}
+
+// ── Multi-select style ────────────────────────────────────────────────
+function applyMultiPreset(p: { bg: string; border: string; color: string }) {
+  for (const id of selectedNodeIds.value) {
+    const node = nodeMap.get(id)
+    if (!node) continue
+    node.style.background  = p.bg
+    node.style.borderColor = p.border
+    node.style.color       = p.color
+  }
+  multiStyle.value = { background: p.bg, borderColor: p.border, color: p.color }
+}
+
+function onMultiStyleChange(prop: string, event: Event) {
+  const t = event.target as HTMLInputElement
+  const value = t.type === 'number' ? Number(t.value) : t.value
+  for (const id of selectedNodeIds.value) {
+    const node = nodeMap.get(id)
+    if (!node) continue
+    if (!node.style) node.style = {}
+    applyStyleProp(node.style, prop, value)
+  }
+  // Mirror into multiStyle for the panel UI
+  applyStyleProp(multiStyle.value as any, prop, value)
+}
+
+function onMultiStyleChangeDirect(prop: string, value: string) {
+  for (const id of selectedNodeIds.value) {
+    const node = nodeMap.get(id)
+    if (!node) continue
+    if (!node.style) node.style = {}
+    applyStyleProp(node.style, prop, value)
+  }
+  applyStyleProp(multiStyle.value as any, prop, value)
+}
+
+function resetMultiStyle() {
+  for (const id of selectedNodeIds.value) {
+    const node = nodeMap.get(id)
+    if (!node) continue
+    node.style = mapBackendStyle(DEFAULT_BACKEND_STYLE)
+  }
+  multiStyle.value = {}
+}
+
+async function saveMultiStyle() {
+  if (isSavingNodeStyle.value) return
+  isSavingNodeStyle.value = true
+  try {
+    for (const id of selectedNodeIds.value) {
+      const node = nodeMap.get(id)
+      if (!node || node.uniqueName !== 'card') continue
+      const plain = toRaw(node)
+      const s    = plain.style || {}
+      const orig = plain._originalStyle || {}
+      const p = {
+        bg_color:      resolveStyle(s.background,  orig.bg_color,     DEFAULT_BACKEND_STYLE.bg_color),
+        color:         resolveStyle(s.color,        orig.color,        DEFAULT_BACKEND_STYLE.color),
+        font_size:     resolveStyle(s.fontSize ? parseInt(s.fontSize) : undefined, orig.font_size, DEFAULT_BACKEND_STYLE.font_size),
+        font_weight:   resolveStyle(s.fontWeight,   orig.font_weight,  DEFAULT_BACKEND_STYLE.font_weight),
+        font_style:    resolveStyle(s.fontStyle,    orig.font_style,   DEFAULT_BACKEND_STYLE.font_style),
+        font_family:   resolveStyle(s.fontFamily,   orig.font_family,  DEFAULT_BACKEND_STYLE.font_family),
+        text_align:    resolveStyle((s as any).textAlign, orig.text_align, DEFAULT_BACKEND_STYLE.text_align),
+        border_color:  resolveStyle(s.borderColor,  orig.border_color, DEFAULT_BACKEND_STYLE.border_color),
+        border_width:  resolveStyle(s.borderWidth ? parseInt(s.borderWidth) : undefined, orig.border_width, DEFAULT_BACKEND_STYLE.border_width),
+        border_radius: resolveStyle(s.borderRadius ? parseInt(s.borderRadius) : undefined, orig.border_radius, DEFAULT_BACKEND_STYLE.border_radius),
+        border_style:  resolveStyle((s as any).borderStyle, orig.border_style, DEFAULT_BACKEND_STYLE.border_style),
+        padding:       resolveStyle(s.padding ? parseInt(s.padding) : undefined, orig.padding, DEFAULT_BACKEND_STYLE.padding),
+        opacity:       resolveStyle((s as any).opacity, orig.opacity, DEFAULT_BACKEND_STYLE.opacity),
+        box_shadow:    resolveStyle((s as any).boxShadow, orig.box_shadow, DEFAULT_BACKEND_STYLE.box_shadow),
+      }
+      plain._originalStyle = { ...p }
+      emit('update:card', { card_id: plain.real_id || plain.id, seat_id: plain.seat_id, style: p })
+    }
+    toast.success(`Saved ${selectedNodeIds.value.size} cards`)
+  } catch (err) {
+    console.error(err)
+    toast.error('Failed to save styles')
+  } finally {
+    isSavingNodeStyle.value = false
+  }
+}
 function handleOpenNode(node: MindNode) {
   emit("select:ticket", { ...node, _id: node.real_id || node.id });
 }
@@ -3832,11 +4228,18 @@ function handleDeleteNode(nodeId: string) {
   const node = nodeMap.get(nodeId);
   emit("delete:ticket", node?.real_id || nodeId);
 }
-
-// ✦ FIX: toggleCollapse now does layout in-place WITHOUT resetting pan/zoom
 function toggleCollapse(nodeId: string) {
   const n = nodeMap.get(nodeId);
   if (!n) return;
+
+  // ── Snapshot current pan/zoom BEFORE any reactive mutations ──────────
+  const savedPanX = panX.value;
+  const savedPanY = panY.value;
+  const savedZoom = zoom.value;
+
+  // ── Signal watchEffect to skip its own layout call this cycle ────────
+  isCollapseLayout.value = true;
+
   if (isCollapsed(nodeId)) {
     expandNode(nodeId);
     n.collapsed = false;
@@ -3844,17 +4247,18 @@ function toggleCollapse(nodeId: string) {
     collapseNode(nodeId);
     n.collapsed = true;
   }
-  // Increment collapseVersion to update allNodes/visibleEdges computed
+
   collapseVersion.value++;
-  
-  // Re-layout from the root but do NOT call centerView - preserve current pan/zoom
+
+  // ── Re-layout in place using current root positions (not origin) ──────
   const root = nodeMap.get(rootNodeId.value);
   if (root) {
-    const startX = _getLayoutStartX();
-    const startY = _getLayoutStartY();
+    // Use the root node's CURRENT x/y so everything stays where it is
+    const startX = root.x;
+    const startY = root.y;
     layoutTree(root, startX, startY, layoutDirection.value);
-    
-    // Update SVG bounds to accommodate expanded/collapsed tree
+
+    // Update SVG canvas bounds
     let mx = 0, my = 0;
     for (const node of flattenTree(root)) {
       mx = Math.max(mx, node.x + node.width);
@@ -3863,8 +4267,16 @@ function toggleCollapse(nodeId: string) {
     svgW.value = Math.max(mx + 300, 3000);
     svgH.value = Math.max(my + 300, 3000);
   }
-}
 
+  // ── Restore pan/zoom so viewport doesn't shift at all ────────────────
+  nextTick(() => {
+    panX.value = savedPanX;
+    panY.value = savedPanY;
+    zoom.value = savedZoom;
+    // Allow watchEffect to run normally again on the next change
+    isCollapseLayout.value = false;
+  });
+}
 function openFormatSidebar(nodeId: string) {
   selectedNodeId.value = nodeId;
   showFormatSidebar.value = true;
@@ -4369,27 +4781,25 @@ function handleKeyDown(e: KeyboardEvent) {
   const inInput =
     t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable;
 
+  // ── Escape: close multi-select or inline creation ──────────────────
   if (e.key === "Escape") {
+    if (selectedNodeIds.value.size > 0) {
+      clearMultiSelect();
+      return;
+    }
     if (creatingCardForListId.value) {
       cancelInlineCreation();
       return;
     }
-    if (ctxMenu.visible) {
-      closeCtxMenu();
-      return;
-    }
-    if (document.fullscreenElement) {
-      document.exitFullscreen();
-      return;
-    }
-    selectedNodeId.value = null;
-    sheetSelector.visible = false;
-    return;
+    return; // ← properly closes the Escape block
   }
 
+  // ── Ignore all other shortcuts when typing in an input ────────────
   if (inInput) return;
 
   const sel = selectedNodeId.value ? nodeMap.get(selectedNodeId.value) : null;
+
+  // ... (rest of the key handlers unchanged)
 
   if (e.key === "ArrowRight") {
     e.preventDefault();
@@ -4534,8 +4944,17 @@ function handleKeyDown(e: KeyboardEvent) {
   }
 
   if (e.ctrlKey && e.key === "a") {
-    e.preventDefault();
-    selectFirstNode();
+    e.preventDefault()
+    // Select ALL visible card nodes
+    const cards = allNodes.value.filter(n => n.uniqueName === 'card')
+    if (cards.length > 0) {
+      selectedNodeIds.value = new Set(cards.map(c => c.id))
+      showMultiFormatPanel.value = true
+      selectedNodeId.value = null
+      showHint(`${cards.length} cards selected`)
+    } else {
+      selectFirstNode()
+    }
     return;
   }
 }
@@ -6585,5 +7004,135 @@ onBeforeUnmount(() => {
 }
 .mm-node--card:not([style*="background"]) .node-card-body {
   background: var(--mm-node-card-bg, var(--bg-card)) !important;
+}
+/* ── Node group wrapper ─────────────────────────────────────────────── */
+.mm-node-group {
+  position: absolute;
+  pointer-events: none; /* group itself doesn't capture - children do */
+}
+.mm-node-group > .mm-node {
+  position: relative !important;
+  left: unset !important;
+  top: unset !important;
+  pointer-events: auto;
+  display: inline-block;
+}
+
+/* ── Collapse toggle (inside group, on node edge) ───────────────────── */
+.collapse-toggle {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--primary-color);
+  background: var(--bg-card, #fff);
+  color: var(--primary-color);
+  font-size: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 20;
+  pointer-events: auto;
+  /* Hidden by default, shown on group hover */
+  opacity: 0;
+  transform: scale(0.7);
+  transition: opacity 0.18s ease, transform 0.18s ease, background 0.15s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+}
+.collapse-toggle--visible {
+  opacity: 1;
+  transform: scale(1);
+}
+.collapse-toggle:hover {
+  background: var(--primary-color);
+  color: #fff;
+}
+.mindmap-root[data-dark="true"] .collapse-toggle {
+  background: var(--bg-card, #2b2c30);
+}
+/* ── Multi-select ────────────────────────────────────────────────────── */
+.mm-node--multi-selected {
+  border-color: var(--primary-color) !important;
+  outline: 2px dashed var(--primary-color);
+  outline-offset: 2px;
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--primary-color), transparent 70%),
+    0 4px 16px rgba(0, 0, 0, 0.12) !important;
+}
+
+.ctrl-btn--multi {
+  position: relative;
+  background: var(--primary-color) !important;
+  color: #fff !important;
+  border-color: var(--primary-color) !important;
+}
+.multi-count {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 8px;
+  font-weight: 700;
+  border-radius: 10px;
+  padding: 1px 4px;
+  min-width: 14px;
+  text-align: center;
+  line-height: 1.4;
+}
+
+/* ── Multi-format panel ──────────────────────────────────────────────── */
+.multi-format-panel {
+  width: 260px;
+  min-width: 260px;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--border, #d9d9d9);
+  background: var(--bg-card, #fff);
+  overflow: hidden;
+  font-size: 13px !important;
+  font-family: "Lato", sans-serif !important;
+  color: var(--text-primary, #2b2c30) !important;
+}
+
+/* ── Drag & Drop ─────────────────────────────────────────────────────── */
+.node-list--drag-over {
+  background: color-mix(in srgb, var(--primary-color), transparent 85%) !important;
+  border-color: var(--primary-color) !important;
+  border-style: dashed !important;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.drag-ghost {
+  position: absolute;
+  background: var(--primary-color);
+  color: #fff;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  pointer-events: none;
+  z-index: 9999;
+  white-space: nowrap;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  opacity: 0.92;
+}
+
+/* Card dragging cursor */
+.mm-node--card[draggable="true"] {
+  cursor: grab;
+}
+.mm-node--card[draggable="true"]:active {
+  cursor: grabbing;
+  opacity: 0.7;
+}
+
+/* Right-click pan cursor hint on viewport */
+.viewport {
+  cursor: default;
 }
 </style>
