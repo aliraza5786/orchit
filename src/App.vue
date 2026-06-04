@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, computed, watch } from 'vue'
+import { onMounted, computed, watch, ref } from 'vue'
 import { Toaster } from 'vue-sonner'
 import 'vue-sonner/style.css'
 import { useTheme } from './composables/useTheme'
@@ -7,9 +7,9 @@ import { useAuthStore } from './stores/auth'
 import { useDeletionGuard } from './composables/useDeletionGuard'
 import { useQuery } from '@tanstack/vue-query'
 import { getProfile } from './services/user'
-import { toast } from 'vue-sonner'
 const { isDark } = useTheme()
 const authStore = useAuthStore()
+const showSuspendedModal = ref(false)
 const { data: profile } = useQuery({
   queryKey: ['profile'],
   queryFn: getProfile,
@@ -23,14 +23,18 @@ onMounted(async () => {
 useDeletionGuard(profileData)
 watch(
   profileData,
-  async (user) => { 
+  (user) => {
     if (user?.is_suspended) {
-      await authStore.logout()
-      toast.error('Your account has been suspended. Please contact support for more information.')
+      showSuspendedModal.value = true
     }
   },
   { immediate: true }
 )
+
+async function handleSuspendedConfirm() {
+  showSuspendedModal.value = false
+  await authStore.logout()
+}
 </script>
 
 <template>
@@ -38,6 +42,56 @@ watch(
     <router-view />
   </div>
   <Toaster position="bottom-right" :theme="isDark ? 'dark' : 'light'" closeButton />
+  <!-- ══ SUSPENDED MODAL ══ -->
+<Teleport to="body">
+  <Transition
+    enter-active-class="transition duration-200 ease-out"
+    enter-from-class="opacity-0"
+    enter-to-class="opacity-100"
+    leave-active-class="transition duration-150 ease-in"
+    leave-from-class="opacity-100"
+    leave-to-class="opacity-0"
+  >
+    <div
+      v-if="showSuspendedModal"
+      class="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+    >
+      <Transition
+        enter-active-class="transition duration-200 ease-out"
+        enter-from-class="opacity-0 scale-95 translate-y-2"
+        enter-to-class="opacity-100 scale-100 translate-y-0"
+        appear
+      >
+        <div class="w-full max-w-sm bg-bg-body rounded-2xl border border-border shadow-2xl overflow-hidden">
+
+          <!-- Top section -->
+          <div class="px-6 pt-6 pb-5 bg-gradient-to-br from-red-500/8 to-bg-body">
+            <div class="w-14 h-14 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mb-4">
+              <i class="fa-solid fa-ban text-red-500 text-xl"></i>
+            </div>
+            <h3 class="text-base font-bold text-text-primary">Account suspended</h3>
+            <p class="text-sm text-text-secondary mt-1.5 leading-relaxed">
+              Your account has been suspended. You won't be able to access any features until this is resolved.
+              Please contact your admin.
+            </p>
+          </div>
+
+          <!-- Action -->
+          <div class="px-6 pb-5">
+            <button
+              @click="handleSuspendedConfirm"
+              class="w-full py-2.5 bg-red-600 text-white text-sm font-bold rounded-xl hover:bg-red-700 transition-all flex items-center justify-center gap-2"
+            >
+              <i class="fa-solid fa-arrow-right-from-bracket text-xs"></i>
+              Sign out
+            </button>
+          </div>
+
+        </div>
+      </Transition>
+    </div>
+  </Transition>
+</Teleport>
 </template>
 
 <style>
