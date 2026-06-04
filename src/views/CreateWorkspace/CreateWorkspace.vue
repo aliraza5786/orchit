@@ -48,7 +48,7 @@
       </div>
     </div>
     <div
-      class="z-[1] overflow-y-auto h-auto flex-grow relative flex flex-col gap-10 max-w-[800px] mx-auto w-full items-center">
+      class="z-[1] overflow-y-auto overflow-x-hidden h-auto flex-grow relative flex flex-col gap-10 max-w-[800px] mx-auto w-full min-w-0 items-center">
       <template v-if="currentStep === 0">
         <IdealStep @manual="onManualStart" />
       </template>
@@ -57,9 +57,12 @@
         <StepTwo v-if="currentStep === 2" :ai="isAI" ref="stepTwoRef" @next="goNext2" />
       </KeepAlive>
       <KeepAlive>
-        <StepThree v-if="currentStep === 3" :ai="isAI" ref="stepThreeRef" @next="goNext" />
+        <StepModules v-if="currentStep === 3" :ai="isAI" ref="stepModulesRef" @next="goNext2" />
       </KeepAlive>
-      <StepFour v-if="currentStep === 4" :ai="isAI" ref="stepFourRef" @back="startOver" />
+      <KeepAlive>
+        <StepThree v-if="currentStep === 4" :ai="isAI" ref="stepThreeRef" @next="goNext" />
+      </KeepAlive>
+      <StepFour v-if="currentStep === 5" :ai="isAI" ref="stepFourRef" @back="startOver" />
     </div>
     <div v-if="currentStep !== 0"
   class="flex z-2 bg-bg-body justify-between mt-15 fixed bottom-0 w-full px-6 border-t items-center border-border h-[80px]">
@@ -94,6 +97,7 @@ import IdealStep from './steps/IdealStep.vue'
 import StepOneSync from './steps/StepOne.vue'
 const StepOne = StepOneSync
 const StepTwo = defineAsyncComponent(() => import('./steps/StepTwo.vue'))
+const StepModules = defineAsyncComponent(() => import('./steps/StepModules.vue'))
 const StepThree = defineAsyncComponent(() => import('./steps/StepThree.vue'))
 const StepFour = defineAsyncComponent(() => import('./steps/StepFour.vue'))
 import { useWorkspaceStore } from '../../stores/workspace';
@@ -108,6 +112,7 @@ const STEPS = Object.freeze([
   'Get Started',
   'Project Setup',
   'Define Work streams',
+  'Modules & Sheets',
   'Team Planning',
   'Review Space'
 ] as const)
@@ -115,16 +120,16 @@ const STEPS = Object.freeze([
 
 const draftMeta = workspaceStore.hydrateWorkspaceDraft()
 
-function resolveInitialStep(): 0 | 1 | 2 | 3 | 4 {
+function resolveInitialStep(): 0 | 1 | 2 | 3 | 4 | 5 {
   const saved = draftMeta?.currentStep
-  if (saved !== undefined && saved >= 0 && saved <= 4) {
-    return saved as 0 | 1 | 2 | 3 | 4
+  if (saved !== undefined && saved >= 0 && saved <= 5) {
+    return saved as 0 | 1 | 2 | 3 | 4 | 5
   }
   if (!workspaceStore.workspace) return 0
-  return workspaceStore.workspace?.logo ? 4 : 1
+  return workspaceStore.workspace?.logo ? 5 : 1
 }
 
-const currentStep = ref<0 | 1 | 2 | 3 | 4>(resolveInitialStep())
+const currentStep = ref<0 | 1 | 2 | 3 | 4 | 5>(resolveInitialStep())
 const isStepperVisible = ref(true)
 const isAI = ref(draftMeta?.isAI ?? true)
 
@@ -145,9 +150,10 @@ type StepFourInst = InstanceType<typeof StepFour> | null
 const isStartOver = ref(0);
 const stepOneRef = shallowRef<StepOneInst>(null)
 const stepTwoRef = shallowRef<StepTwoInst>(null)
+const stepModulesRef = shallowRef<StepTwoInst>(null)
 const stepThreeRef = shallowRef<StepTwoInst>(null)
 const stepFourRef = shallowRef<StepFourInst>(null)
-const showSkip = computed(() => currentStep.value === 2 || currentStep.value === 3)
+const showSkip = computed(() => currentStep.value === 2 || currentStep.value === 3 || currentStep.value === 4)
 const stepOnePending = computed<boolean>(() => {
   const inst = stepOneRef.value as unknown as {
     isPending?: boolean | { value: boolean }
@@ -171,7 +177,7 @@ const stepOnePending = computed<boolean>(() => {
 
 const isLoading = computed(() => {
   if (currentStep.value === 1) return stepOnePending.value
-  if (currentStep.value === 4) {
+  if (currentStep.value === 5) {
     if (!stepFourRef.value) return false
     return !!(stepFourRef.value.createWorkspacePending || stepFourRef.value.isPending)
   }
@@ -182,10 +188,10 @@ const continueDisabled = computed(() => isLoading.value)
 const continueLabel = computed(() => {
   if (isLoading.value) {
     if (currentStep.value === 1) return 'Continuing...'
-    if (currentStep.value === 4) return 'Creating...'
+    if (currentStep.value === 5) return 'Creating...'
     return 'Loading...'
   }
-  return currentStep.value === 4 ? 'Complete' : 'Continue'
+  return currentStep.value === 5 ? 'Complete' : 'Continue'
 })
 function handleClose() {
   const type = route.query.type as string
@@ -251,19 +257,23 @@ function goNext() {
     stepTwoRef.value.continueHandler()
     return
   }
-  if (currentStep.value === 3 && stepThreeRef.value?.continueHandler) {
+  if (currentStep.value === 3 && stepModulesRef.value?.continueHandler) {
+    stepModulesRef.value.continueHandler()
+    return
+  }
+  if (currentStep.value === 4 && stepThreeRef.value?.continueHandler) {
     stepThreeRef.value.continueHandler()
     goNext2()
     return
   }
-  if (currentStep.value === 4 && stepFourRef.value?.createProjectHandler ) {
+  if (currentStep.value === 5 && stepFourRef.value?.createProjectHandler ) {
     if (!localStorage.getItem('token')) {
       router.push('/register')
     }
     stepFourRef.value.createProjectHandler()
     return
   }
-  if (currentStep.value < 4) currentStep.value = (currentStep.value + 1) as typeof currentStep.value
+  if (currentStep.value < 5) currentStep.value = (currentStep.value + 1) as typeof currentStep.value
 }
 function goNext2() {
   currentStep.value = (currentStep.value + 1) as typeof currentStep.value
@@ -273,7 +283,9 @@ function goBack() {
   if (currentStep.value > 0) currentStep.value = (currentStep.value - 1) as typeof currentStep.value
 }
 function handleSkip() {
-  currentStep.value = 4
+  if (currentStep.value < 5) {
+    currentStep.value = (currentStep.value + 1) as typeof currentStep.value
+  }
 }
 function startOver() {
   workspaceStore.clearWorkspaceDraft()

@@ -128,6 +128,131 @@
         </div>
       </div>
     </div>
+
+    <!-- Modules & Sheets -->
+    <div v-if="project?.modules?.length > 0" class="step-enter step-enter-5 h-full flex-grow flex flex-col mt-8">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5 px-1">
+        <h3 class="text-lg font-semibold text-text-primary m-0 flex items-center gap-2">
+          <i class="fa-solid fa-cubes text-text-secondary text-base"></i> Modules & Sheets
+        </h3>
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent/10 border border-accent/20 text-xs font-semibold text-accent">
+            <i class="fa-solid fa-cube text-[10px]"></i>
+            {{ modulesSummary.count }} {{ modulesSummary.count === 1 ? "module" : "modules" }}
+          </span>
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-bg-card border border-border text-xs font-semibold text-text-secondary">
+            <i class="fa-solid fa-table text-[10px]"></i>
+            {{ modulesSummary.totalSheets }} {{ modulesSummary.totalSheets === 1 ? "sheet" : "sheets" }}
+          </span>
+        </div>
+      </div>
+
+      <div class="space-y-4">
+        <div
+          v-for="(mod, modIdx) in project.modules"
+          :key="mod.variables?.id || modIdx"
+          class="group bg-bg-surface border border-border/50 rounded-2xl shadow-sm overflow-hidden "
+        >
+          <!-- Module header -->
+          <div class="flex gap-4 items-start p-5 bg-bg-card/30 border-b border-border relative">
+            <div
+              class="absolute left-0 top-0 bottom-0 w-1 bg-accent/60 rounded-r-full opacity-80 group-hover:opacity-100 transition-opacity"
+              aria-hidden="true"
+            ></div>
+            <div class="w-11 h-11 rounded-xl shrink-0 bg-bg-surface border border-border flex items-center justify-center text-accent shadow-sm ml-1">
+              <i
+                v-if="mod.variables?.['module-icon']"
+                :class="[
+                  mod.variables['module-icon'].prefix,
+                  mod.variables['module-icon'].iconName,
+                ]"
+                class="text-lg"
+              />
+              <i v-else class="fa-solid fa-cube text-text-secondary" />
+            </div>
+            <div class="flex-1 min-w-0 pt-0.5">
+              <span class="inline-flex items-center px-2 py-0.5 rounded-md bg-bg-surface border border-border text-[10px] font-semibold uppercase tracking-wider text-text-secondary mb-2">
+                Module {{ Number(modIdx) + 1 }}
+              </span>
+              <p class="text-base font-semibold text-text-primary m-0 leading-tight">
+                {{ mod.variables?.["module-title"] }}
+              </p>
+              <p class="text-[12px] text-text-secondary line-clamp-2 mt-1.5 m-0 leading-relaxed">
+                {{ mod.variables?.["module-description"] }}
+              </p>
+            </div>
+          </div>
+
+          <!-- Sheets list -->
+          <div class="p-5 pt-4">
+            <div class="flex items-center justify-between gap-2 mb-4">
+              <h4 class="text-sm font-semibold text-text-primary m-0 flex items-center gap-2">
+                <span class="w-7 h-7 rounded-lg bg-bg-card border border-border flex items-center justify-center">
+                  <i class="fa-solid fa-table text-text-secondary text-[11px]"></i>
+                </span>
+                Sheets in this module
+              </h4>
+              <span class="text-xs font-semibold text-text-secondary bg-bg-card border border-border px-2.5 py-1 rounded-full shrink-0">
+                {{ mod.sheets?.length || 0 }}
+              </span>
+            </div>
+
+            <ul
+              v-if="mod.sheets?.length"
+              class="space-y-2 m-0 p-0 list-none relative ml-3 pl-5 border-l-2 border-accent/25"
+            >
+              <li
+                v-for="(sheet, sheetIdx) in mod.sheets"
+                :key="sheet.variables?.id || sheetIdx"
+                class="relative"
+              >
+                <span
+                  class="absolute -left-[23px] top-[18px] w-2.5 h-2.5 rounded-full bg-accent border-2 border-bg-surface shadow-sm"
+                  aria-hidden="true"
+                ></span>
+                <div class="flex gap-3 items-start rounded-xl px-4 py-3 bg-bg-card/50 border border-border/50 transition-colors hover:bg-bg-card hover:border-border">
+                  <div class="w-9 h-9 shrink-0 rounded-lg bg-bg-surface border border-border flex items-center justify-center text-accent">
+                    <i
+                      v-if="sheet.variables?.['sheet-icon']"
+                      :class="[
+                        sheet.variables['sheet-icon'].prefix,
+                        sheet.variables['sheet-icon'].iconName,
+                      ]"
+                    />
+                    <i v-else class="fa-solid fa-table text-text-secondary text-sm" />
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <span class="text-[10px] font-semibold uppercase tracking-wider text-accent/90 block mb-0.5">
+                      Sheet {{ Number(sheetIdx) + 1 }}
+                    </span>
+                    <p class="text-sm font-semibold text-text-primary m-0">
+                      {{ sheet.variables?.["sheet-title"] }}
+                    </p>
+                    <p class="text-[11px] text-text-secondary line-clamp-2 mt-1 m-0">
+                      {{ sheet.variables?.["sheet-description"] }}
+                    </p>
+                    <p
+                      v-if="sheet.variables?.['to-do']"
+                      class="text-[11px] text-text-secondary mt-2 m-0 flex items-start gap-1.5"
+                    >
+                      <i class="fa-regular fa-circle-check text-accent/80 text-[10px] mt-0.5 shrink-0"></i>
+                      <span>{{ sheet.variables["to-do"] }}</span>
+                    </p>
+                  </div>
+                </div>
+              </li>
+            </ul>
+            <div
+              v-else
+              class="rounded-xl border border-dashed border-border px-4 py-6 text-center bg-bg-card/20"
+            >
+              <i class="fa-solid fa-table text-text-secondary/40 text-xl mb-2"></i>
+              <p class="text-xs text-text-secondary m-0">No sheets added to this module</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -221,6 +346,16 @@ const total_resorces = computed(() =>
       )
     : 0,
 );
+
+const modulesSummary = computed(() => {
+  const modules = project.value?.modules || [];
+  const count = modules.length;
+  const totalSheets = modules.reduce(
+    (sum: number, mod: { sheets?: unknown[] }) => sum + (mod.sheets?.length || 0),
+    0,
+  );
+  return { count, totalSheets };
+});
 function createProjectHandler() {
   createWorkspace({
     ...(authStore.company_id ? { company_id: authStore.company_id } : {}),
@@ -247,6 +382,7 @@ const emits = defineEmits(['back'])
 .step-enter-2 { animation-delay: 0.15s; }
 .step-enter-3 { animation-delay: 0.25s; }
 .step-enter-4 { animation-delay: 0.35s; }
+.step-enter-5 { animation-delay: 0.45s; }
 
 @keyframes slideUpFade {
   from {

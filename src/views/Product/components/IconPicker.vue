@@ -4,9 +4,9 @@ import Button from '../../../components/ui/Button.vue';
 import EmptyState from '../../../components/ui/EmptyState.vue';
 import { primeIcons } from '../../../data/primeIconsNames';
 
-type IconPrefix = 'fa';
+export type IconPrefix = 'fa' | 'fa-regular' | 'fa-solid';
 
-type IconValue = { prefix: IconPrefix; iconName: string } | null;
+export type IconValue = { prefix: IconPrefix; iconName: string } | null;
 
 const props = defineProps<{ 
   modelValue?: IconValue,
@@ -93,7 +93,7 @@ function openIconLibrary() {
 </script>
 
 <template>
-  <div>
+  <div class="icon-picker-root min-w-0 w-full max-w-full">
     <!-- Button / Empty state -->
     <div v-if="!showIconPicker && !modelValue?.iconName"
       class="border border-dashed bg-bg-input border-border rounded-xl p-6 flex flex-col items-center text-center">
@@ -102,27 +102,41 @@ function openIconLibrary() {
     </div>
 
     <!-- Icon picker -->
-    <div v-else-if="showIconPicker">
-      <div class="grid gap-3 w-full">
-        <!-- Search --> 
-        <input  v-if="!props.noSearch" v-model="query" placeholder="Search icons…" class="px-3 py-2 rounded-[6px] border col-span-full border-border bg-bg-input text-sm placeholder-text-secondary
-                 focus:outline-none focus:ring-2 focus:ring-accent focus:border-border" type="text" />
+    <div v-else-if="showIconPicker" class="min-w-0 w-full max-w-full">
+      <div class="flex flex-col gap-3 w-full min-w-0 max-w-full">
+        <input
+          v-if="!props.noSearch"
+          v-model="query"
+          placeholder="Search icons…"
+          class="px-3 py-2 rounded-[6px] border border-border bg-bg-input text-sm placeholder-text-secondary w-full min-w-0
+                 focus:outline-none  focus:border-border"
+          type="text"
+        />
 
         <!-- Grid -->
-        <div class="grid gap-2 col-span-full grid-cols-[repeat(auto-fill,minmax(90px,1fr))] max-h-[360px] overflow-auto pr-1
-                 rounded-lg border-border" @scroll="onScroll">
-          <button v-for="item in visibleIcons" :key="item.prefix + item.iconName" type="button" @click="select(item)"
-            :aria-label="`${item.prefix} ${item.iconName}`" v-tooltip="`${item.prefix} ${item.iconName}`" class="group grid place-items-center gap-1.5 p-2 bg-bg-body cursor-pointer
-                   border border-transparent rounded-lg text-text-secondary
-                   hover:border-border focus:outline-none focus:ring-2 focus:ring-accent">
-            <i :class="item.renderClasses" class="text-base"></i>
-            <small class="max-w-[84px] text-[11px] text-text-secondary truncate">
-              {{ item.iconName }}
-            </small>
+        <div
+          class="icon-picker-grid w-full min-w-0 max-w-full rounded-lg border border-border bg-bg-input"
+          @scroll="onScroll"
+        >
+          <button
+            v-for="item in visibleIcons"
+            :key="item.prefix + item.iconName"
+            type="button"
+            :title="item.label"
+            :aria-label="item.label"
+            class="icon-picker-cell group flex flex-col items-center justify-center gap-1.5 p-2 min-h-[4.25rem] w-full min-w-0 overflow-hidden
+                   bg-bg-body cursor-pointer border border-transparent rounded-lg text-text-secondary
+                   hover:border-border hover:bg-bg-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            @click="select(item)"
+          >
+            <i :class="item.renderClasses" class="text-base shrink-0 leading-none" />
+            <span class="icon-picker-label w-full min-w-0 px-0.5 text-[10px] leading-tight text-center text-text-secondary truncate">
+              {{ item.label }}
+            </span>
           </button>
         </div>
 
-        <div v-if="!filteredIcons.length" class="flex items-center justify-center col-span-full py-6">
+        <div v-if="!filteredIcons.length" class="flex items-center justify-center py-6">
           <EmptyState
             icon="fa-regular fa-icons"
             title="No icons found"
@@ -134,21 +148,35 @@ function openIconLibrary() {
     </div>
 
     <!-- Selected preview -->
-    <div v-if="modelValue" class="mt-1 p-3 bg-bg-input rounded-lg flex items-center gap-2">
-      <i :class="[modelValue.prefix, modelValue.iconName]" class="text-xl" />
-      <div class="min-w-0">
-        <p class="font-medium truncate"> {{ modelValue.iconName }}</p>
-
-      </div> 
-        <i class="fa-solid fa-xmark ml-auto cursor-pointer text-text-secondary" @click="select(null)"></i>
+    <div v-if="modelValue" class="mt-1 p-3 bg-bg-input rounded-lg flex items-center gap-2 min-w-0">
+      <i :class="[modelValue.prefix, modelValue.iconName]" class="text-xl shrink-0" />
+      <div class="min-w-0 flex-1">
+        <p class="font-medium truncate m-0">{{ modelValue.iconName }}</p>
+      </div>
+      <i class="fa-solid fa-xmark ml-auto shrink-0 cursor-pointer text-text-secondary" @click="select(null)" />
     </div>
   </div>
 </template>
 
 <style scoped>
-/* .grid {
+.icon-picker-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
-  gap: 1rem;
-} */
+  grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
+  gap: 0.5rem;
+  padding: 0.75rem;
+  padding-bottom: 0.875rem;
+  max-height: 280px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+.icon-picker-cell {
+  box-sizing: border-box;
+}
+
+.icon-picker-label {
+  display: block;
+  max-width: 100%;
+}
 </style>

@@ -118,3 +118,76 @@ export const primeIcons = [
   // Health / misc
   "heart-pulse","cloud-sun"
 ];
+
+/** Dedupe helper for icon name lists */
+function dedupeIcons(names: string[]): string[] {
+  return [...new Set(names)];
+}
+
+const primeIconSet = new Set(primeIcons);
+
+function pmIcons(names: string[]): string[] {
+  return dedupeIcons(names).filter((n) => primeIconSet.has(n));
+}
+
+/** Icons suited for workspace modules (areas / boards / teams) */
+export const projectManagementModuleIcons = pmIcons([
+  "diagram-project", "sitemap", "briefcase", "clipboard-check", "layer-group",
+  "bullseye", "flag-checkered", "note-sticky", "code-branch", "route",
+  "bars-progress", "road-barrier", "cubes", "cube", "object-group",
+  "puzzle-piece", "rocket", "gears", "toolbox", "hammer",
+  "user-group", "users", "people-group", "user-tie", "user-gear",
+  "user-shield", "user-clock", "person-chalkboard", "handshake",
+  "chart-bar", "chart-column", "chart-line", "chart-area", "chart-pie",
+  "chart-simple", "chart-gantt", "chart-scatter", "square-poll-vertical",
+  "magnifying-glass-chart", "network-wired", "circle-nodes",
+  "folder", "folder-open", "folder-tree", "folders", "files",
+  "database", "server", "cloud", "globe", "shield", "shield-check",
+  "calendar", "calendar-days", "calendar-check", "calendar-week",
+  "clock", "clock-rotate-left", "stopwatch", "hourglass",
+  "home", "warehouse", "shop", "car", "truck",
+  "inbox", "envelope", "comments", "comment-dots", "video", "headset",
+  "book", "bookmark", "tag", "tags", "trophy", "flag", "fire", "bolt",
+  "list-check", "clipboard", "pen-ruler", "pen-fancy", "paintbrush",
+  "table", "table-cells", "columns", "bars", "ellipsis", "grip",
+  "filter", "sort", "arrows-rotate", "rotate", "shuffle",
+  "dollar-sign", "calculator", "receipt", "scale-balanced",
+  "laptop-code", "terminal", "code", "bug", "robot", "microchip",
+  "circle-info", "circle-question", "star", "heart", "eye", "gear",
+  "pen-to-square", "floppy-disk", "share-nodes", "link", "paperclip",
+  "box-archive", "trash-can", "plus", "check", "check-double",
+]);
+
+/** Icons suited for sheets (views, lists, boards, task tables) */
+export const projectManagementSheetIcons = pmIcons([
+  "table", "table-cells", "table-cells-large", "table-list", "columns",
+  "list", "list-ul", "list-ol", "list-check", "square-check",
+  "clipboard", "clipboard-check", "clipboard-list", "note-sticky",
+  "inbox", "tray", "filter", "sort", "shuffle",
+  "arrow-up-wide-short", "arrow-down-wide-short", "arrows-sort",
+  "calendar", "calendar-days", "calendar-check", "calendar-xmark",
+  "calendar-plus", "calendar-minus", "calendar-week",
+  "clock", "clock-rotate-left", "stopwatch", "timer",
+  "hourglass", "hourglass-half", "hourglass-start", "hourglass-end",
+  "chart-bar", "chart-column", "chart-line", "chart-area", "chart-pie",
+  "chart-simple", "chart-gantt", "chart-scatter",
+  "square-poll-vertical", "square-poll-horizontal", "bars-progress",
+  "file", "file-lines", "file-pen", "file-check", "file-circle-check",
+  "file-circle-plus", "file-export", "file-import", "file-code", "file-csv",
+  "folder", "folder-open", "folder-tree", "copy", "paste",
+  "diagram-project", "sitemap", "code-branch", "route", "bullseye",
+  "flag", "flag-checkered", "bookmark", "tag", "tags",
+  "pen", "pen-to-square", "pencil", "highlighter", "eraser",
+  "comment", "comments", "comment-dots", "message", "at", "reply",
+  "user", "user-check", "user-plus", "user-clock", "users",
+  "check", "check-double", "circle-check", "xmark", "ban",
+  "magnifying-glass", "magnifying-glass-plus", "magnifying-glass-minus",
+  "eye", "eye-slash", "link", "paperclip", "thumbtack",
+  "bolt", "fire", "star", "triangle-exclamation", "circle-exclamation",
+  "spinner", "circle-notch", "rotate", "arrows-rotate", "undo", "redo",
+  "plus", "minus", "trash", "trash-can", "box-archive",
+  "grip", "grip-vertical", "grip-lines", "ellipsis", "ellipsis-vertical",
+  "expand", "compress", "maximize", "minimize",
+  "database", "server", "cloud", "cloud-arrow-up", "cloud-arrow-down",
+  "columns", "layer-group", "object-group", "cubes",
+]);
