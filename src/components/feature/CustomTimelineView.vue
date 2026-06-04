@@ -43,6 +43,10 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
+  canEdit: {
+    type: Boolean,
+    default: true,
+  },
 });
 
 const emit = defineEmits([
@@ -211,8 +215,10 @@ const isOwnerGroup = computed(() => {
   return false;
 });
 
+const canShowCreate = computed(() => props.canCreate && props.canEdit);
+
 const showGroupQuickCreate = computed(
-  () => props.isGrouped && props.canCreate && !isOwnerGroup.value,
+  () => props.isGrouped && canShowCreate.value && !isOwnerGroup.value,
 );
 
 const inlineQuickCreate = reactive({
@@ -224,6 +230,7 @@ const inlineQuickCreate = reactive({
 const groupCreateInput = ref<HTMLInputElement | null>(null);
 
 const startGroupQuickCreate = (groupKey: string, group: any) => {
+  if (!canShowCreate.value) return;
   expandedGroups[groupKey] = true;
   inlineQuickCreate.groupKey = groupKey;
   inlineQuickCreate.group = group;
@@ -233,13 +240,22 @@ const startGroupQuickCreate = (groupKey: string, group: any) => {
 };
 
 const submitGroupQuickCreate = () => {
-  if (!inlineQuickCreate.title.trim() || props.creating) return;
+  if (!canShowCreate.value || !inlineQuickCreate.title.trim() || props.creating)
+    return;
   emit("quickCreate", inlineQuickCreate.title.trim(), inlineQuickCreate.group);
 };
 
 const cancelGroupQuickCreate = () => {
   inlineQuickCreate.active = false;
   inlineQuickCreate.title = "";
+};
+
+const handleGroupQuickCreateClickOutside = (e: Event) => {
+  if (!inlineQuickCreate.active) return;
+  const target = e.target as HTMLElement;
+  if (!target.closest(".group-quick-create-row")) {
+    cancelGroupQuickCreate();
+  }
 };
 
 const isGroupCreateActive = (groupKey: string) =>
@@ -427,6 +443,7 @@ onMounted(() => {
     resizeObserver.observe(containerRef.value);
   }
   setTimeout(goToToday, 100);
+  document.addEventListener("mousedown", handleGroupQuickCreateClickOutside);
 });
 
 watch([timelineRange, zoomLevel], () => {
@@ -434,6 +451,7 @@ watch([timelineRange, zoomLevel], () => {
 });
 
 onUnmounted(() => {
+  document.removeEventListener("mousedown", handleGroupQuickCreateClickOutside);
   if (containerRef.value)
     containerRef.value.removeEventListener("scroll", handleScroll);
   if (resizeObserver) resizeObserver.disconnect();
@@ -504,11 +522,13 @@ const newEpicTitle = ref("");
 const createInput = ref<HTMLInputElement | null>(null);
 
 const startCreating = () => {
+  if (!canShowCreate.value) return;
   isCreating.value = true;
   setTimeout(() => createInput.value?.focus(), 100);
 };
 
 const handleCreate = () => {
+  if (!canShowCreate.value) return;
   if (newEpicTitle.value.trim() && !props.creating) {
     emit("create:ticket", { "card-title": newEpicTitle.value.trim() });
     newEpicTitle.value = "";
@@ -636,16 +656,18 @@ const handleTaskClick = (task: any) => {
                     class="fa-solid fa-chevron-right text-[10px] text-text-secondary transition-transform shrink-0"
                     :class="{ 'rotate-90': expandedGroups[row.groupKey] }"
                   ></i>
+                  <div class="flex items-center gap-2 ">
                   <span class="text-[11px] font-bold text-text-primary capitalize truncate flex-1">
                     {{ row.title }}
                   </span>
                   <span class="text-[10px] text-text-secondary font-medium shrink-0">
-                    {{ row.count }}
+                     {{ row.count > 1 ? row.count + ' items' : row.count + ' item' }}
                   </span>
+                  </div>
                   <button
                     v-if="showGroupQuickCreate"
                     type="button"
-                    class="w-5 h-5 flex items-center justify-center rounded-md border border-border bg-bg-surface hover:border-primary-color hover:text-primary-color opacity-0 group-hover/header:opacity-100 transition-all text-[10px] shrink-0"
+                    class="w-5 h-5 ms-auto flex items-center justify-center rounded-md border border-border bg-bg-surface hover:border-primary-color hover:text-primary-color opacity-0 group-hover/header:opacity-100 transition-all text-[10px] shrink-0"
                     title="Add ticket to this group"
                     @click.stop="startGroupQuickCreate(row.groupKey, row.group)"
                   >
@@ -654,7 +676,7 @@ const handleTaskClick = (task: any) => {
                 </div>
                 <div
                   v-if="row.type === 'group' && isGroupCreateActive(row.groupKey)"
-                  class="h-10 px-2 border-b border-border bg-bg-surface flex items-center pl-7"
+                  class="group-quick-create-row h-10 px-2 border-b border-border bg-bg-surface flex items-center pl-7"
                 >
                   <div
                     class="relative flex-1 flex items-center border border-primary-color rounded overflow-hidden bg-bg-card shadow-sm h-7"
@@ -667,12 +689,6 @@ const handleTaskClick = (task: any) => {
                       ref="groupCreateInput"
                       @keyup.enter="submitGroupQuickCreate"
                       @keyup.esc="cancelGroupQuickCreate"
-                      @blur="
-                        () => {
-                          if (!inlineQuickCreate.title.trim())
-                            cancelGroupQuickCreate();
-                        }
-                      "
                       placeholder="What needs to be done?"
                       :disabled="creating"
                       class="flex-1 bg-transparent border-none outline-none px-2 text-[10px] font-medium text-text-primary placeholder:text-text-secondary/50 disabled:opacity-50"
@@ -760,7 +776,7 @@ const handleTaskClick = (task: any) => {
 
               <!-- Create Epic row (ungrouped only) -->
               <div
-                v-if="!isGrouped && !isCreating"
+                v-if="!isGrouped && !isCreating && canShowCreate"
                 class="h-10 px-4 flex items-center gap-2 text-primary-color text-[11px] font-bold cursor-pointer hover:bg-primary-color/5 transition-colors border-b border-border"
                 @click="startCreating"
               >

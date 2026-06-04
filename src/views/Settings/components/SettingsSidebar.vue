@@ -102,11 +102,11 @@ function goBack() { router.push('/dashboard') }
 
 // ─── Company switching ────────────────────────────────────────
 const isSwitching = ref(false)
-const { data: profile } = useQuery({
+const { data: profile, isPending: isProfileLoading } = useQuery({
   queryKey: ['profile'],
   queryFn: getProfile,
   placeholderData: (prev) => prev,
-});
+})
 const hasNoCompanyContext = computed(() => {
   const active = profile.value?.active_company?._id
   const associated = profile.value?.associated_company
@@ -210,6 +210,7 @@ function orgInitials(title: string) {
            w-full max-w-[280px] md:w-[240px]"
     :class="{ 'mobile-open': mobileOpen }"
   >
+
     <!-- Back + mobile close -->
     <div class="px-3 pt-4 pb-3 shrink-0 flex items-center justify-between gap-2">
       <button
@@ -229,8 +230,39 @@ function orgInitials(title: string) {
         <i class="fa-solid fa-xmark text-[12px]"></i>
       </button>
     </div>
+<!-- Skeleton -->
+<div v-if="isProfileLoading" class="flex flex-col flex-1 px-3 pb-6 gap-4 animate-pulse">
+  <div class="h-2.5 w-16 rounded bg-border/20"></div>
+  <div class="space-y-1">
+    <div v-for="i in 5" :key="i" class="flex items-center gap-3 px-3 py-2.5 rounded-lg">
+      <div class="w-4 h-4 rounded bg-border/30 shrink-0"></div>
+      <div class="h-3 rounded bg-border/25" :style="{ width: `${65 + (i * 19) % 60}px` }"></div>
+    </div>
+  </div>
+  <div class="h-2.5 w-20 rounded bg-border/20 mt-2"></div>
+  <div class="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-border/30">
+    <div class="w-8 h-8 rounded-lg bg-border/30 shrink-0"></div>
+    <div class="space-y-1.5 flex-1">
+      <div class="h-3 w-24 rounded bg-border/30"></div>
+      <div class="h-2.5 w-16 rounded bg-border/20"></div>
+    </div>
+  </div>
+  <div class="space-y-1 mt-1">
+    <div v-for="i in 5" :key="i" class="flex items-center gap-3 px-3 py-2.5 rounded-lg">
+      <div class="w-4 h-4 rounded bg-border/30 shrink-0"></div>
+      <div class="h-3 rounded bg-border/25" :style="{ width: `${55 + (i * 23) % 70}px` }"></div>
+    </div>
+  </div>
+  <div class="mt-auto flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-border/20">
+    <div class="w-9 h-9 rounded-full bg-border/30 shrink-0"></div>
+    <div class="space-y-1.5 flex-1">
+      <div class="h-3 w-20 rounded bg-border/30"></div>
+      <div class="h-2.5 w-28 rounded bg-border/20"></div>
+    </div>
+  </div>
+</div>
 
-    <div class="flex flex-col flex-1 px-3 pb-6 min-h-0 gap-6">
+    <div v-else class="flex flex-col flex-1 px-3 pb-6 min-h-0 gap-6">
 
       <!-- ── PERSONAL (non-company emails) ── -->
       <template v-if="mode === 'personal' && !isCompanyEmail">

@@ -441,6 +441,7 @@
         <MindMapView
           :listsData="filteredBoard ?? []"
           :selectedSheetId="selected_sheet_id"
+          :sheetId="sheetId"
           :selectedViewBy="selected_view_by"
           :workspaceId="workspaceId"
           :moduleId="moduleId"
@@ -502,6 +503,7 @@
         :isGrouped="!!selectedGroup"
         :selectedGroup="selectedGroup"
         :canCreate="canCreateCard"
+        :canEdit="canEditCard"
         :data-loading="!!selectedGroup && isTablePending"
         :creating="isAddingTableTicket"
         @select:ticket="selectCardHandler"
@@ -519,6 +521,7 @@
         :isGrouped="!!selectedGroup"
         :selectedGroup="selectedGroup"
         :canCreate="canCreateCard"
+        :canEdit="canEditCard"
         :data-loading="!!selectedGroup && isTablePending"
         :creating="isAddingTableTicket"
         @select:ticket="selectCardHandler"

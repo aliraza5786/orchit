@@ -151,6 +151,7 @@
                 <p class="text-[12px] text-text-secondary">{{ profileData?.u_email }}</p>
 
                 <!-- Managed badge — only for company emails -->
+                 
                 <div
                 v-if="isOrgUser && !isPendingOrgMember && hasVerifiedDomain"
                 class="mt-1 inline-flex cursor-default items-center gap-1.5 rounded-full border border-accent/22 bg-accent/[0.08] px-2.5 py-1 text-[11px] font-medium text-accent"
@@ -187,7 +188,7 @@
 </button>
               </div>
               <!-- ── Pending org membership notice ── -->
-<div v-if="isPendingOrgMember" class="border-b border-border/40 p-2">
+<div v-if="isPendingOrgMember && pendingMemberCreation" class="border-b border-border/40 p-2">
   <div class="rounded-[10px] bg-amber-500/[0.07] border border-amber-500/20 px-3 py-3 flex gap-3 items-start">
     <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-[7px] bg-amber-500/10 border border-amber-500/20 mt-0.5">
       <i class="fa-regular fa-clock text-amber-500 text-[11px]"></i>
@@ -197,8 +198,25 @@
         Organization access pending
       </p>
       <p class="text-[11px] text-text-secondary leading-relaxed">
-        We've notified your organization admin. If they don't approve, you'll be added automatically within <span class="font-medium text-text-primary">48 hours</span>.
+  We've notified your organization admin. If they don't approve, you'll be added automatically in
+  <span class="font-mono font-medium text-amber-600 tabular-nums">{{ pendingCountdown }}</span>.
+</p>
+    </div>
+  </div>
+</div>
+<div v-if="isPendingOrgMember && hasActiveAndVerifiedOrg" class="border-b border-border/40 p-2">
+  <div class="rounded-[10px] bg-amber-500/[0.07] border border-amber-500/20 px-3 py-3 flex gap-3 items-start">
+    <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-[7px] bg-amber-500/10 border border-amber-500/20 mt-0.5">
+      <i class="fa-regular fa-clock text-amber-500 text-[11px]"></i>
+    </div>
+    <div class="flex flex-col gap-1 min-w-0">
+      <p class="text-[12px] font-semibold text-text-primary leading-tight">
+        Organization access pending
       </p>
+      <p class="text-[11px] text-text-secondary leading-relaxed">
+  We've notified your organization admin. If they don't approve, you'll be added automatically in
+  <span class="font-mono font-medium text-amber-600 tabular-nums">{{ pendingCountdown }}</span>.
+</p>
     </div>
   </div>
 </div>
@@ -311,7 +329,7 @@
 
 <script setup lang="ts">
 import {
-  computed, onMounted, onBeforeUnmount, ref, nextTick, watch,
+  computed, onMounted,onUnmounted, onBeforeUnmount, ref, nextTick, watch,
 } from "vue";
 import { useRouter, RouterLink, useRoute } from "vue-router";
 import { useQuery, useQueryClient } from "@tanstack/vue-query";
@@ -480,7 +498,9 @@ const links = [
 const hasActiveOrg = computed(() =>
   !!(profileData.value?.active_company?._id || profileData.value?.associated_company?._id)
 );
-
+const hasActiveAndVerifiedOrg = computed(() =>
+  profileData.value?.active_company?._id
+);
 const isOrgUser = computed(() => isCompanyEmail.value && hasActiveOrg.value);
 
 const visibleLinks = computed(() => {
@@ -496,11 +516,59 @@ const hasVerifiedDomain = computed(() =>
 const isPendingOrgMember = computed(() =>
   !!profileData.value?.associated_company?._id && !profileData.value?.active_company?._id
 );
+const pendingMemberCreation = computed(() => {
+  const associated = profileData.value?.associated_company
+  const active     = profileData.value?.active_company
 
-// ── Domain redirect logic ──────────────────────────────────────
+  // Need a custom domain that's verified — check both sources
+  const hasDomain =
+    associated?.custom_domain || active?.custom_domain
 
-// Prevents re-entry if the watcher fires multiple times before the
-// browser actually navigates away.
+  const isVerified =
+    associated?.verified_at ||
+    active?.has_domain_verified
+
+  if (!hasDomain || !isVerified) return null
+
+  // Deadline = verified_at + 48h (prefer associated_company.verified_at)
+  return associated?.verified_at ?? active?.updated_at ?? null
+})
+
+const pendingCountdown = ref('')
+let pendingTimer: ReturnType<typeof setInterval> | null = null
+
+function formatCountdown(ms: number): string {
+  if (ms <= 0) return 'any moment now'
+  const totalSeconds = Math.floor(ms / 1000)
+  const hours   = Math.floor(totalSeconds / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const seconds = totalSeconds % 60
+  if (hours > 0) return `${hours}h ${minutes}m ${seconds}s`
+  if (minutes > 0) return `${minutes}m ${seconds}s`
+  return `${seconds}s`
+}
+
+function startPendingCountdown() {
+  if (pendingTimer) clearInterval(pendingTimer)
+  const tick = () => {
+    const verifiedAt = pendingMemberCreation.value
+    if (!verifiedAt) { pendingCountdown.value = ''; return }
+    const deadline = new Date(verifiedAt).getTime() + 48 * 60 * 60 * 1000
+    pendingCountdown.value = formatCountdown(deadline - Date.now())
+  }
+  tick()
+  pendingTimer = setInterval(tick, 1000)
+}
+
+watch(pendingMemberCreation, (val) => {
+  if (val) startPendingCountdown()
+  else {
+    if (pendingTimer) { clearInterval(pendingTimer); pendingTimer = null }
+    pendingCountdown.value = ''
+  }
+}, { immediate: true })
+
+onUnmounted(() => { if (pendingTimer) clearInterval(pendingTimer) })
 const domainRedirectAttempted = ref(false);
 
 /** Skip redirect entirely when running on local dev. */

@@ -80,7 +80,16 @@ export interface VerifyDomainResult {
   instructions: DomainInstructions;
   methodSwitched?: boolean;
 }
-
+export interface DomainUsersResult {
+  domain: any
+  users: DomainUser[]
+  pagination: {
+    total: number
+    page: number
+    limit: number
+    pages: number
+  }
+}
 export interface DomainUser {
   _id: string;
   u_full_name: string;
@@ -499,18 +508,12 @@ export const useWorkspaceStore = defineStore("workspace", {
         this.domainVerification = null;
       }
     },
-
-    /**
-     * GET /api/v1/company-domains/:id/users
-     * Lists all users associated with the custom domain.
-     * :id here is the company_id stored in localStorage after company creation.
-     */
-    async listDomainUsers(companyId: string): Promise<DomainUser[]> {
-      const res = await api.get(`company-domains/${companyId}/users`);
-      const users: DomainUser[] = res.data?.data?.users ?? res.data?.data ?? [];
-      this.domainUsers = users;
-      return users;
-    },
+    async listDomainUsers(companyId: string): Promise<DomainUsersResult> {
+  const res = await api.get(`company-domains/${companyId}/users`);
+  const result: DomainUsersResult = res.data?.data;
+  this.domainUsers = result.users;
+  return result;
+},
    async enrolDomainUsers(
   companyId: string,
   userIds: string[],
