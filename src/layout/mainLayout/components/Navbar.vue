@@ -187,8 +187,9 @@
   <i class="fa-solid fa-chevron-right text-[10px] text-text-secondary opacity-0 transition-opacity group-hover:opacity-100"></i>
 </button>
               </div>
+              
               <!-- ── Pending org membership notice ── -->
-<div v-if="isPendingOrgMember && pendingMemberCreation" class="border-b border-border/40 p-2">
+<div v-if="isPendingOrgMember" class="border-b border-border/40 p-2">
   <div class="rounded-[10px] bg-amber-500/[0.07] border border-amber-500/20 px-3 py-3 flex gap-3 items-start">
     <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-[7px] bg-amber-500/10 border border-amber-500/20 mt-0.5">
       <i class="fa-regular fa-clock text-amber-500 text-[11px]"></i>
@@ -204,23 +205,50 @@
     </div>
   </div>
 </div>
-<div v-if="isPendingOrgMember && hasActiveAndVerifiedOrg" class="border-b border-border/40 p-2">
-  <div class="rounded-[10px] bg-amber-500/[0.07] border border-amber-500/20 px-3 py-3 flex gap-3 items-start">
-    <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-[7px] bg-amber-500/10 border border-amber-500/20 mt-0.5">
-      <i class="fa-regular fa-clock text-amber-500 text-[11px]"></i>
+<!-- ── Org auto-merge countdown ── -->
+<div v-if="isOrgMergePending" class="border-b border-border/40 p-2">
+  <div class="rounded-[10px] border px-3 py-3 flex gap-3 items-start"
+       :class="orgMergeExpired
+         ? 'bg-green-500/[0.07] border-green-500/20'
+         : 'bg-blue-500/[0.07] border-blue-500/20'">
+    <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-[7px] border mt-0.5"
+         :class="orgMergeExpired
+           ? 'bg-green-500/10 border-green-500/20'
+           : 'bg-blue-500/10 border-blue-500/20'">
+      <i :class="orgMergeExpired
+           ? 'fa-regular fa-circle-check text-green-500'
+           : 'fa-regular fa-building-circle-arrow-right text-blue-500'"
+         class="text-[11px]"></i>
     </div>
     <div class="flex flex-col gap-1 min-w-0">
       <p class="text-[12px] font-semibold text-text-primary leading-tight">
-        Organization access pending
+        {{ orgMergeExpired ? 'Joining organization…' : 'Organization merge scheduled' }}
       </p>
       <p class="text-[11px] text-text-secondary leading-relaxed">
-  We've notified your organization admin. If they don't approve, you'll be added automatically in
-  <span class="font-mono font-medium text-amber-600 tabular-nums">{{ pendingCountdown }}</span>.
-</p>
+        <template v-if="orgMergeExpired">
+          You're being merged into
+          <span class="font-medium text-text-primary">{{ orgMergeData?.title }}</span>.
+          This should complete any moment now.
+        </template>
+        <!-- Has a countdown timer -->
+        <template v-else-if="orgMergeCountdown">
+          Your account will automatically join
+          <span class="font-medium text-text-primary">{{ orgMergeData?.title }}</span> in
+          <span class="font-mono font-medium tabular-nums text-blue-600">
+            {{ orgMergeCountdown }}
+          </span>.
+        </template>
+        <!-- Active org user, associated org pending, no expiry date -->
+        <template v-else>
+          Your account is pending membership in
+          <span class="font-medium text-text-primary">{{ orgMergeData?.title }}</span>.
+          An admin will need to approve your request.
+        </template>
+      </p>
     </div>
   </div>
 </div>
-                <!-- ── Appearance ── -->
+       <!-- ── Appearance ── -->
 <div class="border-b border-border/40 p-2">
   <div
     class="relative"
@@ -498,9 +526,7 @@ const links = [
 const hasActiveOrg = computed(() =>
   !!(profileData.value?.active_company?._id || profileData.value?.associated_company?._id)
 );
-const hasActiveAndVerifiedOrg = computed(() =>
-  profileData.value?.active_company?._id
-);
+
 const isOrgUser = computed(() => isCompanyEmail.value && hasActiveOrg.value);
 
 const visibleLinks = computed(() => {
@@ -516,24 +542,9 @@ const hasVerifiedDomain = computed(() =>
 const isPendingOrgMember = computed(() =>
   !!profileData.value?.associated_company?._id && !profileData.value?.active_company?._id
 );
-const pendingMemberCreation = computed(() => {
-  const associated = profileData.value?.associated_company
-  const active     = profileData.value?.active_company
-
-  // Need a custom domain that's verified — check both sources
-  const hasDomain =
-    associated?.custom_domain || active?.custom_domain
-
-  const isVerified =
-    associated?.verified_at ||
-    active?.has_domain_verified
-
-  if (!hasDomain || !isVerified) return null
-
-  // Deadline = verified_at + 48h (prefer associated_company.verified_at)
-  return associated?.verified_at ?? active?.updated_at ?? null
+const pendingMemberCreation = computed(() =>{
+  return profileData.value?.created_at
 })
-
 const pendingCountdown = ref('')
 let pendingTimer: ReturnType<typeof setInterval> | null = null
 
@@ -551,9 +562,9 @@ function formatCountdown(ms: number): string {
 function startPendingCountdown() {
   if (pendingTimer) clearInterval(pendingTimer)
   const tick = () => {
-    const verifiedAt = pendingMemberCreation.value
-    if (!verifiedAt) { pendingCountdown.value = ''; return }
-    const deadline = new Date(verifiedAt).getTime() + 48 * 60 * 60 * 1000
+    const createdAt = pendingMemberCreation.value
+    if (!createdAt) { pendingCountdown.value = ''; return }
+    const deadline = new Date(createdAt).getTime() + 48 * 60 * 60 * 1000
     pendingCountdown.value = formatCountdown(deadline - Date.now())
   }
   tick()
@@ -562,13 +573,61 @@ function startPendingCountdown() {
 
 watch(pendingMemberCreation, (val) => {
   if (val) startPendingCountdown()
-  else {
-    if (pendingTimer) { clearInterval(pendingTimer); pendingTimer = null }
-    pendingCountdown.value = ''
-  }
+  else if (pendingTimer) { clearInterval(pendingTimer); pendingTimer = null }
 }, { immediate: true })
 
-onUnmounted(() => { if (pendingTimer) clearInterval(pendingTimer) })
+onUnmounted(() => {
+  if (pendingTimer) clearInterval(pendingTimer)
+  if (orgMergeTimer) clearInterval(orgMergeTimer)
+})
+
+// ── Org merge countdown ────────────────────────────────────────
+// Fires when associated_company exists AND is_member === false.
+// Uses join_expires_at (server-set) as the deadline.
+const orgMergeCountdown = ref('')
+const orgMergeExpired   = ref(false)
+let orgMergeTimer: ReturnType<typeof setInterval> | null = null
+const isOrgMergePending = computed(() => {
+  const assoc = profileData.value?.associated_company
+  if (!assoc?._id || assoc?.is_member !== false) return false
+
+  // Only show org merge block when user already has an active company
+  return !!profileData.value?.active_company?._id
+})
+
+const orgMergeData = computed(() => profileData.value?.associated_company ?? null)
+
+function startOrgMergeCountdown() {
+  if (orgMergeTimer) clearInterval(orgMergeTimer)
+  const tick = () => {
+    const expiresAt = orgMergeData.value?.join_expires_at
+    if (!expiresAt) {
+      // Active org user with pending merge but no expiry — show banner without timer
+      orgMergeCountdown.value = ''
+      orgMergeExpired.value   = false
+      return
+    }
+    const remaining = new Date(expiresAt).getTime() - Date.now()
+    if (remaining <= 0) {
+      orgMergeCountdown.value = 'any moment now'
+      orgMergeExpired.value   = true
+    } else {
+      orgMergeExpired.value   = false
+      orgMergeCountdown.value = formatCountdown(remaining)
+    }
+  }
+  tick()
+  orgMergeTimer = setInterval(tick, 1000)
+}
+
+watch(isOrgMergePending, (val) => {
+  if (val) startOrgMergeCountdown()
+  else {
+    if (orgMergeTimer) { clearInterval(orgMergeTimer); orgMergeTimer = null }
+    orgMergeCountdown.value = ''
+    orgMergeExpired.value   = false
+  }
+}, { immediate: true })
 const domainRedirectAttempted = ref(false);
 
 /** Skip redirect entirely when running on local dev. */
