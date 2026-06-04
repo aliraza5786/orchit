@@ -64,50 +64,54 @@
     </div>
 
     <!-- ── Search + Filters ── -->
-    <div class="flex flex-col sm:flex-row gap-2.5">
-      <div class="flex-1 relative">
-  <input
-    v-model="searchQuery"
-    placeholder="Search by name or email…"
-    class="relative px-7.5 py-2 rounded-md overflow-x-auto w-full  text-sm h-10 bg-bg-input border border-border focus-within:ring-black"
-  />
+   <div class="flex flex-col sm:flex-row gap-2.5">
+  <!-- Search -->
+  <div class="relative flex-[4.5]">
+    <input
+      v-model="searchQuery"
+      placeholder="Search by name or email..."
+      class="relative px-7.5 py-2 rounded-md w-full text-sm h-10 bg-bg-input border border-border focus-within:ring-black"
+    />
 
-  <!-- Search Icon -->
-  <i
-    class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary/60 text-xs"
-  ></i>
+    <i
+      class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary/60 text-xs"
+    ></i>
 
-  <!-- Clear Icon -->
-  <button
-    v-if="searchQuery"
-    @click="searchQuery = ''"
-    type="button"
-    class="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary/60 hover:text-text-primary transition-colors"
-  >
-    <i class="fa-solid fa-xmark text-sm"></i>
-  </button>
+    <button
+      v-if="searchQuery"
+      @click="searchQuery = ''"
+      type="button"
+      class="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary/60 hover:text-text-primary"
+    >
+      <i class="fa-solid fa-xmark text-sm"></i>
+    </button>
+  </div>
+
+  <!-- Status -->
+  <div class="relative flex-[1.5]">
+    <BaseSelectField
+      v-model="statusFilter"
+      :noSearchAble="true"
+      :options="STATUS_FILTER_OPTIONS"
+      placeholder="All status"
+      size="md"
+    />
+  </div>
+
+  <!-- Role -->
+  <div class="relative flex-[1.5]">
+    <BaseSelectField
+      v-model="roleFilter"
+      :noSearchAble="true"
+      :options="[
+        { title: 'All Roles', _id: '' },
+        ...allRoles
+      ]"
+      placeholder="All roles"
+      size="md"
+    />
+  </div>
 </div>
-
-     <div class="relative">
-  <BaseSelectField
-    v-model="statusFilter"
-    :noSearchAble="true"
-    :options="STATUS_FILTER_OPTIONS"
-    placeholder="All status"
-    size="md"
-  />
-</div>
-
-      <div class="relative">
-  <BaseSelectField
-    v-model="roleFilter"
-    :noSearchAble="true"
-    :options="allRoles"
-    placeholder="All roles"
-    size="md"
-  />
-</div>
-    </div>
 
     <!-- ── Bulk action bar ── -->
     <Transition
@@ -174,11 +178,39 @@
         </div>
       </div>
     </Transition>
+     <!-- ── Loading ── -->
+<div v-if="isLoading" class="space-y-1.5">
+  <div
+    v-for="i in 6"
+    :key="i"
+    class="flex items-center gap-3 px-4 py-3 rounded-xl border border-border/30 bg-bg-body/30 animate-pulse"
+  >
+    <!-- Checkbox placeholder -->
+    <div class="w-4 h-4 rounded bg-border/30 shrink-0"></div>
 
-    <!-- ── Loading ── -->
-    <div v-if="isLoading" class="space-y-2.5">
-      <div v-for="i in 5" :key="i" class="h-[72px] rounded-xl border border-border/30 bg-bg-body/30 animate-pulse"></div>
+    <!-- Avatar -->
+    <div class="w-9 h-9 rounded-full bg-border/30 shrink-0"></div>
+
+    <!-- Name + email -->
+    <div class="flex-1 min-w-0 space-y-2">
+      <div class="flex items-center gap-2">
+        <div class="h-3.5 rounded-md bg-border/40" :style="{ width: `${100 + (i * 17) % 80}px` }"></div>
+        <div class="h-4 w-12 rounded-full bg-border/20"></div>
+      </div>
+      <div class="h-3 rounded-md bg-border/25" :style="{ width: `${130 + (i * 23) % 90}px` }"></div>
     </div>
+
+    <!-- Action buttons placeholder -->
+    <div class="flex items-center gap-1.5 shrink-0">
+      <div class="h-7 w-20 rounded-lg bg-border/25"></div>
+      <div class="w-8 h-8 rounded-lg bg-border/20"></div>
+      <div class="w-8 h-8 rounded-lg bg-border/20"></div>
+    </div>
+
+    <!-- Role select placeholder -->
+    <div class="h-7 w-20 rounded-lg bg-border/25 shrink-0"></div>
+  </div>
+</div>
 
     <!-- ── Empty state ── -->
     <div
@@ -271,52 +303,57 @@
           </div>
           <p class="text-xs text-text-secondary truncate mt-0.5 leading-tight">{{ member.u_email }}</p>
         </div>
+           <!-- Action buttons -->
+<div
+  class="flex items-center gap-1.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+  v-if="canActOnMember(member)"
+>
+  <!-- Activate / Deactivate toggle -->
+  <button
+    v-if="canUpdateUsers && (
+      member.membership_status === 'active' ||
+      member.membership_status === 'deactivated' ||
+      member.membership_status === 'suspended' ||
+      member.membership_status == null
+    )"
+    @click.stop="openStatusModal(member)"
+    :disabled="togglingUserId === member._id || !isUserVerified"
+    :title="member.membership_status === 'active' ? 'Deactivate member' : 'Activate member'"
+    class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold border transition-all disabled:opacity-40"
+    :class="member.membership_status === 'active'
+      ? 'border-yellow-500/25 bg-yellow-500/8 text-yellow-600 hover:bg-yellow-500/15 hover:border-yellow-500/40'
+      : 'border-green-500/25 bg-green-500/8 text-green-600 hover:bg-green-500/15 hover:border-green-500/40'"
+  >
+    <i v-if="togglingUserId === member._id" class="fa-solid fa-spinner animate-spin text-[10px]"></i>
+    <i v-else-if="member.membership_status === 'active'" class="fa-solid fa-ban text-[10px]"></i>
+    <i v-else class="fa-solid fa-circle-check text-[10px]"></i>
+    <span class="hidden sm:inline">
+      {{ member.membership_status === 'active' ? 'Deactivate' : 'Activate' }}
+    </span>
+  </button>
 
-        <!-- Action buttons -->
-        <div
-          class="flex items-center gap-1.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
-          v-if="!isSuperAdminMember(member) && !member.is_owner && (canUpdateUsers || canDeleteUsers)">
-          <button
-            v-if="canUpdateUsers && (
-            member.membership_status === 'active' ||
-            member.membership_status === 'deactivated' ||
-            member.membership_status === 'suspended' ||
-            member.membership_status == null
-          )"
-            @click.stop="openStatusModal(member)"
-            :disabled="togglingUserId === member._id || !isUserVerified"
-            :title="member.membership_status === 'active' ? 'Deactivate member' : 'Activate member'"
-            class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold border transition-all disabled:opacity-40"
-            :class="member.membership_status === 'active'
-              ? 'border-yellow-500/25 bg-yellow-500/8 text-yellow-600 hover:bg-yellow-500/15 hover:border-yellow-500/40'
-              : 'border-green-500/25 bg-green-500/8 text-green-600 hover:bg-green-500/15 hover:border-green-500/40'"
-          >
-            <i v-if="togglingUserId === member._id" class="fa-solid fa-spinner animate-spin text-[10px]"></i>
-            <i v-else-if="member.membership_status === 'active'" class="fa-solid fa-ban text-[10px]"></i>
-            <i v-else class="fa-solid fa-circle-check text-[10px]"></i>
-            <span class="hidden sm:inline">{{ member.membership_status === 'active' ? 'Deactivate' : 'Activate' }}</span>
-          </button>
+  <!-- Edit -->
+  <button
+    v-if="canUpdateUsers && member.membership_status !== 'deactivated'"
+    @click.stop="openEditModal(member)"
+    :disabled="!isUserVerified"
+    title="Edit member"
+    class="w-8 h-8 rounded-lg flex items-center justify-center border border-border/50 text-text-secondary hover:text-text-primary hover:border-border hover:bg-bg-card transition-all disabled:opacity-40"
+  >
+    <i class="fa-regular fa-pen-to-square text-xs"></i>
+  </button>
 
-          <button
-            v-if="canUpdateUsers"
-            @click.stop="openEditModal(member)"
-            :disabled="!isUserVerified"
-            title="Edit member"
-            class="w-8 h-8 rounded-lg flex items-center justify-center border border-border/50 text-text-secondary hover:text-text-primary hover:border-border hover:bg-bg-card transition-all disabled:opacity-40"
-          >
-            <i class="fa-regular fa-pen-to-square text-xs"></i>
-          </button>
-
-          <button
-            v-if="canDeleteUsers && member.membership_status !== 'deactivated'"
-            @click.stop="confirmDeactivate(member)"
-            :disabled="!isUserVerified"
-            title="Remove member"
-            class="w-8 h-8 rounded-lg flex items-center justify-center border border-red-500/20 text-red-400 hover:bg-red-500/10 hover:border-red-500/40 transition-all disabled:opacity-40"
-          >
-            <i class="fa-regular fa-trash-can text-xs"></i>
-          </button>
-        </div>
+  <!-- Remove (only for non-deactivated, requires delete perm) -->
+  <button
+    v-if="canDeleteUsers && member.membership_status !== 'deactivated'"
+    @click.stop="confirmDeactivate(member)"
+    :disabled="!isUserVerified"
+    title="Remove member"
+    class="w-8 h-8 rounded-lg flex items-center justify-center border border-red-500/20 text-red-400 hover:bg-red-500/10 hover:border-red-500/40 transition-all disabled:opacity-40"
+  >
+    <i class="fa-regular fa-trash-can text-xs"></i>
+  </button>
+</div>
 
         <!-- Role select -->
         <div
@@ -339,7 +376,7 @@
     </div>
 
    <!-- ── Pagination ── -->
-<div v-if="totalPages > 1" class="flex items-center justify-between pt-2">
+<div v-if="totalPages" class="flex items-center justify-between pt-2">
   <p class="text-xs text-text-secondary">
     Showing
     <span class="font-medium text-text-primary">{{ rangeStart }}</span>–<span
@@ -623,6 +660,7 @@
                 <label class="text-[11px] font-semibold text-text-primary uppercase tracking-wider block mb-1.5">
                   Role <span class="text-text-secondary font-normal normal-case">(default: {{ defaultRoleName }})</span>
                 </label>
+                {{ createForm.company_role_id }}
                 <div class="relative">
                   <select
                     v-model="createForm.company_role_id"
@@ -690,24 +728,25 @@
               <label class="text-[11px] font-semibold text-text-primary uppercase tracking-wider block mb-1.5">Department</label>
               <input v-model="editForm.u_department" placeholder="e.g. Engineering" class="w-full border border-border/60 bg-bg-body/80 rounded-lg px-3.5 py-2.5 text-sm focus:border-accent/60 focus:ring-2 focus:ring-accent/10 outline-none transition-all placeholder:text-text-tertiary" />
             </div>
-            <div class="pt-1">
-              <button type="button" @click="showResetPassword = !showResetPassword" class="text-xs text-accent hover:underline flex items-center gap-1.5">
-                <i class="fa-solid fa-key text-[10px]"></i>
-                {{ showResetPassword ? 'Cancel password reset' : 'Reset password' }}
-              </button>
-              <div v-if="showResetPassword" class="mt-2.5">
+            <div>
+                <label class="text-[11px] font-semibold text-text-primary uppercase tracking-wider block mb-1.5">
+                  Role <span class="text-text-secondary font-normal normal-case">(default: {{ defaultRoleName }})</span>
+                </label>
                 <div class="relative">
-                  <input v-model="editForm.u_password" :type="showEditPassword ? 'text' : 'password'" placeholder="New password (min 6 chars)" class="w-full border border-border/60 bg-bg-body/80 rounded-lg px-3.5 py-2.5 pr-10 text-sm focus:border-accent/60 focus:ring-2 focus:ring-accent/10 outline-none transition-all placeholder:text-text-tertiary" :class="{ 'border-red-500/60': editErrors.u_password }" />
-                  <button type="button" @click="showEditPassword = !showEditPassword" class="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary text-xs">
-                    <i :class="showEditPassword ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"></i>
-                  </button>
+                  <select
+                    v-model="editForm.u_company_role_id"
+                    class="w-full appearance-none border border-border/60 bg-bg-body/80 rounded-lg pl-3.5 pr-8 py-2.5 text-sm focus:border-accent/60 focus:ring-2 focus:ring-accent/10 outline-none transition-all cursor-pointer text-text-primary"
+                  >
+                    <option v-for="role in allRoles" :key="role._id" :value="role._id">
+                      {{ role.title }}
+                    </option>
+                  </select>
+                  <i class="fa-solid fa-chevron-down absolute right-2.5 top-1/2 -translate-y-1/2 text-text-secondary/60 text-[10px] pointer-events-none"></i>
                 </div>
-                <p v-if="editErrors.u_password" class="text-[11px] text-red-500 mt-1">{{ editErrors.u_password }}</p>
               </div>
-            </div>
-            <div v-if="editServerError" class="flex items-start gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20">
-              <i class="fa-solid fa-circle-exclamation text-red-500 text-xs mt-0.5 shrink-0"></i>
-              <p class="text-xs text-red-500">{{ editServerError }}</p>
+            <div v-if="editServerError" class="flex items-start gap-2">
+              <i class="fa-solid fa-circle-exclamation text-red-400 text-xs mt-0.5 shrink-0"></i>
+              <p class="text-xs text-red-400">{{ editServerError }}</p>
             </div>
           </div>
           <div class="px-6 py-4 border-t border-border/50 flex gap-3">
@@ -809,6 +848,7 @@ import {
 } from '../../../queries/useCompanyUsers'
 import { useCompanyRolesWithoutPermission } from '../../../queries/useCommon'
 import BaseSelectField from '../../../components/ui/BaseSelectField.vue'
+
 type MembershipStatus =
   | 'active'
   | 'deactivated'
@@ -820,12 +860,14 @@ type MembershipStatus =
 interface Permission {
   _id: string; slug: string; title: string; description: string; action: string; category: string; scope: string;
 }
+
 const STATUS_FILTER_OPTIONS = [
   { title: 'All status', _id: '' },
-  { title: 'Active', _id: 'active' },
-  { title: 'Suspended', _id: 'suspended' },
-  { title: 'Deactivated', _id: 'deactivated' },
-];
+  { title: 'Active',     _id: 'active' },
+  { title: 'Suspended',  _id: 'suspended' },
+  { title: 'Deactivated',_id: 'deactivated' },
+]
+
 interface CompanyRole {
   _id: string; title: string; slug: string; description: string; company_id: string | null;
   is_admin: boolean; is_editor: boolean; is_viewer: boolean; is_system: boolean; is_trash: boolean;
@@ -852,11 +894,11 @@ const defaultRoleName = computed(() => defaultRole.value?.title ?? 'Viewer')
 
 // ─── Company context ──────────────────────────────────────────
 const companyId = computed<string>(() => {
-  const profileVal = props.profile
-  if (profileVal?.data?.active_company_id) return profileVal.data.active_company_id
-  if (profileVal?.active_company_id) return profileVal.active_company_id
-  if (profileVal?.data?.active_company?._id) return profileVal.data.active_company._id
-  if (profileVal?.active_company?._id) return profileVal.active_company._id
+  const p = props.profile
+  if (p?.data?.active_company_id) return p.data.active_company_id
+  if (p?.active_company_id)       return p.active_company_id
+  if (p?.data?.active_company?._id) return p.data.active_company._id
+  if (p?.active_company?._id)     return p.active_company._id
   return localStorage.getItem('company_id') || ''
 })
 
@@ -868,44 +910,125 @@ const activeCompany = computed(() =>
   ?? null
 )
 
-const hasSuperAdmin = computed(() => activeCompany.value?.has_super_admin ?? false)
+const hasSuperAdmin   = computed(() => activeCompany.value?.has_super_admin ?? false)
+const inviteLink      = computed<string>(() => activeCompany.value?.join_link ?? '')
+const hasOrgDomain    = computed(() => !!activeCompany.value?.custom_domain)
 
 const orgDomainSuffix = computed<string>(() => {
-  const domainLink = activeCompany.value?.custom_domain ?? ''
-  if (!domainLink) return ''
-  try { return new URL(domainLink).hostname } catch { return domainLink.replace(/^https?:\/\//, '') }
+  const d = activeCompany.value?.custom_domain ?? ''
+  if (!d) return ''
+  try { return new URL(d).hostname } catch { return d.replace(/^https?:\/\//, '') }
 })
 
-const inviteLink = computed<string>(() => activeCompany.value?.join_link ?? '')
-const hasOrgDomain = computed(() => !!activeCompany.value?.custom_domain)
-
+// ─── Role / permission helpers ────────────────────────────────
+/**
+ * The flat membership_role string ("admin", "owner", etc.)
+ * Falls back to the nested role object slug when the flat string is absent.
+ */
 const membershipRole = computed<string>(() => {
-  const role =
+  const flat =
     activeCompany.value?.membership_role
     ?? props.profile?.data?.membership_role
     ?? props.profile?.membership_role
     ?? ''
-  return role.toString().toLowerCase().replace(/-/g, '_').trim()
+  if (flat) return flat.toString().toLowerCase().replace(/-/g, '_').trim()
+
+  // Derive from nested role object
+  const slug =
+    activeCompany.value?.role?.slug
+    ?? activeCompany.value?.user_role?.slug
+    ?? ''
+  return slug.toString().toLowerCase().replace(/-/g, '_').trim()
 })
 
+/**
+ * The nested role object from the profile — the most reliable source for
+ * is_admin / is_editor flags.
+ */
+const userRoleObject = computed(() =>
+  activeCompany.value?.role
+  ?? activeCompany.value?.user_role
+  ?? props.profile?.data?.active_company?.role
+  ?? null
+)
+
 const permissions = computed<string[]>(() => activeCompany.value?.permissions ?? [])
+function hasPerm(p: string): boolean { return permissions.value.includes(p) }
 
-function hasPerm(p: string): boolean {
-  return permissions.value.includes(p)
-}
-
+/**
+ * True for any role that can manage users (owner, super_admin, admin, editor,
+ * or any role whose role object has is_admin = true).
+ */
 const isSuperAdminOrOwner = computed(() => {
   const role = membershipRole.value
   return (
-    role === 'owner' ||
+    role === 'owner'       ||
     role === 'super_admin' ||
-    role === 'admin' ||
-    role === 'editor' ||
-    activeCompany.value?.role?.is_admin === true ||
-    activeCompany.value?.user_role?.is_admin === true
+    role === 'admin'       ||
+    role === 'editor'      ||
+    userRoleObject.value?.is_admin  === true ||
+    userRoleObject.value?.is_editor === true
   )
 })
 
+// ─── isUserVerified ───────────────────────────────────────────
+/**
+ * Determines whether the current user is fully verified / active and
+ * therefore allowed to perform mutations.
+ *
+ * Priority (first truthy wins):
+ *  1. Role object says is_admin (strongest signal from profile JSON)
+ *  2. Owner found in members list and is active
+ *  3. company_owner.is_active from profile
+ *  4. has_domain_verified + user is_active
+ *  5. Any legacy "verified" flag scattered across the profile
+ *  6. isSuperAdminOrOwner (role string fallback)
+ */
+const isUserVerified = computed(() => {
+  const notPendingSuperAdmin =
+    activeCompany.value?.membership_status !== 'pending_super_admin_otp'
+
+  // 1. Role object is_admin — most direct signal
+  if (
+    (userRoleObject.value?.is_admin === true || userRoleObject.value?.is_editor === true) &&
+    notPendingSuperAdmin
+  ) return true
+
+  // 2. Owner row in members list is active
+  if (
+    owner.value?.membership_status === 'active' &&
+    notPendingSuperAdmin
+  ) return true
+
+  // 3. company_owner.is_active from profile
+  if (
+    props.profile?.data?.company_owner?.is_active === true &&
+    notPendingSuperAdmin
+  ) return true
+
+  // 4. Domain verified + user active
+  if (
+    props.profile?.data?.active_company?.has_domain_verified &&
+    props.profile?.data?.is_active !== false &&
+    notPendingSuperAdmin
+  ) return true
+
+  // 5. Legacy verified flags
+  const raw = props.profile?.data ?? props.profile
+  const checks = [
+    raw?.u_is_verfied, raw?.u_verified,
+    raw?.is_verified,  raw?.isUserVerified,
+    activeCompany.value?.isUserVerified,
+  ]
+  if (checks.some(v => v === true || v === 'true')) return true
+
+  // 6. Role string fallback
+  if (isSuperAdminOrOwner.value) return true
+
+  return false
+})
+
+// ─── Permissions ──────────────────────────────────────────────
 const canCreateUsers = computed(() =>
   isSuperAdminOrOwner.value || hasPerm('company_user.create')
 )
@@ -916,83 +1039,11 @@ const canDeleteUsers = computed(() =>
   isUserVerified.value && (isSuperAdminOrOwner.value || hasPerm('company_user.delete'))
 )
 
-const owner = computed(() => members.value.find((m) => m.is_owner))
-const isSuperAdminActive = computed(() => owner.value?.membership_status === 'active')
-
-const isUserVerified = computed(() => {
-  const profileVal = props.profile
-  const raw = profileVal?.data ?? profileVal
-
-  if (
-    owner.value?.membership_status === 'active' &&
-    activeCompany.value?.membership_status !== 'pending_super_admin_otp'
-  ) return true
-
-  const checks = [
-    raw?.isUserVerified, raw?.is_verified, raw?.u_verified, raw?.u_is_verfied,
-    profileVal?.isUserVerified, profileVal?.is_verified, profileVal?.u_verified, profileVal?.u_is_verfied,
-    activeCompany.value?.isUserVerified,
-  ]
-  if (checks.some(v => v === true || v === 'true')) return true
-
-  if (isSuperAdminOrOwner.value) return true
-
-  return false
-})
-const currentUserIsOwner = computed(() => {
-  // Cross-reference the owner member from API against the logged-in user's _id
-  const currentUserId =
-    props.profile?.data?._id ??
-    props.profile?._id ??
-    props.profile?.data?.user?._id ??
-    props.profile?.user?._id
-
-  const ownerMember = members.value.find(m => m.is_owner)
-
-  // Most reliable: check if logged-in user IS the owner member
-  if (currentUserId && ownerMember && currentUserId === ownerMember._id) return true
-
-  // Fallback: check role string
-  const role = membershipRole.value
-  return (
-    role === 'owner' ||
-    activeCompany.value?.is_owner === true ||
-    activeCompany.value?.membership_role === 'owner' ||
-    props.profile?.data?.is_owner === true ||
-    props.profile?.is_owner === true ||
-    props.profile?.data?.active_company?.is_owner === true ||
-    props.profile?.active_company?.is_owner === true
-  )
-})
-
-function isSuperAdminMember(member: CompanyUser): boolean {
-  // Owner has full access — never hide anything
-  if (currentUserIsOwner.value) return false
-
-  // Non-owners cannot touch the owner row
-  if (member.is_owner) return true
-
-  // Non-owners cannot touch super admin role members
-  const role = allRoles.value.find((r: CompanyRole) => r._id === member.company_role_id)
-  if (!role) return false
-  const slug  = role.slug?.toLowerCase()  || ''
-  const title = role.title?.toLowerCase() || ''
-  return slug.includes('super') || title === 'super admin'
-}
-const BULK_SELECTABLE_STATUSES: MembershipStatus[] = ['active', 'deactivated', 'suspended']
-
-function isBulkSelectable(member: CompanyUser): boolean {
-  if (isSuperAdminMember(member)) return false
-  return (
-    BULK_SELECTABLE_STATUSES.includes(member.membership_status as MembershipStatus) ||
-    member.membership_status == null
-  )
-}
-// ─── Members data (unchanged) ─────────────────────────────────
+// ─── Members data ─────────────────────────────────────────────
 const companyUsersParams = computed(() => ({
   company_id:      companyId.value,
   membership_role: '',
-  per_page:        1000, // fetch all — API doesn't support search
+  per_page:        1000,
 }))
 
 const { data: usersData, isLoading } = useCompanyUsers(companyUsersParams)
@@ -1007,6 +1058,94 @@ const members = computed<CompanyUser[]>(() => {
   })
 })
 
+/**
+ * Owner member — first tries the members list (is_owner flag),
+ * then falls back to profile.company_owner with a synthesised
+ * membership_status derived from is_active.
+ */
+const owner = computed(() =>
+  members.value.find((m) => m.is_owner)
+  ?? (props.profile?.data?.company_owner
+      ? {
+          ...props.profile.data.company_owner,
+          membership_status: props.profile.data.company_owner.is_active
+            ? 'active'
+            : 'deactivated',
+        } as any
+      : null)
+)
+
+const isSuperAdminActive = computed(() => owner.value?.membership_status === 'active')
+
+// ─── currentUserIsOwner ───────────────────────────────────────
+const currentUserIsOwner = computed(() => {
+  const currentUserId =
+    props.profile?.data?._id ??
+    props.profile?._id ??
+    props.profile?.data?.user?._id ??
+    props.profile?.user?._id
+
+  const ownerMember = members.value.find(m => m.is_owner)
+  if (currentUserId && ownerMember && currentUserId === ownerMember._id) return true
+
+  const role = membershipRole.value
+  return (
+    role === 'owner' ||
+    activeCompany.value?.is_owner === true ||
+    activeCompany.value?.membership_role === 'owner' ||
+    props.profile?.data?.is_owner === true ||
+    props.profile?.is_owner === true ||
+    props.profile?.data?.active_company?.is_owner === true ||
+    props.profile?.active_company?.is_owner === true
+  )
+})
+
+// ─── isSuperAdminMember ───────────────────────────────────────
+/**
+ * Returns true when the CURRENT USER should not be allowed to act on `member`.
+ * Owners can act on anyone. Non-owners cannot act on the owner row or on
+ * members who have a super-admin role.
+ */
+function isSuperAdminMember(member: CompanyUser): boolean {
+  if (currentUserIsOwner.value) return false   // owner can touch anyone
+  if (member.is_owner) return true             // nobody else can touch the owner
+
+  const role = allRoles.value.find((r: CompanyRole) => r._id === member.company_role_id)
+  if (!role) return false
+  const slug  = role.slug?.toLowerCase()  || ''
+  const title = role.title?.toLowerCase() || ''
+  return slug.includes('super') || title === 'super admin'
+}
+
+function canActOnMember(member: CompanyUser): boolean {
+  if (member.is_owner)           return false
+
+  const role = activeCompany.value?.role?.slug
+    ?? activeCompany.value?.user_role?.slug
+    ?? membershipRole.value
+  return (
+    role === 'owner'       ||
+    role === 'super_admin' ||
+    role === 'admin'       ||
+    role === 'editor'      ||
+    userRoleObject.value?.is_admin  === true ||
+    userRoleObject.value?.is_editor === true ||
+    hasPerm('company_user.update')  ||
+    hasPerm('company_user.delete')
+  )
+}
+
+// ─── Bulk selectable ──────────────────────────────────────────
+const BULK_SELECTABLE_STATUSES: MembershipStatus[] = ['active', 'deactivated', 'suspended']
+
+function isBulkSelectable(member: CompanyUser): boolean {
+  if (isSuperAdminMember(member)) return false
+  return (
+    BULK_SELECTABLE_STATUSES.includes(member.membership_status as MembershipStatus) ||
+    member.membership_status == null
+  )
+}
+
 const isViewer = computed(() => membershipRole.value === 'viewer')
 const canAct   = computed(() => !isViewer.value)
 
@@ -1015,7 +1154,6 @@ const searchQuery  = ref('')
 const statusFilter = ref('')
 const roleFilter   = ref('')
 
-// Runs over ALL members (full dataset), not just current page
 const filteredMembers = computed(() =>
   members.value.filter((m) => {
     const q           = searchQuery.value.toLowerCase()
@@ -1026,27 +1164,14 @@ const filteredMembers = computed(() =>
   })
 )
 
-// ─── Pagination (API-meta aware) ──────────────────────────────
+// ─── Pagination ───────────────────────────────────────────────
 const page     = ref(1)
-const pageSize = ref(20) // must match your API's per_page default
+const pageSize = ref(20)
 watch([searchQuery, statusFilter, roleFilter], () => { page.value = 1 })
 
-// Read total from API response meta; fall back to filtered count
-// for when the API doesn't return pagination meta
-// const apiTotal   = computed<number>(() =>
-//   usersData.value?.data?.total   ??
-//   usersData.value?.total         ??
-//   filteredMembers.value.length
-// )
-// const apiPerPage = computed<number>(() =>
-//   usersData.value?.data?.per_page ??
-//   usersData.value?.per_page       ??
-//   pageSize.value
-// )
 const totalMembers = computed<number>(() => filteredMembers.value.length)
 const totalPages   = computed(() => Math.max(1, Math.ceil(totalMembers.value / pageSize.value)))
 
-// Slice filtered results for current page
 const paginatedMembers = computed(() => {
   const start = (page.value - 1) * pageSize.value
   return filteredMembers.value.slice(start, start + pageSize.value)
@@ -1099,10 +1224,9 @@ watch([page, searchQuery, statusFilter, roleFilter], () => { bulkSelectedIds.val
 
 // ─── Mutations ────────────────────────────────────────────────
 const togglingUserId = ref<string | null>(null)
-
-const { mutate: toggleActive } = useToggleCompanyUserActive(companyId.value)
-
+const { mutate: toggleActive }   = useToggleCompanyUserActive(companyId.value)
 const { mutate: deactivateUser } = useDeactivateCompanyUser(companyId.value)
+const { mutate: updateUser }     = useUpdateCompanyUser(companyId.value)
 
 // ─── Bulk activate ────────────────────────────────────────────
 async function handleBulkActivate() {
@@ -1115,7 +1239,9 @@ async function handleBulkActivate() {
   selectedBulkAction.value = 'activate'
   bulkActionLoading.value  = true
   try {
-    await Promise.all(eligibleIds.map(id => new Promise<void>((res, rej) => toggleActive(id, { onSuccess: () => res(), onError: rej }))))
+    await Promise.all(eligibleIds.map(id =>
+      new Promise<void>((res, rej) => toggleActive(id, { onSuccess: () => res(), onError: rej }))
+    ))
     toast.success(`${eligibleIds.length} member(s) activated.`)
     clearBulkSelection()
   } catch (err: any) {
@@ -1137,7 +1263,9 @@ async function handleBulkDeactivate() {
   selectedBulkAction.value = 'deactivate'
   bulkActionLoading.value  = true
   try {
-    await Promise.all(eligibleIds.map(id => new Promise<void>((res, rej) => deactivateUser(id, { onSuccess: () => res(), onError: rej }))))
+    await Promise.all(eligibleIds.map(id =>
+      new Promise<void>((res, rej) => deactivateUser(id, { onSuccess: () => res(), onError: rej }))
+    ))
     toast.success(`${eligibleIds.length} member(s) deactivated.`)
     clearBulkSelection()
   } catch (err: any) {
@@ -1151,8 +1279,6 @@ async function handleBulkDeactivate() {
 // ─── Inline role update ───────────────────────────────────────
 const roleUpdatingUserId = ref<string | null>(null)
 
-const { mutate: updateUser } = useUpdateCompanyUser(companyId.value)
-
 function handleInlineRoleUpdate(member: CompanyUser, roleId: string) {
   if (!canUpdateUsers.value) { toast.error('No permission to update roles'); return }
   if (!roleId || member.company_role_id === roleId) return
@@ -1160,8 +1286,14 @@ function handleInlineRoleUpdate(member: CompanyUser, roleId: string) {
   updateUser(
     { userId: member._id, payload: { company_role_id: roleId } },
     {
-      onSuccess: (data: any) => { toast.success((data?.data ?? data)?.message || 'Role updated'); roleUpdatingUserId.value = null },
-      onError:   (error: any) => { toast.error(error?.response?.data?.message || 'Failed to update role'); roleUpdatingUserId.value = null },
+      onSuccess: (data: any) => {
+        toast.success((data?.data ?? data)?.message || 'Role updated')
+        roleUpdatingUserId.value = null
+      },
+      onError: (error: any) => {
+        toast.error(error?.response?.data?.message || 'Failed to update role')
+        roleUpdatingUserId.value = null
+      },
     }
   )
 }
@@ -1170,16 +1302,19 @@ function handleInlineRoleUpdate(member: CompanyUser, roleId: string) {
 const showStatusModal   = ref(false)
 const statusModalMember = ref<CompanyUser | null>(null)
 const statusModalRole   = ref<string>('')
-  function isFirstTimeActivation(member: CompanyUser): boolean {
+
+function isFirstTimeActivation(member: CompanyUser): boolean {
   const neverActiveStatuses = [null, undefined, 'pending', 'pending_super_admin_otp', 'invited']
   return neverActiveStatuses.includes(member.membership_status as any)
 }
+
 function openStatusModal(member: CompanyUser) {
   if (!canUpdateUsers.value) { toast.error('No permission to update members'); return }
   statusModalMember.value = member
-  statusModalRole.value   = member.company_role_id ?? defaultRole.value?._id ?? ''  // ← seed role
+  statusModalRole.value   = member.company_role_id ?? defaultRole.value?._id ?? ''
   showStatusModal.value   = true
 }
+
 function handleStatusConfirm() {
   if (!statusModalMember.value) return
   togglingUserId.value = statusModalMember.value._id
@@ -1273,7 +1408,9 @@ const createErrors = ref({
 })
 
 const fullEmail = computed(() =>
-  createForm.value.emailPrefix ? `${createForm.value.emailPrefix}@${orgDomainSuffix.value}` : ''
+  createForm.value.emailPrefix
+    ? `${createForm.value.emailPrefix}@${orgDomainSuffix.value}`
+    : ''
 )
 
 function nameToEmailPrefix(name: string): string {
@@ -1284,8 +1421,8 @@ function nameToEmailPrefix(name: string): string {
 }
 
 function onNameInput() {
-  const currentPrefix   = createForm.value.emailPrefix
-  const expectedPrefix  = nameToEmailPrefix(createForm.value.u_full_name.slice(0, -1))
+  const currentPrefix  = createForm.value.emailPrefix
+  const expectedPrefix = nameToEmailPrefix(createForm.value.u_full_name.slice(0, -1))
   if (!currentPrefix || currentPrefix === expectedPrefix) {
     createForm.value.emailPrefix = nameToEmailPrefix(createForm.value.u_full_name)
   }
@@ -1381,7 +1518,7 @@ const showEditPassword  = ref(false)
 const editingMember     = ref<CompanyUser | null>(null)
 const editServerError   = ref('')
 const isEditing         = ref(false)
-const editForm   = ref({ u_full_name: '', u_job_title: '', u_department: '', u_password: '' })
+const editForm   = ref({ u_full_name: '', u_job_title: '', u_department: '', u_password: '', u_company_role_id: '' })
 const editErrors = ref({ u_password: '' })
 
 function openEditModal(member: CompanyUser) {
@@ -1390,6 +1527,7 @@ function openEditModal(member: CompanyUser) {
     u_full_name:  member.u_full_name,
     u_job_title:  member.u_job_title  ?? '',
     u_department: member.u_department ?? '',
+    u_company_role_id: member.company_role_id ?? defaultRole.value?._id ?? '',
     u_password:   '',
   }
   editErrors.value        = { u_password: '' }
@@ -1412,31 +1550,32 @@ function handleEdit() {
   editServerError.value = ''
   isEditing.value = true
   const payload: any = {
-    u_full_name:  editForm.value.u_full_name,
-    u_job_title:  editForm.value.u_job_title  || undefined,
-    u_department: editForm.value.u_department || undefined,
-  }
+  u_full_name:      editForm.value.u_full_name,
+  u_job_title:      editForm.value.u_job_title  || undefined,
+  u_department:     editForm.value.u_department || undefined,
+  company_role_id:  editForm.value.u_company_role_id || defaultRole.value?._id || undefined,
+}
   if (showResetPassword.value && editForm.value.u_password) payload.u_password = editForm.value.u_password
   updateMember(
-  { userId: editingMember.value._id, payload },
-  {
-    onSuccess: (data: any) => {
-      const p = data?.data ?? data
-      if (!p || p?.status === false) {
-        editServerError.value = p?.message || 'Something went wrong.'
+    { userId: editingMember.value._id, payload },
+    {
+      onSuccess: (data: any) => {
+        const p = data?.data ?? data
+        if (!p || p?.status === false) {
+          editServerError.value = p?.message || 'Something went wrong.'
+          isEditing.value = false
+          return
+        }
+        toast.success(p?.message || 'Member updated successfully')
+        closeEditModal()
         isEditing.value = false
-        return
-      }
-      toast.success(p?.message || 'Member updated successfully')
-      closeEditModal()
-      isEditing.value = false
-    },
-    onError: (error: any) => {
-      editServerError.value = error?.response?.data?.message || error?.message || 'Failed to update member'
-      isEditing.value = false
-    },
-  }
-)
+      },
+      onError: (error: any) => {
+        editServerError.value = error?.response?.data?.message || error?.message || 'Failed to update member'
+        isEditing.value = false
+      },
+    }
+  )
 }
 
 // ─── Remove modal ─────────────────────────────────────────────
@@ -1467,6 +1606,7 @@ function handleDeactivate() {
     },
   })
 }
+
 // ─── Bulk action helpers ──────────────────────────────────────
 const bulkHasActivatable = computed(() =>
   bulkSelectedIds.value.some(id => {

@@ -138,7 +138,7 @@
               <button
                 :disabled="domain.status !== 'verified'"
                 @click="loadDomainUsers(domain._id)"
-                class="w-full flex items-center justify-between px-5 py-2.5 text-[11px] font-semibold text-text-secondary hover:text-text-primary transition-all bg-bg-surface/30 disabled:opacity-40 disabled:cursor-not-allowed"
+                class="w-full flex items-center cursor-pointer justify-between px-5 py-2.5 text-[11px] font-semibold text-text-secondary hover:text-text-primary transition-all bg-bg-surface/30 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <div class="flex items-center gap-2">
                   <i class="fa-regular fa-users text-[11px]"></i>
@@ -160,42 +160,7 @@
               >
                 <div v-if="domainUsersLoaded.has(domain._id)" class="overflow-hidden">
                   <div class="px-5 py-4 space-y-3">
-                    <div class="flex items-center justify-between">
-                      <div class="flex items-center gap-3">
-                        <template v-if="!isViewer">
-                          <label class="flex items-center gap-2 cursor-pointer">
-                          <div
-                            class="w-4 h-4 rounded border-[1.5px] flex items-center justify-center transition-all"
-                            :class="isDomainAllSelected(domain._id) ? 'bg-accent border-accent' : 'border-border/60 hover:border-accent/50'"
-                            @click.stop="toggleDomainSelectAll(domain._id)"
-                          >
-                            <i v-if="isDomainAllSelected(domain._id)" class="fa-solid fa-check text-white text-[8px]"></i>
-                            <div v-else-if="isDomainPartiallySelected(domain._id)" class="w-2 h-0.5 bg-accent rounded-full"></div>
-                          </div>
-                          <span class="text-[11px] font-semibold text-text-secondary">Select all</span>
-                        </label>
-
-                        <button
-                          v-if="(domainSelectedIds[domain._id] ?? []).length"
-                          @click="openTransferModal(domain._id, domain.domain)"
-                          class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent text-white text-[11px] font-bold transition-all hover:bg-accent/90"
-                        >
-                          <i class="fa-solid fa-arrow-right-to-bracket text-[10px]"></i>
-                          Enrol ({{ domainSelectedIds[domain._id].length }})
-                        </button>
-                        </template>
-                        
-                      </div>
-
-                      <button
-                      v-if="!isViewer"
-                        @click="openCreateUserModal(domain._id)"
-                        class="text-[11px] font-semibold text-accent hover:underline flex items-center gap-1"
-                      >
-                        <i class="fa-solid fa-plus text-[10px]"></i>
-                        Create user
-                      </button>
-                    </div>
+                    
 
                     <div class="space-y-1.5">
                       <div
@@ -203,14 +168,7 @@
                         :key="user._id"
                         class="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-border/30 bg-bg-surface/30 hover:bg-bg-surface/60 transition-all"
                       >
-                        <div
-                        v-if="!isViewer"
-                          class="w-4 h-4 rounded border-[1.5px] flex items-center justify-center cursor-pointer transition-all shrink-0"
-                          :class="(domainSelectedIds[domain._id] ?? []).includes(user._id) ? 'bg-accent border-accent' : 'border-border/60'"
-                          @click="toggleDomainUser(domain._id, user._id)"
-                        >
-                          <i v-if="(domainSelectedIds[domain._id] ?? []).includes(user._id)" class="fa-solid fa-check text-white text-[8px]"></i>
-                        </div>
+                       
 
                         <div class="w-7 h-7 rounded-full bg-accent/15 flex items-center justify-center text-[10px] font-bold text-accent shrink-0 overflow-hidden">
                           <img v-if="user.u_profile_image" :src="user.u_profile_image" class="w-full h-full object-cover" />
@@ -227,6 +185,43 @@
                         <i class="fa-regular fa-users text-text-secondary/40 text-2xl mb-2 block"></i>
                         <p class="text-xs text-text-secondary">No users found for this domain.</p>
                       </div>
+                      <!-- Pagination -->
+<div
+  v-if="domainUsersTotalPages(domain._id)"
+  class="flex items-center justify-between pt-2"
+>
+  <span class="text-[11px] text-text-secondary tabular-nums">
+    {{ domainUsersPageStart(domain._id) }}–{{ domainUsersPageEnd(domain._id) }}
+    of {{ domainUsersMap[domain._id]?.length ?? 0 }}
+  </span>
+  <div class="flex items-center gap-1">
+    <button
+      @click="setDomainUsersPage(domain._id, (domainUsersPage[domain._id] ?? 1) - 1)"
+      :disabled="(domainUsersPage[domain._id] ?? 1) <= 1"
+      class="w-7 h-7 rounded-lg flex items-center justify-center border border-border/50 text-text-secondary hover:text-text-primary hover:bg-bg-surface transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+    >
+      <i class="fa-solid fa-chevron-left text-[10px]"></i>
+    </button>
+    <button
+      v-for="p in domainUsersTotalPages(domain._id)"
+      :key="p"
+      @click="setDomainUsersPage(domain._id, p)"
+      class="w-7 h-7 rounded-lg text-[11px] font-semibold transition-all border"
+      :class="(domainUsersPage[domain._id] ?? 1) === p
+        ? 'bg-accent text-white border-accent shadow-sm shadow-accent/20'
+        : 'border-border/50 text-text-secondary hover:text-text-primary hover:bg-bg-surface'"
+    >
+      {{ p }}
+    </button>
+    <button
+      @click="setDomainUsersPage(domain._id, (domainUsersPage[domain._id] ?? 1) + 1)"
+      :disabled="(domainUsersPage[domain._id] ?? 1) >= domainUsersTotalPages(domain._id)"
+      class="w-7 h-7 rounded-lg flex items-center justify-center border border-border/50 text-text-secondary hover:text-text-primary hover:bg-bg-surface transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+    >
+      <i class="fa-solid fa-chevron-right text-[10px]"></i>
+    </button>
+  </div>
+</div>
                     </div>
                   </div>
                 </div>
@@ -973,13 +968,8 @@ function stopCountdown() {
 }
 
 onUnmounted(() => stopCountdown())
-
-// ── Domain users ──────────────────────────────────────────────────────────────
-// Uses workspaceStore.listDomainUsers(companyId) — same call as loadDomainUsers
-// in the onboarding component (step 9). Handles 404/not-found gracefully.
-async function loadDomainUsers(domainId: string) {
-  // Toggle collapse if already loaded
-  if (domainUsersLoaded.value.has(domainId)) {
+async function loadDomainUsers(domainId: string, page = 1) {
+  if (page === 1 && domainUsersLoaded.value.has(domainId)) {
     const next = new Set(domainUsersLoaded.value)
     next.delete(domainId)
     domainUsersLoaded.value = next
@@ -987,57 +977,20 @@ async function loadDomainUsers(domainId: string) {
   }
   try {
     const companyId = localStorage.getItem('company_id') ?? ''
-    const users = await workspaceStore.listDomainUsers(companyId)
-    domainUsersMap.value = { ...domainUsersMap.value, [domainId]: users }
-    domainUsersLoaded.value = new Set([...domainUsersLoaded.value, domainId])
+    const result = await workspaceStore.listDomainUsers(companyId)
+    domainUsersMap.value        = { ...domainUsersMap.value, [domainId]: result.users ?? [] }
+    domainUsersPagination.value = { ...domainUsersPagination.value, [domainId]: result.pagination }
+    domainUsersLoaded.value     = new Set([...domainUsersLoaded.value, domainId])
   } catch (err: any) {
     const status = err?.response?.status || err?.status
     const msg = (err?.response?.data?.message || err?.message || '').toLowerCase()
     if (status === 404 || msg.includes('no users') || msg.includes('not found')) {
-      domainUsersMap.value = { ...domainUsersMap.value, [domainId]: [] }
+      domainUsersMap.value    = { ...domainUsersMap.value, [domainId]: [] }
       domainUsersLoaded.value = new Set([...domainUsersLoaded.value, domainId])
     } else {
       toast.error(err?.response?.data?.message ?? 'Failed to load domain users.')
     }
   }
-}
-
-function toggleDomainUser(domainId: string, userId: string) {
-  const current = domainSelectedIds.value[domainId] ?? []
-  const idx = current.indexOf(userId)
-  domainSelectedIds.value = {
-    ...domainSelectedIds.value,
-    [domainId]: idx === -1 ? [...current, userId] : current.filter(i => i !== userId),
-  }
-}
-
-function toggleDomainSelectAll(domainId: string) {
-  const allIds  = (domainUsersMap.value[domainId] ?? []).map((u: any) => u._id)
-  const current = domainSelectedIds.value[domainId] ?? []
-  const allSel  = allIds.every(id => current.includes(id))
-  domainSelectedIds.value = { ...domainSelectedIds.value, [domainId]: allSel ? [] : allIds }
-}
-
-function isDomainAllSelected(domainId: string): boolean {
-  const allIds  = (domainUsersMap.value[domainId] ?? []).map((u: any) => u._id)
-  const current = domainSelectedIds.value[domainId] ?? []
-  return allIds.length > 0 && allIds.every(id => current.includes(id))
-}
-
-function isDomainPartiallySelected(domainId: string): boolean {
-  const allIds  = (domainUsersMap.value[domainId] ?? []).map((u: any) => u._id)
-  const current = domainSelectedIds.value[domainId] ?? []
-  return current.some(id => allIds.includes(id)) && !isDomainAllSelected(domainId)
-}
-
-// ── Transfer / Enrol ──────────────────────────────────────────────────────────
-// Uses workspaceStore.enrolDomainUsers(companyId, ids) — same call as
-// enrolSelectedUsers in the onboarding component (step 9).
-function openTransferModal(domainId: string, domainName: string) {
-  if (!(domainSelectedIds.value[domainId] ?? []).length) return
-  transferDomainId.value   = domainId
-  transferDomainName.value = domainName
-  showTransferModal.value  = true
 }
 
 async function handleConfirmTransfer() {
@@ -1057,20 +1010,6 @@ async function handleConfirmTransfer() {
   } finally {
     isTransferring.value = false
   }
-}
-function openCreateUserModal(domainId: string) {
-  createUserDomainId.value  = domainId
-  const domain = domains.value.find(d => d._id === domainId)
-  domainForCreateUser.value = domain?.domain ?? ''
-  createUserForm.value      = {
-    u_full_name:     '',
-    emailPrefix:     '',
-    u_password:      '',
-    company_role_id: defaultRole.value?._id ?? '',   // ← seed viewer
-  }
-  createUserError.value     = ''
-  showPassword.value        = false                  // ← reset eye toggle
-  showCreateUserModal.value = true
 }
 
 function closeCreateUserModal() {
@@ -1161,5 +1100,26 @@ const isViewer = computed(() => {
   if (roleSlug.includes('super') || roleSlug === 'admin') return false
   return membershipRole.value === 'viewer' || membershipRole.value === 'member'
 })
+const domainUsersPage    = ref<Record<string, number>>({})
+const domainUsersPagination = ref<Record<string, { total: number; page: number; limit: number; pages: number }>>({})
+function domainUsersTotalPages(domainId: string): number {
+  return domainUsersPagination.value[domainId]?.pages ?? 1
+}
 
+function domainUsersPageStart(domainId: string): number {
+  const p = domainUsersPagination.value[domainId]
+  if (!p) return 0
+  return (p.page - 1) * p.limit + 1
+}
+
+function domainUsersPageEnd(domainId: string): number {
+  const p = domainUsersPagination.value[domainId]
+  if (!p) return 0
+  return Math.min(p.page * p.limit, p.total)
+}
+async function setDomainUsersPage(domainId: string, page: number) {
+  const total = domainUsersTotalPages(domainId)
+  const clamped = Math.max(1, Math.min(page, total))
+  await loadDomainUsers(domainId, clamped)
+}
 </script>

@@ -7,6 +7,7 @@ import { useAuthStore } from './stores/auth'
 import { useDeletionGuard } from './composables/useDeletionGuard'
 import { useQuery } from '@tanstack/vue-query'
 import { getProfile } from './services/user'
+import { toast } from 'vue-sonner'
 const { isDark } = useTheme()
 const authStore = useAuthStore()
 const { data: profile } = useQuery({
@@ -25,6 +26,7 @@ watch(
   async (user) => { 
     if (user?.is_suspended) {
       await authStore.logout()
+      toast.error('Your account has been suspended. Please contact support for more information.')
     }
   },
   { immediate: true }

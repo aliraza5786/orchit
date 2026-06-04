@@ -44,6 +44,7 @@
     <div class="flex flex-1 min-h-0 overflow-hidden md:flex-row">
 
       <SettingsSidebar
+      v-if="!isProfileLoading"
         :mobile-open="isMobileSidebarOpen"
         :profile="profileData"
         @close-mobile="closeMobileSidebar"
@@ -94,20 +95,56 @@
                 </div>
               </div>
             </div>
+<!-- ── Profile loading skeleton ── -->
+<template v-if="isProfileLoading">
+  <div class="animate-pulse space-y-6">
 
-            <!-- Dynamic Content -->
-            <ProfileTab v-if="currentTab === 'profile'" />
-            <BillingTab v-else-if="currentTab === 'billing'" />
-            <PersonalTokens v-else-if="currentTab === 'token-utilization'" />
+    <!-- Fake warning banner -->
+    <div class="h-16 rounded-xl bg-border/20 w-full"></div>
 
-            <!-- Org tabs — always pass profileData (active_company drives the context) -->
-            <OrganizationTab v-else-if="currentTab === 'org-setup'" :profile="profileData" />
-            <OrgUsersTab v-else-if="currentTab === 'org-users'" :profile="profileData" />
-            <OrgRolesTab v-else-if="currentTab === 'org-roles'" :profile="profileData" />
-            <OwnershipTransfer v-else-if="currentTab === 'ownership-transfer'" :profile="profileData" />
-            <OrgPackagesTab v-else-if="currentTab === 'org-packages'" :profile="profileData" />
-            <OrgDomainSetup v-else-if="currentTab === 'org-domain'" :profile="profileData" />
-            <OrgAiTokensAllocationTab v-else-if="currentTab === 'token-allocation'" :profile="profileData" />
+    <!-- Fake page heading -->
+    <div class="space-y-2">
+      <div class="h-5 w-40 rounded-lg bg-border/30"></div>
+      <div class="h-3.5 w-64 rounded-md bg-border/20"></div>
+    </div>
+
+    <!-- Fake card rows -->
+    <div class="space-y-4">
+      <div v-for="i in 3" :key="i" class="rounded-xl border border-border/30 bg-bg-body/30 p-5 space-y-4">
+        <!-- Card header -->
+        <div class="flex items-center justify-between">
+          <div class="space-y-1.5">
+            <div class="h-4 rounded-md bg-border/35" :style="{ width: `${120 + (i * 31) % 60}px` }"></div>
+            <div class="h-3 rounded-md bg-border/20" :style="{ width: `${180 + (i * 19) % 80}px` }"></div>
+          </div>
+          <div class="h-8 w-24 rounded-lg bg-border/25"></div>
+        </div>
+        <!-- Card fields -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div v-for="j in 4" :key="j" class="space-y-1.5">
+            <div class="h-2.5 w-16 rounded bg-border/20"></div>
+            <div class="h-9 rounded-lg bg-border/20 w-full"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</template>
+
+<!-- Dynamic Content -->
+<template v-else>
+  <ProfileTab v-if="currentTab === 'profile'" />
+  <BillingTab v-else-if="currentTab === 'billing'" />
+  <PersonalTokens v-else-if="currentTab === 'token-utilization'" />
+  <OrganizationTab v-else-if="currentTab === 'org-setup'" :profile="profileData" />
+  <OrgUsersTab v-else-if="currentTab === 'org-users'" :profile="profileData" />
+  <OrgRolesTab v-else-if="currentTab === 'org-roles'" :profile="profileData" />
+  <OwnershipTransfer v-else-if="currentTab === 'ownership-transfer'" :profile="profileData" />
+  <OrgPackagesTab v-else-if="currentTab === 'org-packages'" :profile="profileData" />
+  <OrgDomainSetup v-else-if="currentTab === 'org-domain'" :profile="profileData" />
+  <OrgAiTokensAllocationTab v-else-if="currentTab === 'token-allocation'" :profile="profileData" />
+</template>
 
           </div>
         </div>
@@ -142,8 +179,7 @@ const router = useRouter()
 
 const isMobileSidebarOpen = ref(false)
 const currentTab = computed(() => (route.query.tab as string) || 'profile')
-
-const { data: profile } = useQuery({
+const { data: profile, isPending: isProfileLoading } = useQuery({
   queryKey: ['profile'],
   queryFn: getProfile,
   staleTime: 1000 * 60 * 5,
