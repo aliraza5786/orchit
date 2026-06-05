@@ -116,10 +116,19 @@ const hasNoCompanyContext = computed(() => {
 
   return !active && !hasAssociated
 })
-const profileData = computed(() => profile.value?.data ?? null);
+// const profileData = computed(() => profile.value?.data ?? null);
 const isPendingOrgMember = computed(() =>
-  !!profileData.value?.associated_company?._id && !profileData.value?.active_company?._id
+  !!props.profile?.associated_company?._id && !props.profile?.active_company?._id
 )
+const isEffectivelyPersonal = computed(() => {
+  const associated = props.profile?.associated_company
+  const hasActive = !!props.profile?.active_company?._id
+
+  // Has associated company but is_member is false = not a real org member
+  const isNonMemberAssociated = !!associated?._id && associated?.is_member === false
+
+  return !hasActive && isNonMemberAssociated
+})
 async function selectCompany(company: any, navigate = true) {
   if (!company?._id || isSwitching.value) return
   isSwitching.value = true
@@ -265,7 +274,7 @@ function orgInitials(title: string) {
     <div v-else class="flex flex-col flex-1 px-3 pb-6 min-h-0 gap-6">
 
       <!-- ── PERSONAL (non-company emails) ── -->
-      <template v-if="mode === 'personal' && !isCompanyEmail">
+      <template v-if="mode === 'personal' && (!isCompanyEmail || isEffectivelyPersonal)">
         <!-- User identity card -->
         <div class="flex items-center gap-3 px-2 pt-1 pb-1">
           <div class="w-9 h-9 rounded-full bg-accent/15 flex items-center justify-center text-accent text-[13px] font-bold shrink-0 ring-2 ring-accent/20">
@@ -324,7 +333,7 @@ function orgInitials(title: string) {
       </template>
 
       <!-- ── ORGANIZATION ── -->
-      <template v-if="isCompanyEmail || mode === 'org'">
+     <template v-if="(isCompanyEmail || mode === 'org') && !isEffectivelyPersonal">
 
         <!-- No org state -->
         <div v-if="!hasOrgs && !hasAssociatedCompany && !isPendingOrgMember" class="flex flex-col gap-3">

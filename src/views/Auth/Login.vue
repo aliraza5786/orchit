@@ -1,20 +1,52 @@
 <template>
   <AuthLayout>
     <template #form>
-      <div
-        class="max-w-[400px] mx-auto w-full text-text-primary"
-      > 
-      <router-link to="/">
+      <div class="max-w-[400px] mx-auto w-full text-text-primary">
+        <router-link to="/">
           <img
             :src="isDark ? darkLogo : lightLogo"
             class="w-[130px] mb-6 d-block mx-auto"
             alt="image"
           />
         </router-link>
-         
+         <!-- Post-login loading overlay -->
+<Teleport to="body">
+  <Transition name="auth-fade">
+    <div
+      v-if="isNavigating"
+      class="fixed inset-0 z-[9999] flex flex-col items-center justify-center"
+      style="background: var(--color-bg-body, #0f0f0f)"
+    >
+      <!-- Ambient glow -->
+      <div class="auth-glow" />
+
+      <!-- Logo -->
+      <img
+        :src="isDark ? darkLogo : lightLogo"
+        class="w-[100px] relative z-10 mb-10 opacity-90"
+        alt="logo"
+      />
+
+      <!-- Ring spinner -->
+      <div class="auth-ring-wrap relative z-10">
+        <svg class="auth-ring" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="40" cy="40" r="34" stroke="currentColor" stroke-width="2" class="auth-ring-track" />
+          <circle cx="40" cy="40" r="34" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" class="auth-ring-fill" />
+        </svg>
+        <!-- Inner pulse dot -->
+        <div class="auth-ring-dot" />
+      </div>
+
+      <!-- Label -->
+      <p class="relative z-10 mt-8 text-[12px] font-medium tracking-[0.18em] uppercase auth-label">
+        Signing you in
+      </p>
+    </div>
+  </Transition>
+</Teleport>
+
         <!-- STEP 1: EMAIL (Initially shown) -->
         <form v-if="step === 'email'" @submit.prevent="handleEmailSubmit" class="space-y-3 w-full">
-        
           <Button
             size="md"
             :block="true"
@@ -78,14 +110,14 @@
           >
             Continue with email
           </Button>
-          <p  class="text-sm font-medium text-text-secondary text-center" v-once>
-           By continuing, you acknowledge Orchit
-          <router-link
-            to="/privacy-policy"
-            class="text-text-primary font-bold underline"
-            >Privacy Policy</router-link
-           >
-          </p> 
+
+          <p class="text-sm font-medium text-text-secondary text-center" v-once>
+            By continuing, you acknowledge Orchit
+            <router-link
+              to="/privacy-policy"
+              class="text-text-primary font-bold underline"
+            >Privacy Policy</router-link>
+          </p>
 
           <p v-if="errorMessage" class="text-red-500 text-sm text-center mt-2">
             {{ errorMessage }}
@@ -98,28 +130,30 @@
             <h3 class="text-[24px] leading-7 font-medium text-text-primary">Welcome back</h3>
             <p class="text-sm text-text-secondary mt-3">Enter your password to sign in</p>
           </div>
-          <div>
-          <BaseTextField
-            v-model="password" 
-            placeholder="Enter your password"
-            size="md"
-            type="password"
-            :error="passwordHasError"
-            :message="passwordError"
-            @blur="touched.password = true"
-            @update:modelValue="onFieldInput"
-            :disabled="isAnyPending"
-          />
 
-          <div class="text-end mt-1 mb-2">
-            <router-link
-              to="/forgot-password"
-              class="text-sm text-accent hover:underline"
-            >
-              Forgot password?
-            </router-link>
+          <div>
+            <BaseTextField
+              v-model="password"
+              placeholder="Enter your password"
+              size="md"
+              type="password"
+              :error="passwordHasError"
+              :message="passwordError"
+              @blur="touched.password = true"
+              @update:modelValue="onFieldInput"
+              :disabled="isAnyPending"
+            />
+
+            <div class="text-end mt-1 mb-2">
+              <router-link
+                to="/forgot-password"
+                class="text-sm text-accent hover:underline"
+              >
+                Forgot password?
+              </router-link>
+            </div>
           </div>
-          </div>
+
           <Button
             :loading="isPending"
             size="md"
@@ -145,9 +179,6 @@
             {{ errorMessage }}
           </p>
         </form>
-
-
-
       </div>
     </template>
   </AuthLayout>
@@ -166,13 +197,15 @@ import axios from "axios";
 import { useAuthStore } from "../../stores/auth";
 import { useWorkspaceStore } from "../../stores/workspace";
 import { toast } from "vue-sonner";
+
 const workspaceStore = useWorkspaceStore();
 defineOptions({ name: "LoginPage" });
+
 import lightApple from "@assets/LandingPageImages/header-icons/lightapple.png";
 import darkApple from "@assets/LandingPageImages/header-icons/apple.png";
 import darkLogo from "@assets/global/dark-logo.png";
 import lightLogo from "@assets/global/light-logo.png";
- 
+
 import { useTheme } from "../../composables/useTheme";
 import {
   getPostAuthRedirectPath,
@@ -185,8 +218,10 @@ import {
 } from "../../utilities/authRedirect";
 import { getPendingWorkspaceInviteRedirectPath } from "../../utilities/workspaceInvitePending";
 import { getProfile } from "../../services/user";
+
 const { isDark, theme } = useTheme();
 declare const AppleID: any;
+
 defineProps<{
   isDark: boolean;
 }>();
@@ -194,24 +229,21 @@ defineProps<{
 // --- Constants (non-reactive) ---
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const authStore = useAuthStore();
+
 // --- State ---
 const email = ref("");
 const password = ref("");
-type Step = 'email' | 'login-password';
-const step = ref<Step>('email');
-
+type Step = "email" | "login-password";
+const step = ref<Step>("email");
 const errorMessage = ref("");
-// const cookieToken =
-//   document.cookie
-//     .split("; ")
-//     .find((row) => row.startsWith("auth_token="))
-//     ?.split("=")[1] ?? null;
+const isNavigating = ref(false);
+
 const touched = {
   email: false,
   password: false,
 };
 
-// --- Validation (cheap computed) ---
+// --- Validation ---
 const emailError = computed(() => {
   if (!touched.email) return "";
   if (!email.value.trim()) return "Email is required";
@@ -223,18 +255,16 @@ const emailHasError = computed(() => !!emailError.value);
 const passwordError = computed(() => {
   if (!touched.password) return "";
   if (!password.value) return "Password is required";
-  if (password.value.length < 6)
-    return "Password must be at least 6 characters";
+  if (password.value.length < 6) return "Password must be at least 6 characters";
   return "";
 });
 const passwordHasError = computed(() => !!passwordError.value);
 
 const isFormValid = computed(() => !emailError.value && !passwordError.value);
+
 const router = useRouter();
 const { mutateAsync, isPending } = useMutation({ mutationFn: login });
-const { mutateAsync: socialLoginMutate } = useMutation({
-  mutationFn: socialLogin,
-});
+const { mutateAsync: socialLoginMutate } = useMutation({ mutationFn: socialLogin });
 const { mutateAsync: preLoginMutate, isPending: isPreLoginPending } = useMutation({
   mutationFn: verifyEmailPreLogin,
 });
@@ -273,6 +303,7 @@ async function completeSocialAuth(payload: {
       await handleSocialSignupSuccess(data, payload.u_email);
     }
   } catch (err: any) {
+    isNavigating.value = false;
     errorMessage.value =
       err?.response?.data?.message ||
       err?.message ||
@@ -299,6 +330,7 @@ async function loginWithGoogle() {
       u_full_name: userInfo.data.name,
     });
   } catch (err: any) {
+    isNavigating.value = false;
     if (err?.message !== "Popup closed") {
       errorMessage.value =
         err?.response?.data?.message ||
@@ -339,14 +371,16 @@ async function loginWithApple() {
         : decodedToken.email?.split("@")[0] || "",
     });
   } catch (err: any) {
+    isNavigating.value = false;
     if (err?.error !== "popup_closed_by_user") {
       errorMessage.value =
         err?.message || "Apple Login failed. Please try again.";
     }
   }
 }
-/** New account via Google/Apple on login page — same routing as manual signup (Register/OTP). */
+
 async function handleSocialSignupSuccess(data: any, email: string) {
+  isNavigating.value = true;
   const token = data?.data?.token;
 
   localStorage.setItem("token", token);
@@ -358,7 +392,7 @@ async function handleSocialSignupSuccess(data: any, email: string) {
 
   const redirectPath = router.currentRoute.value.query.redirect as string;
   if (redirectPath) {
-    router.push(redirectPath);
+    await router.push(redirectPath);
     return;
   }
 
@@ -368,7 +402,7 @@ async function handleSocialSignupSuccess(data: any, email: string) {
       const intent = JSON.parse(intentStr);
       localStorage.removeItem("post_auth_intent");
       if (intent.aiResponse) workspaceStore.setWorkspace(intent.aiResponse);
-      router.push(intent.path || "/dashboard");
+      await router.push(intent.path || "/dashboard");
       return;
     } catch (e) {
       console.error("Failed to parse post_auth_intent", e);
@@ -393,31 +427,33 @@ async function handleSocialSignupSuccess(data: any, email: string) {
   const destination = getPostAuthRedirectPath(userData);
 
   if (destination !== "/dashboard") {
-    router.push(destination);
+    await router.push(destination);
     return;
   }
 
   if (workspaceStore.pricing) {
-    router.push(`/dashboard?stripePayment=true`);
+    await router.push(`/dashboard?stripePayment=true`);
   } else {
-    router.push("/dashboard");
+    await router.push("/dashboard");
   }
 }
 
 async function handleLoginSuccess(data: any) {
+  isNavigating.value = true;
   const token = data?.data?.token;
 
   localStorage.setItem("token", token);
   const maxAge = 60 * 60 * 24 * 30;
   const payload = encodeURIComponent(JSON.stringify({ token }));
   document.cookie = `auth_session=${payload}; domain=.orchit.ai; path=/; max-age=${maxAge}; Secure; SameSite=Lax`;
+
   authStore.initialized = false;
   await authStore.bootstrap(true);
   localStorage.setItem("token", token);
-  // authStore.writeAuthCookie({ token, company_id: null, personal_mode: null })
+
   const redirectPath = router.currentRoute.value.query.redirect as string;
   if (redirectPath) {
-    router.push(redirectPath);
+    await router.push(redirectPath);
     return;
   }
 
@@ -427,7 +463,7 @@ async function handleLoginSuccess(data: any) {
       const intent = JSON.parse(intentStr);
       localStorage.removeItem("post_auth_intent");
       if (intent.aiResponse) workspaceStore.setWorkspace(intent.aiResponse);
-      router.push(intent.path || "/dashboard");
+      await router.push(intent.path || "/dashboard");
       return;
     } catch (e) {
       console.error("Failed to parse post_auth_intent", e);
@@ -437,7 +473,7 @@ async function handleLoginSuccess(data: any) {
 
   const pendingInvitePath = getPendingWorkspaceInviteRedirectPath();
   if (pendingInvitePath) {
-    router.push(pendingInvitePath);
+    await router.push(pendingInvitePath);
     return;
   }
 
@@ -463,13 +499,11 @@ async function handleLoginSuccess(data: any) {
   const destination = getPostAuthRedirectPath(userData, { isLogin: true });
 
   if (destination !== "/dashboard") {
-    router.push(destination);
+    await router.push(destination);
     return;
   }
 
-  const extraQuery = workspaceStore.pricing
-    ? { stripePayment: "true" }
-    : undefined;
+  const extraQuery = workspaceStore.pricing ? { stripePayment: "true" } : undefined;
 
   if (
     tryRedirectToCompanyDomainDashboard(userData, {
@@ -482,11 +516,12 @@ async function handleLoginSuccess(data: any) {
   }
 
   if (workspaceStore.pricing) {
-    router.push(`/dashboard?stripePayment=true`);
+    await router.push(`/dashboard?stripePayment=true`);
   } else {
-    router.push("/dashboard");
+    await router.push("/dashboard");
   }
 }
+
 async function handleLogin() {
   errorMessage.value = "";
   touched.email = true;
@@ -502,34 +537,36 @@ async function handleLogin() {
       u_email: email.value,
       u_password: password.value,
     });
-    handleLoginSuccess(data);
+    await handleLoginSuccess(data);
   } catch (err: any) {
+    isNavigating.value = false;
     const errorMsg = err?.response?.data?.message || "Login failed. Please try again.";
-    
+
     // 🚀 AUTO-REDIRECT: Detect social login requirement and auto-redirect
     const lowerMsg = errorMsg.toLowerCase();
-    
+
     // Check if error indicates Google login is required
-    if (lowerMsg.includes('google') || lowerMsg.includes('gmail') || 
-        errorMsg.includes('social') && errorMsg.includes('google')) {
-      console.log('🔄 Detected Google login requirement - Auto-redirecting...');
-      toast.info('Redirecting to Google Sign-In...');
-      // Small delay for toast visibility, then trigger Google login
-      await new Promise(resolve => setTimeout(resolve, 500));
+    if (
+      lowerMsg.includes("google") ||
+      lowerMsg.includes("gmail") ||
+      (errorMsg.includes("social") && errorMsg.includes("google"))
+    ) {
+      console.log("🔄 Detected Google login requirement - Auto-redirecting...");
+      toast.info("Redirecting to Google Sign-In...");
+      await new Promise((resolve) => setTimeout(resolve, 500));
       await loginWithGoogle();
       return;
     }
-    
+
     // Check if error indicates Apple login is required
-    if (lowerMsg.includes('apple')) {
-      console.log('🔄 Detected Apple login requirement - Auto-redirecting...');
-      toast.info('Redirecting to Apple Sign-In...');
-      // Small delay for toast visibility, then trigger Apple login
-      await new Promise(resolve => setTimeout(resolve, 500));
+    if (lowerMsg.includes("apple")) {
+      console.log("🔄 Detected Apple login requirement - Auto-redirecting...");
+      toast.info("Redirecting to Apple Sign-In...");
+      await new Promise((resolve) => setTimeout(resolve, 500));
       await loginWithApple();
       return;
     }
-    
+
     // If no social redirect detected, show error normally
     errorMessage.value = errorMsg;
   }
@@ -549,10 +586,10 @@ async function handleEmailSubmit() {
       email: email.value,
     });
     console.log("Pre-login email verification successful:", response);
-    
+
     const verified = response?.data?.verified ?? response?.verified;
     if (verified === true) {
-      step.value = 'login-password';
+      step.value = "login-password";
     } else {
       router.push(`/otp-verification/${email.value}?preLogin=true`);
     }
@@ -564,3 +601,87 @@ async function handleEmailSubmit() {
   }
 }
 </script>
+
+<style scoped>
+/* ── Ambient glow ── */
+.auth-glow {
+  position: absolute;
+  width: 480px;
+  height: 480px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--color-accent, #6366f1) 0%, transparent 70%);
+  opacity: 0.07;
+  filter: blur(40px);
+  pointer-events: none;
+}
+
+/* ── Ring spinner ── */
+.auth-ring-wrap {
+  width: 72px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.auth-ring {
+  width: 72px;
+  height: 72px;
+  animation: auth-rotate 1.6s linear infinite;
+  color: var(--color-accent, #6366f1);
+}
+
+.auth-ring-track {
+  opacity: 0.1;
+}
+
+.auth-ring-fill {
+  stroke-dasharray: 100 214;
+  stroke-dashoffset: 0;
+  animation: auth-dash 1.6s ease-in-out infinite;
+  filter: drop-shadow(0 0 6px var(--color-accent, #6366f1));
+}
+
+.auth-ring-dot {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-accent, #6366f1);
+  box-shadow: 0 0 10px 3px var(--color-accent, #6366f1);
+  animation: auth-dot-pulse 1.6s ease-in-out infinite;
+}
+
+/* ── Label ── */
+.auth-label {
+  color: var(--color-text-secondary, #888);
+  animation: auth-label-fade 2s ease-in-out infinite;
+}
+
+/* ── Keyframes ── */
+@keyframes auth-rotate {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes auth-dash {
+  0%   { stroke-dasharray: 20 214;  stroke-dashoffset: 0; }
+  50%  { stroke-dasharray: 120 214; stroke-dashoffset: -60; }
+  100% { stroke-dasharray: 20 214;  stroke-dashoffset: -214; }
+}
+
+@keyframes auth-dot-pulse {
+  0%, 100% { opacity: 0.4; transform: scale(0.8); }
+  50%       { opacity: 1;   transform: scale(1.2); }
+}
+
+@keyframes auth-label-fade {
+  0%, 100% { opacity: 0.4; }
+  50%       { opacity: 0.9; }
+}
+
+/* ── Vue Transition ── */
+.auth-fade-enter-active { transition: opacity 0.25s ease; }
+.auth-fade-leave-active { transition: opacity 0.2s ease; }
+.auth-fade-enter-from,
+.auth-fade-leave-to     { opacity: 0; }
+</style>
