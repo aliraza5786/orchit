@@ -2117,7 +2117,6 @@ const updateMoveCard = useMoveCard({
 
     await queryClient.cancelQueries({ queryKey: ["product-card", card_id] });
     await queryClient.cancelQueries({ queryKey: ["sheet-list"] });
-    toast.success("Card Formatted successfully");
     const previousCard = queryClient.getQueryData(["product-card", card_id]);
     const previousLists = queryClient.getQueryData(["sheet-list"]);
 
@@ -2645,10 +2644,26 @@ function handleMindmapCreateCard(payload: any) {
   addTicket(payload);
 }
 
-function handleMindmapUpdateCard(payload: any) {
-  updateMoveCard.mutate(payload);
-}
+async function handleMindmapUpdateCard(payload: any) {
+  if (!payload?.batch) {
+    return updateMoveCard.mutate(payload)
+  }
 
+  try {
+    await Promise.all(
+      payload.cards.map((card: any) =>
+        updateMoveCard.mutateAsync(card)
+      )
+    )
+
+    toast.success(
+      `${payload.cards.length} card${payload.cards.length !== 1 ? 's' : ''} updated`
+    )
+  } catch (error) {
+    console.error(error)
+    toast.error('Failed to update some cards')
+  }
+}
 function handleMindmapUpdateSheet(payload: any) {
   updateSheet(payload);
 }

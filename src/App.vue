@@ -5,22 +5,24 @@ import 'vue-sonner/style.css'
 import { useTheme } from './composables/useTheme'
 import { useAuthStore } from './stores/auth'
 import { useDeletionGuard } from './composables/useDeletionGuard'
-import { useQuery } from '@tanstack/vue-query'
-import { getProfile } from './services/user'
+
 const { isDark } = useTheme()
 const authStore = useAuthStore()
 const showSuspendedModal = ref(false)
-const { data: profile } = useQuery({
-  queryKey: ['profile'],
-  queryFn: getProfile,
-  placeholderData: (prev) => prev,
-  enabled: computed(() => !!localStorage.getItem('token'))
-})
-const profileData = computed(() => profile.value?.data ?? null)
+
+// ✅ Use auth.user instead of independent profile query to avoid duplication
+const profileData = computed(() => authStore.user?.data ?? null)
+
+// ✅ CRITICAL FIX: Don't call bootstrap here - router guard already handles it
+// This prevents duplicate bootstrap calls and /profile API calls
+// Just watch for user data to detect suspension
 onMounted(async () => {
-  await authStore.bootstrap()
+  // Bootstrap already called by router guard beforeEach
+  // No need to call it again here
 })
+
 useDeletionGuard(profileData)
+
 watch(
   profileData,
   (user) => {

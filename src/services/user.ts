@@ -2,16 +2,18 @@ import api from "../libs/api";
 import { useQuery } from '@tanstack/vue-query'
 import { useAuthStore } from '../stores/auth'
 import { watch } from 'vue'
+
+// 🔑 Unified query key used across entire app to ensure deduplication
+export const PROFILE_QUERY_KEY = ['profile']
+
 export const getProfile = () => 
   api.get('/profile').then(r => {
-    console.log("company new", r);
-     console.log("user id is", r.data?.data?._id);
-     
     const activeCompanyId = r.data?.data?.active_company_id;
     const userId = r.data?.data?._id;
+    
+    // Persist company & user IDs from API response
     if (activeCompanyId) {
       localStorage.setItem('company_id', activeCompanyId)
-      console.log('✅ company_id saved from getProfile:', activeCompanyId)
     }
     if(userId){
       localStorage.setItem('user_id', userId)
@@ -23,11 +25,21 @@ export function useProfile() {
   const auth = useAuthStore()
 
   const query = useQuery({
-    queryKey: ['me'],
+    queryKey: PROFILE_QUERY_KEY,
     queryFn: getProfile,
     enabled: auth.isAuthenticated,
     staleTime: 5 * 60 * 1000,
     retry: false,
+    placeholderData: () => {
+      // Try to load cached profile from sessionStorage (used during domain redirects)
+      const cached = sessionStorage.getItem('__orchit_profile_cache__')
+      if (cached) {
+        try {
+          return JSON.parse(cached)
+        } catch {}
+      }
+      return undefined
+    }
   })
 
   // ✅ Logout on error
@@ -51,8 +63,6 @@ export function useProfile() {
       if (stored !== activeCompanyId) {
         localStorage.setItem('company_id', activeCompanyId)
         auth.company_id = activeCompanyId
-
-        console.log('✅ company_id saved from useProfile:', activeCompanyId)
       }
     },
     { immediate: true }
@@ -60,9 +70,10 @@ export function useProfile() {
 
   return query
 }
+
 export function useCompanyId() {
   return useQuery({
-    queryKey: ['me'],
+    queryKey: PROFILE_QUERY_KEY,
     queryFn: getProfile,
     staleTime: 5 * 60 * 1000,
     select: (p) => {
@@ -72,12 +83,13 @@ export function useCompanyId() {
     },
   })
 }
+
 export function useUserId() {
   return useQuery({
-    queryKey: ['me'],
+    queryKey: PROFILE_QUERY_KEY,
     queryFn: getProfile,
     staleTime: 5 * 60 * 1000,
-    select: (p) => p.data?._id, // only expose what you need
+    select: (p) => p.data?._id,
   })
 }
 

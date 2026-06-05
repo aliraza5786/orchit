@@ -591,7 +591,13 @@ const route = useRoute();
 const router = useRouter();
 const { workspaceId } = useRouteIds(); 
 const workspaceStore = useWorkspaceStore();
-const currentTab = ref("talent"); 
+const currentTab = ref(
+  localStorage.getItem('currentTalent') || 'talent'
+)
+
+watch(currentTab, (newValue) => {
+  localStorage.setItem('currentTalent', newValue)
+})
 const { data: peopleVariables } = usePeopleVar(
   workspaceId
 );

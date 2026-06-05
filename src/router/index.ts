@@ -229,6 +229,8 @@ router.beforeEach(async (to, _from, next) => {
 
   // ─────────────────────────────────────────────
   // Bootstrap auth (MUST happen before decisions)
+  // 🚀 OPTIMIZATION: This ensures /profile is fetched once
+  //    and cached, preventing redundant calls from components
   // ─────────────────────────────────────────────
   if (!auth.initialized) {
     await auth.bootstrap()

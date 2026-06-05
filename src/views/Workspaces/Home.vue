@@ -382,10 +382,8 @@ const timeGreeting = computed(() => {
 });
 
 // --- Verification Logic ---
+// ✅ Use profile from useProfile hook with unified query key to avoid duplication
 const { data: profile } = useProfile();
-// const { data: usersData } = useCompanyUsers(
-//   computed(() => ({ company_id: authStore.company_id || '' })).value
-// );
 
 const isEmptyObject = (obj :any) => {
   return !obj || Object.keys(obj).length === 0;

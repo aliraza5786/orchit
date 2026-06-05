@@ -121,6 +121,15 @@ const cleanedUrl =
   (cleanedParams.toString() ? '?' + cleanedParams.toString() : '');
 window.history.replaceState({}, '', cleanedUrl);
 
+// ── Step 6.5: OPTIMIZATION - Consume profile cache if redirected from domain ──
+// When redirected to a new domain, useProfile() will use the cached profile
+// as placeholderData, preventing a blank state during the new domain load
+const profileCache = sessionStorage.getItem('__orchit_profile_cache__');
+if (profileCache) {
+  // Profile cache exists from domain redirect — it will be used as placeholderData
+  // in Vue Query's useProfile() to show data immediately while refetching fresh data
+}
+
 // ── Step 7: Handle personal_mode from cookie (no URL param case) ──────────
 const session = readCookie(COOKIE_KEY);
 const isPersonalMode = urlPersonalMode === 'true' || session?.personal_mode === true;
