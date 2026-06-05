@@ -1,5 +1,9 @@
 <template>
-  <div :class="isDarkTheme ? 'text-white' : 'text-text-primary'">
+  <div
+    :class="isDarkTheme ? 'text-white' : 'text-text-primary'"
+    @click.stop
+    @mousedown.stop
+  >
     <!-- Label + Tooltip -->
     <label
       v-if="label"
@@ -30,9 +34,13 @@
           isDarkTheme
             ? 'bg-bg-input border-border '
             : ' border-border bg-bg-input',
-          disabled ? 'opacity-60 cursor-not-allowed' : '',
+          disabled
+            ? 'opacity-60 cursor-not-allowed'
+            : atLimit
+              ? 'cursor-default'
+              : '',
         ]"
-        @click="focusInput"
+        @click.stop="onWrapperClick"
       >
         <!-- Prefix slot -->
         <span v-if="$slots.prefix" class="mr-1 text-text-secondary -500">
@@ -41,40 +49,72 @@
 
         <!-- Chips -->
         <div class="flex flex-wrap gap-2 w-full items-center flex-1">
-          <span
-            v-for="(e, i) in internal"
-            :key="e + i"
-            class="inline-flex items-center max-w-full min-w-0 gap-1.5 rounded-full px-2.5 py-1 text-xs bg-bg-body text-text-secondary border border-border/40"
-            :title="e"
-          >
-            <span v-if="showName" class="font-medium truncate">{{
-              extractNameFromEmail(e)
-            }}</span>
-            <span v-if="showName" class="opacity-70 truncate"
-              >&lt;{{ e }}&gt;</span
+          <template v-for="(e, i) in internal" :key="e + i">
+            <!-- Inline edit: chip becomes an input -->
+            <span
+              v-if="editingIndex === i"
+              class="inline-flex items-center max-w-full min-w-0 gap-1 rounded-full px-2 py-0.5 text-xs bg-bg-body text-text-primary border ring-2 ring-accent border-accent/60"
             >
-            <span v-else class="truncate">{{ e }}</span>
+              <input
+                ref="editInputRef"
+                v-model="editValue"
+                type="text"
+                class="min-w-[100px] max-w-[220px] bg-transparent outline-none text-xs text-text-primary"
+                :disabled="disabled"
+                @keydown="onEditKeydown"
+                @blur="commitEditing"
+                @click.stop
+                @mousedown.stop
+              />
+              <button
+                type="button"
+                class="rounded hover:bg-bg-surface px-1 shrink-0"
+                title="Remove"
+                @mousedown.prevent
+                @click.stop="removeAt(i)"
+                :disabled="disabled"
+              >
+                ✕
+              </button>
+            </span>
 
-            <button
-              type="button"
-              class="ml-1 rounded hover:bg-bg-surface px-1 shrink-0"
-              title="Remove"
-              @click.stop="removeAt(i)"
-              :disabled="disabled"
+            <!-- Display chip -->
+            <span
+              v-else
+              class="inline-flex items-center max-w-full min-w-0 gap-1.5 rounded-full px-2.5 py-1 text-xs bg-bg-body text-text-secondary border border-border/40"
+              :class="disabled ? '' : 'cursor-pointer hover:bg-bg-surface'"
+              :title="disabled ? e : `${e} — click to edit`"
+              @click.stop="editAt(i)"
             >
-              ✕
-            </button>
-          </span>
+              <span v-if="showName" class="font-medium truncate">{{
+                extractNameFromEmail(e)
+              }}</span>
+              <span v-if="showName" class="opacity-70 truncate"
+                >&lt;{{ e }}&gt;</span
+              >
+              <span v-else class="truncate">{{ e }}</span>
 
-          <!-- Input -->
+              <button
+                type="button"
+                class="ml-1 rounded hover:bg-bg-surface px-1 shrink-0"
+                title="Remove"
+                @mousedown.prevent
+                @click.stop="removeAt(i)"
+                :disabled="disabled"
+              >
+                ✕
+              </button>
+            </span>
+          </template>
+
+          <!-- Input for adding new emails only -->
           <input
+            v-if="!atLimit"
             ref="inputRef"
             v-model="inputValue"
-            :placeholder="
-              atLimit ? '' : internal.length === 0 ? placeholder : ''
-            "
-            class="flex-1 min-w-[160px] bg-transparent outline-none text-sm placeholder:text-text-secondary text-text-primary"
-            :disabled="disabled || atLimit"
+            :placeholder="internal.length === 0 ? placeholder : ''"
+            class="flex-1 min-w-[120px] bg-transparent outline-none text-sm placeholder:text-text-secondary text-text-primary"
+            :disabled="disabled"
             @keydown="onKeydown"
             @blur="commit"
             @paste="onPaste"
@@ -106,7 +146,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed } from "vue";
+import { ref, watch, computed, nextTick } from "vue";
 import { useTheme } from "../../composables/useTheme";
 
 const { isDark } = useTheme();
@@ -152,7 +192,10 @@ const emit = defineEmits<{
 }>();
 
 const inputRef = ref<HTMLInputElement | null>(null);
+const editInputRef = ref<HTMLInputElement | null>(null);
 const inputValue = ref("");
+const editValue = ref("");
+const editingIndex = ref<number | null>(null);
 
 /** internal mirror so we can mutate comfortably, synced with v-model */
 const internal = ref<string[]>([...props.modelValue]);
@@ -163,6 +206,8 @@ watch(
     // sync if parent overwrote
     if (JSON.stringify(v) !== JSON.stringify(internal.value)) {
       internal.value = [...v];
+      cancelEditing();
+      inputValue.value = "";
     }
   },
 );
@@ -178,10 +223,21 @@ const cap = computed(() =>
 const remaining = computed(() =>
   Math.max(0, cap.value - internal.value.length),
 );
-const atLimit = computed(() => remaining.value === 0);
+const atLimit = computed(
+  () => remaining.value === 0 && editingIndex.value === null,
+);
 
-function focusInput() {
+function onWrapperClick() {
   if (!props.disabled && !atLimit.value) inputRef.value?.focus();
+}
+
+function clearEditing() {
+  editingIndex.value = null;
+  editValue.value = "";
+}
+
+function cancelEditing() {
+  clearEditing();
 }
 
 const defaultEmailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
@@ -234,6 +290,42 @@ function addEmails(list: string[]) {
     emit("limit", isFinite(cap.value) ? Number(cap.value) : Infinity);
 }
 
+function commitEditing() {
+  const idx = editingIndex.value;
+  if (idx === null) return;
+
+  if (!editValue.value.trim()) {
+    cancelEditing();
+    return;
+  }
+
+  const emails = normalizeEmails(editValue.value);
+  if (!emails.length) {
+    cancelEditing();
+    return;
+  }
+
+  const email = emails[0];
+  const rest = emails.slice(1);
+
+  if (!isValid(email)) {
+    emit("invalid", [email]);
+    return;
+  }
+
+  if (
+    !props.allowDuplicates &&
+    internal.value.some((e, i) => i !== idx && e === email)
+  ) {
+    return;
+  }
+
+  internal.value[idx] = email;
+  cancelEditing();
+  emit("update:modelValue", [...internal.value]);
+  if (rest.length) addEmails(rest);
+}
+
 function commit() {
   if (!inputValue.value || atLimit.value) return;
   addEmails(normalizeEmails(inputValue.value));
@@ -250,6 +342,21 @@ function onPaste(e: ClipboardEvent) {
   if (!text) return;
   e.preventDefault();
   addEmails(normalizeEmails(text));
+}
+
+function onEditKeydown(e: KeyboardEvent) {
+  if (props.disabled) return;
+
+  if (e.key === "Escape") {
+    e.preventDefault();
+    cancelEditing();
+    return;
+  }
+
+  if (e.key === "Enter" || e.key === "Tab" || e.key === "," || e.key === " ") {
+    e.preventDefault();
+    commitEditing();
+  }
 }
 
 function onKeydown(e: KeyboardEvent) {
@@ -272,9 +379,33 @@ function onKeydown(e: KeyboardEvent) {
 
 function removeAt(i: number) {
   if (props.disabled) return;
+  if (editingIndex.value === i) {
+    cancelEditing();
+  } else if (editingIndex.value !== null && editingIndex.value > i) {
+    editingIndex.value--;
+  }
   const [removed] = internal.value.splice(i, 1);
   emit("remove", removed);
   emit("update:modelValue", [...internal.value]);
+}
+
+function editAt(i: number) {
+  if (props.disabled) return;
+  const email = internal.value[i];
+  if (!email) return;
+  if (editingIndex.value !== null && editingIndex.value !== i) {
+    commitEditing();
+  }
+  editingIndex.value = i;
+  editValue.value = email;
+  nextTick(() => {
+    const raw = editInputRef.value;
+    const el = Array.isArray(raw) ? raw[0] : raw;
+    if (el) {
+      el.focus();
+      el.select();
+    }
+  });
 }
 
 /** Optional: Name extraction for chip display */

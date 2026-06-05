@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia'
 import api from '../libs/api'
+import { queryClient } from '../libs/queryClient'
 import { setAuthCookie } from '../utilities/auth'
+import { PROFILE_QUERY_KEY } from '../services/user'
 const COOKIE_KEY = 'auth_session'
 function parseCookie(): { token?: string; company_id?: string; personal_mode?: boolean; company_switched?: boolean } | null {
   try {
@@ -47,6 +49,9 @@ function writeCookie(data: {
 }
 
 function clearCookies() {
+  // 🚀 OPTIMIZATION: Clear profile cache on logout
+  sessionStorage.removeItem('__orchit_profile_cache__')
+  
   const keys = [COOKIE_KEY, 'auth_token', 'space_auth', 'auth_session', 'token', '_cid', '_uid', 'user_id', 'company_id'];
   
   try {
@@ -252,6 +257,11 @@ export const useAuthStore = defineStore('auth', {
         try {
           const res = await api.get('/profile')
           this.user = res.data
+          
+          // 🚀 CRITICAL FIX: Populate Vue Query cache so Navbar doesn't refetch
+          // This prevents the duplicate /profile call
+          queryClient.setQueryData(PROFILE_QUERY_KEY, res.data)
+          
           const activeCompanyId = res.data?.data?.active_company_id
           const hasExplicitlySwitched = session?.company_switched === true
           if (activeCompanyId && !this.company_id && !session?.personal_mode && hasExplicitlySwitched) {
@@ -293,7 +303,7 @@ export const useAuthStore = defineStore('auth', {
         'onboarding_super_admin_otp_sent', 'onboarding_super_admin_user_id',
         'onboarding_super_admin_email_prefix', 'onboarding_super_admin_name',
         'onboarding_domain_phase', 'onboarding_current_domain', 'onboarding_current_instructions',
-        'onboarding_selected_verification_method',
+        'onboarding_selected_verification_method','currentTalent',
         'pending_invite_token',
       ]
       keys.forEach(k => localStorage.removeItem(k))

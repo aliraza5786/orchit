@@ -165,6 +165,7 @@ import { googleTokenLogin } from "vue3-google-login";
 import axios from "axios";
 import { useAuthStore } from "../../stores/auth";
 import { useWorkspaceStore } from "../../stores/workspace";
+import { toast } from "vue-sonner";
 const workspaceStore = useWorkspaceStore();
 defineOptions({ name: "LoginPage" });
 import lightApple from "@assets/LandingPageImages/header-icons/lightapple.png";
@@ -503,8 +504,34 @@ async function handleLogin() {
     });
     handleLoginSuccess(data);
   } catch (err: any) {
-    errorMessage.value =
-      err?.response?.data?.message || "Login failed. Please try again.";
+    const errorMsg = err?.response?.data?.message || "Login failed. Please try again.";
+    
+    // 🚀 AUTO-REDIRECT: Detect social login requirement and auto-redirect
+    const lowerMsg = errorMsg.toLowerCase();
+    
+    // Check if error indicates Google login is required
+    if (lowerMsg.includes('google') || lowerMsg.includes('gmail') || 
+        errorMsg.includes('social') && errorMsg.includes('google')) {
+      console.log('🔄 Detected Google login requirement - Auto-redirecting...');
+      toast.info('Redirecting to Google Sign-In...');
+      // Small delay for toast visibility, then trigger Google login
+      await new Promise(resolve => setTimeout(resolve, 500));
+      await loginWithGoogle();
+      return;
+    }
+    
+    // Check if error indicates Apple login is required
+    if (lowerMsg.includes('apple')) {
+      console.log('🔄 Detected Apple login requirement - Auto-redirecting...');
+      toast.info('Redirecting to Apple Sign-In...');
+      // Small delay for toast visibility, then trigger Apple login
+      await new Promise(resolve => setTimeout(resolve, 500));
+      await loginWithApple();
+      return;
+    }
+    
+    // If no social redirect detected, show error normally
+    errorMessage.value = errorMsg;
   }
 }
 

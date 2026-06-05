@@ -361,7 +361,7 @@ import {
 } from "vue";
 import { useRouter, RouterLink, useRoute } from "vue-router";
 import { useQuery, useQueryClient } from "@tanstack/vue-query";
-import { getProfile } from "../../../services/user";
+import { getProfile, PROFILE_QUERY_KEY } from "../../../services/user";
 import { useTheme } from "../../../composables/useTheme";
 import Loader from "../../../components/ui/Loader.vue";
 import { useWorkspaceStore } from "../../../stores/workspace";
@@ -403,9 +403,12 @@ function handleLogoClick() {
 }
 
 const { data: profile, isPending } = useQuery({
-  queryKey: ['profile'],
+  queryKey: PROFILE_QUERY_KEY,
   queryFn: getProfile,
   placeholderData: (prev) => prev,
+  // ✅ CRITICAL: Don't refetch immediately since bootstrap already cached it
+  staleTime: 5 * 60 * 1000,  // 5 minutes
+  refetchOnMount: false,      // Don't refetch on mount
 });
 
 const profileData = computed(() => profile.value?.data ?? null);
@@ -730,6 +733,11 @@ watch(
 
     // Lock immediately to prevent any reactive re-entry
     domainRedirectAttempted.value = true;
+
+    // 🚀 OPTIMIZATION: Cache profile data before redirecting
+    if (profile.value) {
+      sessionStorage.setItem('__orchit_profile_cache__', JSON.stringify(profile.value))
+    }
 
     window.location.href = buildOrgRedirectUrl(domainLink, activeCompany._id);
   },

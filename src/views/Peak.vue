@@ -705,7 +705,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed, defineComponent, h, watch, nextTick } from 'vue'
+import { ref, onMounted, computed, defineComponent, h, watch, nextTick } from 'vue'
+import { useSpaceCreationStream } from '../composables/useSpaceCreationStream'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useRoute } from 'vue-router'
 import gsap from 'gsap'
@@ -738,16 +739,6 @@ interface LaneProgressRow {
   total_cards?: number
   status_distribution?: Record<string, number>
   [key: string]: any
-}
-
-interface TaskProgress {
-  status: 'queued' | 'running' | 'completed' | 'failed' | 'canceled' | string
-  percent: number
-  message: string
-  progress_details?: { lanes_progress?: LaneProgressRow[] }
-  result?: { sheet_lists?: number; cards?: number; lanes_summary: any }
-  error?: string
-  updated_at: string
 }
 
 interface Activity {
@@ -792,8 +783,7 @@ const getPaginationRange = (): number[] => {
 }
 
 onMounted(async () => {
-  isStopped = false
-  connect()
+  if (workspaceId.value) connect(workspaceId.value, jobId.value)
   sections.value = []
   await nextTick()
 
@@ -811,11 +801,6 @@ onMounted(async () => {
       }
     )
   })
-})
-
-onUnmounted(() => {
-  isStopped = true
-  disconnect()
 })
 
 const groupedActivities = computed<GroupedActivities>(() => {
@@ -894,46 +879,12 @@ function stripHtmlModal(html: string): string {
 }
 
 const isLoading = ref(false)
-const isConnected = ref(false)
-const taskProgress = ref<TaskProgress | null>(null)
-const eventSource = ref<EventSource | null>(null)
-let isStopped = false
-const SERVER_BASE_URL = import.meta.env.VITE_API_BASE_URL
-
-const connect = () => {
-  if (isStopped) return
-  if (eventSource.value) return
-  const token = localStorage.getItem('token') || ''
-  const paramJob = jobId.value
-  const storedJob = localStorage.getItem('jobId')
-  const effectiveJob = paramJob || storedJob || workspaceId.value
-  const isManual = paramJob || storedJob ? 'false' : 'true'
-  const url = `${SERVER_BASE_URL}common/step2/tasks/${effectiveJob}/stream?token=${token}&is_manual=${isManual}`
-  const es = new EventSource(url)
-  eventSource.value = es
-  es.onopen = () => { if (isStopped) return; isConnected.value = true }
-  es.onmessage = (event: MessageEvent) => {
-    if (isStopped) return
-    try {
-      taskProgress.value = JSON.parse(event.data)
-      const status = taskProgress.value?.status ?? 'cancels'
-      if (['completed', 'failed', 'canceled'].includes(status)) disconnect()
-    } catch (_) { }
-  }
-  es.onerror = () => { disconnect() }
-  eventSource.value.addEventListener('progress', (event: MessageEvent) => {
-    try { taskProgress.value = JSON.parse(event.data) } catch { }
-  })
-}
-
-const disconnect = () => {
-  isConnected.value = false
-  if (eventSource.value) { eventSource.value.close(); eventSource.value = null }
-}
-
-const cardProgress = computed(() => taskProgress.value?.percent === 100 ? true : false)
-const lanes = computed<LaneProgressRow[]>(() => taskProgress.value?.result?.lanes_summary ?? [])
-const lanes2 = computed<LaneProgressRow[]>(() => taskProgress.value?.progress_details?.lanes_progress ?? [])
+const {
+  cardProgress,
+  lanes,
+  lanes2,
+  connect,
+} = useSpaceCreationStream()
 
 const avatars = [
   'https://randomuser.me/api/portraits/women/1.jpg',
@@ -985,13 +936,15 @@ watch(cardProgress, (val) => {
   if (val) queryClient.invalidateQueries({ queryKey: ["dashboard-teams", workspaceId.value] })
 })
 
-watch([workspaceId, jobId], () => { disconnect(); connect() })
+watch([workspaceId, jobId], ([wsId, jId]) => {
+  if (wsId) connect(wsId, jId)
+})
 
 watch(
   () => workspaceStore.lanes,
   (newVal, oldVal) => {
     if (!newVal || !oldVal || newVal === oldVal) return
-    disconnect(); connect()
+    if (workspaceId.value) connect(workspaceId.value, jobId.value)
   },
   { deep: true }
 )

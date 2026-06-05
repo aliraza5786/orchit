@@ -115,10 +115,12 @@
     <!-- SHEET -->
     <template v-else-if="node.uniqueName === 'sheet'">
       <div class="node-sheet-inner">
-        <div class="node-sheet-header">
-          <i class="fa-solid fa-table-columns node-sheet-icon"></i>
-          <span class="node-sheet-title">{{ node.topic }}</span>
-        </div>
+       <div class="node-sheet-header">
+    <i class="fa-solid fa-table-columns node-sheet-icon"></i>
+    <span class="node-sheet-title">
+      {{ getNodeTitle(node?.topic) }}
+    </span>
+  </div>
         <div class="node-sheet-meta" v-if="node.children && !isCollapsed(node.id)">
           <span class="meta-pill">
             <i class="fa-solid fa-list me-1"></i>{{ node.children.length }} lists
@@ -990,6 +992,233 @@
         </div>
       </div>
     </transition>
+    <!-- ✦ Search Spotlight -->
+<transition name="search-drop">
+  <div v-if="showSearch" class="search-overlay" @click.self="closeSearch">
+    <div class="search-panel">
+      <div class="search-header">
+        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+        <input
+          ref="searchInputRef"
+          v-model="searchQuery"
+          class="search-input"
+          placeholder="Search nodes, cards, lists…"
+          @keydown.escape="closeSearch"
+          @keydown.enter="searchResults[0] && jumpToNode(searchResults[0])"
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <span class="search-count" v-if="searchQuery">
+          {{ searchResults.length }} result{{ searchResults.length !== 1 ? 's' : '' }}
+        </span>
+        <button class="search-close-btn" @click="closeSearch">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div class="search-results" v-if="searchResults.length">
+        <button
+          v-for="(node, i) in searchResults.slice(0, 12)"
+          :key="node.id"
+          class="search-result-item"
+          @click="jumpToNode(node)"
+        >
+          <i
+            class="search-result-icon"
+            :class="{
+              'fa-solid fa-circle-nodes': node.uniqueName === 'root',
+              'fa-solid fa-table-columns': node.uniqueName === 'sheet',
+              'fa-solid fa-list': node.uniqueName === 'List',
+              'fa-solid fa-square-check': node.uniqueName === 'card',
+            }"
+          ></i>
+          <div class="search-result-text">
+            <span class="search-result-topic">{{ node.topic }}</span>
+            <span class="search-result-type">{{ node.uniqueName }}</span>
+          </div>
+          <span v-if="i === 0" class="search-result-enter">
+            <kbd>↵</kbd>
+          </span>
+        </button>
+      </div>
+      <div class="search-empty" v-else-if="searchQuery">
+        <i class="fa-solid fa-ghost" style="color:#94a3b8;font-size:20px"></i>
+        <span>No nodes match "{{ searchQuery }}"</span>
+      </div>
+      <div class="search-footer">
+        <span><kbd>↵</kbd> Jump</span>
+        <span><kbd>Esc</kbd> Close</span>
+        <span><kbd>Ctrl K</kbd> Toggle</span>
+      </div>
+    </div>
+  </div>
+</transition>
+<!-- ✦ Export Menu -->
+<transition name="fade">
+  <div v-if="showExportMenu" class="export-menu" @click.stop>
+    <div class="export-menu-header">
+      <i class="fa-solid fa-file-export" style="color:var(--primary-color)"></i>
+      <span>Export Mindmap</span>
+      <button class="fs-close" @click="showExportMenu = false">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <button class="export-item" @click="exportPNG" :disabled="isExporting">
+      <div class="export-item-icon export-item-icon--png">
+        <i class="fa-solid fa-image"></i>
+      </div>
+      <div class="export-item-info">
+        <span class="export-item-name">PNG Image</span>
+        <span class="export-item-desc">Transparent background, lossless</span>
+      </div>
+      <i v-if="isExporting" class="fa-solid fa-spinner fa-spin" style="color:var(--primary-color)"></i>
+    </button>
+
+    <button class="export-item" @click="exportJPEG" :disabled="isExporting">
+      <div class="export-item-icon export-item-icon--jpg">
+        <i class="fa-solid fa-file-image"></i>
+      </div>
+      <div class="export-item-info">
+        <span class="export-item-name">JPEG / JPG</span>
+        <span class="export-item-desc">Smaller file, white background</span>
+      </div>
+      <i v-if="isExporting" class="fa-solid fa-spinner fa-spin" style="color:var(--primary-color)"></i>
+    </button>
+
+    <button class="export-item" @click="exportPDF" :disabled="isExporting">
+      <div class="export-item-icon export-item-icon--pdf">
+        <i class="fa-solid fa-file-pdf"></i>
+      </div>
+      <div class="export-item-info">
+        <span class="export-item-name">PDF Document</span>
+        <span class="export-item-desc">Custom page size, print-ready</span>
+      </div>
+      <i v-if="isExporting" class="fa-solid fa-spinner fa-spin" style="color:var(--primary-color)"></i>
+    </button>
+
+    <button class="export-item" @click="exportSVG">
+      <div class="export-item-icon export-item-icon--svg">
+        <i class="fa-solid fa-bezier-curve"></i>
+      </div>
+      <div class="export-item-info">
+        <span class="export-item-name">SVG Vector</span>
+        <span class="export-item-desc">Scalable, editable graphic</span>
+      </div>
+    </button>
+
+    <button class="export-item" @click="exportJSON">
+      <div class="export-item-icon export-item-icon--json">
+        <i class="fa-solid fa-code"></i>
+      </div>
+      <div class="export-item-info">
+        <span class="export-item-name">JSON Data</span>
+        <span class="export-item-desc">Full tree structure &amp; styles</span>
+      </div>
+    </button>
+  </div>
+</transition>
+
+<!-- ✦ Shortcuts Panel -->
+<transition name="slide-sidebar">
+  <div v-if="showShortcutsPanel" class="shortcuts-panel" @click.stop>
+    <div class="sp-header flex justify-between">
+      <div class="flex gap-2 justify-center items-center">
+        <i class="fa-solid fa-keyboard" style="color:var(--primary-color)"></i>
+      <span>Keyboard Shortcuts</span>
+      </div>
+      <button class="fs-close" @click="showShortcutsPanel = false">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div class="sp-body">
+      <div class="sp-group">
+        <div class="sp-group-label">Navigation</div>
+        <div class="sp-row"><kbd>Arrow Keys</kbd><span>Navigate nodes</span></div>
+        <div class="sp-row"><kbd>F</kbd><span>Fit to screen</span></div>
+        <div class="sp-row"><kbd>C</kbd><span>Center view</span></div>
+        <div class="sp-row"><kbd>R</kbd><span>Reset zoom</span></div>
+        <div class="sp-row"><kbd>G</kbd><span>Toggle fullscreen</span></div>
+        <div class="sp-row"><kbd>+ / -</kbd><span>Zoom in / out</span></div>
+        <div class="sp-row"><kbd>Scroll</kbd><span>Pan canvas</span></div>
+        <div class="sp-row"><kbd>Ctrl + Scroll</kbd><span>Zoom</span></div>
+        <div class="sp-row"><kbd>Right Click Drag</kbd><span>Pan canvas</span></div>
+      </div>
+      <div class="sp-group">
+        <div class="sp-group-label">Cards</div>
+        <div class="sp-row"><kbd>Enter</kbd><span>Add card below</span></div>
+        <div class="sp-row"><kbd>Tab</kbd><span>Add card to list</span></div>
+        <div class="sp-row"><kbd>Space</kbd><span>Open selected card</span></div>
+        <div class="sp-row"><kbd>Del / Bksp</kbd><span>Delete card</span></div>
+        <div class="sp-row"><kbd>Ctrl+D</kbd><span>Duplicate card</span></div>
+        <div class="sp-row"><kbd>Ctrl+A</kbd><span>Select all cards</span></div>
+        <div class="sp-row"><kbd>Shift+Click</kbd><span>Multi-select</span></div>
+      </div>
+      <div class="sp-group">
+        <div class="sp-group-label">Style</div>
+        <div class="sp-row"><kbd>Alt+Ctrl+C</kbd><span>Copy style</span></div>
+        <div class="sp-row"><kbd>Alt+Ctrl+V</kbd><span>Paste style</span></div>
+        <div class="sp-row"><kbd>Alt+Ctrl+0</kbd><span>Reset style</span></div>
+      </div>
+      <div class="sp-group">
+        <div class="sp-group-label">View & History</div>
+        <div class="sp-row"><kbd>Ctrl+K</kbd><span>Search / Spotlight</span></div>
+        <div class="sp-row"><kbd>Ctrl+Z</kbd><span>Undo</span></div>
+        <div class="sp-row"><kbd>Ctrl+Y</kbd><span>Redo</span></div>
+        <div class="sp-row"><kbd>Ctrl+/</kbd><span>Collapse/Expand node</span></div>
+        <div class="sp-row"><kbd>Alt+Ctrl+/</kbd><span>Collapse all</span></div>
+        <div class="sp-row"><kbd>Alt+Ctrl+=</kbd><span>Expand all</span></div>
+        <div class="sp-row"><kbd>H / ?</kbd><span>This shortcuts panel</span></div>
+        <div class="sp-row"><kbd>Esc</kbd><span>Deselect / Close</span></div>
+      </div>
+    </div>
+  </div>
+</transition>
+
+<div class="mm-toolbar " :class="{ 'mm-toolbar--sidebar-open': showFormatSidebar || showMultiFormatPanel }">
+  <button
+    class="ctrl-btn"
+    :class="{ 'ctrl-btn--disabled': undoStack.length === 0 }"
+    @click="undo"
+    :title="`Undo (Ctrl+Z) — ${undoStack.length} steps`"
+    :disabled="undoStack.length === 0"
+  >
+    <i class="fa-solid fa-rotate-left"></i>
+  </button>
+  <div class="mm-tool-divider"></div>
+  <button
+    class="ctrl-btn"
+    :class="{ 'ctrl-btn--disabled': redoStack.length === 0 }"
+    @click="redo"
+    :title="`Redo (Ctrl+Y) — ${redoStack.length} steps`"
+    :disabled="redoStack.length === 0"
+  >
+    <i class="fa-solid fa-rotate-right"></i>
+  </button>
+  <div class="mm-tool-divider"></div>
+  <button class="mm-tool-btn" @click="openSearch" title="Search (Ctrl+K)">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+  <div class="mm-tool-divider"></div>
+  <div class="mm-tool-export-wrap">
+    <button
+      class="mm-tool-btn"
+      :class="{ 'mm-tool-btn--active': showExportMenu }"
+      @click.stop="showExportMenu = !showExportMenu; showShortcutsPanel = false"
+      title="Export"
+    >
+      <i class="fa-solid fa-file-export"></i>
+    </button>
+  </div>
+  <div class="mm-tool-divider"></div>
+  <button
+    class="mm-tool-btn"
+    :class="{ 'mm-tool-btn--active': showShortcutsPanel }"
+    @click="showShortcutsPanel = !showShortcutsPanel; showExportMenu = false"
+    title="Shortcuts (H)"
+  >
+    <i class="fa-solid fa-keyboard"></i>
+  </button>
+</div>
     <Teleport to="body">
       <transition name="fade">
         <div
@@ -1315,7 +1544,11 @@ const isCollapseLayout = ref(false)
 const selectedNodeIds = ref<Set<string>>(new Set())
 const showMultiFormatPanel = ref(false)
 const multiStyle = ref<NodeStyle>({})
-
+// ── Rubber-band selection ─────────────────────────────────────────────
+const rubberBand = ref<{ startX: number; startY: number; x: number; y: number; w: number; h: number } | null>(null)
+const isRubberBanding = ref(false)
+const rubberBandMoved = ref(false)
+const rubberBandJustFinished = ref(false)
 // ── Drag & Drop ───────────────────────────────────────────────────────
 const draggingCard = ref<MindNode | null>(null)
 const dragOverListId = ref<string | null>(null)
@@ -1352,10 +1585,10 @@ const THEMES: MapTheme[] = [
     name: "Ocean",
     bg: "#e0f2fe",
     nodeColors: {
-      root: "#0ea5e9",
+      root: "#38bdf8",
       sheet: "#38bdf8",
-      list: "#e0f2fe",
-      card: "#f0f9ff",
+      list: "#38bdf8",
+      card: "#38bdf8",
     },
     edgeColor: "#0284c7",
     textColor: "#0c4a6e",
@@ -1365,10 +1598,10 @@ const THEMES: MapTheme[] = [
     name: "Forest",
     bg: "#dcfce7",
     nodeColors: {
-      root: "#16a34a",
+      root: "#4ade80",
       sheet: "#4ade80",
-      list: "#dcfce7",
-      card: "#f0fdf4",
+      list: "#4ade80",
+      card: "#4ade80",
     },
     edgeColor: "#15803d",
     textColor: "#14532d",
@@ -1378,10 +1611,10 @@ const THEMES: MapTheme[] = [
     name: "Sunset",
     bg: "#fff7ed",
     nodeColors: {
-      root: "#ea580c",
+      root: "#fb923c",
       sheet: "#fb923c",
-      list: "#fff7ed",
-      card: "#ffffff",
+      list: "#fb923c",
+      card: "#fb923c",
     },
     edgeColor: "#c2410c",
     textColor: "#7c2d12",
@@ -1391,10 +1624,10 @@ const THEMES: MapTheme[] = [
     name: "Rose",
     bg: "#fff1f2",
     nodeColors: {
-      root: "#e11d48",
+      root: "#fb7185",
       sheet: "#fb7185",
-      list: "#fff1f2",
-      card: "#ffffff",
+      list: "#fb7185",
+      card: "#fb7185",
     },
     edgeColor: "#be123c",
     textColor: "#881337",
@@ -1404,10 +1637,10 @@ const THEMES: MapTheme[] = [
     name: "Violet",
     bg: "#f5f3ff",
     nodeColors: {
-      root: "#7c3aed",
+      root: "#a78bfa",
       sheet: "#a78bfa",
-      list: "#f5f3ff",
-      card: "#ffffff",
+      list: "#a78bfa",
+      card: "#a78bfa",
     },
     edgeColor: "#6d28d9",
     textColor: "#2e1065",
@@ -1417,10 +1650,10 @@ const THEMES: MapTheme[] = [
     name: "Midnight",
     bg: "#0f172a",
     nodeColors: {
-      root: "#1e293b",
+      root: "#334155",
       sheet: "#334155",
-      list: "#1e293b",
-      card: "#1e293b",
+      list: "#334155",
+      card: "#334155",
     },
     edgeColor: "#7c3aed",
     textColor: "#f1f5f9",
@@ -1430,10 +1663,10 @@ const THEMES: MapTheme[] = [
     name: "Slate",
     bg: "#f1f5f9",
     nodeColors: {
-      root: "#334155",
+      root: "#64748b",
       sheet: "#64748b",
-      list: "#f1f5f9",
-      card: "#ffffff",
+      list: "#64748b",
+      card: "#64748b",
     },
     edgeColor: "#475569",
     textColor: "#0f172a",
@@ -1443,10 +1676,10 @@ const THEMES: MapTheme[] = [
     name: "Golden",
     bg: "#fffbeb",
     nodeColors: {
-      root: "#d97706",
+      root: "#fbbf24",
       sheet: "#fbbf24",
-      list: "#fffbeb",
-      card: "#ffffff",
+      list: "#fbbf24",
+      card: "#fbbf24",
     },
     edgeColor: "#b45309",
     textColor: "#78350f",
@@ -1456,10 +1689,10 @@ const THEMES: MapTheme[] = [
     name: "Teal",
     bg: "#f0fdfa",
     nodeColors: {
-      root: "#0d9488",
+      root: "#2dd4bf",
       sheet: "#2dd4bf",
-      list: "#f0fdfa",
-      card: "#ffffff",
+      list: "#2dd4bf",
+      card: "#2dd4bf",
     },
     edgeColor: "#0f766e",
     textColor: "#134e4a",
@@ -1469,10 +1702,10 @@ const THEMES: MapTheme[] = [
     name: "Dark Purple",
     bg: "#1a0a2e",
     nodeColors: {
-      root: "#2d1b4e",
+      root: "#4a2870",
       sheet: "#4a2870",
-      list: "#2d1b4e",
-      card: "#2d1b4e",
+      list: "#4a2870",
+      card: "#4a2870",
     },
     edgeColor: "#9333ea",
     textColor: "#e9d5ff",
@@ -1482,10 +1715,10 @@ const THEMES: MapTheme[] = [
     name: "Nord",
     bg: "#2e3440",
     nodeColors: {
-      root: "#3b4252",
+      root: "#434c5e",
       sheet: "#434c5e",
-      list: "#3b4252",
-      card: "#3b4252",
+      list: "#434c5e",
+      card: "#434c5e",
     },
     edgeColor: "#88c0d0",
     textColor: "#eceff4",
@@ -1495,10 +1728,10 @@ const THEMES: MapTheme[] = [
     name: "Lavender",
     bg: "#faf5ff",
     nodeColors: {
-      root: "#c084fc",
+      root: "#e9d5ff",
       sheet: "#e9d5ff",
-      list: "#faf5ff",
-      card: "#ffffff",
+      list: "#e9d5ff",
+      card: "#e9d5ff",
     },
     edgeColor: "#a855f7",
     textColor: "#4c1d95",
@@ -1508,10 +1741,10 @@ const THEMES: MapTheme[] = [
     name: "Cyberpunk",
     bg: "#0a0a0a",
     nodeColors: {
-      root: "#ff00ff",
+      root: "#00ffff",
       sheet: "#00ffff",
-      list: "#111111",
-      card: "#1a1a1a",
+      list: "#00ffff",
+      card: "#00ffff",
     },
     edgeColor: "#facc15",
     textColor: "#e5e5e5",
@@ -1521,10 +1754,10 @@ const THEMES: MapTheme[] = [
     name: "Mint",
     bg: "#ecfdf5",
     nodeColors: {
-      root: "#10b981",
+      root: "#6ee7b7",
       sheet: "#6ee7b7",
-      list: "#ecfdf5",
-      card: "#ffffff",
+      list: "#6ee7b7",
+      card: "#6ee7b7",
     },
     edgeColor: "#059669",
     textColor: "#064e3b",
@@ -1534,10 +1767,10 @@ const THEMES: MapTheme[] = [
     name: "Coral",
     bg: "#fff5f5",
     nodeColors: {
-      root: "#ff6b6b",
+      root: "#ffa8a8",
       sheet: "#ffa8a8",
-      list: "#fff5f5",
-      card: "#ffffff",
+      list: "#ffa8a8",
+      card: "#ffa8a8",
     },
     edgeColor: "#fa5252",
     textColor: "#7f1d1d",
@@ -1547,10 +1780,10 @@ const THEMES: MapTheme[] = [
     name: "Ice",
     bg: "#f0f9ff",
     nodeColors: {
-      root: "#7dd3fc",
+      root: "#bae6fd",
       sheet: "#bae6fd",
-      list: "#f0f9ff",
-      card: "#ffffff",
+      list: "#bae6fd",
+      card: "#bae6fd",
     },
     edgeColor: "#38bdf8",
     textColor: "#0c4a6e",
@@ -1560,10 +1793,10 @@ const THEMES: MapTheme[] = [
     name: "Charcoal",
     bg: "#18181b",
     nodeColors: {
-      root: "#27272a",
+      root: "#3f3f46",
       sheet: "#3f3f46",
-      list: "#27272a",
-      card: "#27272a",
+      list: "#3f3f46",
+      card: "#3f3f46",
     },
     edgeColor: "#a1a1aa",
     textColor: "#fafafa",
@@ -1573,10 +1806,10 @@ const THEMES: MapTheme[] = [
     name: "Peach",
     bg: "#fff7ed",
     nodeColors: {
-      root: "#fb923c",
+      root: "#fdba74",
       sheet: "#fdba74",
-      list: "#fff7ed",
-      card: "#ffffff",
+      list: "#fdba74",
+      card: "#fdba74",
     },
     edgeColor: "#ea580c",
     textColor: "#7c2d12",
@@ -1586,10 +1819,10 @@ const THEMES: MapTheme[] = [
     name: "Aqua",
     bg: "#ecfeff",
     nodeColors: {
-      root: "#06b6d4",
+      root: "#67e8f9",
       sheet: "#67e8f9",
-      list: "#ecfeff",
-      card: "#ffffff",
+      list: "#67e8f9",
+      card: "#67e8f9",
     },
     edgeColor: "#0891b2",
     textColor: "#083344",
@@ -1599,10 +1832,10 @@ const THEMES: MapTheme[] = [
     name: "Crimson",
     bg: "#fef2f2",
     nodeColors: {
-      root: "#b91c1c",
+      root: "#ef4444",
       sheet: "#ef4444",
-      list: "#fef2f2",
-      card: "#ffffff",
+      list: "#ef4444",
+      card: "#ef4444",
     },
     edgeColor: "#991b1b",
     textColor: "#450a0a",
@@ -1612,10 +1845,10 @@ const THEMES: MapTheme[] = [
     name: "Indigo",
     bg: "#eef2ff",
     nodeColors: {
-      root: "#4f46e5",
+      root: "#818cf8",
       sheet: "#818cf8",
-      list: "#eef2ff",
-      card: "#ffffff",
+      list: "#818cf8",
+      card: "#818cf8",
     },
     edgeColor: "#4338ca",
     textColor: "#1e1b4b",
@@ -1625,10 +1858,10 @@ const THEMES: MapTheme[] = [
     name: "Sand",
     bg: "#fdf6e3",
     nodeColors: {
-      root: "#d4a373",
+      root: "#e6ccb2",
       sheet: "#e6ccb2",
-      list: "#fdf6e3",
-      card: "#ffffff",
+      list: "#e6ccb2",
+      card: "#e6ccb2",
     },
     edgeColor: "#b08968",
     textColor: "#583101",
@@ -1638,10 +1871,10 @@ const THEMES: MapTheme[] = [
     name: "Neon",
     bg: "#050505",
     nodeColors: {
-      root: "#39ff14",
+      root: "#00ffcc",
       sheet: "#00ffcc",
-      list: "#0a0a0a",
-      card: "#111111",
+      list: "#00ffcc",
+      card: "#00ffcc",
     },
     edgeColor: "#ff073a",
     textColor: "#eaffea",
@@ -3089,7 +3322,8 @@ function buildTree(sheets: any[]): MindNode {
 
   const varMap: Record<string, MindNode> = {};
   sheetCardMap.value = {};
-
+  console.log("sheets data", sheets);
+  
   sheets.forEach((sheet) => {
     const title =
       localStorage.getItem("selected_sheet_title") ||
@@ -3528,8 +3762,26 @@ function nodeInlineStyle(node: MindNode): Record<string, string> {
     return base;
   }
 
-  if (s.background !== undefined) base.background = s.background;
-  if (s.color !== undefined) base.color = s.color;
+  // Apply custom background if set, otherwise fall back to theme CSS var
+  if (s.background !== undefined) {
+    base.background = s.background
+  } else {
+    // Explicitly set the theme var so inline style doesn't leave it to chance
+    const themeVarMap: Record<string, string> = {
+      root:  'var(--mm-node-root-bg,  var(--primary-color))',
+      sheet: 'var(--mm-node-sheet-bg, var(--bg-surface))',
+      List:  'var(--mm-node-list-bg,  var(--bg-card))',
+      card:  'var(--mm-node-card-bg,  var(--bg-card))',
+    }
+    base.background = themeVarMap[node.uniqueName] ?? 'var(--mm-node-card-bg, var(--bg-card))'
+  }
+
+  // Apply custom text color if set, otherwise use theme text color
+  if (s.color !== undefined) {
+    base.color = s.color
+  } else {
+    base.color = 'var(--mm-text-color, var(--text-primary))'
+  }
   if (s.fontFamily) base.fontFamily = s.fontFamily;
   if (s.fontSize) base.fontSize = s.fontSize;
   if (s.fontWeight) base.fontWeight = s.fontWeight;
@@ -3549,7 +3801,17 @@ function nodeInlineStyle(node: MindNode): Record<string, string> {
   if (s.padding && node.uniqueName === "card") base["--card-body-padding"] = s.padding;
   if (ext.opacity != null) base.opacity = String(ext.opacity);
   if (ext.boxShadow) base.boxShadow = ext.boxShadow;
-
+  // Search highlight
+  const q = searchQuery.value.trim()
+  if (q && matchingNodeIds.value.has(node.id)) {
+    base.outline = '2.5px solid #f59e0b'
+    base.outlineOffset = '2px'
+    base.boxShadow = '0 0 0 4px rgba(245,158,11,0.25), 0 4px 16px rgba(0,0,0,0.12)'
+    base.zIndex = '15'
+  } else if (q && !matchingNodeIds.value.has(node.id)) {
+    base.opacity = String((parseFloat(base.opacity || '1')) * 0.35)
+    base.filter = 'grayscale(40%)'
+  }
   return base;
 }
 const activeFormatStyle = computed<NodeStyle>(() => {
@@ -3856,15 +4118,24 @@ function selectFirstNode() {
 function handleWheel(e: WheelEvent) {
   const vp = viewportEl.value;
   if (!vp) return;
-  const rect = vp.getBoundingClientRect();
-  const mouseX = e.clientX - rect.left;
-  const mouseY = e.clientY - rect.top;
-  const delta = e.deltaY > 0 ? -zoomStep : zoomStep;
-  const newZoom = Math.max(minZoom, Math.min(maxZoom, zoom.value + delta));
-  const ratio = newZoom / zoom.value;
-  panX.value = mouseX - (mouseX - panX.value) * ratio;
-  panY.value = mouseY - (mouseY - panY.value) * ratio;
-  zoom.value = newZoom;
+
+  // Ctrl+wheel (or pinch gesture) = zoom
+  if (e.ctrlKey || e.metaKey) {
+    const rect = vp.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    const delta = e.deltaY > 0 ? -zoomStep : zoomStep;
+    const newZoom = Math.max(minZoom, Math.min(maxZoom, zoom.value + delta));
+    const ratio = newZoom / zoom.value;
+    panX.value = mouseX - (mouseX - panX.value) * ratio;
+    panY.value = mouseY - (mouseY - panY.value) * ratio;
+    zoom.value = newZoom;
+    return;
+  }
+
+  // Plain wheel = pan (scroll)
+  panX.value -= e.deltaX;
+  panY.value -= e.deltaY;
 }
 
 function handleZoomIn() {
@@ -3890,20 +4161,6 @@ function zoomAt(cx: number, cy: number, delta: number) {
   zoom.value = newZoom;
 }
 
-function handleViewportMouseDown(e: MouseEvent) {
-  // Right-click (button 2) = pan
-  if (e.button === 2) {
-    isRightPanning.value = true
-    rightPanStart.value = { x: e.clientX - panX.value, y: e.clientY - panY.value }
-    e.preventDefault()
-    return
-  }
-  // Left-click on canvas background only (not on nodes) = deselect
-  if (e.button !== 0) return
-  if (e.target !== viewportEl.value && e.target !== canvasEl.value) return
-  // Left drag on canvas = rubber-band or just deselect; NOT pan anymore
-  isPanning.value = false
-}
 
 function handleViewportContextMenu(e: MouseEvent) {
   // Prevent default context menu when right-clicking on blank canvas
@@ -3911,15 +4168,13 @@ function handleViewportContextMenu(e: MouseEvent) {
     e.preventDefault()
   }
 }
-
 function handleGlobalMouseMove(e: MouseEvent) {
-  // Right-click panning
   if (isRightPanning.value) {
     panX.value = e.clientX - rightPanStart.value.x
     panY.value = e.clientY - rightPanStart.value.y
     return
   }
-  // Node dragging (left-click drag on a node)
+
   if (draggedNodeId.value) {
     const x = (e.clientX - panX.value) / zoom.value - dragOffset.value.x
     const y = (e.clientY - panY.value) / zoom.value - dragOffset.value.y
@@ -3927,17 +4182,89 @@ function handleGlobalMouseMove(e: MouseEvent) {
     if (n) { n.x = x; n.y = y }
     return
   }
-}
-function handleGlobalMouseUp(e: MouseEvent) {
-  console.log(e);
-  
-  isPanning.value = false
-  isRightPanning.value = false
-  draggedNodeId.value = null
-}
 
+  if (isRubberBanding.value && rubberBand.value) {
+    const vp = viewportEl.value
+    if (!vp) return
+    const rect = vp.getBoundingClientRect()
+    const canvasX = (e.clientX - rect.left - panX.value) / zoom.value
+    const canvasY = (e.clientY - rect.top  - panY.value) / zoom.value
+    const rb = rubberBand.value
+    const dx = canvasX - rb.startX
+    const dy = canvasY - rb.startY
+
+    if (!rubberBandMoved.value && Math.abs(dx) < 6 && Math.abs(dy) < 6) return
+    rubberBandMoved.value = true
+
+    rb.x = Math.min(canvasX, rb.startX)
+    rb.y = Math.min(canvasY, rb.startY)
+    rb.w = Math.abs(dx)
+    rb.h = Math.abs(dy)
+
+    const newSet = new Set<string>()
+    for (const n of allNodes.value) {
+      if (n.uniqueName !== 'card') continue
+      if (
+        n.x < rb.x + rb.w &&
+        n.x + n.width  > rb.x &&
+        n.y < rb.y + rb.h &&
+        n.y + n.height > rb.y
+      ) newSet.add(n.id)
+    }
+    selectedNodeIds.value = newSet
+    if (newSet.size > 1) {
+      selectedNodeId.value = null
+      showMultiFormatPanel.value = false
+    }
+  }
+}
+function handleGlobalMouseUp(_e: MouseEvent) {
+  isPanning.value      = false
+  isRightPanning.value = false
+
+  if (draggedNodeId.value) {
+    pushHistory()
+    draggedNodeId.value = null
+    return
+  }
+
+  if (isRubberBanding.value) {
+    isRubberBanding.value = false
+
+    if (rubberBandMoved.value && rubberBand.value) {
+      const rb = rubberBand.value
+      const selected = new Set<string>()
+      for (const n of allNodes.value) {
+        if (n.uniqueName !== 'card') continue
+        if (
+          n.x            < rb.x + rb.w &&
+          n.x + n.width  > rb.x &&
+          n.y            < rb.y + rb.h &&
+          n.y + n.height > rb.y
+        ) selected.add(n.id)
+      }
+
+      if (selected.size === 1) {
+        selectedNodeId.value   = [...selected][0]
+        selectedNodeIds.value  = new Set()
+        showMultiFormatPanel.value = false
+      } else if (selected.size > 1) {
+        selectedNodeIds.value  = selected
+        selectedNodeId.value   = null
+        showMultiFormatPanel.value = true
+        showHint(`${selected.size} cards selected`)
+      }
+
+      // ✅ Mark that a real rubber-band drag just finished
+      // handleCanvasClick fires next and must not clear this selection
+      rubberBandJustFinished.value = true
+    }
+
+    rubberBand.value      = null
+    rubberBandMoved.value = false  // reset AFTER setting rubberBandJustFinished
+  }
+}
 function handleNodeMouseDown(e: MouseEvent, nodeId: string) {
-  // Right click on node starts viewport panning (not node drag)
   if (e.button === 2) {
     isRightPanning.value = true
     rightPanStart.value = { x: e.clientX - panX.value, y: e.clientY - panY.value }
@@ -3945,10 +4272,36 @@ function handleNodeMouseDown(e: MouseEvent, nodeId: string) {
     return
   }
   if (e.button !== 0) return
+
   const n = nodeMap.get(nodeId)
   if (!n) return
-  // Don't drag cards — they use HTML5 drag-and-drop
-  if (n.uniqueName === 'card') return
+
+  // Cards: handle selection on mousedown, but do NOT start node-drag
+  // (cards use HTML5 draggable for list-to-list reorder)
+  if (n.uniqueName === 'card') {
+    // Shift/Ctrl = additive multi-select
+    if (e.shiftKey || e.ctrlKey || e.metaKey) {
+      const newSet = new Set(selectedNodeIds.value)
+      if (newSet.has(nodeId)) {
+        newSet.delete(nodeId)
+      } else {
+        newSet.add(nodeId)
+      }
+      selectedNodeIds.value = newSet
+      selectedNodeId.value = null
+      if (newSet.size > 1) showMultiFormatPanel.value = true
+    } else {
+      // Plain click — single select immediately
+      clearMultiSelect()
+      selectedNodeId.value = nodeId
+      hyperlinkInput.value = n.hyperLink || n.style?.hyperLink || ''
+    }
+    // Do NOT preventDefault here — let HTML5 dragstart still fire
+    e.stopPropagation() // stop viewport mousedown from starting rubber-band
+    return
+  }
+
+  // Non-card nodes (sheet, list, root): start node drag
   draggedNodeId.value = nodeId
   const cx = (e.clientX - panX.value) / zoom.value
   const cy = (e.clientY - panY.value) / zoom.value
@@ -3956,48 +4309,73 @@ function handleNodeMouseDown(e: MouseEvent, nodeId: string) {
   e.preventDefault()
   e.stopPropagation()
 }
-
 function handleNodeClick(e: MouseEvent, nodeId: string) {
-  const node = nodeMap.get(nodeId);
-  if (!node) return;
+  const node = nodeMap.get(nodeId)
+  if (!node) return
 
-  // Multi-select: Shift+Click adds to selection, Ctrl/Cmd+Click toggles
-  if ((e.shiftKey || e.ctrlKey || e.metaKey) && node.uniqueName === 'card') {
-    const newSet = new Set(selectedNodeIds.value)
-    if (newSet.has(nodeId)) {
-      newSet.delete(nodeId)
-    } else {
-      newSet.add(nodeId)
-    }
-    selectedNodeIds.value = newSet
-    // If 2+ selected, open multi-format panel
-    if (newSet.size > 1) {
-      showMultiFormatPanel.value = true
-      selectedNodeId.value = null
-    }
+  // Multi-select modifier clicks are already handled in mousedown
+  if (e.shiftKey || e.ctrlKey || e.metaKey) return
+
+  // For non-card nodes, just set selection
+  if (node.uniqueName !== 'card') {
+    selectedNodeId.value = nodeId
+    hyperlinkInput.value = node.hyperLink || node.style?.hyperLink || ''
+  }
+  // Card single-select already done in mousedown — nothing extra needed
+}
+function handleViewportMouseDown(e: MouseEvent) {
+  if (e.button === 2) {
+    isRightPanning.value = true
+    rightPanStart.value = { x: e.clientX - panX.value, y: e.clientY - panY.value }
+    e.preventDefault()
     return
   }
+  if (e.button !== 0) return
 
-  // Normal single click
-  clearMultiSelect()
-  selectedNodeId.value = nodeId
-  hyperlinkInput.value = node.hyperLink || node.style?.hyperLink || ''
+  // Only start rubber-band on bare canvas/viewport — not on any node
+  const target = e.target as HTMLElement
+  if (
+    target !== viewportEl.value &&
+    target !== canvasEl.value &&
+    !target.classList.contains('connections-svg')
+  ) return
+
+  const vp = viewportEl.value!
+  const rect = vp.getBoundingClientRect()
+  const canvasX = (e.clientX - rect.left - panX.value) / zoom.value
+  const canvasY = (e.clientY - rect.top  - panY.value) / zoom.value
+
+  rubberBand.value = { startX: canvasX, startY: canvasY, x: canvasX, y: canvasY, w: 0, h: 0 }
+  isRubberBanding.value = true
+  rubberBandMoved.value = false
+  isPanning.value = false
+  e.preventDefault()
 }
-
 function clearMultiSelect() {
   selectedNodeIds.value = new Set()
   showMultiFormatPanel.value = false
   multiStyle.value = {}
 }
-
 function handleCanvasClick(e: MouseEvent) {
-  if (ctxMenu.visible) {
-    const target = e.target as HTMLElement
-    if (!target.closest(".card-ctx-menu")) closeCtxMenu()
+  // ✅ Consume the rubber-band flag — never deselect after a drag
+  if (rubberBandJustFinished.value) {
+    rubberBandJustFinished.value = false
     return
   }
+
+  if (showExportMenu.value) { showExportMenu.value = false; return }
+  if (showShortcutsPanel.value && !(e.target as HTMLElement).closest('.shortcuts-panel')) {
+    showShortcutsPanel.value = false
+  }
+  if (ctxMenu.visible) {
+    const target = e.target as HTMLElement
+    if (!target.closest('.card-ctx-menu')) closeCtxMenu()
+    return
+  }
+
+  // Only deselect on truly blank canvas clicks
   if (e.target === viewportEl.value || e.target === canvasEl.value) {
-    selectedNodeId.value = null
+    selectedNodeId.value  = null
     sheetSelector.visible = false
     clearMultiSelect()
   }
@@ -4061,8 +4439,6 @@ async function handleCardDrop(e: DragEvent, targetListNode: MindNode) {
     draggingCard.value = null;
     return;
   }
-
-  // Remove card from source list
   sourceList.children = sourceList.children.filter((c) => c.id !== card.id);
 
   // Add to target list
@@ -4083,10 +4459,12 @@ try {
       new_index: newIndex,
       sheet_id:
         props.selectedSheetId === "all"
-          ? props.sheetId
+          ? card.variables?.sheet_id
           : props.selectedSheetId,
     },
   });
+  pushHistory()
+  toast.success("Ticket moved successfully");
 } catch (err) {
   console.error("Failed to reorder card:", err);
   toast.error("Failed to move card");
@@ -4188,12 +4566,19 @@ async function saveMultiStyle() {
   if (isSavingNodeStyle.value) return
   isSavingNodeStyle.value = true
   try {
+    pushHistory()
+
+    // Build all payloads first — no emits yet
+    const updates: Array<{ card_id: string; seat_id: any; style: Record<string, any> }> = []
+
     for (const id of selectedNodeIds.value) {
       const node = nodeMap.get(id)
       if (!node || node.uniqueName !== 'card') continue
+
       const plain = toRaw(node)
       const s    = plain.style || {}
       const orig = plain._originalStyle || {}
+
       const p = {
         bg_color:      resolveStyle(s.background,  orig.bg_color,     DEFAULT_BACKEND_STYLE.bg_color),
         color:         resolveStyle(s.color,        orig.color,        DEFAULT_BACKEND_STYLE.color),
@@ -4210,10 +4595,25 @@ async function saveMultiStyle() {
         opacity:       resolveStyle((s as any).opacity, orig.opacity, DEFAULT_BACKEND_STYLE.opacity),
         box_shadow:    resolveStyle((s as any).boxShadow, orig.box_shadow, DEFAULT_BACKEND_STYLE.box_shadow),
       }
+
+      // Update local state immediately
       plain._originalStyle = { ...p }
-      emit('update:card', { card_id: plain.real_id || plain.id, seat_id: plain.seat_id, style: p })
+
+      updates.push({
+        card_id: plain.real_id || plain.id,
+        seat_id: plain.seat_id,
+        style: p,
+      })
     }
-    toast.success(`Saved ${selectedNodeIds.value.size} cards`)
+
+    if (updates.length === 0) return
+
+    // Single emit with all cards batched — parent handles one API call + one toast
+    emit('update:card', {
+      batch: true,
+      cards: updates,
+    })
+
   } catch (err) {
     console.error(err)
     toast.error('Failed to save styles')
@@ -4232,12 +4632,10 @@ function toggleCollapse(nodeId: string) {
   const n = nodeMap.get(nodeId);
   if (!n) return;
 
-  // ── Snapshot current pan/zoom BEFORE any reactive mutations ──────────
   const savedPanX = panX.value;
   const savedPanY = panY.value;
   const savedZoom = zoom.value;
 
-  // ── Signal watchEffect to skip its own layout call this cycle ────────
   isCollapseLayout.value = true;
 
   if (isCollapsed(nodeId)) {
@@ -4248,32 +4646,14 @@ function toggleCollapse(nodeId: string) {
     n.collapsed = true;
   }
 
+  // ✅ Just increment version to trigger allNodes/visibleEdges recompute
+  // No layoutTree call — positions stay exactly where they are
   collapseVersion.value++;
 
-  // ── Re-layout in place using current root positions (not origin) ──────
-  const root = nodeMap.get(rootNodeId.value);
-  if (root) {
-    // Use the root node's CURRENT x/y so everything stays where it is
-    const startX = root.x;
-    const startY = root.y;
-    layoutTree(root, startX, startY, layoutDirection.value);
-
-    // Update SVG canvas bounds
-    let mx = 0, my = 0;
-    for (const node of flattenTree(root)) {
-      mx = Math.max(mx, node.x + node.width);
-      my = Math.max(my, node.y + node.height);
-    }
-    svgW.value = Math.max(mx + 300, 3000);
-    svgH.value = Math.max(my + 300, 3000);
-  }
-
-  // ── Restore pan/zoom so viewport doesn't shift at all ────────────────
   nextTick(() => {
     panX.value = savedPanX;
     panY.value = savedPanY;
     zoom.value = savedZoom;
-    // Allow watchEffect to run normally again on the next change
     isCollapseLayout.value = false;
   });
 }
@@ -4443,6 +4823,7 @@ async function saveNodeStyle() {
         style: p,
       });
     } else {
+      pushHistory()
       emit("update:card", {
         card_id: plain.real_id || plain.id,
         seat_id: plain.seat_id,
@@ -4489,7 +4870,7 @@ async function _doCreateCard(
     } as any);
     const tempCard: MindNode = {
       id: tempId,
-      sheet_id: sheetId,
+      sheet_id: props.sheetId || sheetId,
       topic: title,
       style: {},
       _originalStyle: {},
@@ -4600,7 +4981,7 @@ async function submitInlineCard(topic: string) {
     await _doCreateCard(
       title,
       listNode!,
-      props.sheetId ?? props.selectedSheetId,
+      props.sheetId ?? props.selectedSheetId ?? selectedNodeId.value,
       false,
       status,
     );
@@ -4781,17 +5162,13 @@ function handleKeyDown(e: KeyboardEvent) {
   const inInput =
     t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable;
 
-  // ── Escape: close multi-select or inline creation ──────────────────
-  if (e.key === "Escape") {
-    if (selectedNodeIds.value.size > 0) {
-      clearMultiSelect();
-      return;
-    }
-    if (creatingCardForListId.value) {
-      cancelInlineCreation();
-      return;
-    }
-    return; // ← properly closes the Escape block
+ if (e.key === "Escape") {
+    if (showSearch.value)         { closeSearch(); return }
+    if (showExportMenu.value)     { showExportMenu.value = false; return }
+    if (showShortcutsPanel.value) { showShortcutsPanel.value = false; return }
+    if (selectedNodeIds.value.size > 0) { clearMultiSelect(); return }
+    if (creatingCardForListId.value)    { cancelInlineCreation(); return }
+    return
   }
 
   // ── Ignore all other shortcuts when typing in an input ────────────
@@ -4957,6 +5334,31 @@ function handleKeyDown(e: KeyboardEvent) {
     }
     return;
   }
+  // Search
+  if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+    e.preventDefault()
+    openSearch()
+    return
+  }
+  // Undo
+  if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+    e.preventDefault()
+    undo()
+    return
+  }
+  // Redo
+  if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+    e.preventDefault()
+    redo()
+    return
+  }
+  // Shortcuts panel
+  if (e.key === '?' || e.key === 'h' || e.key === 'H') {
+    if (!inInput) {
+      showShortcutsPanel.value = !showShortcutsPanel.value
+      return
+    }
+  }
 }
 
 function handleGlobalClick(e: MouseEvent) {
@@ -5075,7 +5477,434 @@ onBeforeUnmount(() => {
   document.removeEventListener("click", handleGlobalClick);
   document.removeEventListener("fullscreenchange", handleFullscreenChange);
 });
+// new features
+// ── Search / Spotlight ────────────────────────────────────────────────
+const searchQuery = ref('')
+const showSearch = ref(false)
+const searchInputRef = ref<HTMLInputElement | null>(null)
+const matchingNodeIds = computed<Set<string>>(() => {
+  const q = searchQuery.value.trim().toLowerCase()
+  if (!q) return new Set()
+  const out = new Set<string>()
+  for (const n of allNodes.value) {
+    if (n.topic?.toLowerCase().includes(q)) out.add(n.id)
+    if (n.variables?.['card-title']?.toLowerCase().includes(q)) out.add(n.id)
+    if (n.variables?.['card-status']?.toLowerCase().includes(q)) out.add(n.id)
+    if (n.variables?.['card-type']?.toLowerCase().includes(q)) out.add(n.id)
+  }
+  return out
+})
+const searchResults = computed<MindNode[]>(() => {
+  if (!searchQuery.value.trim()) return []
+  return allNodes.value.filter(n => matchingNodeIds.value.has(n.id))
+})
+function openSearch() {
+  showSearch.value = true
+  nextTick(() => searchInputRef.value?.focus())
+}
+function closeSearch() {
+  showSearch.value = false
+  searchQuery.value = ''
+}
+function jumpToNode(node: MindNode) {
+  const vp = viewportEl.value
+  if (!vp) return
 
+  closeSearch()
+
+  // Pan to center the node
+  panX.value = vp.clientWidth / 2 - (node.x + node.width / 2) * zoom.value
+  panY.value = vp.clientHeight / 2 - (node.y + node.height / 2) * zoom.value
+  selectedNodeId.value = node.id
+
+  // If it's a card, open it directly
+  if (node.uniqueName === 'card') {
+    nextTick(() => handleOpenNode(node))
+  }
+
+  showHint('Found: ' + (node.topic?.slice(0, 20) ?? ''))
+}
+
+// ── Undo / Redo ───────────────────────────────────────────────────────
+interface HistorySnapshot { nodesJSON: string; panX: number; panY: number; zoom: number }
+const undoStack = ref<HistorySnapshot[]>([])
+const redoStack = ref<HistorySnapshot[]>([])
+const MAX_HISTORY = 40
+let _suppressSnapshot = false
+
+function _captureSnapshot(): HistorySnapshot {
+  const root = nodeMap.get(rootNodeId.value)
+  const nodes = root ? flattenTree(root).map(n => ({
+    id: n.id, x: n.x, y: n.y,
+    style: JSON.parse(JSON.stringify(n.style || {})),
+    collapsed: n.collapsed,
+  })) : []
+  return { nodesJSON: JSON.stringify(nodes), panX: panX.value, panY: panY.value, zoom: zoom.value }
+}
+
+function pushHistory() {
+  if (_suppressSnapshot) return
+  const snap = _captureSnapshot()
+  undoStack.value.push(snap)
+  if (undoStack.value.length > MAX_HISTORY) undoStack.value.shift()
+  redoStack.value = []
+}
+
+function _applySnapshot(snap: HistorySnapshot) {
+  _suppressSnapshot = true
+  try {
+    const records: any[] = JSON.parse(snap.nodesJSON)
+    for (const r of records) {
+      const n = nodeMap.get(r.id)
+      if (!n) continue
+      n.x = r.x; n.y = r.y
+      n.style = r.style
+      n.collapsed = r.collapsed
+      if (r.collapsed && !isCollapsed(r.id)) collapseNode(r.id)
+      else if (!r.collapsed && isCollapsed(r.id)) expandNode(r.id)
+    }
+    collapseVersion.value++
+    panX.value = snap.panX; panY.value = snap.panY; zoom.value = snap.zoom
+  } finally {
+    _suppressSnapshot = false
+  }
+}
+
+function undo() {
+  if (undoStack.value.length === 0) { showHint('Nothing to undo'); return }
+  redoStack.value.push(_captureSnapshot())
+  const snap = undoStack.value.pop()!
+  _applySnapshot(snap)
+  showHint('Undo')
+}
+
+function redo() {
+  if (redoStack.value.length === 0) { showHint('Nothing to redo'); return }
+  undoStack.value.push(_captureSnapshot())
+  const snap = redoStack.value.pop()!
+  _applySnapshot(snap)
+  showHint('Redo')
+}
+
+// ── Shortcuts panel ───────────────────────────────────────────────────
+const showShortcutsPanel = ref(false)
+// ── Export ────────────────────────────────────────────────────────────
+const isExporting = ref(false)
+const showExportMenu = ref(false)
+
+async function exportPNG() {
+  if (isExporting.value) return
+  isExporting.value = true
+  showExportMenu.value = false
+  try {
+    await renderSVGToCanvas('png')
+  } catch (e) {
+    console.error('PNG export failed:', e)
+    toast.error('PNG export failed')
+  } finally {
+    isExporting.value = false
+  }
+}
+
+async function exportJPEG() {
+  if (isExporting.value) return
+  isExporting.value = true
+  showExportMenu.value = false
+  try {
+    await renderSVGToCanvas('jpeg')
+  } catch (e) {
+    console.error('JPEG export failed:', e)
+    toast.error('JPEG export failed')
+  } finally {
+    isExporting.value = false
+  }
+}
+
+async function exportPDF() {
+  if (isExporting.value) return
+  isExporting.value = true
+  showExportMenu.value = false
+  try {
+    await renderSVGToCanvas('pdf')
+  } catch (e) {
+    console.error('PDF export failed:', e)
+    toast.error('PDF export failed')
+  } finally {
+    isExporting.value = false
+  }
+}
+
+// Core renderer — builds the export SVG, draws it onto a canvas, then outputs the chosen format
+async function renderSVGToCanvas(format: 'png' | 'jpeg' | 'jpg' | 'pdf') {
+  const svgStr = buildExportSVG()
+  const blob   = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' })
+  const url    = URL.createObjectURL(blob)
+
+  await new Promise<void>((resolve, reject) => {
+    const img = new Image()
+    img.onload = async () => {
+      try {
+        const canvas  = document.createElement('canvas')
+        const DPR     = 2 // retina quality
+        canvas.width  = img.width  * DPR
+        canvas.height = img.height * DPR
+        const ctx     = canvas.getContext('2d')!
+        ctx.scale(DPR, DPR)
+
+        // For JPEG/PDF fill white background (JPEG has no transparency)
+        if (format === 'jpeg' || format === 'jpg' || format === 'pdf') {
+          ctx.fillStyle = '#ffffff'
+          ctx.fillRect(0, 0, img.width, img.height)
+        }
+
+        ctx.drawImage(img, 0, 0, img.width, img.height)
+        URL.revokeObjectURL(url)
+
+        if (format === 'pdf') {
+          // Dynamically load jsPDF
+          const jsPDFModule = await import('https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js' as any)
+          const { jsPDF } = jsPDFModule.default ?? jsPDFModule
+
+          // Page size in mm — A4 landscape if wide, portrait if tall
+          const pxToMm = (px: number) => px * 0.264583
+          const mmW = pxToMm(img.width)
+          const mmH = pxToMm(img.height)
+          const orientation = mmW > mmH ? 'landscape' : 'portrait'
+
+          const pdf = new jsPDF({
+            orientation,
+            unit: 'mm',
+            format: [mmW, mmH], // custom page size matching the mindmap
+          })
+
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.95)
+          pdf.addImage(dataUrl, 'JPEG', 0, 0, mmW, mmH)
+          pdf.save(`mindmap-${Date.now()}.pdf`)
+          showHint('PDF Exported')
+
+        } else {
+          const mimeType = (format === 'jpeg' || format === 'jpg') ? 'image/jpeg' : 'image/png'
+          const quality  = (format === 'jpeg' || format === 'jpg') ? 0.92 : undefined
+          const dataUrl  = quality !== undefined
+            ? canvas.toDataURL(mimeType, quality)
+            : canvas.toDataURL(mimeType)
+
+          const link      = document.createElement('a')
+          link.download   = `mindmap-${Date.now()}.${format}`
+          link.href       = dataUrl
+          link.click()
+          showHint(`${format.toUpperCase()} Exported`)
+        }
+
+        resolve()
+      } catch (err) {
+        reject(err)
+      }
+    }
+    img.onerror = (e) => {
+      URL.revokeObjectURL(url)
+      reject(e)
+    }
+    img.src = url
+  })
+}
+
+
+function buildExportSVG(): string {
+  if (allNodes.value.length === 0) return '<svg xmlns="http://www.w3.org/2000/svg"/>'
+
+  const resolvedEdgeColor = (() => {
+    const raw = activeEdgeColor.value
+    if (!raw || raw.startsWith('var(')) return getComputedVar('--primary-color', '#7d68c8')
+    return raw
+  })()
+
+  const bgColor = (() => {
+    const raw = activeCanvasBg.value
+    if (!raw || raw.startsWith('var(')) return getComputedVar('--bg-body', '#dedfe3')
+    return raw
+  })()
+
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+  for (const n of allNodes.value) {
+    minX = Math.min(minX, n.x)
+    minY = Math.min(minY, n.y)
+    maxX = Math.max(maxX, n.x + n.width)
+    maxY = Math.max(maxY, n.y + n.height)
+  }
+
+  const pad = 60
+  const W = maxX - minX + pad * 2
+  const H = maxY - minY + pad * 2
+  const ox = minX - pad
+  const oy = minY - pad
+
+  const edgePaths = visibleEdges.value.map(e => {
+    const strokeColor = (e.color && !e.color.startsWith('var(')) ? e.color : resolvedEdgeColor
+    const dashAttr = e.dashed ? 'stroke-dasharray="5 4"' : ''
+    return `<path d="${e.path}" stroke="${strokeColor}" stroke-width="1.5" fill="none" stroke-linecap="round" ${dashAttr} opacity="0.65"/>`
+  }).join('\n    ')
+
+  // Helper: wrap text into tspan lines given a max char width
+  function wrapText(text: string, maxChars: number): string[] {
+    const words = text.split(' ')
+    const lines: string[] = []
+    let current = ''
+    for (const word of words) {
+      if ((current + ' ' + word).trim().length > maxChars) {
+        if (current) lines.push(current.trim())
+        current = word
+      } else {
+        current = (current + ' ' + word).trim()
+      }
+    }
+    if (current) lines.push(current.trim())
+    return lines
+  }
+
+  const nodeSVGs = allNodes.value.map(n => {
+    const s = n.style || {}
+
+    const bg = s.background
+      || (n.uniqueName === 'root'  ? resolvedEdgeColor
+        : n.uniqueName === 'sheet' ? '#ede9fb'
+        : n.uniqueName === 'List'  ? '#f3f4f6'
+        :                            '#ffffff')
+
+    const textCol = s.color || (n.uniqueName === 'root' ? '#ffffff' : '#2b2c30')
+    const br      = s.borderRadius ? parseInt(s.borderRadius) : (n.uniqueName === 'root' ? 28 : 8)
+    const bw      = s.borderWidth  ? parseInt(s.borderWidth)  : 1.5
+    const bc      = s.borderColor  || (n.uniqueName === 'root' ? resolvedEdgeColor : '#d9d9d9')
+
+    // Font sizes per node type — larger for root so it's legible
+    const fs = s.fontSize
+      ? parseInt(s.fontSize)
+      : n.uniqueName === 'root'  ? 14
+      : n.uniqueName === 'sheet' ? 12
+      : n.uniqueName === 'List'  ? 11
+      : 11
+
+    const fw = s.fontWeight || (n.uniqueName === 'root' ? '700' : n.uniqueName === 'sheet' ? '600' : '400')
+
+    // For root: wrap text properly, never truncate
+    if (n.uniqueName === 'root') {
+      const fullTitle = n.topic || ''
+      // Approx chars that fit per line based on node width and font size
+      const maxChars = Math.floor((n.width - 56) / (fs * 0.62))
+      const lines = wrapText(fullTitle, Math.max(maxChars, 10))
+      const lineHeight = fs + 4
+      const totalTextH = lines.length * lineHeight
+      const startY = n.height / 2 - totalTextH / 2 + fs
+
+      // Avatar circle placeholder (since we can't embed the logo image easily)
+      const avatarR = 18
+      const avatarCX = 30
+      const avatarCY = n.height / 2
+
+      const tspans = lines.map((line, i) =>
+        `<tspan x="${avatarCX * 2 + 8 + (n.width - avatarCX * 2 - 8) / 2}" dy="${i === 0 ? 0 : lineHeight}">${
+          line.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+        }</tspan>`
+      ).join('')
+
+      return `<g transform="translate(${n.x - ox},${n.y - oy})">
+        <rect width="${n.width}" height="${n.height}" rx="${br}" ry="${br}" fill="${bg}" stroke="${bc}" stroke-width="${bw}"/>
+        <circle cx="${avatarCX}" cy="${avatarCY}" r="${avatarR}" fill="rgba(255,255,255,0.25)"/>
+        <text text-anchor="middle" font-size="${fs}" font-weight="${fw}" fill="${textCol}" font-family="Lato,sans-serif"
+          x="${avatarCX * 2 + 8 + (n.width - avatarCX * 2 - 8) / 2}" y="${startY}">
+          ${tspans}
+        </text>
+      </g>`
+    }
+
+    // Sheet node — icon + title
+    if (n.uniqueName === 'sheet') {
+      const label = (n.topic || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      const childCount = n.children?.length ?? 0
+      return `<g transform="translate(${n.x - ox},${n.y - oy})">
+        <rect width="${n.width}" height="${n.height}" rx="${br}" ry="${br}" fill="${bg}" stroke="${resolvedEdgeColor}" stroke-width="1.5"/>
+        <text x="14" y="${n.height / 2 - 5}" font-size="${fs}" font-weight="${fw}" fill="${textCol}" font-family="Lato,sans-serif">${label}</text>
+        <text x="14" y="${n.height / 2 + fs + 1}" font-size="9" fill="${textCol}" opacity="0.55" font-family="Lato,sans-serif">${childCount} list${childCount !== 1 ? 's' : ''}</text>
+      </g>`
+    }
+
+    // List node — dot + title + card count
+    if (n.uniqueName === 'List') {
+      const label = (n.topic || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      const cardCount = n.children?.length ?? 0
+      return `<g transform="translate(${n.x - ox},${n.y - oy})">
+        <rect width="${n.width}" height="${n.height}" rx="${br}" ry="${br}" fill="${bg}" stroke="#d9d9d9" stroke-width="1"/>
+        <circle cx="14" cy="${n.height / 2}" r="4" fill="${resolvedEdgeColor}"/>
+        <text x="24" y="${n.height / 2 - 4}" font-size="${fs}" font-weight="${fw}" fill="${textCol}" font-family="Lato,sans-serif">${label}</text>
+        <text x="24" y="${n.height / 2 + fs}" font-size="9" fill="${textCol}" opacity="0.55" font-family="Lato,sans-serif">${cardCount} card${cardCount !== 1 ? 's' : ''}</text>
+      </g>`
+    }
+
+    // Card node — colored stripe + title + badges
+    const label = (n.topic || '').slice(0, 35).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    const stripeColor = n.variables?.lane?.variables?.['lane-color'] || s.borderColor || resolvedEdgeColor
+    const status  = (n.variables?.['card-status'] || '').slice(0, 18).replace(/&/g,'&amp;')
+    const cardType = (n.variables?.['card-type'] || '').slice(0, 14).replace(/&/g,'&amp;')
+
+    return `<g transform="translate(${n.x - ox},${n.y - oy})">
+      <rect width="${n.width}" height="${n.height}" rx="${br}" ry="${br}" fill="${bg}" stroke="${bc}" stroke-width="${bw}"/>
+      <rect width="${n.width}" height="4" rx="2" ry="2" fill="${stripeColor}"/>
+      ${cardType ? `<rect x="6" y="10" width="${cardType.length * 5.5 + 8}" height="13" rx="3" fill="rgba(125,104,200,0.1)"/>
+      <text x="10" y="20" font-size="9" fill="#7d68c8" font-family="Lato,sans-serif">${cardType}</text>` : ''}
+      ${status ? `<rect x="${cardType ? cardType.length * 5.5 + 20 : 6}" y="10" width="${status.length * 5.5 + 8}" height="13" rx="3" fill="rgba(125,104,200,0.15)"/>
+      <text x="${cardType ? cardType.length * 5.5 + 24 : 10}" y="20" font-size="9" fill="#7d68c8" font-family="Lato,sans-serif">${status}</text>` : ''}
+      <text x="8" y="${(cardType || status) ? 38 : 22}" font-size="${fs}" font-weight="${fw}" fill="${textCol}" font-family="Lato,sans-serif">${label}</text>
+    </g>`
+  }).join('\n    ')
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+  <rect width="${W}" height="${H}" fill="${bgColor}"/>
+  <g transform="translate(${-ox},${-oy})">
+    ${edgePaths}
+    ${nodeSVGs}
+  </g>
+</svg>`
+}
+function exportSVG() {
+  showExportMenu.value = false
+  const svgStr = buildExportSVG()
+  const blob = new Blob([svgStr], { type: 'image/svg+xml' })
+  const link = document.createElement('a')
+  link.download = `mindmap-${Date.now()}.svg`
+  link.href = URL.createObjectURL(blob)
+  link.click()
+  showHint('SVG Exported')
+}
+
+function exportJSON() {
+  showExportMenu.value = false
+  const root = nodeMap.get(rootNodeId.value)
+  if (!root) return
+  function serializeNode(n: MindNode): any {
+    return {
+      id: n.real_id || n.id,
+      topic: n.topic,
+      type: n.uniqueName,
+      style: n.style,
+      variables: n.variables,
+      hyperLink: n.hyperLink,
+      children: (n.children || []).map(serializeNode),
+    }
+  }
+  const data = { exportedAt: new Date().toISOString(), layout: layoutDirection.value, tree: serializeNode(root) }
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+  const link = document.createElement('a')
+  link.download = `mindmap-${Date.now()}.json`
+  link.href = URL.createObjectURL(blob)
+  link.click()
+  showHint('JSON Exported')
+}
+const getNodeTitle = (topic: string) =>
+  route.path.includes('/talent') && topic === 'All sheet'
+    ? localStorage.getItem('currentTalent') === 'agents'
+      ? 'All Agents'
+      : 'All Talent'
+    : topic
 </script>
 
 <style scoped>
@@ -5620,7 +6449,6 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--border, #d9d9d9);
   border-radius: 6px;
   background: transparent;
   cursor: pointer;
@@ -5984,7 +6812,7 @@ onBeforeUnmount(() => {
 .shadow-btn:hover,
 .shadow-btn--active {
   background: var(--primary-color);
-  color: var(--primary-color, #fff);
+  color: white;
   border-color: var(--primary-color);
 }
 
@@ -7134,5 +7962,462 @@ onBeforeUnmount(() => {
 /* Right-click pan cursor hint on viewport */
 .viewport {
   cursor: default;
+}
+/* ── Search Spotlight ────────────────────────────────────────────────── */
+.search-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 800;
+  display: flex;
+  justify-content: center;
+  padding-top: 48px;
+  pointer-events: none;
+}
+.search-panel {
+  pointer-events: auto;
+  width: 520px;
+  max-width: calc(100vw - 48px);
+  background: var(--bg-card, #fff);
+  border: 1px solid var(--border, #d9d9d9);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.18), 0 4px 16px rgba(0,0,0,0.08);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  max-height: 420px;
+}
+.search-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border, #d9d9d9);
+  flex-shrink: 0;
+}
+.search-icon {
+  color: var(--primary-color);
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 15px;
+  font-weight: 500;
+  background: transparent;
+  color: var(--text-primary, #2b2c30);
+  font-family: 'Lato', sans-serif;
+  min-width: 0;
+}
+.search-input::placeholder {
+  color: var(--text-secondary, #94a3b8);
+  font-weight: 400;
+}
+.search-count {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--primary-color);
+  background: color-mix(in srgb, var(--primary-color), transparent 88%);
+  border-radius: 20px;
+  padding: 2px 8px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.search-close-btn {
+  width: 26px;
+  height: 26px;
+  border: none;
+  background: var(--bg-surface, #dedfe3);
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text-secondary, #6b6b6e);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  flex-shrink: 0;
+  transition: background 0.12s;
+}
+.search-close-btn:hover {
+  background: var(--border, #d9d9d9);
+}
+.search-results {
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px;
+}
+.search-results::-webkit-scrollbar { width: 5px; }
+.search-results::-webkit-scrollbar-thumb { background: var(--border, #d9d9d9); border-radius: 3px; }
+.search-result-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border: none;
+  background: transparent;
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.1s;
+}
+.search-result-item:hover {
+  background: color-mix(in srgb, var(--primary-color), transparent 92%);
+}
+.search-result-icon {
+  font-size: 13px;
+  color: var(--primary-color);
+  width: 16px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.search-result-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.search-result-topic {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary, #2b2c30);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.search-result-type {
+  font-size: 10px;
+  color: var(--text-secondary, #94a3b8);
+  font-weight: 500;
+  text-transform: capitalize;
+}
+.search-result-enter {
+  flex-shrink: 0;
+}
+.search-result-enter kbd {
+  font-size: 10px;
+  background: var(--bg-surface, #dedfe3);
+  border: 1px solid var(--border, #d9d9d9);
+  border-radius: 4px;
+  padding: 2px 6px;
+  color: var(--text-secondary, #6b6b6e);
+}
+.search-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 32px 16px;
+  color: var(--text-secondary, #94a3b8);
+  font-size: 13px;
+}
+.search-footer {
+  display: flex;
+  gap: 14px;
+  padding: 8px 16px;
+  border-top: 1px solid var(--border, #d9d9d9);
+  background: var(--bg-surface, #f8fafc);
+  flex-shrink: 0;
+}
+.search-footer span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10.5px;
+  color: var(--text-secondary, #94a3b8);
+  font-weight: 500;
+}
+.search-footer kbd {
+  font-size: 9.5px;
+  background: var(--bg-card, #fff);
+  border: 1px solid var(--border, #d9d9d9);
+  border-radius: 4px;
+  padding: 1px 5px;
+  color: var(--text-primary, #2b2c30);
+  font-family: monospace;
+}
+.search-drop-enter-active, .search-drop-leave-active {
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+.search-drop-enter-from, .search-drop-leave-to {
+  opacity: 0;
+  transform: translateY(-10px) scale(0.97);
+}
+
+/* Dark mode search */
+.mindmap-root[data-dark="true"] .search-panel {
+  background: var(--bg-card, #2b2c30);
+  border-color: #3e3e42;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+.mindmap-root[data-dark="true"] .search-header { border-color: #3e3e42; }
+.mindmap-root[data-dark="true"] .search-input { color: #f5f5f5; }
+.mindmap-root[data-dark="true"] .search-close-btn { background: #3e3e42; color: #b0b0b0; }
+.mindmap-root[data-dark="true"] .search-result-item:hover { background: rgba(147,86,197,0.15); }
+.mindmap-root[data-dark="true"] .search-result-topic { color: #f5f5f5; }
+.mindmap-root[data-dark="true"] .search-result-enter kbd { background: #3e3e42; border-color: #555; color: #b0b0b0; }
+.mindmap-root[data-dark="true"] .search-footer { background: #1a1a1a; border-color: #3e3e42; }
+.mindmap-root[data-dark="true"] .search-footer kbd { background: #2b2c30; border-color: #555; }
+.mindmap-root[data-dark="true"] .search-results::-webkit-scrollbar-thumb { background: #3e3e42; }
+
+/* ── Export Menu ─────────────────────────────────────────────────────── */
+.export-menu {
+  position: absolute;
+  top: 16px;
+  right: 60px;
+  z-index: 600;
+  background: var(--bg-card, #fff);
+  border: 1px solid var(--border, #d9d9d9);
+  border-radius: 14px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.14);
+  width: 260px;
+  overflow: hidden;
+}
+.export-menu-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border, #d9d9d9);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary, #2b2c30);
+}
+.export-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.1s;
+  border-bottom: 1px solid var(--border, #efefef);
+}
+.export-item:last-child { border-bottom: none; }
+.export-item:hover:not(:disabled) { background: var(--bg-surface, #f8fafc); }
+.export-item:disabled { opacity: 0.6; cursor: not-allowed; }
+.export-item-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.export-item-icon--png { background: #fef3c7; color: #d97706; }
+.export-item-icon--svg { background: #dbeafe; color: #2563eb; }
+.export-item-icon--json { background: #d1fae5; color: #059669; }
+.export-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+.export-item-name { font-size: 13px; font-weight: 600; color: var(--text-primary, #2b2c30); }
+.export-item-desc { font-size: 10.5px; color: var(--text-secondary, #94a3b8); }
+
+.mindmap-root[data-dark="true"] .export-menu {
+  background: var(--bg-card, #2b2c30);
+  border-color: #3e3e42;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+}
+.mindmap-root[data-dark="true"] .export-menu-header { border-color: #3e3e42; color: #f5f5f5; }
+.mindmap-root[data-dark="true"] .export-item { border-color: #3e3e42; }
+.mindmap-root[data-dark="true"] .export-item:hover:not(:disabled) { background: #3e3e42; }
+.mindmap-root[data-dark="true"] .export-item-name { color: #f5f5f5; }
+
+/* ── Shortcuts Panel ─────────────────────────────────────────────────── */
+.shortcuts-panel {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 600;
+  width: 320px;
+  max-height: calc(100% - 80px);
+  background: var(--bg-card, #fff);
+  border: 1px solid var(--border, #d9d9d9);
+  border-radius: 14px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.12);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.sp-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border, #d9d9d9);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary, #2b2c30);
+  flex-shrink: 0;
+}
+.sp-body {
+  overflow-y: auto;
+  padding: 8px 0;
+}
+.sp-body::-webkit-scrollbar { width: 4px; }
+.sp-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.sp-group {
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--border, #efefef);
+}
+.sp-group:last-child { border-bottom: none; }
+.sp-group-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--primary-color);
+  margin-bottom: 7px;
+}
+.sp-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 11.5px;
+  color: var(--text-primary, #2b2c30);
+}
+.sp-row kbd {
+  font-size: 9.5px;
+  font-weight: 600;
+  background: var(--bg-surface, #f3f4f6);
+  border: 1px solid var(--border, #d9d9d9);
+  border-bottom: 2px solid var(--border, #c9cacc);
+  border-radius: 5px;
+  padding: 2px 7px;
+  font-family: monospace;
+  color: var(--text-primary, #2b2c30);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.sp-row span {
+  color: var(--text-secondary, #6b6b6e);
+  font-size: 11px;
+  text-align: right;
+}
+
+.mindmap-root[data-dark="true"] .shortcuts-panel {
+  background: var(--bg-card, #2b2c30);
+  border-color: #3e3e42;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+}
+.mindmap-root[data-dark="true"] .sp-header { border-color: #3e3e42; color: #f5f5f5; }
+.mindmap-root[data-dark="true"] .sp-group { border-color: #3e3e42; }
+.mindmap-root[data-dark="true"] .sp-row { color: #f5f5f5; }
+.mindmap-root[data-dark="true"] .sp-row kbd { background: #3e3e42; border-color: #555; border-bottom-color: #222; color: #f5f5f5; }
+.mindmap-root[data-dark="true"] .sp-row span { color: #b0b0b0; }
+.mindmap-root[data-dark="true"] .sp-body::-webkit-scrollbar-thumb { background: #3e3e42; }
+
+/* ── Undo/Redo controls ──────────────────────────────────────────────── */
+.undo-redo-controls {
+  position: absolute;
+  top: 16px;
+  left: 62px;
+  display: flex;
+  gap: 4px;
+  z-index: 100;
+}
+.undo-redo-controls .ctrl-btn {
+  position: relative;
+  background: var(--bg-card, #fff);
+  border: 1px solid var(--border, #d9d9d9);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+}
+.undo-count {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: var(--primary-color);
+  color: #fff;
+  font-size: 7.5px;
+  font-weight: 700;
+  border-radius: 10px;
+  padding: 1px 3px;
+  min-width: 12px;
+  text-align: center;
+  line-height: 1.4;
+}
+.ctrl-btn--disabled {
+  opacity: 0.4 !important;
+  cursor: not-allowed !important;
+}
+
+/* ── Toolbar (top-right) ─────────────────────────────────────────────── */
+.mm-toolbar {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  z-index: 500;
+  background: var(--bg-card, #fff);
+  border: 1px solid var(--border, #d9d9d9);
+  border-radius: 10px;
+  padding: 5px 6px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  transition: right 0.22s ease; /* ADD THIS */
+}
+.mm-tool-btn {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-secondary, #6b6b6e);
+  transition: all 0.12s;
+}
+.mm-tool-btn:hover, .mm-tool-btn--active {
+  background: var(--primary-color);
+  color: #fff;
+}
+.mm-tool-divider {
+  width: 1px;
+  height: 18px;
+  background: var(--border, #d9d9d9);
+  flex-shrink: 0;
+}
+.mm-tool-export-wrap {
+  position: relative;
+}
+
+.mindmap-root[data-dark="true"] .mm-toolbar {
+  background: var(--bg-card, #2b2c30);
+  border-color: #3e3e42;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+}
+.mindmap-root[data-dark="true"] .mm-tool-btn { color: #b0b0b0; }
+.mindmap-root[data-dark="true"] .mm-tool-divider { background: #3e3e42; }
+.mindmap-root[data-dark="true"] .undo-redo-controls .ctrl-btn {
+  background: var(--bg-card, #2b2c30);
+  border-color: #3e3e42;
+}
+/* Shift toolbar left when sidebar is open so it doesn't overlap */
+.mm-toolbar--sidebar-open {
+  right: calc(280px + 16px); /* sidebar width + original offset */
+  transition: right 0.22s ease;
+}
+
+/* Also shift export menu anchor */
+.mm-toolbar--sidebar-open ~ .export-menu,
+.export-menu {
+  right: auto; /* let it follow the toolbar */
 }
 </style>

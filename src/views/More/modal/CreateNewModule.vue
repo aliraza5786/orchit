@@ -22,13 +22,24 @@
                 <BaseTextField v-model="form.title" label="Module name" size="lg" placeholder="Module name"
                     :error="!!errors.title" :message="errors.title" />
 
-                <BaseTextField v-model="form.description" label="Description" size="lg" textarea
-                    placeholder="A short description" :error="!!errors.description" :message="errors.description" />
+                <BaseTextAreaField
+                    v-model="form.description"
+                    label="Description"
+                    placeholder="A short description"
+                    :error="!!errors.description"
+                    :message="errors.description"
+                />
 
                 <div class="flex justify-end gap-2 pt-2">
                     <button class="px-4 py-2 rounded-md text-sm text-text-secondary border"
                         @click="close">Cancel</button>
-                    <Button :inSpace="true" class="px-4" @click="submitManual" :loading="creatingModule">
+                    <Button
+                        :inSpace="true"
+                        class="px-4"
+                        @click="submitManual"
+                        :disabled="!canSubmitManual || creatingModule"
+                        :loading="creatingModule"
+                    >
                         {{ creatingModule ? 'Saving' : 'Save' }}
                     </Button>
                 </div>
@@ -136,6 +147,7 @@
 import { ref, computed, watch } from 'vue'
 import BaseModal from '../../../components/ui/BaseModal.vue'
 import BaseTextField from '../../../components/ui/BaseTextField.vue'
+import BaseTextAreaField from '../../../components/ui/BaseTextAreaField.vue'
 import Button from '../../../components/ui/Button.vue'
 import AudioRecorder from '../../../views/CreateWorkspace/components/AudioRecorder.vue'
 
@@ -149,6 +161,7 @@ import IconPicker from '../../Product/components/IconPicker.vue'
 import { useCreateModule, useCreateModuleAI } from '../../../queries/useMore'
 // import { useSuggestions } from '../../../queries/useWorkspace'
 import { usePermissions } from '../../../composables/usePermissions'
+import { useModuleGenerationStream } from '../../../composables/useModuleGenerationStream'
 
 const props = defineProps<{ modelValue: boolean }>()
 const { canCreateModule } = usePermissions()
@@ -157,6 +170,7 @@ const emit = defineEmits(['update:modelValue'])
 
 const queryClient = useQueryClient()
 const { workspaceId, moduleId } = useRouteIds()
+const { registerModuleJob, startModuleGenerationStream } = useModuleGenerationStream()
 
 const form = ref({ title: '', description: '', icon: null })
 const errors = ref<{ title?: string; description?: string }>({})
@@ -183,6 +197,12 @@ watch(() => form.value.title, (val) => {
 watch(() => form.value.description, (val) => {
     if (val.trim()) clearFieldError('description')
 })
+
+const canSubmitManual = computed(() =>
+    !!form.value.title.trim() &&
+    !!form.value.description.trim() &&
+    !!form.value.icon,
+)
 
 const { mutate: createModule, isPending: creatingModule } = useCreateModule({
     onSuccess: async () => {
@@ -267,20 +287,26 @@ const isPending = ref(false)
 // }
 
 const { mutate: generateAI, isPending: isAiPending } = useCreateModuleAI({
-    onSuccess: async () => {
+    onSuccess: async (data: any) => {
+          const module = data?.module
+          const newModuleId = module?._id
+          const jobId = module?.card_generation_job_id
+
+          if (newModuleId && jobId) {
+            registerModuleJob(newModuleId, String(jobId))
+            startModuleGenerationStream(
+              newModuleId,
+              String(jobId),
+              workspaceId.value,
+              queryClient,
+            )
+          }
+
           description.value = ''
           await queryClient.invalidateQueries({ queryKey: ['workspaces'] })
-          await queryClient.invalidateQueries({ queryKey: ['workspaces', 'byId', workspaceId.value] }) // Ensure single workspace is refreshed
+          await queryClient.invalidateQueries({ queryKey: ['workspaces', 'byId', workspaceId.value] })
           close()
           isPending.value = false
-        // const result: any = extractJSONFromResponse(data) ?? {}
-        // createModule({
-        //     payload: {
-        //         ...data,
-        //         workspace_id: workspaceId.value,
-        //     }
-
-        // }) 
     },
     onError: () => { isPending.value = false }
 })

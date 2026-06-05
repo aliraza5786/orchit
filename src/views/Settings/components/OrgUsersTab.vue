@@ -334,7 +334,7 @@
 
   <!-- Edit -->
   <button
-    v-if="canUpdateUsers && member.membership_status !== 'deactivated'"
+    v-if="canUpdateUsers && member.membership_status === 'active'"
     @click.stop="openEditModal(member)"
     :disabled="!isUserVerified"
     title="Edit member"
@@ -345,7 +345,7 @@
 
   <!-- Remove (only for non-deactivated, requires delete perm) -->
   <button
-    v-if="canDeleteUsers && member.membership_status !== 'deactivated'"
+    v-if="canDeleteUsers && member.membership_status === 'active'"
     @click.stop="confirmDeactivate(member)"
     :disabled="!isUserVerified"
     title="Remove member"
@@ -660,7 +660,6 @@
                 <label class="text-[11px] font-semibold text-text-primary uppercase tracking-wider block mb-1.5">
                   Role <span class="text-text-secondary font-normal normal-case">(default: {{ defaultRoleName }})</span>
                 </label>
-                {{ createForm.company_role_id }}
                 <div class="relative">
                   <select
                     v-model="createForm.company_role_id"
