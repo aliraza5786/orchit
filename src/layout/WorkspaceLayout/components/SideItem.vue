@@ -5,7 +5,7 @@
     @click="clickHandler"
     class="group cursor-pointer flex items-center px-2 rounded-lg text-xs transition-all duration-300 ease-in-out relative hover:bg-bg-card hover:text-text-primary select-none"
     :class="[
-      progress == 'processing' && status == 'running'
+      showLoadingSpinner
         ? 'disbled !cursor-not-allowed opacity-50'
         : workspaceStore.background.startsWith('url') && !isActive
           ? 'text-text-primary bg-bg-card'
@@ -33,7 +33,7 @@
 
     <!-- Icon -->
     <i
-      v-if="progress == 'processing' && status == 'running'"
+      v-if="showLoadingSpinner"
       class="fa-regular opacity-50 text-left fa-arrows-spin animate-spin duration-250"
     ></i>
 
@@ -166,7 +166,11 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, onUnmounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { useQueryClient } from "@tanstack/vue-query";
 import { useWorkspaceStore } from "../../../stores/workspace";
+import { useSpaceCreationStream } from "../../../composables/useSpaceCreationStream";
+import { useModuleGenerationStream } from "../../../composables/useModuleGenerationStream";
+import { useRouteIds } from "../../../composables/useQueryParams";
 const emit = defineEmits([
   "toggleDropdown",
   "delete",
@@ -182,6 +186,7 @@ const props = defineProps<{
   icon: any;
   to: string;
   status?: string;
+  laneLabel?: string;
   expanded?: boolean;
   deleteIcon?: any;
   activeDropdownId?: string | null;
@@ -189,6 +194,7 @@ const props = defineProps<{
   canShare?: string;
   canUpdate?: boolean;
 }>();
+
 const showTooltip = ref(false);
 const itemRef = ref<HTMLElement | null>(null);
 const dropdownRef = ref<HTMLElement | null>(null);
@@ -218,11 +224,43 @@ onUnmounted(() => {
 });
 
 /** --- STATE --- **/
-const progress = ref<any>(""); // store only progress as required
-const eventSource = ref<EventSource | null>(null);
-let stopped = false;
-/** --- SSE URL --- **/
-const SERVER_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const { isLaneGenerating, isGenerating } = useSpaceCreationStream();
+const {
+  moduleProgress,
+  startModuleGenerationStream,
+} = useModuleGenerationStream();
+const queryClient = useQueryClient();
+const { workspaceId } = useRouteIds();
+
+const TERMINAL_STATUSES = ["completed", "failed", "canceled"];
+
+const isModuleJobGenerating = computed(() => {
+  if (!props.jobId) return false;
+  const progress = moduleProgress.value[props.id];
+  if (progress?.status) {
+    return !TERMINAL_STATUSES.includes(progress.status);
+  }
+  return props.status === "running";
+});
+
+const showLoadingSpinner = computed(() => {
+  // For lane-aware tabs (Plan + dynamic modules like Tasks), keep spinner visible
+  // while the AI space creation stream is active.
+  if (props.laneLabel && isGenerating.value) return true;
+  if (props.laneLabel && isLaneGenerating(props.laneLabel)) return true;
+  if (isModuleJobGenerating.value) return true;
+  return false;
+});
+
+function ensureModuleStream() {
+  if (!props.jobId || props.status !== "running") return;
+  startModuleGenerationStream(
+    props.id,
+    props.jobId,
+    workspaceId.value,
+    queryClient,
+  );
+}
 const toggleDropdown = () => {
   emit("toggleDropdown", props.id);
 };
@@ -246,87 +284,16 @@ const emitEdit = () => {
   emit("closeDropdown");
   emit("edit", props.id);
 };
-const connectStream = () => {
-  if (stopped) return;
-  if (!props.id) return; // no job id → no stream
-  if (props.status != "running") return; // already done → skip
-  if (eventSource.value) return; // prevent multiple streams
 
-  const token = localStorage.getItem("token") || "";
-  const url = `${SERVER_BASE_URL}workspace/modules/generation/${props?.jobId}/stream?token=${token}`;
-
-  const es = new EventSource(url);
-  eventSource.value = es;
-
-  es.onopen = () => {
-    if (stopped) return;
-    console.log("STREAM CONNECTED:", url);
-  };
-
-  es.onmessage = (event) => {
-    if (stopped) return;
-    try {
-      const data = JSON.parse(event.data);
-      if (data.status) {
-        progress.value = data.status;
-
-        // Auto-close at 100%
-        if (progress.value == "completed") {
-          disconnectStream();
-        }
-      }
-    } catch (_) {}
-  };
-  eventSource.value.addEventListener("progress", (event: MessageEvent) => {
-    console.log(">> trki g");
-
-    try {
-      const data = JSON.parse(event.data);
-      if (data.status) {
-        progress.value = data.status;
-
-        // Auto-close at 100%
-        if (progress.value == "completed") {
-          disconnectStream();
-        }
-      }
-    } catch {}
-  });
-  es.onerror = () => {
-    // DO NOT RECONNECT
-    disconnectStream();
-  };
-};
-
-/** Close stream completely */
-const disconnectStream = () => {
-  if (eventSource.value) {
-    eventSource.value.close();
-    eventSource.value = null;
-  }
-};
-
-/** Lifecycle */
 onMounted(() => {
-  stopped = false;
-  connectStream(); // connect once
+  ensureModuleStream();
 });
 
-/** Close on unmount */
-onUnmounted(() => {
-  stopped = true;
-  disconnectStream();
-});
-
-/**
- * If props.id changes → restart stream
- */
 watch(
-  () => props.id,
-  () => {
-    disconnectStream();
-    progress.value = 0;
-    connectStream();
+  () => props.jobId,
+  (nextJobId, prevJobId) => {
+    if (nextJobId === prevJobId) return;
+    ensureModuleStream();
   },
 );
 
@@ -340,7 +307,7 @@ const isActive = computed(() => {
 });
 const router = useRouter();
 function clickHandler() {
-  if (progress.value == "processing" && props.status == "running") return;
+  if (showLoadingSpinner.value) return;
   router.push(props.to);
   workspaceStore.saveAgentModule(props.label);
 }

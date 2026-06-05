@@ -282,6 +282,8 @@
                 <div
                   v-else-if="column.showADDNEW"
                   class="p-4 space-y-2 bg-bg-surface m-4 rounded-md"
+                  @click.stop
+                  @mousedown.stop
                 >
                   <p class="text-sm text-text-primary">
                     {{ column.title }} {{ column.cards.length + 1 }}

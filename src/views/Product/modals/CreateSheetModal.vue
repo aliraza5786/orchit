@@ -20,13 +20,24 @@
                 <BaseTextField v-model="form.title" label="Sheet name" size="lg" placeholder="Design Ideas"
                     :error="!!errors.title" :message="errors.title" />
 
-                <BaseTextField v-model="form.description" label="Description" size="lg" textarea
-                    placeholder="A short description" :error="!!errors.description" :message="errors.description" />
+                <BaseTextAreaField
+                    v-model="form.description"
+                    label="Description"
+                    placeholder="A short description"
+                    :error="!!errors.description"
+                    :message="errors.description"
+                />
 
                 <div class="flex justify-end gap-2 pt-2">
                     <button class="px-4 py-2 rounded-md text-sm text-text-secondary border"
                         @click="close">Cancel</button>
-                    <Button :inSpace="true" class="px-4" @click="submitManual">
+                    <Button
+                        :inSpace="true"
+                        class="px-4"
+                        @click="submitManual"
+                        :disabled="!canSubmitManual || creatingSheet || isUpdating"
+                        :loading="creatingSheet || isUpdating"
+                    >
                         {{ creatingSheet || isUpdating ? 'Saving...' : 'Save' }}
                     </Button>
                 </div>
@@ -131,6 +142,7 @@
 import { ref, computed, watch } from 'vue'
 import BaseModal from '../../../components/ui/BaseModal.vue'
 import BaseTextField from '../../../components/ui/BaseTextField.vue'
+import BaseTextAreaField from '../../../components/ui/BaseTextAreaField.vue'
 import IconPicker from '../components/IconPicker.vue'
 import AudioRecorder from '../../../views/CreateWorkspace/components/AudioRecorder.vue'
 
@@ -179,6 +191,12 @@ watch(() => form.value.title, (val) => {
 watch(() => form.value.description, (val) => {
     if ((val ?? '').trim()) clearFieldError('description')
 })
+
+const canSubmitManual = computed(() =>
+    !!form.value.title?.trim() &&
+    !!form.value.description?.trim() &&
+    !!form.value.icon,
+)
 
 const { mutate: createSheet, isPending: creatingSheet } = useCreateWorkspaceSheet({
     onSuccess: () => {

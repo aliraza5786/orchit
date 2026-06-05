@@ -35,7 +35,7 @@
             🎉
           </span></span>
         <span v-else>
-       {{ doneCard ??0 }}  / {{ totalCard }}
+         {{ doneCard ??0 }}  / {{ totalCard }}
         </span>
       </div>
       <ProgressBar class="mt-2" :progress="liveProgress" fillColor="bg-primary-color" :indeterminate="!!loading" />
@@ -69,8 +69,12 @@ const props = withDefaults(defineProps<{
   color: '#9CA3AF'
 })
 
-const indeterminate = useIndeterminateProgress(() => !!props.loading)
-const liveProgress = computed(() => (props.loading ? indeterminate.value : props.progress))
+const indeterminate = useIndeterminateProgress(() => !!props.loading && !(props.ai && (props.progress ?? 0) > 0))
+const liveProgress = computed(() => {
+  if (!props.loading) return props.progress ?? 0
+  if (props.ai && (props.progress ?? 0) > 0) return props.progress ?? 0
+  return indeterminate.value
+})
 
 // const visibleAvatars = computed(() => props.avatars.slice(0, props.maxVisible))
 // const extraCount = computed(() => (props.avatars.length > props.maxVisible ? props.avatars.length - props.maxVisible : 0))

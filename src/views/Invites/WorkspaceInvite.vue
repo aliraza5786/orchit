@@ -173,6 +173,7 @@ import {
   getPendingWorkspaceInvite,
   type WorkspaceInviteAction,
 } from '../../utilities/workspaceInvitePending'
+import { clearAuthCookie } from '../../utilities/auth'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -270,12 +271,19 @@ function goHome() {
 }
 
 function goToLogin() {
-  router.push({ name: 'Login', query: { redirect: router.currentRoute.value.fullPath } })
+  auth.logout()
+  clearAuthCookie()
+  router.push({
+    name: 'Login',
+    query: {
+      redirect: router.currentRoute.value.fullPath,
+      logout: 'true',
+    },
+  })
 }
 
 function logoutAndSwitch() {
-  auth.logout()
-  router.push({ name: 'Login', query: { redirect: router.currentRoute.value.fullPath } })
+  goToLogin()
 }
 
 function goToWorkspace() {

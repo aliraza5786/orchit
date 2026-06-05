@@ -55,6 +55,7 @@
 
 <script setup lang="ts">
 import { computed, ref, onUnmounted, onMounted, watch } from "vue";
+import { useSpaceCreationStream } from "../../composables/useSpaceCreationStream";
 import { useWorkspaceStore } from "../../stores/workspace";
 import ProfilePanel from "./components/ProfilePanel.vue";
 import SettingPanel from "./components/SettingPanel.vue";
@@ -77,7 +78,8 @@ import {
 } from "../../utilities/themeUtils";
 const { isDark } = useTheme();
 const workspaceStore = useWorkspaceStore();
-const { workspaceId } = useRouteIds(); // Use the shared composable
+const { workspaceId, jobId } = useRouteIds();
+const { connect, resume, stopAll } = useSpaceCreationStream();
 
 // Pass the ref directly. useSingleWorkspace handles unref internally if designed correctly,
 // or we can pass a computed if needed. Inspecting useSingleWorkspace, it accepts MaybeRef.
@@ -171,11 +173,19 @@ watch(
   { immediate: true },
 );
 onMounted(() => {
-  handleResize(); // initial check
+  handleResize();
   window.addEventListener("resize", handleResize);
+  resume();
+  if (workspaceId.value) connect(workspaceId.value, jobId.value);
 });
+
+watch([workspaceId, jobId], ([wsId, jId]) => {
+  if (wsId) connect(wsId, jId || "");
+});
+
 onUnmounted(() => {
   window.removeEventListener("resize", handleResize);
+  stopAll();
 });
 // Toggle function for button
 function toggleSidebar() {

@@ -534,7 +534,7 @@
     <!-- ── No Sheets Modal ─────────────────────────────────────────────────── -->
     <div
       v-if="(!transformedData?.length && !isPending) || !isSheetPending"
-      v-show="hideNoSheetsModal && canCreateSheet"
+      v-show="hideNoSheetsModal"
       class="flex items-center justify-center h-full"
     >
       <div
@@ -548,6 +548,7 @@
         />
         <div class="flex justify-center gap-3 mt-6">
           <Button
+            v-show="canCreateSheet"
             class="px-4 py-2 bg-primary-color text-white"
             @click="handleCreateSheetFromModal"
           >

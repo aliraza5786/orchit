@@ -62,6 +62,7 @@
           :to="`/workspace/plan/${workspaceId}`"
           key="plan"
           id="plan"
+          laneLabel="Plan"
           :icon="{
             prefix: 'fa-regular',
             iconName: 'fa-brain',
@@ -74,12 +75,13 @@
         :class="expanded ? 'w-full' : 'w-max'"
       >
         <SideItem
-          v-for="(item, index) in filteredModules"
-          :key="index"
+          v-for="item in filteredModules"
+          :key="item._id"
           :id="item?._id"
           :label="item.variables['module-title']"
-          :jobId="item?.generation_task?.job_id"
-          :status="item?.generation_task?.status"
+          :laneLabel="item.variables['module-title']"
+          :jobId="resolveModuleJobId(item)"
+          :status="resolveModuleJobStatus(item)"
           :to="`/${
             item?.variables['module-title']?.toLowerCase() == 'pin'
               ? 'workspace/pin'
@@ -226,6 +228,7 @@ import SidebarSkeleton from "../../../components/skeletons/SidebarSkeleton.vue";
 import { useWorkspaceStore } from "../../../stores/workspace";
 import { useDeleteModule } from "../../../queries/useMore";
 import { useSingleWorkspace } from "../../../queries/useWorkspace";
+import { useModuleGenerationStream } from "../../../composables/useModuleGenerationStream";
 import { toast } from "vue-sonner";
 import { useRouter } from "vue-router";
 const showDeleteDialog = ref(false);
@@ -303,6 +306,25 @@ function cancelDelete() {
 }
 
 const { canCreateModule } = usePermissions();
+const { getPendingJobId, hasPendingJob } = useModuleGenerationStream();
+
+function resolveModuleJobId(item: any) {
+  const task = item?.generation_task;
+  if (task?.status === "running" && task?.job_id) {
+    return String(task.job_id);
+  }
+  if (hasPendingJob(item._id)) {
+    return getPendingJobId(item._id);
+  }
+  return undefined;
+}
+
+function resolveModuleJobStatus(item: any) {
+  const task = item?.generation_task;
+  if (task?.status) return task.status;
+  if (hasPendingJob(item._id)) return "running";
+  return undefined;
+}
 
 // Removed workspace from props
 defineProps<{

@@ -180,19 +180,78 @@
 
         <!-- Input row -->
         <div class="flex gap-2">
-          <div class="flex-1">
+          <div class="flex-1 relative">
             <input
+              ref="emailInputRef"
               v-model="emailInput"
-              type="email"
+              type="text"
+              autocomplete="off"
               placeholder="Enter email address and press Enter or Add..."
               class="w-full h-9 px-3 text-sm border border-border rounded-lg bg-bg-input text-text-primary outline-none transition-all"
               :class="inSpace? 'focus:border-primary-color' : 'focus:border-accent '"
-              @keydown.enter.prevent="addEmail"
+              @keydown="onEmailKeydown"
+              @focus="onEmailInputFocus"
+              @blur="onEmailInputBlur"
+              @input="onEmailInput"
             />
             <p v-if="emailInputError" class="text-xs text-red-500 mt-1">
               {{ emailInputError }}
             </p>
           </div>
+
+          <Teleport to="body">
+            <div
+              v-if="showSuggestions && filteredUserSuggestions.length > 0"
+              class="fixed z-[9999] bg-bg-body border border-border rounded-lg shadow-lg overflow-hidden"
+              :style="suggestionDropdownStyle"
+            >
+              <div class="max-h-60 overflow-y-auto custom-scrollbar">
+                <div
+                  v-for="(user, idx) in filteredUserSuggestions"
+                  :key="user._id"
+                  :class="[
+                    'px-3 py-2.5 flex items-center gap-3 cursor-pointer transition-colors',
+                    highlightedSuggestionIndex === idx
+                      ? 'bg-bg-hover'
+                      : 'hover:bg-bg-hover',
+                  ]"
+                  @mousedown.prevent="selectUserSuggestion(user)"
+                >
+                  <img
+                    v-if="user.profile_image"
+                    :src="user.profile_image"
+                    class="w-7 h-7 rounded-full object-cover shrink-0"
+                  />
+                  <div
+                    v-else
+                    class="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-medium text-white shrink-0"
+                    :style="{
+                      backgroundColor: generateAvatarColor(
+                        user._id,
+                        user.name || user.email,
+                      ),
+                    }"
+                  >
+                    {{ getInitials(user.name || user.email) }}
+                  </div>
+                  <div class="flex flex-col min-w-0 flex-1">
+                    <span class="text-sm text-text-primary truncate">{{
+                      user.name
+                    }}</span>
+                    <span class="text-xs text-text-secondary truncate">{{
+                      user.email
+                    }}</span>
+                  </div>
+                  <span
+                    v-if="user.hasAccess"
+                    class="text-[10px] text-text-secondary shrink-0"
+                  >
+                    Has access
+                  </span>
+                </div>
+              </div>
+            </div>
+          </Teleport>
           <button
             type="button"
             class="h-9 px-4 rounded-lg text-sm font-medium text-white transition-opacity disabled:opacity-50"
@@ -414,7 +473,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive, onMounted } from "vue";
+import { ref, computed, reactive, onMounted, onUnmounted, watch, nextTick } from "vue";
 import { useQueryClient } from "@tanstack/vue-query";
 import { toast } from "vue-sonner";
 import BaseModal from "../../../components/ui/BaseModal.vue";
@@ -439,6 +498,14 @@ import { useWorkspaceRoles } from "../../../queries/usePeople";
 interface EmailEntry {
   email: string;
   roleId: string | number | null;
+}
+
+interface UserSuggestion {
+  _id: string;
+  name: string;
+  email: string;
+  profile_image?: string | null;
+  hasAccess?: boolean;
 }
 
 // ─── Props / Emits ────────────────────────────────────────────────────────────
@@ -600,8 +667,16 @@ function toggleSelectAll(checked: boolean) {
 
 // ─── Email entries (per-email role) ──────────────────────────────────────────
 const emailEntries = ref<EmailEntry[]>([]);
+const emailInputRef = ref<HTMLInputElement | null>(null);
 const emailInput = ref("");
 const emailInputError = ref("");
+const showSuggestions = ref(false);
+const highlightedSuggestionIndex = ref(0);
+const suggestionDropdownStyle = ref({
+  top: "0px",
+  left: "0px",
+  width: "0px",
+});
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -627,6 +702,89 @@ function removeEmailEntry(index: number) {
 
 function setEntryRole(index: number, roleId: string | number) {
   emailEntries.value[index].roleId = roleId;
+}
+
+function updateSuggestionDropdownPosition() {
+  const el = emailInputRef.value;
+  if (!el) return;
+  const rect = el.getBoundingClientRect();
+  suggestionDropdownStyle.value = {
+    top: `${rect.bottom + 4}px`,
+    left: `${rect.left}px`,
+    width: `${rect.width}px`,
+  };
+}
+
+function onEmailInputFocus() {
+  showSuggestions.value = true;
+  nextTick(updateSuggestionDropdownPosition);
+}
+
+function onEmailInput() {
+  emailInputError.value = "";
+  showSuggestions.value = true;
+  nextTick(updateSuggestionDropdownPosition);
+}
+
+function onEmailInputBlur() {
+  setTimeout(() => {
+    showSuggestions.value = false;
+  }, 200);
+}
+
+function isUserAlreadyShared(email: string) {
+  const normalized = email.trim().toLowerCase();
+  return sharedUsers.value.some(
+    (item: any) => item.user?.u_email?.trim().toLowerCase() === normalized,
+  );
+}
+
+function selectUserSuggestion(user: UserSuggestion) {
+  if (String(user._id) === currentUserId) {
+    emailInputError.value = "You cannot invite yourself.";
+    return;
+  }
+  if (user.hasAccess || isUserAlreadyShared(user.email)) {
+    emailInputError.value = "This user already has access.";
+    return;
+  }
+  emailInput.value = user.email;
+  emailInputError.value = "";
+  addEmail();
+  showSuggestions.value = false;
+}
+
+function onEmailKeydown(e: KeyboardEvent) {
+  const suggestions = filteredUserSuggestions.value;
+
+  if (e.key === "ArrowDown" && showSuggestions.value && suggestions.length > 0) {
+    e.preventDefault();
+    highlightedSuggestionIndex.value =
+      (highlightedSuggestionIndex.value + 1) % suggestions.length;
+    return;
+  }
+
+  if (e.key === "ArrowUp" && showSuggestions.value && suggestions.length > 0) {
+    e.preventDefault();
+    highlightedSuggestionIndex.value =
+      (highlightedSuggestionIndex.value - 1 + suggestions.length) %
+      suggestions.length;
+    return;
+  }
+
+  if (e.key === "Escape") {
+    showSuggestions.value = false;
+    return;
+  }
+
+  if (e.key === "Enter") {
+    e.preventDefault();
+    if (showSuggestions.value && suggestions[highlightedSuggestionIndex.value]) {
+      selectUserSuggestion(suggestions[highlightedSuggestionIndex.value]);
+    } else {
+      addEmail();
+    }
+  }
 }
 
 // ─── Avatar & role helpers ────────────────────────────────────────────────────
@@ -680,24 +838,39 @@ const canSubmit = computed(() => {
 });
 
 // ─── Users for autocomplete ───────────────────────────────────────────────────
-// const companyId = computed(() => workspaceStore.singleWorkspace?.company_id);
-const { data: allUsersData } = useUsers();
-console.log(allUsersData);
+const { data: allUsersData, refetch: refetchAllUsers } = useUsers();
 
-// const allUsers = computed(() => {
-//   if (!allUsersData.value?.data?.users) return []
-//   return allUsersData.value.data.users.map((u: any) => ({
-//     _id: u._id,
-//     name: u.u_full_name,
-//     email: u.u_email,
-//     profile_image: u.u_profile_image,
-//   }))
-// })
+const allUsers = computed(() => {
+  const raw = allUsersData.value as any;
+  const users = raw?.data?.users ?? raw?.users ?? [];
+  return users
+    .map((u: any) => ({
+      _id: String(u._id ?? ""),
+      name: (u.u_full_name || u.u_email || "").trim(),
+      email: (u.u_email || "").trim(),
+      profile_image: u.u_profile_image,
+    }))
+    .filter((u: UserSuggestion) => !!u.email);
+});
+
+watch(isOpen, (open) => {
+  if (open) {
+    refetchAllUsers();
+    showSuggestions.value = false;
+  }
+});
+
+onUnmounted(() => {
+  window.removeEventListener("resize", updateSuggestionDropdownPosition);
+  window.removeEventListener("scroll", updateSuggestionDropdownPosition, true);
+});
 
 // ─── Roles ────────────────────────────────────────────────────────────────────
 onMounted(() => {
   const id = workspaceId.value || workspaceResourceId.value;
   if (id) agentStore.fetchAgentsRolesPermissions(id);
+  window.addEventListener("resize", updateSuggestionDropdownPosition);
+  window.addEventListener("scroll", updateSuggestionDropdownPosition, true);
 });
 
 const companyIdFromLS = localStorage.getItem("company_id");
@@ -733,6 +906,43 @@ const { data: sharedUsersData, isLoading: isLoadingSharedUsers } =
     workspace_id: workspaceId.value,
   });
 const sharedUsers = computed(() => sharedUsersData.value || []);
+
+const sharedUserEmails = computed(() => {
+  const emails = new Set<string>();
+  for (const item of sharedUsers.value as any[]) {
+    const email = item?.user?.u_email?.trim().toLowerCase();
+    if (email) emails.add(email);
+  }
+  return emails;
+});
+
+const filteredUserSuggestions = computed(() => {
+  const pendingEmails = new Set(
+    emailEntries.value.map((e) => e.email.trim().toLowerCase()),
+  );
+
+  const available: UserSuggestion[] = allUsers.value
+    .filter((u: UserSuggestion) => !pendingEmails.has(u.email.toLowerCase()))
+    .map((u: UserSuggestion) => ({
+      ...u,
+      hasAccess: sharedUserEmails.value.has(u.email.toLowerCase()),
+    }));
+
+  const q = emailInput.value.trim().toLowerCase();
+  const matched = q
+    ? available.filter(
+        (u: UserSuggestion) =>
+          u.name.toLowerCase().includes(q) ||
+          u.email.toLowerCase().includes(q),
+      )
+    : available;
+
+  return matched.slice(0, 10);
+});
+
+watch(filteredUserSuggestions, () => {
+  highlightedSuggestionIndex.value = 0;
+});
 
 const { mutate: updateRole } = useUpdateShareRole({
   type: props.resourceType,
@@ -879,6 +1089,8 @@ function reset() {
   emailEntries.value = [];
   emailInput.value = "";
   emailInputError.value = "";
+  showSuggestions.value = false;
+  highlightedSuggestionIndex.value = 0;
   selectedModulesList.value = new Set();
   selectedSheets.value = new Set();
   selectedUsers.value = new Set();
