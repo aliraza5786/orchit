@@ -34,8 +34,8 @@ watch(
 )
 
 async function handleSuspendedConfirm() {
-  showSuspendedModal.value = false
   await authStore.logout()
+  showSuspendedModal.value = false
 }
 </script>
 
