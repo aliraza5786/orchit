@@ -100,17 +100,17 @@
               <p class="text-[15px] font-bold text-text-primary truncate">
                 {{ associatedCompany.title }}
               </p>
-              <p class="text-xs mt-0.5 truncate text-text-secondary">
+              <p class="text-xs mt-0.5 text-text-secondary">
                 <span
                   class="font-mono bg-surface/50 px-1.5 py-0.5 rounded border border-border/40"
-                  >{{ associatedCompany.slug }}</span
-                >.streamed.space
+                  >{{ associatedCompany.domain}}</span
+                > 
               </p>
             </div>
 
             <!-- Associated badge -->
             <span
-              class="shrink-0 text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full shadow-sm bg-accent/10 border border-accent/20 text-accent"
+              class="shrink-0 text-[9px] font-bold uppercase tracking-wider px-3 py-1 rounded-full shadow-sm bg-accent/10 border border-accent/20 text-accent"
             >
               Associated
             </span>
@@ -150,7 +150,7 @@
             >
               You are currently linked to
               <strong>{{ associatedCompany.title }}</strong
-              >. If you need a new workspace or organization, please contact
+              > If you need a new workspace or organization, please contact
               your administrator or register with a different email address.
             </p>
           </div>
