@@ -3808,7 +3808,8 @@ watch(
     [_oldIsOpen, _oldModuleSelected, oldSelectedAgentId],
   ) => {
     if (!workspaceId.value || !isOpen) return;
-
+     console.log(newSelectedAgentId, oldSelectedAgentId);
+     
     // Block if either flag is active — agentPassed flow owns this lifecycle
     if (agentStore.agentPassedHandling || isHandlingAgentPassed.value) return;
 
