@@ -32,11 +32,29 @@
             Add sheets and cards to see your mindmap
           </p>
         </div>
-         <!-- ✦ Drag ghost indicator -->
         <div v-if="dragGhostStyle" class="drag-ghost" :style="dragGhostStyle">
           <i class="fa-solid fa-grip-vertical"></i>
-          {{ draggingCard?.topic?.slice(0, 20) }}...
+          <template v-if="selectedNodeIds.size > 1">
+            {{ selectedNodeIds.size }} cards
+          </template>
+          <template v-else>
+            {{ draggingCard?.topic?.slice(0, 20) }}...
+          </template>
         </div>
+        <!-- ✦ Rubber-band marquee -->
+        <div
+          v-if="isRubberBanding && rubberBand && rubberBandMoved"
+          class="rubber-band-rect"
+          :style="{
+            position: 'absolute',
+            left: `${rubberBand.x}px`,
+            top: `${rubberBand.y}px`,
+            width: `${rubberBand.w}px`,
+            height: `${rubberBand.h}px`,
+            pointerEvents: 'none',
+            zIndex: '999',
+          }"
+        ></div>
         <svg
           class="connections-svg"
           :style="{ width: svgW + 'px', height: svgH + 'px' }"
@@ -325,7 +343,95 @@
           >{{ visibleEdges.length }}</span
         >
       </div>
+      <!-- ✦ Multi-select overlay bar -->
+<transition name="ms-bar">
+  <div v-if="selectedNodeIds.size > 0" class="ms-bar" @click.stop @mousedown.stop>
+    <div class="ms-bar-left">
+      <i class="fa-solid fa-object-group ms-bar-icon"></i>
+      <span class="ms-bar-count">{{ selectedNodeIds.size }} card{{ selectedNodeIds.size !== 1 ? 's' : '' }} selected</span>
     </div>
+    <div class="ms-bar-chips">
+      <div
+        v-for="id in [...selectedNodeIds].slice(0, 6)"
+        :key="id"
+        class="ms-chip"
+        :title="nodeMap.get(id)?.topic"
+      >
+        <span class="ms-chip-label">{{ (nodeMap.get(id)?.topic || '').slice(0, 18) }}</span>
+        <button class="ms-chip-remove" @click.stop="removeFromSelection(id)" title="Remove from selection">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <span v-if="selectedNodeIds.size > 6" class="ms-chip ms-chip--more">
+        +{{ selectedNodeIds.size - 6 }} more
+      </span>
+    </div>
+    <div class="ms-bar-actions">
+      <button
+        v-if="canAssignCard && canEditCard"
+        class="ms-action-btn ms-action-btn--format"
+        @click.stop="showMultiFormatPanel = !showMultiFormatPanel"
+        title="Format selected cards"
+      >
+        <i class="fa-solid fa-palette"></i>
+        <span>Format</span>
+      </button>
+      <button
+        class="ms-action-btn ms-action-btn--clear"
+        @click.stop="clearMultiSelect"
+        title="Clear selection (Esc)"
+      >
+        <i class="fa-solid fa-xmark"></i>
+        <span>Clear</span>
+      </button>
+    </div>
+  </div>
+</transition>
+    </div>
+    <!-- ✦ Multi-select overlay bar -->
+    <transition name="ms-bar">
+      <div v-if="selectedNodeIds.size > 0" class="ms-bar" @click.stop @mousedown.stop>
+        <div class="ms-bar-left">
+          <i class="fa-solid fa-object-group ms-bar-icon"></i>
+          <span class="ms-bar-count">{{ selectedNodeIds.size }} card{{ selectedNodeIds.size !== 1 ? 's' : '' }} selected</span>
+        </div>
+        <div class="ms-bar-chips">
+          <div
+            v-for="id in [...selectedNodeIds].slice(0, 6)"
+            :key="id"
+            class="ms-chip"
+            :title="nodeMap.get(id)?.topic"
+          >
+            <span class="ms-chip-label">{{ (nodeMap.get(id)?.topic || '').slice(0, 18) }}</span>
+            <button class="ms-chip-remove" @click.stop="removeFromSelection(id)" title="Remove from selection">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+          <span v-if="selectedNodeIds.size > 6" class="ms-chip ms-chip--more">
+            +{{ selectedNodeIds.size - 6 }} more
+          </span>
+        </div>
+        <div class="ms-bar-actions">
+          <button
+            v-if="canAssignCard && canEditCard"
+            class="ms-action-btn ms-action-btn--format"
+            @click.stop="showMultiFormatPanel = !showMultiFormatPanel"
+            title="Format selected cards"
+          >
+            <i class="fa-solid fa-palette"></i>
+            <span>Format</span>
+          </button>
+          <button
+            class="ms-action-btn ms-action-btn--clear"
+            @click.stop="clearMultiSelect"
+            title="Clear selection (Esc)"
+          >
+            <i class="fa-solid fa-xmark"></i>
+            <span>Clear</span>
+          </button>
+        </div>
+      </div>
+    </transition>
     <!-- ✦ Shortcut hint toast -->
     <transition name="hint-fade">
       <div v-if="showShortcutHint" class="shortcut-hint">
@@ -4332,6 +4438,23 @@ function clearMultiSelect() {
   showMultiFormatPanel.value = false
   multiStyle.value = {}
 }
+function removeFromSelection(id: string) {
+  const newSet = new Set(selectedNodeIds.value)
+  newSet.delete(id)
+  if (newSet.size === 0) {
+    selectedNodeIds.value = new Set()
+    showMultiFormatPanel.value = false
+    multiStyle.value = {}
+  } else if (newSet.size === 1) {
+    // Downgrade to single select
+    selectedNodeId.value = [...newSet][0]
+    selectedNodeIds.value = new Set()
+    showMultiFormatPanel.value = false
+    multiStyle.value = {}
+  } else {
+    selectedNodeIds.value = newSet
+  }
+}
 function handleCanvasClick(e: MouseEvent) {
   // ✅ Consume the rubber-band flag — never deselect after a drag
   if (rubberBandJustFinished.value) {
@@ -4360,6 +4483,10 @@ function handleCanvasClick(e: MouseEvent) {
 function handleCardDragStart(e: DragEvent, node: MindNode) {
   if (node.uniqueName !== 'card') return
   draggingCard.value = node
+  if (!selectedNodeIds.value.has(node.id)) {
+    clearMultiSelect()
+    selectedNodeId.value = node.id
+  }
   if (e.dataTransfer) {
     e.dataTransfer.effectAllowed = 'move'
     e.dataTransfer.setData('text/plain', node.id)
@@ -4409,61 +4536,96 @@ async function handleCardDrop(e: DragEvent, targetListNode: MindNode) {
   e.preventDefault();
   const card = draggingCard.value;
   if (!card) return;
-  const sourceList = card.parent;
-  if (!sourceList || sourceList.id === targetListNode.id) {
+
+  // Collect cards to move: all selected cards (if multi), or just the dragged card
+  const cardsToMove: MindNode[] = selectedNodeIds.value.size > 1
+    ? [...selectedNodeIds.value]
+        .map(id => nodeMap.get(id))
+        .filter((n): n is MindNode => !!n && n.uniqueName === 'card')
+    : [card];
+
+  // Filter out cards already in the target list
+  const movableCards = cardsToMove.filter(c => c.parent?.id !== targetListNode.id);
+
+  if (movableCards.length === 0) {
     dragOverListId.value = null;
     draggingCard.value = null;
+    dragGhostStyle.value = null;
     return;
   }
-  sourceList.children = sourceList.children.filter((c) => c.id !== card.id);
 
-  // Add to target list
-  card.parent = targetListNode;
-  card.variables = { ...card.variables, "card-status": targetListNode.topic };
-  targetListNode.children.push(card);
-  nodeMap.set(card.id, card);
+  // --- Optimistic UI: move all cards locally first ---
+  // Track rollback data per card: { card, sourceList, originalStatus }
+  const rollbackData: Array<{ card: MindNode; sourceList: MindNode; originalStatus: string }> = [];
 
-  // Build new_index as position in target list
-  const newIndex = targetListNode.children.length - 1;
-try {
-  await reOrderCard.mutateAsync({
-    payload: {
+  for (const c of movableCards) {
+    const sourceList = c.parent;
+    if (!sourceList) continue;
+    rollbackData.push({ card: c, sourceList, originalStatus: c.variables?.['card-status'] ?? sourceList.topic });
+    sourceList.children = sourceList.children.filter(x => x.id !== c.id);
+    c.parent = targetListNode;
+    c.variables = { ...c.variables, 'card-status': targetListNode.topic };
+    targetListNode.children.push(c);
+    nodeMap.set(c.id, c);
+  }
+
+  // --- API calls (sequential, tolerant of partial failure) ---
+  const failed: MindNode[] = [];
+  for (const c of movableCards) {
+    const newIndex = targetListNode.children.findIndex(x => x.id === c.id);
+    try {
+      await reOrderCard.mutateAsync({
+        payload: {
+          workspace_id: props.workspaceId,
+          card_id: c.real_id || c.id,
+          group_value: targetListNode.topic,
+          group_variable_id: props.selectedViewBy,
+          new_index: newIndex,
+          sheet_id:
+            props.selectedSheetId === 'all'
+              ? c.variables?.sheet_id
+              : props.selectedSheetId,
+        },
+      });
+    } catch (err) {
+      console.error('Failed to reorder card:', c.id, err);
+      failed.push(c);
+    }
+  }
+
+  if (failed.length > 0) {
+    // Rollback only the failed cards
+    for (const rb of rollbackData.filter(r => failed.includes(r.card))) {
+      targetListNode.children = targetListNode.children.filter(x => x.id !== rb.card.id);
+      rb.card.parent = rb.sourceList;
+      rb.card.variables = { ...rb.card.variables, 'card-status': rb.sourceList.topic };
+      rb.sourceList.children.push(rb.card);
+      nodeMap.set(rb.card.id, rb.card);
+    }
+    toast.error(`${failed.length} card(s) failed to move`);
+  }
+
+  const successCount = movableCards.length - failed.length;
+  if (successCount > 0) {
+    pushHistory();
+    toast.success(
+      successCount === 1
+        ? 'Ticket moved successfully'
+        : `${successCount} tickets moved successfully`
+    );
+  }
+
+  // Emit for parent awareness (non-blocking)
+  for (const rb of rollbackData.filter(r => !failed.includes(r.card))) {
+    emit('reorder:card', {
+      card_id: rb.card.real_id || rb.card.id,
+      from_list: rb.sourceList.topic,
+      to_list: targetListNode.topic,
+      sheet_id: targetListNode.sheet_id || rb.card.sheet_id,
       workspace_id: props.workspaceId,
-      card_id: card.real_id || card.id,
-      group_value: targetListNode.topic,
-      group_variable_id: props.selectedViewBy,
-      new_index: newIndex,
-      sheet_id:
-        props.selectedSheetId === "all"
-          ? card.variables?.sheet_id
-          : props.selectedSheetId,
-    },
-  });
-  pushHistory()
-  toast.success("Ticket moved successfully");
-} catch (err) {
-  console.error("Failed to reorder card:", err);
-  toast.error("Failed to move card");
-
-  // Rollback: move card back to source list
-  targetListNode.children = targetListNode.children.filter(
-    (c) => c.id !== card.id
-  );
-  card.parent = sourceList;
-  card.variables = { ...card.variables, "card-status": sourceList.topic };
-  sourceList.children.push(card);
-  nodeMap.set(card.id, card);
-}
-
-  // Also emit for parent component awareness (optional, non-blocking)
-  emit("reorder:card", {
-    card_id: card.real_id || card.id,
-    from_list: sourceList.topic,
-    to_list: targetListNode.topic,
-    sheet_id: targetListNode.sheet_id || card.sheet_id,
-    workspace_id: props.workspaceId,
-    variables: card.variables,
-  });
+      variables: rb.card.variables,
+    });
+  }
 
   // Re-layout preserving pan/zoom
   const savedPX = panX.value;
@@ -4473,8 +4635,7 @@ try {
   const root = nodeMap.get(rootNodeId.value);
   if (root) {
     layoutTree(root, root.x, root.y, layoutDirection.value);
-    let mx = 0,
-      my = 0;
+    let mx = 0, my = 0;
     for (const n of flattenTree(root)) {
       mx = Math.max(mx, n.x + n.width);
       my = Math.max(my, n.y + n.height);
@@ -8007,14 +8168,31 @@ const getNodeTitle = (topic: string) =>
 .mindmap-root[data-dark="true"] .collapse-toggle {
   background: var(--bg-card, #2b2c30);
 }
-/* ── Multi-select ────────────────────────────────────────────────────── */
 .mm-node--multi-selected {
   border-color: var(--primary-color) !important;
-  outline: 2px dashed var(--primary-color);
+  outline: 2.5px solid var(--primary-color);
   outline-offset: 2px;
   box-shadow:
-    0 0 0 3px color-mix(in srgb, var(--primary-color), transparent 70%),
-    0 4px 16px rgba(0, 0, 0, 0.12) !important;
+    0 0 0 5px color-mix(in srgb, var(--primary-color), transparent 55%),
+    0 4px 20px rgba(0, 0, 0, 0.18) !important;
+}
+.mm-node--multi-selected::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: color-mix(in srgb, var(--primary-color), transparent 85%);
+  pointer-events: none;
+  z-index: 3;
+}
+.mm-node--multi-selected::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: color-mix(in srgb, var(--primary-color), transparent 88%);
+  pointer-events: none;
+  z-index: 1;
 }
 
 .ctrl-btn--multi {
@@ -8447,6 +8625,14 @@ const getNodeTitle = (topic: string) =>
 .mindmap-root[data-dark="true"] .sp-row span { color: #b0b0b0; }
 .mindmap-root[data-dark="true"] .sp-body::-webkit-scrollbar-thumb { background: #3e3e42; }
 
+/* ── Rubber-band marquee ─────────────────────────────────────────────── */
+.rubber-band-rect {
+  border: 1.5px dashed var(--primary-color);
+  background: color-mix(in srgb, var(--primary-color), transparent 88%);
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
 /* ── Undo/Redo controls ──────────────────────────────────────────────── */
 .undo-redo-controls {
   position: absolute;
@@ -8547,5 +8733,179 @@ const getNodeTitle = (topic: string) =>
 .mm-toolbar--sidebar-open ~ .export-menu,
 .export-menu {
   right: auto; /* let it follow the toolbar */
+}
+/* ── Multi-select overlay bar ────────────────────────────────────────── */
+.ms-bar {
+  position: absolute;
+  bottom: 52px; /* just above canvas-stats */
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--bg-card, #fff);
+  border: 1.5px solid var(--primary-color);
+  border-radius: 40px;
+  box-shadow:
+    0 0 0 4px color-mix(in srgb, var(--primary-color), transparent 80%),
+    0 8px 28px rgba(0, 0, 0, 0.14);
+  max-width: calc(100% - 200px);
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  backdrop-filter: blur(8px);
+  user-select: none;
+}
+.ms-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.ms-bar-icon {
+  color: var(--primary-color);
+  font-size: 13px;
+}
+.ms-bar-count {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--primary-color);
+  white-space: nowrap;
+}
+.ms-bar-chips {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  overflow: hidden;
+  flex-shrink: 1;
+  min-width: 0;
+}
+.ms-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px 3px 10px;
+  background: color-mix(in srgb, var(--primary-color), transparent 88%);
+  border: 1px solid color-mix(in srgb, var(--primary-color), transparent 70%);
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-primary, #2b2c30);
+  white-space: nowrap;
+  max-width: 140px;
+  transition: background 0.12s;
+}
+.ms-chip:hover {
+  background: color-mix(in srgb, var(--primary-color), transparent 78%);
+}
+.ms-chip--more {
+  padding: 3px 10px;
+  opacity: 0.7;
+  font-style: italic;
+  pointer-events: none;
+  border-style: dashed;
+}
+.ms-chip-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 110px;
+}
+.ms-chip-remove {
+  width: 14px;
+  height: 14px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  color: var(--text-secondary, #94a3b8);
+  padding: 0;
+  flex-shrink: 0;
+  transition: background 0.1s, color 0.1s;
+}
+.ms-chip-remove:hover {
+  background: #ef4444;
+  color: #fff;
+}
+.ms-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  margin-left: 4px;
+  padding-left: 8px;
+  border-left: 1px solid var(--border, #d9d9d9);
+}
+.ms-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 11.5px;
+  font-weight: 600;
+  font-family: 'Lato', sans-serif;
+  transition: all 0.13s;
+  white-space: nowrap;
+}
+.ms-action-btn--format {
+  background: var(--primary-color);
+  color: #fff;
+}
+.ms-action-btn--format:hover {
+  background: color-mix(in srgb, var(--primary-color), #000 12%);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--primary-color), transparent 55%);
+}
+.ms-action-btn--clear {
+  background: var(--bg-surface, #f3f4f6);
+  color: var(--text-secondary, #6b6b6e);
+  border: 1px solid var(--border, #d9d9d9);
+}
+.ms-action-btn--clear:hover {
+  background: #fef2f2;
+  color: #ef4444;
+  border-color: #fca5a5;
+}
+/* Slide-up animation */
+.ms-bar-enter-active, .ms-bar-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.ms-bar-enter-from, .ms-bar-leave-to {
+  opacity: 0;
+  transform: translateX(-50%) translateY(12px) scale(0.97);
+}
+
+/* Dark mode */
+.mindmap-root[data-dark="true"] .ms-bar {
+  background: var(--bg-card, #2b2c30);
+  box-shadow:
+    0 0 0 4px color-mix(in srgb, var(--primary-color), transparent 75%),
+    0 8px 28px rgba(0,0,0,0.5);
+}
+.mindmap-root[data-dark="true"] .ms-chip {
+  color: #f5f5f5;
+  border-color: color-mix(in srgb, var(--primary-color), transparent 60%);
+}
+.mindmap-root[data-dark="true"] .ms-bar-actions {
+  border-color: #3e3e42;
+}
+.mindmap-root[data-dark="true"] .ms-action-btn--clear {
+  background: #3e3e42;
+  color: #b0b0b0;
+  border-color: #555;
+}
+.mindmap-root[data-dark="true"] .ms-action-btn--clear:hover {
+  background: #450a0a;
+  color: #f87171;
+  border-color: #7f1d1d;
+}
+.mindmap-root[data-dark="true"] .mm-node--multi-selected::after {
+  background: color-mix(in srgb, var(--primary-color), transparent 80%);
 }
 </style>
