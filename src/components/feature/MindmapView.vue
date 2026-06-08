@@ -3663,50 +3663,31 @@ const visibleEdges = computed<Edge[]>(() => {
 
   return edges;
 });
-watchEffect(() => {
-  void layoutTrigger.value;
-  const root = nodeMap.get(rootNodeId.value);
-  if (!root) return;
+// Replace the existing watchEffect block with this:
+watch(
+  layoutTrigger,
+  () => {
+    const root = nodeMap.get(rootNodeId.value);
+    if (!root) return;
 
-  // ── If collapse triggered this re-run, skip — toggleCollapse already
-  //    called layoutTree directly and we must NOT move nodes again.
-  if (isCollapseLayout.value) return;
-
-  const dir = layoutDirection.value;
-  let startX = 60,
-    startY = 60;
-  if (dir === "left") {
-    startX = 4000 - NODE_W.root;
-  } else if (dir === "center") {
-    startX = 2000 - NODE_W.root / 2;
-  } else if (dir === "top") {
-    startX = 2000;
-  } else if (dir === "bottom") {
-    startX = 2000;
-    startY = 3000;
-  } else if (dir === "logic-right" || dir === "logic-left") {
-    startX = 2500 - NODE_W.root / 2;
-    startY = 1500;
-  } else if (dir === "fishbone") {
-    startX = 300;
-    startY = 1400;
-  } else if (dir === "org-chart") {
-    startX = 2000;
-    startY = 200;
-  } else if (dir === "timeline") {
-    startX = 200;
-    startY = 1000;
-  } else if (dir === "tree-map") {
-    startX = 400;
-    startY = 400;
-  } else if (
-    ["radial", "zigzag", "staggered", "split-horizontal", "ladder"].includes(dir)
-  ) {
-    startX = 2500 - NODE_W.root / 2;
-    startY = 1500;
-  }
-  layoutTree(root, startX, startY, dir);
-});
+    const dir = layoutDirection.value;
+    let startX = 60, startY = 60;
+    if (dir === "left") { startX = 4000 - NODE_W.root; }
+    else if (dir === "center") { startX = 2000 - NODE_W.root / 2; }
+    else if (dir === "top") { startX = 2000; }
+    else if (dir === "bottom") { startX = 2000; startY = 3000; }
+    else if (dir === "logic-right" || dir === "logic-left") { startX = 2500 - NODE_W.root / 2; startY = 1500; }
+    else if (dir === "fishbone") { startX = 300; startY = 1400; }
+    else if (dir === "org-chart") { startX = 2000; startY = 200; }
+    else if (dir === "timeline") { startX = 200; startY = 1000; }
+    else if (dir === "tree-map") { startX = 400; startY = 400; }
+    else if (["radial", "zigzag", "staggered", "split-horizontal", "ladder"].includes(dir)) {
+      startX = 2500 - NODE_W.root / 2; startY = 1500;
+    }
+    layoutTree(root, startX, startY, dir);
+  },
+  { immediate: true }
+)
 
 function nodeInlineStyle(node: MindNode): Record<string, string> {
   const s = node.style || {};
@@ -4027,21 +4008,7 @@ function collapseAll() {
       n.collapsed = true;
     }
   }
- collapseVersion.value++;
-  const _savedPX = panX.value;
-  const _savedPY = panY.value;
-  const _savedZ  = zoom.value;
-  isCollapseLayout.value = true;
-  const root2 = nodeMap.get(rootNodeId.value);
-  if (root2) {
-    layoutTree(root2, root2.x, root2.y, layoutDirection.value);
-  }
-  nextTick(() => {
-    panX.value = _savedPX;
-    panY.value = _savedPY;
-    zoom.value = _savedZ;
-    isCollapseLayout.value = false;
-  });
+  collapseVersion.value++;
   showHint("All Collapsed");
 }
 
@@ -4055,24 +4022,9 @@ function expandAll() {
       n.collapsed = false;
     }
   }
- collapseVersion.value++;
-  const _savedPX = panX.value;
-  const _savedPY = panY.value;
-  const _savedZ  = zoom.value;
-  isCollapseLayout.value = true;
-  const root2 = nodeMap.get(rootNodeId.value);
-  if (root2) {
-    layoutTree(root2, root2.x, root2.y, layoutDirection.value);
-  }
-  nextTick(() => {
-    panX.value = _savedPX;
-    panY.value = _savedPY;
-    zoom.value = _savedZ;
-    isCollapseLayout.value = false;
-  });
+  collapseVersion.value++;
   showHint("All Expanded");
 }
-
 function _getLayoutStartX(): number {
   const dir = layoutDirection.value;
   if (dir === "left") return 4000 - NODE_W.root;
@@ -4632,12 +4584,6 @@ function toggleCollapse(nodeId: string) {
   const n = nodeMap.get(nodeId);
   if (!n) return;
 
-  const savedPanX = panX.value;
-  const savedPanY = panY.value;
-  const savedZoom = zoom.value;
-
-  isCollapseLayout.value = true;
-
   if (isCollapsed(nodeId)) {
     expandNode(nodeId);
     n.collapsed = false;
@@ -4646,16 +4592,9 @@ function toggleCollapse(nodeId: string) {
     n.collapsed = true;
   }
 
-  // ✅ Just increment version to trigger allNodes/visibleEdges recompute
-  // No layoutTree call — positions stay exactly where they are
+  // Just bump version — allNodes/visibleEdges will recompute
+  // No layoutTree call, no pan/zoom save needed
   collapseVersion.value++;
-
-  nextTick(() => {
-    panX.value = savedPanX;
-    panY.value = savedPanY;
-    zoom.value = savedZoom;
-    isCollapseLayout.value = false;
-  });
 }
 function openFormatSidebar(nodeId: string) {
   selectedNodeId.value = nodeId;

@@ -1468,8 +1468,8 @@ function levelClass(level: string): string {
 }
 
 function handleChatWithAgent(agent: any, module_id: any, module_name: any) {
-  console.log("module name", agent, module_id, module_name);
   agentStore.handleAgentPassed(agent, module_id, module_name);
+  agentStore.agentPassedHandling = true;
   workspaceStore.toggleChatBotPanel();
 }
 
