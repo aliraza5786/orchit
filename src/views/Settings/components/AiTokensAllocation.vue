@@ -91,29 +91,35 @@
         ></div>
       </div>
       <div class="flex flex-wrap gap-x-4 gap-y-1.5 mt-3">
-        <div
-          v-for="user in users"
-          :key="user.id"
-          class="flex items-center gap-1.5 text-xs text-text-secondary transition-all duration-150 hover:text-text-primary cursor-default group/legend"
-        >
-          <span
-            class="w-2 h-2 rounded-full shrink-0 transition-transform duration-150 group-hover/legend:scale-125"
-            :style="{ background: user.color }"
-          ></span>
-          {{ user.name }}
-        </div>
-        <div class="flex items-center gap-1.5 text-xs text-text-secondary cursor-default">
-          <span class="w-2 h-2 rounded-full shrink-0 bg-accent/40"></span>
-          Unallocated
-        </div>
-      </div>
+    <!-- Users -->
+    <div
+      v-for="user in displayedUsers"
+      :key="user.id"
+      class="flex items-center gap-1.5 text-xs text-text-secondary transition-all duration-150 hover:text-text-primary cursor-default group/legend"
+    >
+      <span
+        class="w-2 h-2 rounded-full shrink-0 transition-transform duration-150 group-hover/legend:scale-125"
+        :style="{ background: user.color }"
+      ></span>
+      {{ user.name }}
+    </div>
+
+    <!-- Toggle button -->
+    <button
+      v-if="users.length > 10"
+      @click="toggleUsers"
+      class="text-xs text-accent hover:underline cursor-pointer"
+    >
+      {{ showAllUsers ? "Hide" : `+${users.length - 10} more` }}
+    </button>
+  </div>
     </div>
 
     <!-- ── Donut + Member rows ───────────────────────────────────────────────── -->
     <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
 
       <!-- Donut card -->
-      <div class="lg:col-span-2 bg-bg-card border border-border/40 rounded-xl p-5 transition-all duration-200 hover:border-border/70 hover:shadow-md hover:shadow-black/10">
+      <div class="lg:col-span-2 bg-bg-card border border-border/40 rounded-xl px-5 pt-5 transition-all duration-200 hover:border-border/70 hover:shadow-md hover:shadow-black/10">
         <p class="text-[10px] font-semibold uppercase tracking-widest text-text-secondary mb-4">Distribution</p>
 
         <div v-if="users.length === 0" class="flex flex-col items-center justify-center py-12">
@@ -153,19 +159,105 @@
 
           <div class="space-y-2 mt-5">
             <div
-              v-for="user in users"
+              v-for="user in paginatedMemberUsers"
               :key="user.id"
               class="flex items-center justify-between text-xs transition-all duration-150 hover:bg-border/10 rounded-lg px-2 py-1 -mx-2 cursor-default group/dist"
+              :class="[
+                user.membershipStatus === 'inactive' || user.membershipStatus === 'suspended'
+                  ? 'opacity-60 grayscale-[0.4] cursor-not-allowed bg-bg-card/40'
+                  : isUserVerified
+                    ? 'hover:border-border/70 hover:shadow-md hover:shadow-black/10 hover:-translate-y-0.5'
+                    : 'opacity-60 grayscale-[0.5] cursor-not-allowed bg-bg-card/50'
+              ]"
             >
               <div class="flex items-center gap-2">
                 <span
                   class="w-2.5 h-2.5 rounded-full shrink-0 transition-transform duration-150 group-hover/dist:scale-125"
                   :style="{ background: user.color }"
                 ></span>
-                <span class="text-text-secondary group-hover/dist:text-text-primary transition-colors duration-150">{{ user.name }}</span>
+                <div class="flex flex-col">
+                  <div class="flex gap-2">
+                    <span class="text-text-secondary group-hover/dist:text-text-primary transition-colors duration-150">{{ user.name }}</span>
+                  <span
+            v-if="user.companyRole"
+            class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-md border shrink-0"
+            :class="{
+              'bg-accent/10 text-accent border-accent/20': user.companyRole.toLowerCase().includes('admin') || user.companyRole.toLowerCase().includes('super'),
+              'bg-blue-500/10 text-blue-400 border-blue-500/20': user.companyRole.toLowerCase() === 'editor',
+              'bg-emerald-500/10 text-emerald-400 border-emerald-500/20': user.companyRole.toLowerCase() === 'owner',
+              'bg-border/30 text-text-secondary border-border/40': !user.companyRole.toLowerCase().includes('admin') && !user.companyRole.toLowerCase().includes('super') && user.companyRole.toLowerCase() !== 'editor' && user.companyRole.toLowerCase() !== 'owner',
+            }"
+          >
+            {{ user.companyRole }}
+          </span>
+                  </div>
+                <p class="text-xs text-text-secondary truncate">{{ user.email }}</p>
+                </div>
+                
+          <span
+            v-if="user.membershipStatus === 'inactive'"
+            class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-md bg-gray-500/10 text-gray-400 border border-gray-500/20 shrink-0"
+          >
+            Inactive
+          </span>
+
+          <!-- Suspended badge -->
+          <span
+            v-if="user.membershipStatus === 'suspended'"
+            class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-md bg-red-500/10 text-red-400 border border-red-500/20 shrink-0"
+          >
+            Suspended
+          </span>
+
+          <span v-if="!isUserVerified" class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-md bg-red-500/10 text-red-400 border border-red-500/20 shrink-0">
+            Verify user first
+          </span>
               </div>
               <span class="font-semibold text-text-primary">{{ user.percentage }}%</span>
             </div>
+            <div v-if="totalMemberPages > 1" class="flex items-center justify-between pt-1">
+      <p class="text-[11px] text-text-secondary">
+        Showing {{ (membersPage - 1) * MEMBERS_PAGE_SIZE + 1 }}–{{ Math.min(membersPage * MEMBERS_PAGE_SIZE, users.length) }} of {{ users.length }} members
+      </p>
+      <div class="flex items-center gap-1">
+        <!-- Prev -->
+        <button
+          @click="membersPage--"
+          :disabled="membersPage === 1"
+          class="inline-flex items-center justify-center w-7 h-7 rounded-md border border-border/40 text-text-secondary transition-all duration-150 hover:border-accent/30 hover:text-accent hover:bg-accent/5 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:border-border/40 disabled:hover:text-text-secondary disabled:hover:bg-transparent"
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+
+        <!-- Page numbers -->
+        <template v-for="page in totalMemberPages" :key="page">
+          <template v-if="page === 1 || page === totalMemberPages || (page >= membersPage - 1 && page <= membersPage + 1)">
+            <button
+              @click="membersPage = page"
+              :class="[
+                'inline-flex items-center justify-center w-7 h-7 rounded-md border text-[11px] font-semibold transition-all duration-150',
+                page === membersPage
+                  ? 'bg-accent/10 border-accent/30 text-accent'
+                  : 'border-border/40 text-text-secondary hover:border-accent/30 hover:text-accent hover:bg-accent/5'
+              ]"
+            >{{ page }}</button>
+          </template>
+          <span
+            v-else-if="page === membersPage - 2 || page === membersPage + 2"
+            class="inline-flex items-center justify-center w-7 h-7 text-[11px] text-text-secondary/50 select-none"
+          >…</span>
+        </template>
+
+        <!-- Next -->
+        <button
+          @click="membersPage++"
+          :disabled="membersPage === totalMemberPages"
+          class="inline-flex items-center justify-center w-7 h-7 rounded-md border border-border/40 text-text-secondary transition-all duration-150 hover:border-accent/30 hover:text-accent hover:bg-accent/5 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:border-border/40 disabled:hover:text-text-secondary disabled:hover:bg-transparent"
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
+    </div>
           </div>
         </template>
       </div>
@@ -189,12 +281,12 @@
       :key="user.id"
       class="flex items-center gap-3 bg-bg-card border border-border/40 rounded-xl px-4 py-3 transition-all duration-200 group/member relative"
       :class="[
-        user.membershipStatus === 'inactive'
-          ? 'opacity-60 grayscale-[0.4] cursor-not-allowed bg-bg-card/40'
-          : isUserVerified
-            ? 'hover:border-border/70 hover:shadow-md hover:shadow-black/10 hover:-translate-y-0.5'
-            : 'opacity-60 grayscale-[0.5] cursor-not-allowed bg-bg-card/50'
-      ]"
+  user.membershipStatus === 'inactive' || user.membershipStatus === 'suspended'
+    ? 'opacity-60 grayscale-[0.4] cursor-not-allowed bg-bg-card/40'
+    : isUserVerified
+      ? 'hover:border-border/70 hover:shadow-md hover:shadow-black/10 hover:-translate-y-0.5'
+      : 'opacity-60 grayscale-[0.5] cursor-not-allowed bg-bg-card/50'
+]"
     >
       <!-- Avatar -->
       <div
@@ -259,10 +351,12 @@
 
       <!-- Controls -->
       <div class="text-right shrink-0 w-28">
-        <template v-if="user.membershipStatus === 'inactive'">
-          <p class="text-xs text-text-secondary/50 italic">Not available</p>
-          <p class="text-[10px] text-text-secondary/40 mt-1">Member inactive</p>
-        </template>
+        <template v-if="user.membershipStatus === 'inactive' || user.membershipStatus === 'suspended'">
+  <p class="text-xs text-text-secondary/50 italic">Not available</p>
+  <p class="text-[10px] text-text-secondary/40 mt-1">
+    {{ user.membershipStatus === 'suspended' ? 'Member suspended' : 'Member inactive' }}
+  </p>
+</template>
 
         <template v-else-if="allocationMode === 'percentage'">
           <input
@@ -946,4 +1040,13 @@ const paginatedMemberUsers = computed(() => {
 })
 
 const totalMemberPages = computed(() => Math.ceil(users.value.length / MEMBERS_PAGE_SIZE))
+const showAllUsers = ref(false)
+
+const displayedUsers = computed(() => {
+  return showAllUsers.value ? users.value : users.value.slice(0, 10)
+})
+
+const toggleUsers = () => {
+  showAllUsers.value = !showAllUsers.value
+}
 </script>

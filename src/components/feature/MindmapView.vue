@@ -134,56 +134,77 @@
         </a>
       </div>
     </template>
+      <!-- LIST -->
+<template v-else-if="node.uniqueName === 'List'">
+  <div
+    class="node-list-inner"
+    :class="{ 'node-list--drag-over': dragOverListId === node.id }"
+    @dragover.prevent="handleListDragOver($event, node)"
+    @dragleave="handleListDragLeave(node)"
+    @drop.prevent="handleCardDrop($event, node)"
+  >
+    <div class="node-list-header">
+      <div class="node-list-dot"></div>
+      <span class="node-list-title">{{ node.topic }}</span>
+      <!-- Add card button — lives in header, always visible on hover -->
+       
+      <button
+        v-if="canCreateCard && !asTalent && creatingCardForListId !== node.id"
+        class="list-add-btn"
+        @click.stop="startInlineCardCreation(node)"
+        title="Add card (Enter)"
+      >
+        <i class="fa-solid fa-plus"></i>
+      </button>
+    </div>
 
-    <!-- LIST -->
-    <template v-else-if="node.uniqueName === 'List'">
-      <div
-          class="node-list-inner"
-          :class="{ 'node-list--drag-over': dragOverListId === node.id }"
-          @dragover.prevent="handleListDragOver($event, node)"
-          @dragleave="handleListDragLeave(node)"
-          @drop.prevent="handleCardDrop($event, node)"
-        >
-        <div class="node-list-header">
-          <div class="node-list-dot"></div>
-          <span class="node-list-title">{{ node.topic }}</span>
-        </div>
-        <div class="node-list-count" v-if="node.children && !isCollapsed(node.id)">
-          {{ node.children.length }} card{{ node.children.length !== 1 ? "s" : "" }}
-        </div>
-        <div v-if="isCollapsed(node.id) && node.children?.length" class="node-collapsed-badge">
-          <i class="fa-solid fa-layer-group me-1"></i>{{ node.children.length }} hidden
-        </div>
-        <div v-if="creatingCardForListId === node.id" class="inline-create-card" @click.stop @mousedown.stop>
-          <input
-            v-model="newCardTitle"
-            class="inline-card-input"
-            placeholder="Card title…"
-            @keydown.enter.prevent="submitInlineCard"
-            @keydown.escape.prevent="cancelInlineCreation"
-            @blur="() => { if (!newCardTitle.trim()) cancelInlineCreation(); }"
-            autofocus
-          />
-          <div class="inline-card-actions">
-            <button class="inline-btn inline-btn--confirm" :disabled="!newCardTitle.trim() || isCreatingCard" @click.stop="submitInlineCard(node?.topic)">
-              <i v-if="isCreatingCard" class="fa-solid fa-spinner fa-spin"></i>
-              <i v-else class="fa-solid fa-check"></i>
-            </button>
-            <button class="inline-btn inline-btn--cancel" @click.stop="cancelInlineCreation">
+    <div class="node-list-count" v-if="node.children && !isCollapsed(node.id)">
+      {{ node.children.length }} card{{ node.children.length !== 1 ? "s" : "" }}
+    </div>
+    <div v-if="isCollapsed(node.id) && node.children?.length" class="node-collapsed-badge">
+      <i class="fa-solid fa-layer-group me-1"></i>{{ node.children.length }} hidden
+    </div>
+
+    <!-- Inline card creator — sits at bottom of list like a real card -->
+    <div
+      v-if="creatingCardForListId === node.id"
+      class="inline-create-card"
+      @click.stop
+      @mousedown.stop
+    >
+      <!-- <div class="inline-card-top-stripe"></div> -->
+      <div class="inline-card-body">
+        <input
+          v-model="newCardTitle"
+          class="inline-card-input"
+          placeholder="What needs to be done?"
+          @keydown.enter.prevent="submitInlineCard(node?.topic)"
+          @keydown.escape.prevent="cancelInlineCreation"
+          @blur="() => { if (!newCardTitle.trim()) cancelInlineCreation(); }"
+          autofocus
+        />
+        <div class="flex justify-end">
+          <!-- <span class="inline-card-hint"><kbd>↵</kbd> confirm &nbsp;·&nbsp; <kbd>Esc</kbd> cancel</span> -->
+          <div class="inline-card-btns flex justify-end">
+            <button class="icb icb--cancel" @click.stop="cancelInlineCreation" title="Cancel">
               <i class="fa-solid fa-xmark"></i>
+            </button>
+            <button
+              class="icb icb--confirm"
+              :disabled="!newCardTitle.trim() || isCreatingCard"
+              @click.stop="submitInlineCard(node?.topic)"
+              title="Add card"
+            >
+              <i v-if="isCreatingCard" class="fa-solid fa-spinner fa-spin"></i>
+              <span v-else>Add</span>
             </button>
           </div>
         </div>
-        <button
-          v-if="canCreateCard && !asTalent && creatingCardForListId !== node.id"
-          class="list-add-card-btn"
-          @click.stop="startInlineCardCreation(node)"
-          title="Add card (Enter)"
-        >
-          <i class="fa-solid fa-plus"></i> Add card
-        </button>
       </div>
-    </template>
+    </div>
+
+  </div>
+</template>
 
     <!-- CARD -->
     <template v-else-if="node.uniqueName === 'card'">
@@ -3360,8 +3381,8 @@ function buildTree(sheets: any[]): MindNode {
       .replace(/[^a-z0-9_]/g, "");
 
     const listNode: MindNode = {
-      id: `${instancePrefix}_list_${sheet._id}_${safeTitle}_${sheet.sort_order ?? 0}`,
-      sheet_id: sheet?.cards[0]?.sheet_id,
+    id: `${instancePrefix}_list_${sheet._id}_${safeTitle}_${sheet.sort_order ?? 0}`,
+    sheet_id: sheet._id,
       topic: listTitle,
       children: [],
       style: mapBackendStyle(sheet?.style),
@@ -3450,44 +3471,47 @@ function collapseButtonSide(node: MindNode): 'left' | 'right' | 'top' | 'bottom'
   const side = nodeSides.get(node.id) ?? 'right';
   return side === 'left' ? 'left' : 'right';
 }
-
-// The group is positioned at node coords; node inside is at (0,0) relative to group
 function nodeGroupStyle(node: MindNode): Record<string, string> {
-  const BTN = 20; // button size
-  const PAD = 6;  // space between node edge and button center
-  // const dir = layoutDirection.value;
-  const side = collapseButtonSide(node);
+  const BTN = 20
+  const PAD = 6
+  const side = collapseButtonSide(node)
   const hasToggle =
     (node.uniqueName === 'sheet' || node.uniqueName === 'List') &&
     node.children &&
-    node.children.length > 0;
+    node.children.length > 0
 
-  // Extra space so the button doesn't overflow the group bounding box
-  const extra = hasToggle ? BTN / 2 + PAD : 0;
+  const extra = hasToggle ? BTN / 2 + PAD : 0
 
-  let left = node.x;
-  let top = node.y;
-  let width = node.width;
-  let height = node.height;
+  let left = node.x
+  let top  = node.y
+  let width  = node.width
+  // ← For List nodes that are currently showing the inline creator,
+  //   give the group enough height to contain it without clipping siblings.
+  //   We use a generous fixed expansion rather than trying to measure the DOM
+  //   (which isn't reactive here). The CSS `height: auto` on .mm-node--List
+  //   already lets the node grow visually; we just need the group to not
+  //   clip pointer-events on the creator.
+  const isCreating = node.uniqueName === 'List' && creatingCardForListId.value === node.id
+  let height = isCreating ? node.height + 120 : node.height  // 120px ≈ creator height
 
   if (hasToggle) {
-    if (side === 'right') { width += extra; }
-    else if (side === 'left') { left -= extra; width += extra; }
-    else if (side === 'bottom') { height += extra; }
-    else if (side === 'top') { top -= extra; height += extra; }
+    if (side === 'right')       { width  += extra }
+    else if (side === 'left')   { left   -= extra; width += extra }
+    else if (side === 'bottom') { height += extra }
+    else if (side === 'top')    { top    -= extra; height += extra }
   }
 
   return {
     position: 'absolute',
-    left: `${left}px`,
-    top: `${top}px`,
-    width: `${width}px`,
+    left:   `${left}px`,
+    top:    `${top}px`,
+    width:  `${width}px`,
     height: `${height}px`,
-    zIndex: '2',
+    zIndex: isCreating ? '50' : '2',  // ← lift above siblings while creating
     pointerEvents: 'auto',
-  };
+    overflow: 'visible',             // ← allow creator to paint outside group box
+  }
 }
-
 // Position of button *relative to the mm-node-group div*
 function collapseToggleLocalStyle(node: MindNode): Record<string, string> {
   const BTN = 20;
@@ -4800,6 +4824,7 @@ async function _doCreateCard(
       sheetId,
       directCreate,
       siblingStatus,
+      sheetId,
     );
     emit("create:card", payload);
     const tempId = `temp-card-${Date.now()}`;
@@ -4847,6 +4872,7 @@ function createDefaultCardPayload(
   sheetId?: string,
   directCreate = false,
   siblingStatus?: string,
+  inlineSheetId?: string,
 ) {
   console.log(directCreate);
 
@@ -4862,7 +4888,7 @@ function createDefaultCardPayload(
       props.selectedSheetId ||
       localStorage.getItem("selected_sheet_id") ||
       ""
-    : (sheetId ?? props.selectedSheetId);
+    : inlineSheetId ?? sheetId ?? props.selectedSheetId; 
 
   const payload: any = {
     sheet_list_id: status,
@@ -4947,10 +4973,17 @@ async function submitInlineCard(topic: string) {
     return;
   }
 
-  const sheetId =
-    listNode.sheet_id || selectedListSheetId.value || props.selectedSheetId;
+  // AFTER
+const sheetId = listNode.sheet_id;  // use only the node's own sheet_id, no prop fallback
 
-  await _doCreateCard(title, listNode, sheetId);
+if (!sheetId) {
+  selectedNodeId.value = listNode.id;
+  showMustSelectMessage.value = true;
+  setTimeout(() => { showMustSelectMessage.value = false; }, 2500);
+  return;
+}
+
+await _doCreateCard(title, listNode, sheetId);
   cancelInlineCreation();
 }
 
@@ -5598,30 +5631,74 @@ async function renderSVGToCanvas(format: 'png' | 'jpeg' | 'jpg' | 'pdf') {
 
         ctx.drawImage(img, 0, 0, img.width, img.height)
         URL.revokeObjectURL(url)
+       if (format === 'pdf') {
+  showExportMenu.value = false;
+  showHint('Generating PDF download...');
 
-        if (format === 'pdf') {
-          // Dynamically load jsPDF
-          const jsPDFModule = await import('https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js' as any)
-          const { jsPDF } = jsPDFModule.default ?? jsPDFModule
+  try {
+    // 1. Check if pdf-lib is already attached to the global window thread.
+    // If not, inject a script element to load it instantly on demand.
+    if (!(window as any).PDFLib) {
+      await new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js';
+        script.onload = resolve;
+        script.onerror = () => reject(new Error('Failed to load PDF library engine from CDN.'));
+        document.head.appendChild(script);
+      });
+    }
 
-          // Page size in mm — A4 landscape if wide, portrait if tall
-          const pxToMm = (px: number) => px * 0.264583
-          const mmW = pxToMm(img.width)
-          const mmH = pxToMm(img.height)
-          const orientation = mmW > mmH ? 'landscape' : 'portrait'
+    // 2. Extract the PDFDocument constructor safely out of the global window instance
+    const { PDFDocument } = (window as any).PDFLib;
 
-          const pdf = new jsPDF({
-            orientation,
-            unit: 'mm',
-            format: [mmW, mmH], // custom page size matching the mindmap
-          })
+    // 3. Grab your existing canvas data as a high-quality PNG
+    const pngDataUrl = canvas.toDataURL('image/png');
+    const pngBytes = await fetch(pngDataUrl).then((res) => res.arrayBuffer());
 
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.95)
-          pdf.addImage(dataUrl, 'JPEG', 0, 0, mmW, mmH)
-          pdf.save(`mindmap-${Date.now()}.pdf`)
-          showHint('PDF Exported')
+    // 4. Create a genuine, blank PDF binary document
+    const pdfDoc = await PDFDocument.create();
 
-        } else {
+    // 5. Embed the PNG data into the PDF document context
+    const embeddedImage = await pdfDoc.embedPng(pngBytes);
+    const { width, height } = embeddedImage.scale(1);
+
+    // 6. Add a single page exactly matching the canvas layout dimensions
+    const page = pdfDoc.addPage([width, height]);
+
+    // 7. Draw the mindmap image flat onto the clean page layout matrix
+    page.drawImage(embeddedImage, {
+      x: 0,
+      y: 0,
+      width: width,
+      height: height,
+    });
+
+    // 8. Save the valid PDF bytes and trigger an instant direct browser file download
+    const pdfBytes = await pdfDoc.save();
+    const pdfBlob = new Blob([pdfBytes], { type: 'application/pdf' });
+    const downloadUrl = URL.createObjectURL(pdfBlob);
+
+    const downloadLink = document.createElement('a');
+    downloadLink.href = downloadUrl;
+    downloadLink.download = `${props.selectedSheetTitle || 'mindmap'}_export.pdf`;
+
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+
+    // 9. Clean up resources instantly
+    document.body.removeChild(downloadLink);
+    URL.revokeObjectURL(downloadUrl);
+
+    showHint('PDF downloaded successfully!');
+  } catch (err) {
+    console.error('Direct PDF compilation failure:', err);
+    showHint('Failed to generate a valid PDF download.');
+  }
+
+  isExporting.value = false;
+  return;
+}
+        else {
           const mimeType = (format === 'jpeg' || format === 'jpg') ? 'image/jpeg' : 'image/png'
           const quality  = (format === 'jpeg' || format === 'jpg') ? 0.92 : undefined
           const dataUrl  = quality !== undefined
@@ -6018,14 +6095,18 @@ const getNodeTitle = (topic: string) =>
   padding: 1px 8px;
 }
 
+/* Allow list node to grow when inline creator is open */
 .mm-node--List {
   border-color: var(--border, #d9d9d9);
   border-radius: 8px;
-  overflow: visible;
+  overflow: visible !important; /* was hidden */
+  height: auto !important;      /* override the fixed px height from nodeInlineStyle */
 }
+
 .node-list-inner {
-  height: 100%;
-  padding: 8px 12px 6px;
+  height: auto;           /* remove the 100% that clamps to parent */
+  min-height: 60px;
+  padding: 8px 12px 8px;
   display: flex;
   flex-direction: column;
   gap: 3px;
@@ -6246,98 +6327,206 @@ const getNodeTitle = (topic: string) =>
   background: var(--secondary-color, var(--primary-color)) !important;
   color: #ffffff !important;
 }
-
-.list-add-card-btn {
-  display: none;
-  width: 100%;
-  margin-top: 4px;
-  padding: 3px 8px;
-  font-size: 10px;
-  font-weight: 500;
-  color: #fff;
-  background: rgba(var(--primary-color), 0.07);
-  border: 1px dashed rgba(var(--primary-color), 0.3);
-  border-radius: 5px;
-  cursor: pointer;
-  text-align: left;
-  transition:
-    background 0.12s,
-    border-color 0.12s;
+/* ── List header add button ──────────────────────────────────────────── */
+.node-list-header {
+  display: flex;
   align-items: center;
-  gap: 5px;
-}
-.list-add-card-btn i {
-  font-size: 9px;
-}
-.mm-node--List:hover .list-add-card-btn {
-  display: flex;
-}
-.list-add-card-btn:hover {
-  background: var(--primary-color);
-  border-color: var(--primary-color);
+  gap: 7px;
 }
 
-.inline-create-card {
-  margin-top: 6px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  position: relative;
-  z-index: 10;
-}
-.inline-card-input {
-  width: 100%;
-  padding: 5px 8px;
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--text-primary, #2b2c30);
-  background: var(--bg-card, #fff);
-  border: 1.5px solid var(--primary-color);
-  border-radius: 5px;
-  outline: none;
-  box-shadow: 0 0 0 2px
-    color-mix(in srgb, var(--primary-color), transparent 85%);
-  box-sizing: border-box;
-}
-.inline-card-input::placeholder {
-  color: var(--text-secondary, #6b6b6e);
-  font-weight: normal;
-}
-.inline-card-actions {
-  display: flex;
-  gap: 4px;
-  justify-content: flex-end;
-}
-.inline-btn {
-  width: 22px;
-  height: 22px;
+.list-add-btn {
+  margin-left: auto;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary, #94a3b8);
+  font-size: 9px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: none;
-  border-radius: 4px;
   cursor: pointer;
-  font-size: 10px;
-  transition: background 0.12s;
+  flex-shrink: 0;
+  opacity: 0;
+  transform: scale(0.8);
+  transition: opacity 0.15s, transform 0.15s, background 0.12s, color 0.12s;
 }
-.inline-btn--confirm {
+.mm-node--List:hover .list-add-btn {
+  opacity: 1;
+  transform: scale(1);
+}
+.list-add-btn:hover {
   background: var(--primary-color);
   color: #fff;
 }
-.inline-btn--confirm:hover:not(:disabled) {
-  background: var(--primary-color);
+
+/* ── Inline card creator ─────────────────────────────────────────────── */
+.inline-create-card {
+  margin-top: 8px;
+  border-radius: 7px;
+  background: var(--bg-card, #fff);
+  border: 1.5px solid var(--primary-color);
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--primary-color), transparent 85%),
+    0 2px 8px rgba(0,0,0,0.07);
+  overflow: hidden;
+  animation: card-pop-in 0.15s ease;
 }
-.inline-btn--confirm:disabled {
-  background: var(--primary-color);
-  cursor: not-allowed;
+
+@keyframes card-pop-in {
+  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0)   scale(1); }
 }
-.inline-btn--cancel {
-  background: var(--bg-surface, #dedfe3);
+
+.inline-card-top-stripe {
+  height: 3px;
+  background: var(--primary-color);
+  opacity: 0.6;
+}
+
+.inline-card-body {
+  padding: 8px 8px 7px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.inline-card-input {
+  width: 100%;
+  border: 1px solid var(--border, #d9d9d9);
+  outline: none;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-primary, #2b2c30);
+  background: var(--bg-surface, #f3f4f6);
+  font-family: 'Lato', sans-serif;
+  line-height: 1.45;
+  min-width: 0;
+  border-radius: 5px;
+  padding: 6px 8px;
+  display: block;
+  box-sizing: border-box;
+}
+.inline-card-input:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary-color), transparent 85%);
+}
+
+.mindmap-root[data-dark="true"] .inline-card-input {
+  background: #1a1a1a !important;
+  color: #f5f5f5 !important;
+  border-color: #3e3e42 !important;
+}
+.mindmap-root[data-dark="true"] .inline-card-input::placeholder {
+  color: #6b6b6e !important;
+}
+
+.mindmap-root[data-dark="true"] .inline-create-card {
+  background: #2c2c2b !important;
+  border-color: var(--primary-color) !important;
+}
+.inline-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.inline-card-hint {
+  font-size: 9px;
+  color: var(--text-secondary, #94a3b8);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.inline-card-hint kbd {
+  font-size: 8.5px;
+  background: var(--bg-surface, #f3f4f6);
+  border: 1px solid var(--border, #d9d9d9);
+  border-bottom: 2px solid var(--border, #c9cacc);
+  border-radius: 3px;
+  padding: 1px 4px;
+  font-family: monospace;
   color: var(--text-secondary, #6b6b6e);
 }
-.inline-btn--cancel:hover {
-  background: var(--border, #d9d9d9);
+
+.inline-card-btns {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
 }
+
+.icb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 22px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 600;
+  font-family: 'Lato', sans-serif;
+  transition: background 0.12s, transform 0.1s, opacity 0.12s;
+  padding: 0 8px;
+}
+.icb:active { transform: scale(0.92); }
+
+.icb--cancel {
+  background: #3e3e42;
+  color: #b0b0b0;
+  width: 22px;
+  padding: 0;
+  border: 1px solid #555;
+}
+.icb--cancel:hover {
+  background: #450a0a;
+  color: #f87171;
+  border-color: #7f1d1d;
+}
+
+.icb--confirm {
+  background: var(--primary-color);
+  color: #fff;
+  min-width: 40px;
+  gap: 4px;
+}
+.icb--confirm:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--primary-color), #000 10%);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--primary-color), transparent 60%);
+}
+.icb--confirm:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Dark mode */
+.mindmap-root[data-dark="true"] .inline-create-card {
+  background: var(--bg-card, #2b2c30);
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--primary-color), transparent 80%),
+    0 2px 12px rgba(0,0,0,0.3);
+}
+.mindmap-root[data-dark="true"] .inline-card-input {
+  color: #f5f5f5;
+}
+.mindmap-root[data-dark="true"] .inline-card-hint kbd {
+  background: #3e3e42;
+  border-color: #555;
+  border-bottom-color: #222;
+  color: #b0b0b0;
+}
+.mindmap-root[data-dark="true"] .icb--cancel {
+  background: #3e3e42;
+  color: #b0b0b0;
+}
+.mindmap-root[data-dark="true"] .icb--cancel:hover {
+  background: #450a0a;
+  color: #f87171;
+}
+
 
 .node-collapsed-badge {
   font-size: 9px;
