@@ -71,15 +71,26 @@ import LoaderPeak from "../../components/ui/LoaderPeak.vue";
 import { useRouteIds } from "../../composables/useQueryParams";
 import { useTheme } from "../../composables/useTheme";
 import {
-  getWorkspaceBackground,
-  applyThemeVariables,
-  lightColors,
-  darkColors,
-} from "../../utilities/themeUtils";
+  loadUserThemePreference,
+  applyActiveUserTheme,
+  resetActiveUserThemeState,
+} from "../../composables/useUserWorkspaceTheme";
+import { getWorkspaceBackground } from "../../utilities/themeUtils";
 const { isDark } = useTheme();
 const workspaceStore = useWorkspaceStore();
 const { workspaceId, jobId } = useRouteIds();
 const { connect, resume, stopAll } = useSpaceCreationStream();
+
+async function syncUserThemeForWorkspace(ws: any, id?: string) {
+  const wsId = id || workspaceId.value;
+  if (!ws || !wsId) return;
+  if (ws.variables?.theme) {
+    workspaceStore.setBackground(getWorkspaceBackground(ws.variables, isDark.value));
+    return;
+  }
+  await loadUserThemePreference(wsId, ws.variables);
+  applyActiveUserTheme(ws.variables, isDark.value);
+}
 
 // Pass the ref directly. useSingleWorkspace handles unref internally if designed correctly,
 // or we can pass a computed if needed. Inspecting useSingleWorkspace, it accepts MaybeRef.
@@ -93,7 +104,7 @@ const localWorkspace = ref<any>(null);
 // Replace only the two watch() blocks that handle workspace + isDark.
 // Everything else (sidebar, resize, modals) stays untouched.
 
-// 1. Seed the store from query data
+// 1. Seed workspace data (do NOT apply theme here — avoids reacting to other users' saves)
 watch(
   getWorkspace,
   (newWorkspace) => {
@@ -102,50 +113,37 @@ watch(
       localWorkspace.value = wsClone;
       workspaceStore.setSingleWorkspace(wsClone);
       workspaceStore.setLanes(wsClone?.lanes);
-    }
-  },
-  { immediate: true }
-);
 
-// 2. Apply UI state (reactive to workspace data AND dark mode changes)
-watch(
-  [() => workspaceStore.singleWorkspace, isDark],
-  ([ws, dark]) => {
-    if (!ws) return;
-
-    // Resolve and set background
-    workspaceStore.setBackground(getWorkspaceBackground(ws.variables, dark));
-
-    // Apply CSS variables only when not using an image theme
-    if (!ws.variables?.theme) {
-      const tc = ws.variables?.themeColors;
-
-      if (!tc || !tc.value) {
-        // ── Brand mode ──
-        // primary-color = workspace-color, secondary = "" (or default)
-        const brandColor = ws.variables?.["workspace-color"];
-        if (brandColor) {
-          applyThemeVariables({ "primary-color": brandColor, "secondary-color": "" }, dark);
-        } else {
-          // Absolute fallback — first preset
-          applyThemeVariables((dark ? darkColors : lightColors)[0], dark);
-        }
-        workspaceStore.setThemeColors(tc ?? null);
-      } else {
-        // ── Color scheme (preset or custom) ──
-        // For custom colors, darkVariant/lightVariant are stored on themeColors
-        const variant = dark ? tc.darkVariant : tc.lightVariant;
-        const resolvedColors = variant
-          ? { ...variant, color: tc.color }
-          : tc;
-
-        applyThemeVariables(resolvedColors, dark);
-        workspaceStore.setThemeColors(tc);
+      if (wsClone.variables?.theme) {
+        workspaceStore.setBackground(
+          getWorkspaceBackground(wsClone.variables, isDark.value),
+        );
       }
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
+
+// 2. Reset theme state when switching spaces
+watch(workspaceId, () => {
+  resetActiveUserThemeState();
+}, { immediate: true });
+
+// 3. Load & apply ONLY this user's private theme (localStorage + per-user API)
+watch(
+  [workspaceId, getWorkspace],
+  async ([id, ws]) => {
+    if (!id || !ws) return;
+    await syncUserThemeForWorkspace(ws, id);
+  },
+  { immediate: true },
+);
+
+watch(isDark, async () => {
+  const ws = workspaceStore.singleWorkspace;
+  if (!ws) return;
+  await syncUserThemeForWorkspace(ws);
+});
 
 const workspaceNavRef = ref<any>(null);
 const isDrawerOpen = ref(true);

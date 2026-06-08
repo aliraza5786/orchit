@@ -309,6 +309,91 @@ export function getPresetByIndex(
   return palette[index] ?? null;
 }
 
+/** Find preset index regardless of which appearance mode it was saved in. */
+export function findPresetIndexAcrossModes(colorValue: string): number {
+  const lightIdx = lightColors.findIndex(
+    (c) => c.value === colorValue || c.color === colorValue,
+  );
+  if (lightIdx >= 0) return lightIdx;
+  return darkColors.findIndex(
+    (c) => c.value === colorValue || c.color === colorValue,
+  );
+}
+
+export interface UserThemePreferenceInput {
+  themeColors?: any;
+  selectedIndex?: number;
+  customHex?: string;
+}
+
+/**
+ * Resolve saved preference for the current global light/dark mode.
+ * Preset index stays per-space; appearance mode is global (last selected wins).
+ */
+export function resolveThemeColorsFromPreference(
+  style: UserThemePreferenceInput | null | undefined,
+  isDark: boolean,
+): any | null {
+  if (!style) return null;
+
+  const { selectedIndex, customHex, themeColors } = style;
+
+  if (selectedIndex != null && selectedIndex >= 0) {
+    const preset = getPresetByIndex(selectedIndex, isDark);
+    if (preset) {
+      return {
+        "primary-color": preset["primary-color"],
+        "secondary-color": preset["secondary-color"],
+        value: preset.value,
+        color: preset.color,
+      };
+    }
+  }
+
+  const hex = customHex || themeColors?.color;
+  if (hex && (customHex || selectedIndex === -1)) {
+    const variant = isDark ? themeColors?.darkVariant : themeColors?.lightVariant;
+    if (variant) {
+      return {
+        ...variant,
+        lightVariant: themeColors?.lightVariant,
+        darkVariant: themeColors?.darkVariant,
+        color: hex,
+      };
+    }
+    return generateThemeFromColor(hex, isDark);
+  }
+
+  if (themeColors?.value) {
+    const variant = isDark ? themeColors.darkVariant : themeColors.lightVariant;
+    if (variant) {
+      return {
+        ...variant,
+        lightVariant: themeColors.lightVariant,
+        darkVariant: themeColors.darkVariant,
+        color: themeColors.color,
+      };
+    }
+
+    const presetIndex = findPresetIndexAcrossModes(themeColors.value);
+    if (presetIndex >= 0) {
+      const preset = getPresetByIndex(presetIndex, isDark);
+      if (preset) {
+        return {
+          "primary-color": preset["primary-color"],
+          "secondary-color": preset["secondary-color"],
+          value: preset.value,
+          color: preset.color,
+        };
+      }
+    }
+
+    return themeColors;
+  }
+
+  return null;
+}
+
 // ─── CSS Variable Application ─────────────────────────────────────────────────
 
 /**

@@ -116,5 +116,55 @@ export const useThemeStore = defineStore("theme", {
         this.isDeletingTheme = false;
       }
     },
+
+    // ─── Per-user workspace UI theme (silent — no toasts) ───────────────────
+
+    _matchUserWorkspaceTheme(themes: any[], workspaceId: string, userId: string) {
+      return (
+        themes.find((t: any) => {
+          if (t.type !== "workspace-theme") return false;
+          if (t.type_id !== workspaceId) return false;
+          const creator = t.created_by?._id ?? t.created_by;
+          return creator === userId;
+        }) ?? null
+      );
+    },
+
+    async getUserWorkspaceTheme(workspaceId: string, userId: string) {
+      try {
+        const res = await api.request({
+          url: `${baseUrl}mindmap-styles`,
+          method: "GET",
+          params: { workspace_id: workspaceId },
+        });
+        const themes = res?.data?.data || [];
+        return this._matchUserWorkspaceTheme(themes, workspaceId, userId);
+      } catch {
+        return null;
+      }
+    },
+
+    async saveUserWorkspaceTheme(payload: any) {
+      await api.request({
+        url: `${baseUrl}mindmap-styles`,
+        method: "POST",
+        data: payload,
+      });
+    },
+
+    async updateUserWorkspaceTheme(id: string, payload: any) {
+      await api.request({
+        url: `${baseUrl}mindmap-styles/${id}`,
+        method: "PUT",
+        data: payload,
+      });
+    },
+
+    async deleteUserWorkspaceTheme(id: string) {
+      await api.request({
+        url: `${baseUrl}mindmap-styles/${id}`,
+        method: "DELETE",
+      });
+    },
   },
 });
