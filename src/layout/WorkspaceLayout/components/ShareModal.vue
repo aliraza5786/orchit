@@ -890,21 +890,21 @@ function avatarColorFromEmail(email: string): string {
   return colors[Math.abs(hash) % colors.length];
 }
 
-function roleLabelById(id: string | number | null): string {
-  if (!id) return "";
-  return accessRoles.value.find((r: any) => r._id === id)?.title ?? "";
-}
+// function roleLabelById(id: string | number | null): string {
+//   if (!id) return "";
+//   return accessRoles.value.find((r: any) => r._id === id)?.title ?? "";
+// }
 
-function roleBadgeClass(id: string | number | null): string {
-  const label = roleLabelById(id).toLowerCase();
-  if (label.includes("viewer"))
-    return "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400";
-  if (label.includes("editor"))
-    return "bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400";
-  if (label.includes("admin"))
-    return "bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400";
-  return "bg-bg-surface text-text-secondary";
-}
+// function roleBadgeClass(id: string | number | null): string {
+//   const label = roleLabelById(id).toLowerCase();
+//   if (label.includes("viewer"))
+//     return "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400";
+//   if (label.includes("editor"))
+//     return "bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400";
+//   if (label.includes("admin"))
+//     return "bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400";
+//   return "bg-bg-surface text-text-secondary";
+// }
 
 // ─── Module sheets (module share only) ───────────────────────────────────────
 const { data: moduleSheetsData } = useSheets(
