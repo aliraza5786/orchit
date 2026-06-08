@@ -171,161 +171,331 @@
       </div>
 
       <!-- Member rows -->
-      <div class="lg:col-span-3 space-y-2.5">
-        <p class="text-[10px] font-semibold uppercase tracking-widest text-text-secondary">Member Allocations</p>
+      <!-- Member rows -->
+<div class="lg:col-span-3 space-y-2.5">
+  <p class="text-[10px] font-semibold uppercase tracking-widest text-text-secondary">Member Allocations</p>
 
-        <div v-if="users.length === 0" class="flex flex-col items-center justify-center py-8 px-4 bg-bg-card border border-border/40 rounded-xl">
-          <svg class="w-12 h-12 text-text-secondary/40 mb-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-          </svg>
-          <p class="text-sm font-medium text-text-secondary">No member allocations</p>
-          <p class="text-xs text-text-secondary/60 mt-1">Members will appear here when allocations are configured</p>
+  <div v-if="users.length === 0" class="flex flex-col items-center justify-center py-8 px-4 bg-bg-card border border-border/40 rounded-xl">
+    <svg class="w-12 h-12 text-text-secondary/40 mb-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+    </svg>
+    <p class="text-sm font-medium text-text-secondary">No member allocations</p>
+    <p class="text-xs text-text-secondary/60 mt-1">Members will appear here when allocations are configured</p>
+  </div>
+
+  <template v-else>
+    <div
+      v-for="user in paginatedMemberUsers"
+      :key="user.id"
+      class="flex items-center gap-3 bg-bg-card border border-border/40 rounded-xl px-4 py-3 transition-all duration-200 group/member relative"
+      :class="[
+        user.membershipStatus === 'inactive'
+          ? 'opacity-60 grayscale-[0.4] cursor-not-allowed bg-bg-card/40'
+          : isUserVerified
+            ? 'hover:border-border/70 hover:shadow-md hover:shadow-black/10 hover:-translate-y-0.5'
+            : 'opacity-60 grayscale-[0.5] cursor-not-allowed bg-bg-card/50'
+      ]"
+    >
+      <!-- Avatar -->
+      <div
+        class="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-transform duration-200 group-hover/member:scale-110"
+        :style="{ background: user.color + '22', color: user.color, border: `1.5px solid ${user.color}44` }"
+      >
+        {{ user.initials }}
+      </div>
+
+      <div class="min-w-0 flex-1">
+        <div class="flex items-center gap-2 flex-wrap">
+          <p class="text-sm font-semibold text-text-primary truncate">{{ user.name }}</p>
+
+          <!-- Company role badge -->
+          <span
+            v-if="user.companyRole"
+            class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-md border shrink-0"
+            :class="{
+              'bg-accent/10 text-accent border-accent/20': user.companyRole.toLowerCase().includes('admin') || user.companyRole.toLowerCase().includes('super'),
+              'bg-blue-500/10 text-blue-400 border-blue-500/20': user.companyRole.toLowerCase() === 'editor',
+              'bg-emerald-500/10 text-emerald-400 border-emerald-500/20': user.companyRole.toLowerCase() === 'owner',
+              'bg-border/30 text-text-secondary border-border/40': !user.companyRole.toLowerCase().includes('admin') && !user.companyRole.toLowerCase().includes('super') && user.companyRole.toLowerCase() !== 'editor' && user.companyRole.toLowerCase() !== 'owner',
+            }"
+          >
+            {{ user.companyRole }}
+          </span>
+
+          <!-- Inactive badge -->
+          <span
+            v-if="user.membershipStatus === 'inactive'"
+            class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-md bg-gray-500/10 text-gray-400 border border-gray-500/20 shrink-0"
+          >
+            Inactive
+          </span>
+
+          <!-- Suspended badge -->
+          <span
+            v-if="user.membershipStatus === 'suspended'"
+            class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-md bg-red-500/10 text-red-400 border border-red-500/20 shrink-0"
+          >
+            Suspended
+          </span>
+
+          <span v-if="!isUserVerified" class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-md bg-red-500/10 text-red-400 border border-red-500/20 shrink-0">
+            Verify user first
+          </span>
+        </div>
+        <div class="flex items-center gap-2 mt-0.5">
+          <p class="text-xs text-text-secondary truncate">{{ user.email }}</p>
+        </div>
+      </div>
+
+      <!-- Mini progress bar -->
+      <div class="flex-1 hidden sm:block">
+        <div class="h-1 rounded-full bg-border/20 overflow-hidden">
+          <div
+            class="h-full rounded-full transition-all duration-500 group-hover/member:brightness-125"
+            :style="{ width: user.percentage + '%', background: user.color }"
+          ></div>
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div class="text-right shrink-0 w-28">
+        <template v-if="user.membershipStatus === 'inactive'">
+          <p class="text-xs text-text-secondary/50 italic">Not available</p>
+          <p class="text-[10px] text-text-secondary/40 mt-1">Member inactive</p>
+        </template>
+
+        <template v-else-if="allocationMode === 'percentage'">
+          <input
+            v-model.number="user.percentage"
+            type="number"
+            min="0"
+            max="100"
+            step="1"
+            @change="requestAllocationChange(user)"
+            :disabled="!isUserVerified || isViewer || user.membershipStatus === 'inactive'"
+            class="w-20 text-right text-sm font-bold text-text-primary bg-border/10 border border-border/40 rounded-md px-2 py-1 outline-none focus:border-accent/50 hover:border-border/70 transition-colors duration-150 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
+          />
+          <span class="text-xs text-text-secondary ml-1">%</span>
+          <p class="text-[10px] text-text-secondary mt-1">{{ ((user.percentage / 100) * totalBudget).toLocaleString() }} tkns</p>
+        </template>
+
+        <template v-else>
+          <input
+            v-model.number="user.tokens"
+            type="number"
+            min="0"
+            :max="totalBudget"
+            :disabled="!isUserVerified || user.membershipStatus === 'inactive'"
+            class="w-full text-right text-xs font-semibold text-text-primary bg-border/10 border border-border/40 rounded-md px-2 py-1 outline-none focus:border-accent/50 hover:border-border/70 transition-colors duration-150 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
+          />
+          <p class="text-[10px] text-text-secondary mt-1">{{ ((user.tokens / totalBudget) * 100).toFixed(1) }}% of budget</p>
+        </template>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <div v-if="totalMemberPages > 1" class="flex items-center justify-between pt-1">
+      <p class="text-[11px] text-text-secondary">
+        Showing {{ (membersPage - 1) * MEMBERS_PAGE_SIZE + 1 }}–{{ Math.min(membersPage * MEMBERS_PAGE_SIZE, users.length) }} of {{ users.length }} members
+      </p>
+      <div class="flex items-center gap-1">
+        <!-- Prev -->
+        <button
+          @click="membersPage--"
+          :disabled="membersPage === 1"
+          class="inline-flex items-center justify-center w-7 h-7 rounded-md border border-border/40 text-text-secondary transition-all duration-150 hover:border-accent/30 hover:text-accent hover:bg-accent/5 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:border-border/40 disabled:hover:text-text-secondary disabled:hover:bg-transparent"
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+
+        <!-- Page numbers -->
+        <template v-for="page in totalMemberPages" :key="page">
+          <template v-if="page === 1 || page === totalMemberPages || (page >= membersPage - 1 && page <= membersPage + 1)">
+            <button
+              @click="membersPage = page"
+              :class="[
+                'inline-flex items-center justify-center w-7 h-7 rounded-md border text-[11px] font-semibold transition-all duration-150',
+                page === membersPage
+                  ? 'bg-accent/10 border-accent/30 text-accent'
+                  : 'border-border/40 text-text-secondary hover:border-accent/30 hover:text-accent hover:bg-accent/5'
+              ]"
+            >{{ page }}</button>
+          </template>
+          <span
+            v-else-if="page === membersPage - 2 || page === membersPage + 2"
+            class="inline-flex items-center justify-center w-7 h-7 text-[11px] text-text-secondary/50 select-none"
+          >…</span>
+        </template>
+
+        <!-- Next -->
+        <button
+          @click="membersPage++"
+          :disabled="membersPage === totalMemberPages"
+          class="inline-flex items-center justify-center w-7 h-7 rounded-md border border-border/40 text-text-secondary transition-all duration-150 hover:border-accent/30 hover:text-accent hover:bg-accent/5 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:border-border/40 disabled:hover:text-text-secondary disabled:hover:bg-transparent"
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
+    </div>
+  </template>
+</div>
+    </div>
+
+   <!-- ── 30-day sparklines ─────────────────────────────────────────────────── -->
+<!-- ── 30-day sparklines ─────────────────────────────────────────────────── -->
+<section class="space-y-3">
+  <div class="flex items-center justify-between">
+    <p class="text-[10px] font-semibold uppercase tracking-widest text-text-secondary">Token Usage History</p>
+  </div>
+
+  <div v-if="users.length === 0" class="flex flex-col items-center justify-center py-12 px-4 bg-bg-card border border-border/40 rounded-xl">
+    <svg class="w-12 h-12 text-text-secondary/40 mb-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <path d="M3 12h18M3 6h18M3 18h18"/><path d="M3 3v18a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V3"/>
+    </svg>
+    <p class="text-sm font-medium text-text-secondary">No usage data</p>
+    <p class="text-xs text-text-secondary/60 mt-1">Usage history will appear once members start using tokens</p>
+  </div>
+
+  <template v-else>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      <div
+        v-for="user in paginatedUsers"
+        :key="user.id"
+        class="bg-bg-card border border-border/40 rounded-xl p-4 transition-all duration-200 group/spark"
+        :class="[
+          user.membershipStatus === 'inactive' || user.membershipStatus === 'suspended'
+            ? 'opacity-60 grayscale-[0.4] cursor-not-allowed bg-bg-card/40'
+            : 'hover:border-border/70 hover:shadow-md hover:shadow-black/10 hover:-translate-y-0.5'
+        ]"
+      >
+        <!-- Header: dot + name + company role badge -->
+        <div class="flex items-start gap-2 mb-3">
+          <span
+            class="w-2 h-2 rounded-full shrink-0 mt-1 transition-transform duration-150 group-hover/spark:scale-125"
+            :style="{ background: user.color }"
+          ></span>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <span class="text-xs font-semibold text-text-primary truncate">{{ user.name }}</span>
+              <span
+                v-if="user.companyRole"
+                class="shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-md border"
+                :class="{
+                  'bg-emerald-500/10 border-emerald-500/20 text-emerald-500': user.companyRole.toLowerCase() === 'owner',
+                  'bg-accent/10 border-accent/20 text-accent': user.companyRole.toLowerCase().includes('admin') || user.companyRole.toLowerCase().includes('super'),
+                  'bg-blue-500/10 border-blue-500/20 text-blue-400': user.companyRole.toLowerCase() === 'editor',
+                  'bg-border/30 border-border/50 text-text-secondary': !['owner', 'editor'].includes(user.companyRole.toLowerCase()) && !user.companyRole.toLowerCase().includes('admin') && !user.companyRole.toLowerCase().includes('super'),
+                }"
+              >{{ user.companyRole }}</span>
+              <span
+                v-if="user.membershipStatus === 'inactive'"
+                class="shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-gray-500/10 text-gray-400 border border-gray-500/20"
+              >Inactive</span>
+              <span
+                v-if="user.membershipStatus === 'suspended'"
+                class="shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-red-500/10 text-red-400 border border-red-500/20"
+              >Suspended</span>
+            </div>
+            <p class="text-[10px] text-text-secondary truncate mt-0.5">{{ user.email }}</p>
+          </div>
         </div>
 
-        <div
-          v-for="user in users"
-          :key="user.id"
-          class="flex items-center gap-3 bg-bg-card border border-border/40 rounded-xl px-4 py-3 transition-all duration-200 group/member relative"
-          :class="[
-            isUserVerified
-              ? 'hover:border-border/70 hover:shadow-md hover:shadow-black/10 hover:-translate-y-0.5' 
-              : 'opacity-60 grayscale-[0.5] cursor-not-allowed bg-bg-card/50'
-          ]"
+        <!-- Sparkline -->
+        <svg
+          viewBox="0 0 120 40"
+          class="w-full h-10 transition-opacity duration-200 group-hover/spark:opacity-80"
+          preserveAspectRatio="none"
         >
-          <!-- Avatar -->
-          <div
-            class="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-transform duration-200 group-hover/member:scale-110"
-            :style="{ background: user.color + '22', color: user.color, border: `1.5px solid ${user.color}44` }"
-          >
-            {{ user.initials }}
-          </div>
+          <defs>
+            <linearGradient :id="`grad-${user.id}`" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" :stop-color="user.color" stop-opacity="0.2"/>
+              <stop offset="100%" :stop-color="user.color" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <path :d="user.sparkPath" :fill="`url(#grad-${user.id})`"/>
+          <path :d="user.sparkLine" fill="none" :stroke="user.color" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+        </svg>
 
-          <!-- Name + role -->
-          <div class="min-w-0 flex-1">
-            <div class="flex items-center gap-2">
-              <p class="text-sm font-semibold text-text-primary truncate">{{ user.name }}</p>
-              <span v-if="!isUserVerified" class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-md bg-red-500/10 text-red-400 border border-red-500/20 shrink-0">
-                Verify user first
-              </span>
-            </div>
-            <p class="text-xs text-text-secondary mt-0.5">{{ user.role }}</p>
-          </div>
-
-          <!-- Mini progress bar -->
-          <div class="flex-1 hidden sm:block">
-            <div class="h-1 rounded-full bg-border/20 overflow-hidden">
-              <div
-                class="h-full rounded-full transition-all duration-500 group-hover/member:brightness-125"
-                :style="{ width: user.percentage + '%', background: user.color }"
-              ></div>
-            </div>
-          </div>
-
-          <!-- Controls -->
-          <div class="text-right shrink-0 w-28">
-            <template v-if="allocationMode === 'percentage'">
-              <input
-              v-model.number="user.percentage"
-              type="number"
-              min="0"
-              max="100"
-              step="1"
-              @change="requestAllocationChange(user)"
-              :disabled="!isUserVerified || isViewer"
-              class="w-20 text-right text-sm font-bold text-text-primary bg-border/10 border border-border/40 rounded-md px-2 py-1 outline-none focus:border-accent/50 hover:border-border/70 transition-colors duration-150 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
-            />
-            <span class="text-xs text-text-secondary ml-1">%</span>
-              <p class="text-[10px] text-text-secondary mt-1">{{ ((user.percentage / 100) * totalBudget).toLocaleString() }} tkns</p>
+        <!-- Footer: usage · limit + status -->
+        <div class="flex items-center justify-between mt-2.5 pt-2.5 border-t border-border/30">
+          <span class="text-[10px] text-text-secondary">
+            <template v-if="user.tokens > 0">
+              {{ user.usedThisMonth.toLocaleString() }} used · limit {{ user.tokens.toLocaleString() }}
             </template>
             <template v-else>
-              <input
-                v-model.number="user.tokens"
-                type="number"
-                min="0"
-                :max="totalBudget"
-                :disabled="!isUserVerified"
-                class="w-full text-right text-xs font-semibold text-text-primary bg-border/10 border border-border/40 rounded-md px-2 py-1 outline-none focus:border-accent/50 hover:border-border/70 transition-colors duration-150 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
-              />
-              <p class="text-[10px] text-text-secondary mt-1">{{ ((user.tokens / totalBudget) * 100).toFixed(1) }}% of budget</p>
+              {{ user.usedThisMonth > 0 ? user.usedThisMonth.toLocaleString() + ' used' : '0 used' }} · no limit set
             </template>
-          </div>
+          </span>
+          <span
+            v-if="user.tokens > 0"
+            :class="[
+              'text-[10px] font-semibold flex items-center gap-1',
+              user.usedThisMonth > user.tokens ? 'text-red-400' : 'text-emerald-400'
+            ]"
+          >
+            <template v-if="user.usedThisMonth > user.tokens">
+              <svg class="w-3 h-3" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 3.5a.75.75 0 0 1 .75.75v3a.75.75 0 0 1-1.5 0v-3A.75.75 0 0 1 8 4.5zm0 7a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/></svg>
+              over limit
+            </template>
+            <template v-else>
+              <svg class="w-3 h-3" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.75.75 0 0 1 1.06-1.06L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0z"/></svg>
+              within limit
+            </template>
+          </span>
+          <span v-else class="text-[10px] font-semibold text-text-secondary flex items-center gap-1">
+            <span class="text-sm leading-none">∞</span> unlimited
+          </span>
         </div>
       </div>
     </div>
 
-    <!-- ── 30-day sparklines ─────────────────────────────────────────────────── -->
-    <section class="space-y-3">
-      <div class="flex items-center justify-between">
-        <p class="text-[10px] font-semibold uppercase tracking-widest text-text-secondary">Token Usage History</p>
-        <div class="flex gap-1">
-          <button
-            v-for="r in ['7d', '14d', '30d']"
-            :key="r"
-            @click="range = r"
-            :class="[
-              'px-2.5 py-1 rounded-md text-[10px] font-semibold uppercase tracking-wide border transition-all duration-150 hover:scale-105 active:scale-95',
-              range === r
-                ? 'bg-accent/10 border-accent/30 text-accent'
-                : 'border-border/40 text-text-secondary hover:border-accent/30 hover:text-accent hover:bg-accent/5'
-            ]"
-          >{{ r }}</button>
-        </div>
-      </div>
-
-      <div v-if="users.length === 0" class="flex flex-col items-center justify-center py-12 px-4 bg-bg-card border border-border/40 rounded-xl">
-        <svg class="w-12 h-12 text-text-secondary/40 mb-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path d="M3 12h18M3 6h18M3 18h18"/><path d="M3 3v18a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V3"/>
-        </svg>
-        <p class="text-sm font-medium text-text-secondary">No usage data</p>
-        <p class="text-xs text-text-secondary/60 mt-1">Usage history will appear once members start using tokens</p>
-      </div>
-
-      <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        <div
-          v-for="user in users"
-          :key="user.id"
-          class="bg-bg-card border border-border/40 rounded-xl p-4 transition-all duration-200 hover:border-border/70 hover:shadow-md hover:shadow-black/10 hover:-translate-y-0.5 group/spark"
+    <!-- Pagination -->
+    <div v-if="totalPages > 1" class="flex items-center justify-between pt-1">
+      <p class="text-[11px] text-text-secondary">
+        Showing {{ (currentPage - 1) * PAGE_SIZE + 1 }}–{{ Math.min(currentPage * PAGE_SIZE, users.length) }} of {{ users.length }} members
+      </p>
+      <div class="flex items-center gap-1">
+        <!-- Prev -->
+        <button
+          @click="currentPage--"
+          :disabled="currentPage === 1"
+          class="inline-flex items-center justify-center w-7 h-7 rounded-md border border-border/40 text-text-secondary transition-all duration-150 hover:border-accent/30 hover:text-accent hover:bg-accent/5 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:border-border/40 disabled:hover:text-text-secondary disabled:hover:bg-transparent"
         >
-          <div class="flex items-center gap-2 mb-3">
-            <span
-              class="w-2 h-2 rounded-full shrink-0 transition-transform duration-150 group-hover/spark:scale-125"
-              :style="{ background: user.color }"
-            ></span>
-            <span class="text-xs font-semibold text-text-primary truncate">{{ user.name }}</span>
-            <span class="ml-auto text-[10px] text-text-secondary shrink-0">{{ user.usedThisMonth.toLocaleString() }} used</span>
-          </div>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
 
-          <svg
-            viewBox="0 0 120 40"
-            class="w-full h-10 transition-opacity duration-200 group-hover/spark:opacity-80"
-            preserveAspectRatio="none"
-          >
-            <defs>
-              <linearGradient :id="`grad-${user.id}`" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" :stop-color="user.color" stop-opacity="0.25"/>
-                <stop offset="100%" :stop-color="user.color" stop-opacity="0"/>
-              </linearGradient>
-            </defs>
-            <path :d="user.sparkPath" :fill="`url(#grad-${user.id})`"/>
-            <path :d="user.sparkLine" fill="none" :stroke="user.color" stroke-width="1.5" stroke-linejoin="round"/>
-          </svg>
-
-          <div class="flex items-center justify-between mt-2">
-            <span class="text-[10px] text-text-secondary">
-              Limit: {{ ((user.percentage / 100) * totalBudget).toLocaleString() }}
-            </span>
-            <span
+        <!-- Page numbers -->
+        <template v-for="page in totalPages" :key="page">
+          <!-- Ellipsis logic: show first, last, current ±1, and ellipsis for gaps -->
+          <template v-if="page === 1 || page === totalPages || (page >= currentPage - 1 && page <= currentPage + 1)">
+            <button
+              @click="currentPage = page"
               :class="[
-                'text-[10px] font-semibold transition-all duration-150',
-                user.usedThisMonth > (user.percentage / 100) * totalBudget ? 'text-red-400' : 'text-emerald-400'
+                'inline-flex items-center justify-center w-7 h-7 rounded-md border text-[11px] font-semibold transition-all duration-150',
+                page === currentPage
+                  ? 'bg-accent/10 border-accent/30 text-accent'
+                  : 'border-border/40 text-text-secondary hover:border-accent/30 hover:text-accent hover:bg-accent/5'
               ]"
-            >
-              {{ user.usedThisMonth > (user.percentage / 100) * totalBudget ? '⚠ Over limit' : '✓ Within limit' }}
-            </span>
-          </div>
-        </div>
+            >{{ page }}</button>
+          </template>
+          <span
+            v-else-if="page === currentPage - 2 || page === currentPage + 2"
+            class="inline-flex items-center justify-center w-7 h-7 text-[11px] text-text-secondary/50 select-none"
+          >…</span>
+        </template>
+
+        <!-- Next -->
+        <button
+          @click="currentPage++"
+          :disabled="currentPage === totalPages"
+          class="inline-flex items-center justify-center w-7 h-7 rounded-md border border-border/40 text-text-secondary transition-all duration-150 hover:border-accent/30 hover:text-accent hover:bg-accent/5 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:border-border/40 disabled:hover:text-text-secondary disabled:hover:bg-transparent"
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
       </div>
-    </section>
+    </div>
+  </template>
+</section>
 
     <!-- ── Over-budget warning ──────────────────────────────────────────────── -->
     <div
@@ -343,14 +513,19 @@
 
     <!-- ── Info banner ───────────────────────────────────────────────────────── -->
     <div class="flex items-start gap-3 bg-blue-500/5 border border-blue-500/15 rounded-xl px-4 py-3.5 transition-all duration-200 hover:bg-blue-500/8 hover:border-blue-500/25">
-      <svg class="shrink-0 mt-0.5 text-blue-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-        <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
-      </svg>
-      <p class="text-xs text-blue-400 leading-relaxed">
-        Allocations reset on the 1st of each month. Users exceeding their allocation will be rate-limited unless
-        <span class="font-semibold">overflow</span> is enabled. Unallocated tokens remain in the shared pool.
-      </p>
-    </div>
+  <svg class="shrink-0 mt-0.5 text-blue-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+    <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+  </svg>
+  <p class="text-xs text-blue-400 leading-relaxed">
+    Current billing period:
+    <span class="font-semibold">{{ periodStart }}</span> → <span class="font-semibold">{{ periodEnd }}</span>.
+    Resets in <span class="font-semibold">{{ daysUntilReset }} day{{ daysUntilReset !== 1 ? 's' : '' }}</span>
+    on <span class="font-semibold">{{ resetDateLabel }}</span>.
+    Users exceeding their allocation will be rate-limited unless
+    <span class="font-semibold">overflow</span> is enabled.
+    Unallocated tokens remain in the shared pool.
+  </p>
+</div>
 
     <!-- ── Sticky save bar ───────────────────────────────────────────────────── -->
     <Transition
@@ -452,7 +627,6 @@ import { useCompanyTokenAllocation, useSetUserAllocation, useSetAllocationMode }
 const props = defineProps<{ profile?: any }>()
 
 const allocationMode = ref<'percentage' | 'custom'>('percentage')
-const range = ref('30d')
 const saveSuccess = ref(false)
 const saveError = ref<string | null>(null)
 const showSaveConfirm = ref(false)
@@ -510,7 +684,10 @@ interface UserAllocation {
   id: string
   name: string
   initials: string
+  email: string  
   role: string
+  companyRole: string
+  membershipStatus: string
   color: string
   percentage: number
   tokens: number
@@ -568,6 +745,11 @@ const apiUsers = computed<UserAllocation[]>(() => {
       id: u.user_id || apiUser?._id || `user-${idx}`,
       name: fullName,
       initials,
+      email: apiUser?.u_email || '',
+      companyRole: u.membership_role === 'owner'
+      ? 'Owner'
+      : u.company_role?.title || '',
+      membershipStatus: u.membership_status || '',
       role: u.membership_role
         ? u.membership_role.charAt(0).toUpperCase() + u.membership_role.slice(1)
         : 'Member',
@@ -680,12 +862,12 @@ const pendingChange = ref<{
 
 function requestAllocationChange(user: any) {
   if (!isUserVerified.value) return
+  if (user.membershipStatus === 'inactive') return   // ADD THIS
 
   pendingAllocation.value = {
     userId: user.id,
     newPercentage: user.percentage
   }
-
   showAllocateConfirm.value = true
 }
 async function confirmAllocation() {
@@ -716,4 +898,52 @@ async function confirmAllocation() {
     toast.error(err?.message ?? 'Failed to allocate tokens')
   }
 }
+const periodStart = computed(() => {
+  const d = allocationData.value?.allocation?.period_start
+  if (!d) return '—'
+  return new Date(d).toLocaleDateString('en-US', {
+    month: 'short', day: 'numeric', year: 'numeric'
+  })
+})
+
+const periodEnd = computed(() => {
+  const d = allocationData.value?.allocation?.period_end
+  if (!d) return '—'
+  return new Date(d).toLocaleDateString('en-US', {
+    month: 'short', day: 'numeric', year: 'numeric'
+  })
+})
+
+const daysUntilReset = computed(() => {
+  const d = allocationData.value?.allocation?.period_end
+  if (!d) return 0
+  const diff = new Date(d).getTime() - Date.now()
+  return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)))
+})
+
+const resetDateLabel = computed(() => {
+  const d = allocationData.value?.allocation?.period_end
+  if (!d) return '—'
+  return new Date(d).toLocaleDateString('en-US', {
+    month: 'long', day: 'numeric'
+  })
+})
+const currentPage = ref(1)
+const PAGE_SIZE = 9
+
+const paginatedUsers = computed(() => {
+  const start = (currentPage.value - 1) * PAGE_SIZE
+  return users.value.slice(start, start + PAGE_SIZE)
+})
+
+const totalPages = computed(() => Math.ceil(users.value.length / PAGE_SIZE))
+const membersPage = ref(1)
+const MEMBERS_PAGE_SIZE = 10
+
+const paginatedMemberUsers = computed(() => {
+  const start = (membersPage.value - 1) * MEMBERS_PAGE_SIZE
+  return users.value.slice(start, start + MEMBERS_PAGE_SIZE)
+})
+
+const totalMemberPages = computed(() => Math.ceil(users.value.length / MEMBERS_PAGE_SIZE))
 </script>

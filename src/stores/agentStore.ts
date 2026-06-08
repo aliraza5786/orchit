@@ -185,6 +185,7 @@ export const useAgentStore = defineStore("agent", {
     currentPhaseTimestamp: null as number | null,
     streamPhases: [] as Array<{ phase: string; detail: string; timestamp: number }>,
     abortController: null as AbortController | null,
+    agentPassedHandling: false,
   }),
 
   getters: {

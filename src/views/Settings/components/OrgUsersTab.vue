@@ -308,29 +308,30 @@
   class="flex items-center gap-1.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
   v-if="canActOnMember(member)"
 >
-  <!-- Activate / Deactivate toggle -->
-  <button
-    v-if="canUpdateUsers && (
-      member.membership_status === 'active' ||
-      member.membership_status === 'deactivated' ||
-      member.membership_status === 'suspended' ||
-      member.membership_status == null
-    )"
-    @click.stop="openStatusModal(member)"
-    :disabled="togglingUserId === member._id || !isUserVerified"
-    :title="member.membership_status === 'active' ? 'Deactivate member' : 'Activate member'"
-    class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold border transition-all disabled:opacity-40"
-    :class="member.membership_status === 'active'
-      ? 'border-yellow-500/25 bg-yellow-500/8 text-yellow-600 hover:bg-yellow-500/15 hover:border-yellow-500/40'
-      : 'border-green-500/25 bg-green-500/8 text-green-600 hover:bg-green-500/15 hover:border-green-500/40'"
-  >
-    <i v-if="togglingUserId === member._id" class="fa-solid fa-spinner animate-spin text-[10px]"></i>
-    <i v-else-if="member.membership_status === 'active'" class="fa-solid fa-ban text-[10px]"></i>
-    <i v-else class="fa-solid fa-circle-check text-[10px]"></i>
-    <span class="hidden sm:inline">
-      {{ member.membership_status === 'active' ? 'Deactivate' : 'Activate' }}
-    </span>
-  </button>
+<!-- Activate / Deactivate toggle -->
+<button
+  v-if="canUpdateUsers && (
+  (member.membership_status as string) === 'active' ||
+  (member.membership_status as string) === 'deactivated' ||
+  (member.membership_status as string) === 'suspended' ||
+  (member.membership_status as string) === 'inactive' ||
+  member.membership_status == null
+)"
+  @click.stop="openStatusModal(member)"
+  :disabled="togglingUserId === member._id || !isUserVerified"
+  :title="member.membership_status === 'active' ? 'Deactivate member' : 'Activate member'"
+  class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold border transition-all disabled:opacity-40"
+  :class="member.membership_status === 'active'
+    ? 'border-yellow-500/25 bg-yellow-500/8 text-yellow-600 hover:bg-yellow-500/15 hover:border-yellow-500/40'
+    : 'border-green-500/25 bg-green-500/8 text-green-600 hover:bg-green-500/15 hover:border-green-500/40'"
+>
+  <i v-if="togglingUserId === member._id" class="fa-solid fa-spinner animate-spin text-[10px]"></i>
+  <i v-else-if="member.membership_status === 'active'" class="fa-solid fa-ban text-[10px]"></i>
+  <i v-else class="fa-solid fa-circle-check text-[10px]"></i>
+  <span class="hidden sm:inline">
+    {{ member.membership_status === 'active' ? 'Deactivate' : 'Activate' }}
+  </span>
+</button>
 
   <!-- Edit -->
   <button
@@ -356,22 +357,23 @@
 </div>
 
         <!-- Role select -->
-        <div
-        v-if="canUpdateUsers && !isSuperAdminMember(member) && !member.is_owner && member.membership_status === 'active'"
-        class="relative shrink-0"
-        @click.stop
-      >
-          <select
-            :value="member.company_role_id"
-            @change.stop="handleInlineRoleUpdate(member, ($event.target as HTMLSelectElement).value)"
-            :disabled="roleUpdatingUserId === member._id || !canUpdateUsers"
-            class="appearance-none cursor-pointer text-[11px] font-semibold uppercase tracking-wide pl-2.5 pr-6 py-1.5 rounded-lg border border-border bg-card text-accent hover:border-accent/40 focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:opacity-50 transition-all"
-          >
-            <option v-for="role in allRoles" :key="role._id" :value="role._id">{{ role.title }}</option>
-          </select>
-          <i v-if="roleUpdatingUserId === member._id" class="fa-solid fa-spinner animate-spin absolute right-1.5 top-1/2 -translate-y-1/2 text-[9px] text-accent pointer-events-none"></i>
-          <i v-else class="fa-solid fa-chevron-down absolute right-1.5 top-1/2 -translate-y-1/2 text-[8px] text-accent pointer-events-none"></i>
-        </div>
+        <!-- Role select -->
+<div
+  v-if="canUpdateUsers && !isSuperAdminMember(member) && !member.is_owner && member.membership_status === 'active'"
+  class="relative shrink-0"
+  @click.stop
+>
+  <select
+    :value="member.company_role_id ?? defaultRole?._id ?? ''"
+    @change.stop="handleInlineRoleUpdate(member, ($event.target as HTMLSelectElement).value)"
+    :disabled="roleUpdatingUserId === member._id || !canUpdateUsers"
+    class="appearance-none cursor-pointer text-[11px] font-semibold uppercase tracking-wide pl-2.5 pr-6 py-1.5 rounded-lg border border-border bg-card text-accent hover:border-accent/40 focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:opacity-50 transition-all"
+  >
+    <option v-for="role in allRoles" :key="role._id" :value="role._id">{{ role.title }}</option>
+  </select>
+  <i v-if="roleUpdatingUserId === member._id" class="fa-solid fa-spinner animate-spin absolute right-1.5 top-1/2 -translate-y-1/2 text-[9px] text-accent pointer-events-none"></i>
+  <i v-else class="fa-solid fa-chevron-down absolute right-1.5 top-1/2 -translate-y-1/2 text-[8px] text-accent pointer-events-none"></i>
+</div>
       </div>
     </div>
 
@@ -855,6 +857,7 @@ type MembershipStatus =
   | 'invited'
   | 'pending'
   | 'pending_super_admin_otp'
+  | 'inactive'
 
 interface Permission {
   _id: string; slug: string; title: string; description: string; action: string; category: string; scope: string;
@@ -1117,7 +1120,15 @@ function isSuperAdminMember(member: CompanyUser): boolean {
 }
 
 function canActOnMember(member: CompanyUser): boolean {
-  if (member.is_owner)           return false
+  if (member.is_owner) return false
+
+  // Allow acting on inactive members too
+  const actableStatuses: MembershipStatus[] = ['active', 'deactivated', 'suspended', 'inactive']
+  const hasActableStatus =
+    actableStatuses.includes(member.membership_status as MembershipStatus) ||
+    member.membership_status == null
+
+  if (!hasActableStatus) return false
 
   const role = activeCompany.value?.role?.slug
     ?? activeCompany.value?.user_role?.slug
@@ -1133,9 +1144,8 @@ function canActOnMember(member: CompanyUser): boolean {
     hasPerm('company_user.delete')
   )
 }
-
 // ─── Bulk selectable ──────────────────────────────────────────
-const BULK_SELECTABLE_STATUSES: MembershipStatus[] = ['active', 'deactivated', 'suspended']
+const BULK_SELECTABLE_STATUSES: MembershipStatus[] = ['active', 'deactivated', 'suspended','inactive',]
 
 function isBulkSelectable(member: CompanyUser): boolean {
   if (isSuperAdminMember(member)) return false
@@ -1232,7 +1242,9 @@ async function handleBulkActivate() {
   if (!isUserVerified.value) { toast.error('Verify user first'); return }
   const eligibleIds = bulkSelectedIds.value.filter(id => {
     const m = members.value.find(m => m._id === id)
-    return m && (['deactivated', 'suspended'] as MembershipStatus[]).includes(m.membership_status as MembershipStatus)
+    return m && (
+      ['deactivated', 'suspended', 'inactive'] as MembershipStatus[]
+    ).includes(m.membership_status as MembershipStatus)
   })
   if (!eligibleIds.length) { toast.error('No eligible members to activate'); return }
   selectedBulkAction.value = 'activate'
@@ -1277,13 +1289,20 @@ async function handleBulkDeactivate() {
 
 // ─── Inline role update ───────────────────────────────────────
 const roleUpdatingUserId = ref<string | null>(null)
-
 function handleInlineRoleUpdate(member: CompanyUser, roleId: string) {
   if (!canUpdateUsers.value) { toast.error('No permission to update roles'); return }
-  if (!roleId || member.company_role_id === roleId) return
+  
+  // Use defaultRole as fallback if roleId is empty
+  const resolvedRoleId = roleId || defaultRole.value?._id
+  if (!resolvedRoleId) return
+  
+  // Skip if same role (accounting for null == defaultRole case)
+  const currentRole = member.company_role_id ?? defaultRole.value?._id
+  if (currentRole === resolvedRoleId) return
+
   roleUpdatingUserId.value = member._id
   updateUser(
-    { userId: member._id, payload: { company_role_id: roleId } },
+    { userId: member._id, payload: { company_role_id: resolvedRoleId } },
     {
       onSuccess: (data: any) => {
         toast.success((data?.data ?? data)?.message || 'Role updated')
@@ -1296,14 +1315,52 @@ function handleInlineRoleUpdate(member: CompanyUser, roleId: string) {
     }
   )
 }
+watch(
+  [members, defaultRole],
+  () => {
+    if (!canUpdateUsers.value || !defaultRole.value?._id) return
 
+    const nullRoleMembers = members.value.filter(
+      (m) =>
+        !m.company_role_id &&
+        !m.is_owner &&
+        m.membership_status === 'active' &&
+        !isSuperAdminMember(m)
+    )
+
+    nullRoleMembers.forEach((member) => {
+      updateUser(
+        {
+          userId: member._id,
+          payload: { company_role_id: defaultRole.value!._id },
+        },
+        {
+          onSuccess: () => {
+            // Silent auto-assign — no toast needed
+          },
+          onError: () => {
+            // Silent fail — don't disrupt UX
+          },
+        }
+      )
+    })
+  },
+  { immediate: false }
+)
 // ─── Status modal ─────────────────────────────────────────────
 const showStatusModal   = ref(false)
 const statusModalMember = ref<CompanyUser | null>(null)
 const statusModalRole   = ref<string>('')
 
 function isFirstTimeActivation(member: CompanyUser): boolean {
-  const neverActiveStatuses = [null, undefined, 'pending', 'pending_super_admin_otp', 'invited']
+  const neverActiveStatuses = [
+    null,
+    undefined,
+    'pending',
+    'pending_super_admin_otp',
+    'invited',
+    'inactive',  // ADD THIS — no active_company_id means never fully onboarded
+  ]
   return neverActiveStatuses.includes(member.membership_status as any)
 }
 
@@ -1362,6 +1419,7 @@ function getStatusBadgeClass(status: string): string {
     case 'active':      return 'bg-green-500/10 text-green-600'
     case 'suspended':   return 'bg-yellow-500/10 text-yellow-600'
     case 'deactivated': return 'bg-red-500/10 text-red-500'
+    case 'inactive':    return 'bg-gray-500/10 text-gray-500'   // ADD THIS
     case 'invited':     return 'bg-blue-500/10 text-blue-500'
     case 'pending':     return 'bg-orange-500/10 text-orange-500'
     default:            return 'bg-border/30 text-text-secondary'
