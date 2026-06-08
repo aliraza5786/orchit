@@ -393,6 +393,7 @@ import {
   getPaletteIndex,
   getPresetByIndex,
 } from "../../../utilities/themeUtils";
+import { saveUserThemePreference, useUserWorkspaceTheme, type UserWorkspaceThemeStyle } from "../../../composables/useUserWorkspaceTheme";
 const {isAdmin} = usePermissions();
 
 // ─── Setup ────────────────────────────────────────────────────────────────────
@@ -401,6 +402,7 @@ const queryClient = useQueryClient();
 const router = useRouter();
 const { workspaceId } = useRouteIds();
 const { theme, setTheme, isDark } = useTheme();
+const { activeUserTheme } = useUserWorkspaceTheme();
 const props = defineProps<{ workspace: any }>();
 
 const workspaceStore = useWorkspaceStore();
@@ -416,12 +418,6 @@ const switchState = ref<"details" | "active-logs">("details");
 // ─── Palette ──────────────────────────────────────────────────────────────────
 
 const currentPalette = computed(() => (isDark.value ? darkColors : lightColors));
-
-// Seed store.themeColors from props on mount if the store doesn't have it yet.
-// Ensures the brand-mode computed has data before any user interaction.
-if (!workspaceStore.themeColors && props.workspace?.variables?.themeColors) {
-  workspaceStore.setThemeColors(props.workspace.variables.themeColors);
-}
 
 // ─── Brand Mode Detection ─────────────────────────────────────────────────────
 // Read from workspaceStore.themeColors — this is updated synchronously on every
@@ -439,11 +435,20 @@ const isBrandMode = computed(() => {
 const selectedIndex = ref<number>(-1);
 const customHex = ref<string>("");
 
-// Seed from store on mount, then keep in sync as store changes
-// (e.g. route switch loads a different workspace)
+// Seed from saved preference or store when switching spaces / appearance mode
 watch(
-  () => workspaceStore.themeColors,
-  (tc) => {
+  [() => workspaceStore.themeColors, activeUserTheme, isDark],
+  ([tc, pref]) => {
+    if (pref?.selectedIndex != null && pref.selectedIndex >= 0) {
+      selectedIndex.value = pref.selectedIndex;
+      customHex.value = "";
+      return;
+    }
+    if (pref?.customHex) {
+      selectedIndex.value = -1;
+      customHex.value = pref.customHex;
+      return;
+    }
     if (!tc || !tc.value) {
       selectedIndex.value = -1;
       customHex.value = "";
@@ -458,7 +463,7 @@ watch(
       customHex.value = tc.color ?? "";
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 // ─── Computed swatch active states ───────────────────────────────────────────
@@ -482,14 +487,22 @@ watch(
   (v) => { if (v) editableWorkspaceColor.value = v; }
 );
 
+async function persistUserTheme(style: UserWorkspaceThemeStyle | null) {
+  const wsId = workspaceId.value || props.workspace?._id;
+  if (!wsId) return;
+
+  const ok = await saveUserThemePreference(wsId, style);
+  if (!ok) {
+    toast.error("Could not save theme preference. Please try again.");
+  }
+}
+
 // ─── Actions ──────────────────────────────────────────────────────────────────
 
 /**
- * Apply brand mode:
- * - themeColors has no .value → getWorkspaceBackground returns var(--bg-body)
- * - primary-color driven by workspace-color
+ * Apply brand mode (workspace default — not saved per user).
  */
-function activateBrandMode() {
+async function activateBrandMode() {
   const brandColor = editableWorkspaceColor.value;
   const themeColors = buildBrandModeThemeColors(brandColor);
 
@@ -497,20 +510,13 @@ function activateBrandMode() {
   workspaceStore.setBackground("var(--bg-body)");
   workspaceStore.setThemeColors(themeColors);
 
-  const variables = {
-    ...props.workspace?.variables,
-    themeColors,
-    theme: "",
-  };
-
-  workspaceStore.updateSingleWorkspaceLocal({ variables });
-  updateWS({ workspace_id: workspaceId.value, variables });
+  await persistUserTheme(null);
 }
 
 /**
- * Apply a palette preset by index.
+ * Apply a palette preset by index — saved per user only.
  */
-function activatePresetByIndex(index: number) {
+async function activatePresetByIndex(index: number) {
   const preset = currentPalette.value[index];
   if (!preset) return;
 
@@ -525,28 +531,22 @@ function activatePresetByIndex(index: number) {
   workspaceStore.setBackground(preset.value);
   workspaceStore.setThemeColors(themeColors);
 
-  const variables = {
-    ...props.workspace?.variables,
+  await persistUserTheme({
     themeColors,
-    theme: "",
-  };
-
-  workspaceStore.updateSingleWorkspaceLocal({ variables });
-  updateWS({ workspace_id: workspaceId.value, variables });
+    selectedIndex: index,
+    customHex: "",
+  });
 }
 
 /**
- * Apply a custom hex color (not in palette).
- * Generates light/dark variants for all theme properties.
+ * Apply a custom hex color — saved per user only.
  */
-function activateCustomColor(hex: string) {
-  // Generate for BOTH modes so we can store both and switch seamlessly
+async function activateCustomColor(hex: string) {
   const lightTheme = generateThemeFromColor(hex, false);
   const darkTheme  = generateThemeFromColor(hex, true);
 
   const themeColors = {
     ...(isDark.value ? darkTheme : lightTheme),
-    // Store both variants so mode-switch can pick the right one
     lightVariant: lightTheme,
     darkVariant: darkTheme,
     color: hex,
@@ -556,14 +556,11 @@ function activateCustomColor(hex: string) {
   workspaceStore.setBackground(themeColors.value);
   workspaceStore.setThemeColors(themeColors);
 
-  const variables = {
-    ...props.workspace?.variables,
+  await persistUserTheme({
     themeColors,
-    theme: "",
-  };
-
-  workspaceStore.updateSingleWorkspaceLocal({ variables });
-  updateWS({ workspace_id: workspaceId.value, variables });
+    selectedIndex: -1,
+    customHex: hex,
+  });
 }
 
 // ─── Handlers ─────────────────────────────────────────────────────────────────
@@ -622,17 +619,17 @@ function saveWorkspaceColor() {
 //   • Preset index → find same index in new palette and apply
 //   • Custom hex → re-generate light/dark variants for the same hex
 
-watch(isDark, (dark) => {
+watch(isDark, async (dark) => {
   if (isBrandMode.value) {
-    activateBrandMode();
+    await activateBrandMode();
     return;
   }
 
-  const tc = props.workspace?.variables?.themeColors;
+  const pref = activeUserTheme.value;
+  const idx = pref?.selectedIndex ?? selectedIndex.value;
 
-  if (selectedIndex.value !== -1) {
-    // Preserve selection by index across palettes
-    const preset = getPresetByIndex(selectedIndex.value, dark);
+  if (idx !== -1 && idx >= 0) {
+    const preset = getPresetByIndex(idx, dark);
     if (preset) {
       const themeColors = {
         "primary-color": preset["primary-color"],
@@ -644,16 +641,18 @@ watch(isDark, (dark) => {
       workspaceStore.setBackground(preset.value);
       workspaceStore.setThemeColors(themeColors);
 
-      const variables = { ...props.workspace?.variables, themeColors, theme: "" };
-      workspaceStore.updateSingleWorkspaceLocal({ variables });
-      updateWS({ workspace_id: workspaceId.value, variables });
+      await persistUserTheme({
+        themeColors,
+        selectedIndex: idx,
+        customHex: "",
+      });
     }
     return;
   }
 
-  // Custom color — use stored variant if available, else re-generate
-  const hex = customHex.value || tc?.color;
+  const hex = pref?.customHex || customHex.value || workspaceStore.themeColors?.color;
   if (hex) {
+    const tc = workspaceStore.themeColors;
     const variant = dark ? tc?.darkVariant : tc?.lightVariant;
     if (variant) {
       const themeColors = { ...variant, lightVariant: tc?.lightVariant, darkVariant: tc?.darkVariant, color: hex };
@@ -661,11 +660,13 @@ watch(isDark, (dark) => {
       workspaceStore.setBackground(themeColors.value);
       workspaceStore.setThemeColors(themeColors);
 
-      const variables = { ...props.workspace?.variables, themeColors, theme: "" };
-      workspaceStore.updateSingleWorkspaceLocal({ variables });
-      updateWS({ workspace_id: workspaceId.value, variables });
+      await persistUserTheme({
+        themeColors,
+        selectedIndex: -1,
+        customHex: hex,
+      });
     } else {
-      activateCustomColor(hex);
+      await activateCustomColor(hex);
     }
   }
 });
