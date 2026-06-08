@@ -5,11 +5,11 @@ import 'vue-sonner/style.css'
 import { useTheme } from './composables/useTheme'
 import { useAuthStore } from './stores/auth'
 import { useDeletionGuard } from './composables/useDeletionGuard'
-
+import { useRouter } from 'vue-router'
 const { isDark } = useTheme()
 const authStore = useAuthStore()
 const showSuspendedModal = ref(false)
-
+const router = useRouter()
 // ✅ Use auth.user instead of independent profile query to avoid duplication
 const profileData = computed(() => authStore.user?.data ?? null)
 
@@ -37,6 +37,7 @@ async function handleSuspendedConfirm() {
   localStorage.removeItem('token')
   document.cookie = 'auth_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
   await authStore.logout()
+  router.push('/login')
   showSuspendedModal.value = false
 }
 </script>
