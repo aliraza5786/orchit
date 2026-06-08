@@ -34,6 +34,8 @@ watch(
 )
 
 async function handleSuspendedConfirm() {
+  localStorage.removeItem('token')
+  document.cookie = 'auth_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
   await authStore.logout()
   showSuspendedModal.value = false
 }
@@ -82,7 +84,7 @@ async function handleSuspendedConfirm() {
           <div class="px-6 pb-5">
             <button
               @click="handleSuspendedConfirm"
-              class="w-full py-2.5 bg-red-600 text-white text-sm font-bold rounded-xl hover:bg-red-700 transition-all flex items-center justify-center gap-2"
+              class="w-full py-2.5 bg-red-600 cursor-pointer text-white text-sm font-bold rounded-xl hover:bg-red-700 transition-all flex items-center justify-center gap-2"
             >
               <i class="fa-solid fa-arrow-right-from-bracket text-xs"></i>
               Sign out
