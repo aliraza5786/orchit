@@ -299,19 +299,13 @@
               </span>
 
               <!-- Role badge -->
-              <span
-                v-if="entry.roleId"
-                class="text-[11px] px-2 py-0.5 rounded-full font-medium shrink-0"
-                :class="roleBadgeClass(entry.roleId)"
-              >
-                {{ roleLabelById(entry.roleId) }}
-              </span>
+               
 
               <!-- Role selector -->
               <BaseSelectField
                 size="sm"
                 variant="ghost"
-                class="!w-28 shrink-0 border-none shadow-none !px-0"
+                class="!w-45 shrink-0 border-none shadow-none !px-0"
                 :options="accessRoles"
                 placeholder="Set role"
                 :model-value="entry.roleId"
@@ -345,17 +339,96 @@
         </template>
       </div>
 
-      <!-- Job Role — module only -->
+      <!-- Job Role — module & sheet -->
       <BaseSelectField
         v-if="
-          (emailEntries.length > 0 && resourceType === 'module') ||
-          resourceType === 'sheet'
+          emailEntries.length > 0 &&
+          (resourceType === 'module' || resourceType === 'sheet')
         "
         label="Job Role"
         :options="jobRoles"
         placeholder="Choose Job Role"
         v-model="form.workspace_role_id"
       />
+
+      <!-- Sheets — module only -->
+      <div
+        v-if="
+          emailEntries.length > 0 &&
+          resourceType === 'module' &&
+          moduleSheetOptions.length > 0
+        "
+        ref="moduleSheetsDropdownRef"
+        class="relative"
+      >
+        <label class="text-sm font-medium text-text-primary mb-1 block">
+          Module Sheets to share
+        </label>
+        <button
+          type="button"
+          class="w-full h-9.5 px-3 text-sm border border-border rounded-[6px] bg-bg-input text-text-primary flex items-center justify-between gap-2 outline-none transition-all"
+          :class="inSpace ? 'focus:border-border' : 'focus:border-border'"
+          @click="showModuleSheetsDropdown = !showModuleSheetsDropdown"
+        >
+          <span class="truncate text-left">{{ moduleSheetsDropdownLabel }}</span>
+          <i
+            class="fa-solid fa-chevron-down text-xs text-text-secondary shrink-0 transition-transform duration-150"
+            :class="{ 'rotate-180': showModuleSheetsDropdown }"
+          />
+        </button>
+
+        <div
+          v-show="showModuleSheetsDropdown"
+          class="absolute z-50 mt-1 w-full border border-border rounded-[6px] bg-bg-input shadow-lg overflow-hidden"
+        >
+          <div class="max-h-[200px] overflow-y-auto custom-scrollbar">
+            <div
+              class="flex items-center gap-2 px-3 py-2 border-b border-border cursor-pointer hover:bg-bg-body text-sm select-none sticky top-0 bg-bg-input"
+              @click="
+                toggleModuleShareSelectAll(
+                  !moduleShareSelectAllState.allSelected,
+                )
+              "
+            >
+              <div class="shrink-0 pointer-events-none">
+                <Checkbox
+                  :inSpace="inSpace"
+                  :checked="
+                    moduleShareSelectAllState.allSelected ||
+                    moduleShareSelectAllState.indeterminate
+                  "
+                  className="!mt-0"
+                />
+              </div>
+              <span class="font-medium text-text-primary">Select all</span>
+            </div>
+
+            <div
+              v-for="sheet in moduleSheetOptions"
+              :key="sheet._id"
+              class="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-bg-body text-sm text-text-primary select-none"
+              @click="
+                toggleModuleShareSheet(
+                  String(sheet._id),
+                  !isModuleSheetSelected(String(sheet._id)),
+                )
+              "
+            >
+              <div class="shrink-0 pointer-events-none">
+                <Checkbox
+                  :inSpace="inSpace"
+                  :checked="isModuleSheetSelected(String(sheet._id))"
+                  className="!mt-0"
+                />
+              </div>
+              <i
+                class="fa-regular fa-file-lines text-text-secondary text-xs shrink-0"
+              />
+              <span class="truncate">{{ sheet.title }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <!-- Note -->
       <BaseTextAreaField
@@ -481,6 +554,7 @@ import BaseSelectField from "../../../components/ui/BaseSelectField.vue";
 import BaseTextAreaField from "../../../components/ui/BaseTextAreaField.vue";
 // import EmailSearchChip from './EmailSearchChip.vue'
 import Button from "../../../components/ui/Button.vue";
+import Checkbox from "../../../components/ui/Checkbox.vue";
 import {
   useShareResource,
   useSharedUsers,
@@ -493,6 +567,7 @@ import { useRouteIds } from "../../../composables/useQueryParams";
 import { getInitials, generateAvatarColor } from "../../../utilities"; 
 import { useAgentStore } from "../../../stores/agentStore";
 import { useWorkspaceRoles } from "../../../queries/usePeople";
+import { useSheets } from "../../../queries/useSheets";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface EmailEntry {
@@ -506,6 +581,11 @@ interface UserSuggestion {
   email: string;
   profile_image?: string | null;
   hasAccess?: boolean;
+}
+
+interface ModuleSheetOption {
+  _id: string;
+  title: string;
 }
 
 // ─── Props / Emits ────────────────────────────────────────────────────────────
@@ -557,6 +637,10 @@ const agentStore = useAgentStore();
 
 const workspaceResourceId = computed(() =>
   props.resourceType === "workspace" ? (props.resourceId ?? "") : "",
+);
+
+const moduleResourceId = computed(() =>
+  props.resourceType === "module" ? (props.resourceId ?? "") : "",
 );
 
 // ─── Modules & Users (workspace only) ────────────────────────────────────────
@@ -687,6 +771,10 @@ function addEmail() {
     emailInputError.value = "Please enter a valid email address.";
     return;
   }
+  if (isUserAlreadyShared(val)) {
+    emailInputError.value = "This user already exists.";
+    return;
+  }
   if (emailEntries.value.some((e) => e.email === val)) {
     emailInputError.value = "This email has already been added.";
     return;
@@ -694,6 +782,7 @@ function addEmail() {
   emailEntries.value.push({ email: val, roleId: null });
   emailInput.value = "";
   emailInputError.value = "";
+  showSuggestions.value = false;
 }
 
 function removeEmailEntry(index: number) {
@@ -716,14 +805,19 @@ function updateSuggestionDropdownPosition() {
 }
 
 function onEmailInputFocus() {
-  showSuggestions.value = true;
-  nextTick(updateSuggestionDropdownPosition);
+  if (emailInput.value.trim()) {
+    showSuggestions.value = true;
+    nextTick(updateSuggestionDropdownPosition);
+  }
 }
 
 function onEmailInput() {
   emailInputError.value = "";
-  showSuggestions.value = true;
-  nextTick(updateSuggestionDropdownPosition);
+  const hasQuery = emailInput.value.trim().length > 0;
+  showSuggestions.value = hasQuery;
+  if (hasQuery) {
+    nextTick(updateSuggestionDropdownPosition);
+  }
 }
 
 function onEmailInputBlur() {
@@ -745,7 +839,7 @@ function selectUserSuggestion(user: UserSuggestion) {
     return;
   }
   if (user.hasAccess || isUserAlreadyShared(user.email)) {
-    emailInputError.value = "This user already has access.";
+    emailInputError.value = "This user already exists.";
     return;
   }
   emailInput.value = user.email;
@@ -796,21 +890,149 @@ function avatarColorFromEmail(email: string): string {
   return colors[Math.abs(hash) % colors.length];
 }
 
-function roleLabelById(id: string | number | null): string {
-  if (!id) return "";
-  return accessRoles.value.find((r: any) => r._id === id)?.title ?? "";
+// function roleLabelById(id: string | number | null): string {
+//   if (!id) return "";
+//   return accessRoles.value.find((r: any) => r._id === id)?.title ?? "";
+// }
+
+// function roleBadgeClass(id: string | number | null): string {
+//   const label = roleLabelById(id).toLowerCase();
+//   if (label.includes("viewer"))
+//     return "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400";
+//   if (label.includes("editor"))
+//     return "bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400";
+//   if (label.includes("admin"))
+//     return "bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400";
+//   return "bg-bg-surface text-text-secondary";
+// }
+
+// ─── Module sheets (module share only) ───────────────────────────────────────
+const { data: moduleSheetsData } = useSheets(
+  {
+    workspace_module_id: moduleResourceId,
+    workspace_id: workspaceId,
+  },
+  { enabled: computed(() => !!moduleResourceId.value && isOpen.value) },
+);
+
+const moduleSheetOptions = computed<ModuleSheetOption[]>(() =>
+  (moduleSheetsData.value ?? []).map((s: any) => ({
+    _id: String(s._id),
+    title:
+      s.variables?.["sheet-title"] || s.title || s.name || "Untitled Sheet",
+  })),
+);
+
+const moduleShareSheetIds = ref<Set<string>>(new Set());
+const moduleSheetsInitialized = ref(false);
+const showModuleSheetsDropdown = ref(false);
+const moduleSheetsDropdownRef = ref<HTMLElement | null>(null);
+
+function initModuleShareSheets() {
+  moduleShareSheetIds.value = new Set(
+    moduleSheetOptions.value.map((s) => String(s._id)),
+  );
+  moduleSheetsInitialized.value = true;
 }
 
-function roleBadgeClass(id: string | number | null): string {
-  const label = roleLabelById(id).toLowerCase();
-  if (label.includes("viewer"))
-    return "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400";
-  if (label.includes("editor"))
-    return "bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400";
-  if (label.includes("admin"))
-    return "bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400";
-  return "bg-bg-surface text-text-secondary";
+function isModuleSheetSelected(id: string) {
+  return moduleShareSheetIds.value.has(id);
 }
+
+function toggleModuleShareSheet(id: string, checked: boolean) {
+  const next = new Set(moduleShareSheetIds.value);
+  if (checked) next.add(id);
+  else next.delete(id);
+  moduleShareSheetIds.value = next;
+}
+
+const moduleShareSelectAllState = computed(() => {
+  const total = moduleSheetOptions.value.length;
+  const checked = moduleSheetOptions.value.filter((s) =>
+    moduleShareSheetIds.value.has(String(s._id)),
+  ).length;
+  return {
+    checked,
+    total,
+    indeterminate: checked > 0 && checked < total,
+    allSelected: checked === total && total > 0,
+  };
+});
+
+function toggleModuleShareSelectAll(checked: boolean) {
+  moduleShareSheetIds.value = checked
+    ? new Set(moduleSheetOptions.value.map((s) => String(s._id)))
+    : new Set();
+}
+
+const moduleSheetsDropdownLabel = computed(() => {
+  const { checked, total, allSelected } = moduleShareSelectAllState.value;
+  if (!total) return "No sheets";
+  if (allSelected) return `All sheets (${total})`;
+  if (checked === 0) return "Select sheets";
+  return `${checked} of ${total} sheets selected`;
+});
+
+const moduleShareSheetsPayload = computed(() => {
+  const allIds: string[] = moduleSheetOptions.value.map((s) =>
+    String(s._id),
+  );
+  if (!allIds.length) return undefined;
+
+  const selected = [...moduleShareSheetIds.value];
+  if (!selected.length) return undefined;
+
+  const allSelected =
+    selected.length === allIds.length &&
+    allIds.every((id: string) => moduleShareSheetIds.value.has(id));
+
+  return allSelected ? undefined : selected;
+});
+
+function handleModuleSheetsClickOutside(e: MouseEvent) {
+  if (!showModuleSheetsDropdown.value) return;
+  const target = e.target as Node;
+  if (moduleSheetsDropdownRef.value?.contains(target)) return;
+  showModuleSheetsDropdown.value = false;
+}
+
+watch(isOpen, (open) => {
+  if (!open) {
+    showModuleSheetsDropdown.value = false;
+    return;
+  }
+  moduleSheetsInitialized.value = false;
+  if (props.resourceType === "module" && moduleSheetOptions.value.length) {
+    initModuleShareSheets();
+  }
+});
+
+watch(moduleSheetsData, (data) => {
+  if (
+    isOpen.value &&
+    props.resourceType === "module" &&
+    data?.length &&
+    !moduleSheetsInitialized.value
+  ) {
+    initModuleShareSheets();
+  }
+});
+
+watch(
+  emailEntries,
+  (entries) => {
+    if (
+      entries.length > 0 &&
+      isOpen.value &&
+      props.resourceType === "module" &&
+      moduleSheetOptions.value.length &&
+      !moduleSheetsInitialized.value
+    ) {
+      initModuleShareSheets();
+    }
+  },
+  { deep: true },
+);
 
 // ─── Form state ───────────────────────────────────────────────────────────────
 const form = reactive({
@@ -832,7 +1054,18 @@ const canSubmit = computed(() => {
   const hasAnyTarget = hasEmails || hasSelections.value;
   if (!hasAnyTarget) return false;
   if (hasEmails && !allHaveRoles) return false;
-  if (props.resourceType === "module" && hasEmails && !form.workspace_role_id)
+  if (
+    (props.resourceType === "module" || props.resourceType === "sheet") &&
+    hasEmails &&
+    !form.workspace_role_id
+  )
+    return false;
+  if (
+    props.resourceType === "module" &&
+    hasEmails &&
+    moduleSheetOptions.value.length > 0 &&
+    moduleShareSheetIds.value.size === 0
+  )
     return false;
   return true;
 });
@@ -863,6 +1096,7 @@ watch(isOpen, (open) => {
 onUnmounted(() => {
   window.removeEventListener("resize", updateSuggestionDropdownPosition);
   window.removeEventListener("scroll", updateSuggestionDropdownPosition, true);
+  document.removeEventListener("mousedown", handleModuleSheetsClickOutside);
 });
 
 // ─── Roles ────────────────────────────────────────────────────────────────────
@@ -871,6 +1105,7 @@ onMounted(() => {
   if (id) agentStore.fetchAgentsRolesPermissions(id);
   window.addEventListener("resize", updateSuggestionDropdownPosition);
   window.addEventListener("scroll", updateSuggestionDropdownPosition, true);
+  document.addEventListener("mousedown", handleModuleSheetsClickOutside);
 });
 
 const companyIdFromLS = localStorage.getItem("company_id");
@@ -929,15 +1164,15 @@ const filteredUserSuggestions = computed(() => {
     }));
 
   const q = emailInput.value.trim().toLowerCase();
-  const matched = q
-    ? available.filter(
-        (u: UserSuggestion) =>
-          u.name.toLowerCase().includes(q) ||
-          u.email.toLowerCase().includes(q),
-      )
-    : available;
+  if (!q) return [];
 
-  return matched.slice(0, 10);
+  return available
+    .filter(
+      (u: UserSuggestion) =>
+        u.name.toLowerCase().includes(q) ||
+        u.email.toLowerCase().includes(q),
+    )
+    .slice(0, 10);
 });
 
 watch(filteredUserSuggestions, () => {
@@ -1048,6 +1283,11 @@ function submit() {
         workspace_role_id: form.workspace_role_id,
       }),
 
+      ...(props.resourceType === "module" &&
+        moduleShareSheetsPayload.value && {
+          sheets: moduleShareSheetsPayload.value,
+        }),
+
       ...(props.resourceType === "workspace" && {
         ...(selectionPayload.value.hasModules && {
           modules: selectionPayload.value.modules,
@@ -1096,6 +1336,9 @@ function reset() {
   selectedUsers.value = new Set();
   expandedModules.value = new Set();
   selectedUserRoles.value = {};
+  moduleShareSheetIds.value = new Set();
+  moduleSheetsInitialized.value = false;
+  showModuleSheetsDropdown.value = false;
 }
 // const shareableUsers = computed(() =>
 const shareableUsers = computed(() =>

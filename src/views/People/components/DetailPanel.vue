@@ -64,20 +64,6 @@
         :options="tabOptions"
       />
 
-      <div class="flex flex-col mt-2">
-        <h1 class="text-base font-medium text-text-primary cursor-pointer">
-          Task Progress
-        </h1>
-        <ProgressBar
-          class="mt-2"
-          :progress="progressPercentage"
-          fillColor="bg-primary-color "
-          :indeterminate="true"
-        />
-        <span class="text-sm text-text-secondary mt-2">
-          Completed {{ completedTasks }} tasks out of {{ totalTasks }}</span
-        >
-      </div>
       <!-- Title -->
       <section v-if="activeTab == 'details'">
         <div class="mb-3 capitalize mt-3">
@@ -366,23 +352,86 @@
         </button>
       </section>
 
-      <section v-if="activeTab == 'tasks'" class="mt-3">
-        <span class="text-base text-text-primary">Worked On</span>
-        <ul
-          v-if="hasAssignedTasks"
-          class="border border-border space-y-1 p-2.5 mt-1 rounded-lg"
-        >
-          <li
-            class="p-2"
-            v-for="(item, index) in assignedTasks"
-            :key="item?._id ?? index"
+      <section v-if="activeTab == 'tasks'" class="mt-3 space-y-4">
+        <div class="flex items-center justify-between">
+          <h3
+            class="text-xs font-semibold text-text-secondary uppercase tracking-wider"
           >
-            <h1 class="text-sm text-text-primary">{{ item?.title }}</h1>
-            <p class="text-xs text-text-secondary">
-              Design Project . Olivia Updated on April 9, 2025
-            </p>
-          </li>
-        </ul>
+            Assigned Tasks
+          </h3>
+          <div
+            v-if="hasAssignedTasks"
+            class="text-[11px] text-text-secondary bg-orchit-white/5 px-2 py-0.5 rounded-full border border-border"
+          >
+            {{ totalTasks }} task{{ totalTasks !== 1 ? "s" : "" }}
+          </div>
+        </div>
+
+        <div
+          v-if="hasAssignedTasks"
+          class="rounded-xl bg-orchit-white/5 border border-border p-3 space-y-2"
+        >
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-[12px] font-medium text-text-primary"
+              >Task Progress</span
+            >
+            <span class="text-[11px] text-text-secondary whitespace-nowrap">
+              {{ completedTasks }}/{{ totalTasks }} done
+            </span>
+          </div>
+          <ProgressBar
+            :progress="progressPercentage"
+            fillColor="bg-primary-color"
+            :indeterminate="true"
+          />
+        </div>
+
+        <div
+          v-if="taskStatusSummary.length"
+          class="flex flex-wrap gap-1.5"
+        >
+          <span
+            v-for="item in taskStatusSummary"
+            :key="item.status"
+            class="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full border"
+            :class="getStatusChipClass(item.status)"
+          >
+            {{ item.count }}
+            <span class="opacity-80">{{ item.status }}</span>
+          </span>
+        </div>
+
+        <div v-if="hasAssignedTasks" class="space-y-2">
+          <div
+            v-for="task in assignedTasks"
+            :key="task._id"
+            class="group flex items-start gap-3 p-3 rounded-xl bg-orchit-white/5 border border-border hover:bg-orchit-white/8 hover:border-orchit-white/15 transition-all duration-150"
+          >
+            <div
+              class="mt-0.5 w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 bg-primary-color/10 text-primary-color"
+            >
+              <i class="fa-regular fa-clipboard-list text-[11px]"></i>
+            </div>
+
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 mb-1.5">
+                <span
+                  class="text-[9px] px-1.5 py-0.5 rounded-md font-bold uppercase tracking-tighter border"
+                  :class="getStatusChipClass(task.status)"
+                >
+                  {{ task.status }}
+                </span>
+              </div>
+              <p
+                class="text-[13px] font-medium text-text-primary leading-snug line-clamp-2"
+                :title="task.title"
+              >
+                {{ task.title }}
+              </p>
+            </div>
+          </div>
+        </div>
+
         <EmptyState
           v-else
           icon="fa-regular fa-clipboard-list"
@@ -391,23 +440,114 @@
           container-class="px-2 py-10"
         />
       </section>
-      <section v-if="activeTab == 'history'" class="mt-3">
-        <span class="text-base text-text-primary">History</span>
-        <ul
-          v-if="hasHistoryItems"
-          class="border border-border space-y-1 p-2.5 mt-1 rounded-lg"
-        >
-          <li
-            class="p-2"
-            v-for="(item, index) in historyList"
-            :key="item?._id ?? index"
+      <section v-if="activeTab == 'history'" class="mt-3 space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="text-xs font-semibold text-text-secondary uppercase tracking-wider">
+            Change History
+          </h3>
+          <div
+            v-if="hasHistoryItems"
+            class="text-[11px] text-text-secondary bg-orchit-white/5 px-2 py-0.5 rounded-full border border-border"
           >
-            <h1 class="text-sm text-text-primary">{{ item?.title }}</h1>
-            <p class="text-xs text-text-secondary">
-              Design Project . Olivia Updated on April 9, 2025
-            </p>
+            {{ mappedHistory.length }} event{{ mappedHistory.length !== 1 ? "s" : "" }}
+          </div>
+        </div>
+
+        <ol v-if="hasHistoryItems" class="space-y-3">
+          <li
+            v-for="(h, i) in mappedHistory"
+            :key="h._id"
+            class="relative flex gap-3"
+          >
+            <div class="flex flex-col items-center flex-shrink-0">
+              <div
+                class="w-2.5 h-2.5 rounded-full mt-[14px] ring-[3px] ring-bg-surface flex-shrink-0"
+                :class="h.dotColor"
+              ></div>
+              <div
+                v-if="i < mappedHistory.length - 1"
+                class="w-px flex-1 min-h-[16px] bg-border mt-1"
+              ></div>
+            </div>
+
+            <div class="flex-1 pb-1 min-w-0">
+              <div
+                class="rounded-xl bg-orchit-white/5 border border-border p-3 hover:bg-orchit-white/8 hover:border-orchit-white/15 transition-all duration-150"
+              >
+                <div class="flex items-center justify-between gap-2 mb-2">
+                  <div class="flex items-center gap-2 min-w-0">
+                    <div
+                      class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-semibold flex-shrink-0 text-white"
+                      :style="{ backgroundColor: h.avatarBg }"
+                    >
+                      {{ h.initials }}
+                    </div>
+                    <span
+                      class="text-[12px] font-semibold text-text-primary truncate"
+                    >
+                      {{ h.user }}
+                    </span>
+                  </div>
+                  <span
+                    class="text-[10px] text-text-secondary whitespace-nowrap shrink-0"
+                  >
+                    {{ h.time }}
+                  </span>
+                </div>
+
+                <div
+                  class="text-[12px] text-text-secondary leading-snug flex flex-wrap items-center gap-x-1 gap-y-1.5"
+                >
+                  <span
+                    class="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-md border"
+                    :class="h.pillClass"
+                  >
+                    <i class="text-[8px]" :class="h.actionIcon"></i>
+                    {{ h.action }}
+                  </span>
+
+                  <template v-if="h.field">
+                    <span class="text-text-secondary text-[11px]">on</span>
+                    <span
+                      class="font-semibold text-text-primary text-[11px]"
+                      >{{ h.field }}</span
+                    >
+                  </template>
+
+                  <template v-if="h.from && h.to">
+                    <span class="text-text-secondary text-[11px] ml-0.5"
+                      >from</span
+                    >
+                    <span
+                      class="inline-flex items-center px-1.5 py-0.5 rounded-md border text-[10px] font-medium line-through decoration-red-400/60"
+                      :class="getStatusChipClass(h.from)"
+                    >
+                      {{ h.from }}
+                    </span>
+                    <i
+                      class="fa-solid fa-arrow-right text-[8px] text-text-secondary/50"
+                    ></i>
+                    <span
+                      class="inline-flex items-center px-1.5 py-0.5 rounded-md border text-[10px] font-medium"
+                      :class="getStatusChipClass(h.to)"
+                    >
+                      {{ h.to }}
+                    </span>
+                  </template>
+                </div>
+
+                <p
+                  v-if="h.cardTitle"
+                  class="mt-2 text-[11px] text-text-primary/90 leading-relaxed line-clamp-2"
+                  :title="h.cardTitle"
+                >
+                  {{ h.cardTitle }}
+                </p>
+              </div>
+            </div>
           </li>
-        </ul>
+        </ol>
+
         <EmptyState
           v-else
           icon="fa-regular fa-clock-rotate-left"
@@ -859,6 +999,14 @@ const progressPercentage = computed(() => {
 
 const assignedTasks = computed(() => cardDetails.value?.assigned_cards ?? []);
 
+const taskStatusSummary = computed(() => {
+  const counts = cardDetails.value?.assigned_cards_status_counts ?? {};
+  return Object.entries(counts)
+    .filter(([, count]) => Number(count) > 0)
+    .map(([status, count]) => ({ status, count: Number(count) }))
+    .sort((a, b) => b.count - a.count);
+});
+
 const historyList = computed(() => {
   const history = cardDetails.value?.assignment_history;
   if (Array.isArray(history)) return history;
@@ -869,6 +1017,175 @@ const historyList = computed(() => {
 const hasAssignedTasks = computed(() => assignedTasks.value.length > 0);
 
 const hasHistoryItems = computed(() => historyList.value.length > 0);
+
+interface MappedHistoryItem {
+  _id: string;
+  user: string;
+  initials: string;
+  avatarBg: string;
+  time: string;
+  action: string;
+  actionIcon: string;
+  dotColor: string;
+  pillClass: string;
+  cardTitle: string | null;
+  from: string | null;
+  to: string | null;
+  field: string | null;
+}
+
+function extractQuotedTitle(message?: string): string | null {
+  if (!message) return null;
+  const match = message.match(/"([^"]+)"/);
+  return match?.[1] ?? null;
+}
+
+function isOpaqueId(value: unknown): boolean {
+  if (value == null || value === "") return false;
+  return /^[a-f0-9]{24}$/i.test(String(value));
+}
+
+function extractFromToValues(message?: string): {
+  from: string | null;
+  to: string | null;
+} {
+  if (!message) return { from: null, to: null };
+  const match = message.match(/from "([^"]+)" to "([^"]+)"/i);
+  if (!match) return { from: null, to: null };
+  return { from: match[1], to: match[2] };
+}
+
+function resolveHistoryDisplayValues(item: any): {
+  from: string | null;
+  to: string | null;
+} {
+  let from: string | null = item?.old_value ?? null;
+  let to: string | null = item?.new_value ?? null;
+
+  if (isOpaqueId(from) || isOpaqueId(to)) {
+    const parsed = extractFromToValues(item?.message);
+    if (parsed.from) from = parsed.from;
+    if (parsed.to) to = parsed.to;
+  }
+
+  return { from, to };
+}
+
+const HISTORY_FIELD_LABELS: Record<string, string> = {
+  "card-status": "Status",
+  "card-type": "Card Type",
+  workspace_lane_id: "Lane",
+  card_created: "Card",
+};
+
+function getStatusChipClass(status: string): string {
+  const normalized = status.toLowerCase();
+  if (normalized === "done")
+    return "bg-green-500/10 text-green-400 border-green-500/20";
+  if (normalized === "to do")
+    return "bg-orchit-white/5 text-text-secondary border-border";
+  if (normalized.includes("progress"))
+    return "bg-blue-500/10 text-blue-400 border-blue-500/20";
+  if (normalized.includes("qa"))
+    return "bg-purple-500/10 text-purple-400 border-purple-500/20";
+  if (normalized.includes("triage"))
+    return "bg-amber-500/10 text-amber-400 border-amber-500/20";
+  return "bg-orchit-white/5 text-text-secondary border-border";
+}
+
+function mapHistoryItem(item: any): MappedHistoryItem {
+  const user = item?.user?.u_full_name ?? "Unknown";
+  const initials =
+    item?.user?.avatar?.initials ?? getInitials(user);
+  const fieldName = item?.field_name ?? "";
+
+  let action = "Updated";
+  let actionIcon = "fa-solid fa-pen";
+  let dotColor = "bg-primary-color/70";
+  let pillClass =
+    "bg-primary-color/10 text-primary-color border-primary-color/20";
+  let field: string | null =
+    HISTORY_FIELD_LABELS[fieldName] ??
+    (fieldName.replace(/_/g, " ").replace(/-/g, " ") || null);
+  let { from, to } = resolveHistoryDisplayValues(item);
+  let cardTitle: string | null = extractQuotedTitle(item?.message);
+
+  if (fieldName === "card-status") {
+    action = "Moved";
+    actionIcon = "fa-solid fa-arrow-right-arrow-left";
+    dotColor = "bg-blue-500/70";
+    pillClass = "bg-blue-500/10 text-blue-400 border-blue-500/20";
+    field = "Status";
+  } else if (fieldName === "card-type") {
+    action = "Changed";
+    actionIcon = "fa-solid fa-arrow-right-arrow-left";
+    dotColor = "bg-blue-500/70";
+    pillClass = "bg-blue-500/10 text-blue-400 border-blue-500/20";
+    field = "Card Type";
+    cardTitle = null;
+  } else if (fieldName === "workspace_lane_id") {
+    action = "Moved";
+    actionIcon = "fa-solid fa-arrow-right-arrow-left";
+    dotColor = "bg-blue-500/70";
+    pillClass = "bg-blue-500/10 text-blue-400 border-blue-500/20";
+    field = "Lane";
+    cardTitle = null;
+  } else if (fieldName === "card_created") {
+    action = "Created";
+    actionIcon = "fa-solid fa-plus";
+    dotColor = "bg-green-500/70";
+    pillClass = "bg-green-500/10 text-green-400 border-green-500/20";
+    field = "Card";
+    cardTitle = item?.new_value ?? cardTitle;
+    from = null;
+    to = null;
+  } else if (isOpaqueId(item?.old_value) || isOpaqueId(item?.new_value)) {
+    cardTitle = null;
+  }
+
+  return {
+    _id: item?._id ?? `${user}-${item?.created_at}`,
+    user,
+    initials,
+    avatarBg: avatarColor({ name: user }),
+    time: formatHistoryTime(item?.created_at),
+    action,
+    actionIcon,
+    dotColor,
+    pillClass,
+    cardTitle,
+    from,
+    to,
+    field,
+  };
+}
+
+const mappedHistory = computed<MappedHistoryItem[]>(() =>
+  historyList.value.map(mapHistoryItem),
+);
+
+function formatHistoryTime(dateString?: string): string {
+  if (!dateString) return "";
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return "";
+
+  const now = new Date();
+  const diffInMs = now.getTime() - date.getTime();
+  const diffInMinutes = Math.floor(diffInMs / 60000);
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  const diffInDays = Math.floor(diffInHours / 24);
+
+  if (diffInMinutes < 1) return "Just now";
+  if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+  if (diffInHours < 24) return `${diffInHours}h ago`;
+  if (diffInDays === 1) return "Yesterday";
+  if (diffInDays < 7) return `${diffInDays}d ago`;
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: now.getFullYear() !== date.getFullYear() ? "numeric" : undefined,
+  });
+}
 
 const { mutate: deleteVarDef, isPending: isDeleting } = useDeletePeopleVarDef();
 const { mutate: updateVarDef } = useUpdatePeopleVarDef();
