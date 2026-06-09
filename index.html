@@ -24,6 +24,14 @@
 
   gtag('config', 'G-WJ6NWFRFHY');
 </script>
+<script>
+    (function () {
+      try {
+        var theme = localStorage.getItem('theme') || 'dark'
+        document.documentElement.style.backgroundColor = theme === 'dark' ? '#0a0a0b' : '#ffffff'
+      } catch (e) {}
+    })()
+  </script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script
   src="https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js"
