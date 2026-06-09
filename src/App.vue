@@ -6,7 +6,7 @@ import { useTheme } from './composables/useTheme'
 import { useAuthStore } from './stores/auth'
 import { useDeletionGuard } from './composables/useDeletionGuard'
 import { useRouter } from 'vue-router'
-
+import Loader from './components/ui/Loader.vue'
 const { isDark } = useTheme()
 const authStore = useAuthStore()
 const showSuspendedModal = ref(false)
@@ -55,11 +55,7 @@ async function handleSuspendedConfirm() {
         v-if="!authReady"
         class="fixed inset-0 z-[9998] flex items-center justify-center bg-bg-body"
       >
-        <div class="flex flex-col items-center gap-4">
-          <!-- Your logo here -->
-          <img src="/src/assets/global/favicon.png" class="w-10 h-10" alt="Orchit" />
-          <div class="w-5 h-5 rounded-full border-2 border-accent/20 border-t-accent animate-spin" />
-        </div>
+        <Loader />
       </div>
     </Transition>
 

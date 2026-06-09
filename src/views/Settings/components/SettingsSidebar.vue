@@ -72,7 +72,11 @@ function hasPerm(p: string): boolean {
 }
 
 const membershipRole  = computed(() => activeCompany.value?.membership_role ?? '')
-const isOwnerOfActive = computed(() => membershipRole.value === 'owner')
+const isOwnerOfActive = computed(() => {
+  const ownerId = props.profile?.active_company?.owner?._id
+  const userId  = props.profile?._id
+  return !!ownerId && !!userId && ownerId === userId
+})
 const canSeeUpgradeBanner = computed(() => 
   ['owner', 'super_admin', 'admin', 'editor'].includes(membershipRole.value)
 )
@@ -85,7 +89,7 @@ const isOrgFree = computed(() =>
 // ─── Tabs ────────────────────────────────────────────────────
 const ORG_TABS = new Set([
   'org-setup','org-domain','org-users','org-roles',
-  'org-packages','token-allocation','ownership-transfer',
+  'org-packages','org-billing','token-allocation','ownership-transfer',
 ])
 
 const currentTab = computed(() => (route.query.tab as string) || 'profile')
@@ -184,8 +188,9 @@ const orgItems = [
   { label: 'Members',          tab: 'org-users',          icon: 'fa-regular fa-users',           perm: 'company_user.read', ownerOnly: false },
   { label: 'Roles',            tab: 'org-roles',          icon: 'fa-regular fa-shield-halved',   perm: 'company_user.read', ownerOnly: false },
   { label: 'Tokens Allocation', tab: 'token-allocation',  icon: 'fa-regular fa-microchip-ai',    perm: 'package.read', ownerOnly: false },
-  { label: 'Billing & Plans',  tab: 'org-packages',     icon: 'fa-regular fa-credit-card',     perm: 'package.read', ownerOnly: false },
-  { label: 'Transfer Owner',   tab: 'ownership-transfer', icon: 'fa-regular fa-user-gear',       perm: null,                ownerOnly: true }
+  { label: 'Packages',  tab: 'org-packages',     icon: 'fa-regular fa-credit-card',     perm: 'package.read', ownerOnly: false },
+  { label: 'Billing & Invoices', tab: 'org-billing', icon: 'fa-regular fa-file-invoice', perm: 'package.read', ownerOnly: false },
+  { label: 'Transfer Owner',   tab: 'ownership-transfer', icon: 'fa-regular fa-crown',       perm: null,                ownerOnly: true }
 ]
 
 const visibleOrgItems = computed(() => {
