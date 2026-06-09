@@ -210,12 +210,7 @@ export function redirectToLogin(
   _router?: { replace: (to: any) => void },
   redirectAfterLogin?: string,
 ): boolean {
-  const primaryDomain = import.meta.env.VITE_PRIMARY_DOMAIN
-  const loginUrl = redirectAfterLogin
-    ? `${primaryDomain}/login?redirect=${encodeURIComponent(redirectAfterLogin)}`
-    : `${primaryDomain}/login`
-
-  window.location.href = loginUrl
+  window.location.href = getLoginPageUrl(redirectAfterLogin)
   return true
 }
 
