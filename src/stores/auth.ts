@@ -126,6 +126,7 @@ export const useAuthStore = defineStore('auth', {
 
   getters: {
     isAuthenticated: (s) => !!s.user,
+    isBootstrapped: (s) => s.initialized,
   },
 
   actions: {
