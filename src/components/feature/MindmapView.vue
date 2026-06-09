@@ -343,50 +343,6 @@
           >{{ visibleEdges.length }}</span
         >
       </div>
-      <!-- ✦ Multi-select overlay bar -->
-<transition name="ms-bar">
-  <div v-if="selectedNodeIds.size > 0" class="ms-bar" @click.stop @mousedown.stop>
-    <div class="ms-bar-left">
-      <i class="fa-solid fa-object-group ms-bar-icon"></i>
-      <span class="ms-bar-count">{{ selectedNodeIds.size }} card{{ selectedNodeIds.size !== 1 ? 's' : '' }} selected</span>
-    </div>
-    <div class="ms-bar-chips">
-      <div
-        v-for="id in [...selectedNodeIds].slice(0, 6)"
-        :key="id"
-        class="ms-chip"
-        :title="nodeMap.get(id)?.topic"
-      >
-        <span class="ms-chip-label">{{ (nodeMap.get(id)?.topic || '').slice(0, 18) }}</span>
-        <button class="ms-chip-remove" @click.stop="removeFromSelection(id)" title="Remove from selection">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
-      <span v-if="selectedNodeIds.size > 6" class="ms-chip ms-chip--more">
-        +{{ selectedNodeIds.size - 6 }} more
-      </span>
-    </div>
-    <div class="ms-bar-actions">
-      <button
-        v-if="canAssignCard && canEditCard"
-        class="ms-action-btn ms-action-btn--format"
-        @click.stop="showMultiFormatPanel = !showMultiFormatPanel"
-        title="Format selected cards"
-      >
-        <i class="fa-solid fa-palette"></i>
-        <span>Format</span>
-      </button>
-      <button
-        class="ms-action-btn ms-action-btn--clear"
-        @click.stop="clearMultiSelect"
-        title="Clear selection (Esc)"
-      >
-        <i class="fa-solid fa-xmark"></i>
-        <span>Clear</span>
-      </button>
-    </div>
-  </div>
-</transition>
     </div>
     <!-- ✦ Multi-select overlay bar -->
     <transition name="ms-bar">
@@ -1666,8 +1622,6 @@ const shortcutHintTimer = ref<ReturnType<typeof setTimeout> | null>(null);
 const lastShortcutLabel = ref("");
 const activeFormatTab = ref<"theme" | "layout">("theme");
 const isTreeMap = computed(() => layoutDirection.value === "tree-map");
-const isCollapseLayout = ref(false)
-// ── Multi-select ──────────────────────────────────────────────────────
 const selectedNodeIds = ref<Set<string>>(new Set())
 const showMultiFormatPanel = ref(false)
 const multiStyle = ref<NodeStyle>({})
@@ -4250,102 +4204,7 @@ function handleViewportContextMenu(e: MouseEvent) {
     e.preventDefault()
   }
 }
-function handleGlobalMouseMove(e: MouseEvent) {
-  if (isRightPanning.value) {
-    panX.value = e.clientX - rightPanStart.value.x
-    panY.value = e.clientY - rightPanStart.value.y
-    return
-  }
 
-  if (draggedNodeId.value) {
-    const x = (e.clientX - panX.value) / zoom.value - dragOffset.value.x
-    const y = (e.clientY - panY.value) / zoom.value - dragOffset.value.y
-    const n = nodeMap.get(draggedNodeId.value)
-    if (n) { n.x = x; n.y = y }
-    return
-  }
-
-  if (isRubberBanding.value && rubberBand.value) {
-    const vp = viewportEl.value
-    if (!vp) return
-    const rect = vp.getBoundingClientRect()
-    const canvasX = (e.clientX - rect.left - panX.value) / zoom.value
-    const canvasY = (e.clientY - rect.top  - panY.value) / zoom.value
-    const rb = rubberBand.value
-    const dx = canvasX - rb.startX
-    const dy = canvasY - rb.startY
-
-    if (!rubberBandMoved.value && Math.abs(dx) < 6 && Math.abs(dy) < 6) return
-    rubberBandMoved.value = true
-
-    rb.x = Math.min(canvasX, rb.startX)
-    rb.y = Math.min(canvasY, rb.startY)
-    rb.w = Math.abs(dx)
-    rb.h = Math.abs(dy)
-
-    const newSet = new Set<string>()
-    for (const n of allNodes.value) {
-      if (n.uniqueName !== 'card') continue
-      if (
-        n.x < rb.x + rb.w &&
-        n.x + n.width  > rb.x &&
-        n.y < rb.y + rb.h &&
-        n.y + n.height > rb.y
-      ) newSet.add(n.id)
-    }
-    selectedNodeIds.value = newSet
-    if (newSet.size > 1) {
-      selectedNodeId.value = null
-      showMultiFormatPanel.value = false
-    }
-  }
-}
-function handleGlobalMouseUp(_e: MouseEvent) {
-  isPanning.value      = false
-  isRightPanning.value = false
-
-  if (draggedNodeId.value) {
-    pushHistory()
-    draggedNodeId.value = null
-    return
-  }
-
-  if (isRubberBanding.value) {
-    isRubberBanding.value = false
-
-    if (rubberBandMoved.value && rubberBand.value) {
-      const rb = rubberBand.value
-      const selected = new Set<string>()
-      for (const n of allNodes.value) {
-        if (n.uniqueName !== 'card') continue
-        if (
-          n.x            < rb.x + rb.w &&
-          n.x + n.width  > rb.x &&
-          n.y            < rb.y + rb.h &&
-          n.y + n.height > rb.y
-        ) selected.add(n.id)
-      }
-
-      if (selected.size === 1) {
-        selectedNodeId.value   = [...selected][0]
-        selectedNodeIds.value  = new Set()
-        showMultiFormatPanel.value = false
-      } else if (selected.size > 1) {
-        selectedNodeIds.value  = selected
-        selectedNodeId.value   = null
-        showMultiFormatPanel.value = true
-        showHint(`${selected.size} cards selected`)
-      }
-
-      // ✅ Mark that a real rubber-band drag just finished
-      // handleCanvasClick fires next and must not clear this selection
-      rubberBandJustFinished.value = true
-    }
-
-    rubberBand.value      = null
-    rubberBandMoved.value = false  // reset AFTER setting rubberBandJustFinished
-  }
-}
 function handleNodeMouseDown(e: MouseEvent, nodeId: string) {
   if (e.button === 2) {
     isRightPanning.value = true
@@ -4358,11 +4217,9 @@ function handleNodeMouseDown(e: MouseEvent, nodeId: string) {
   const n = nodeMap.get(nodeId)
   if (!n) return
 
-  // Cards: handle selection on mousedown, but do NOT start node-drag
-  // (cards use HTML5 draggable for list-to-list reorder)
   if (n.uniqueName === 'card') {
-    // Shift/Ctrl = additive multi-select
     if (e.shiftKey || e.ctrlKey || e.metaKey) {
+      // Additive multi-select toggle
       const newSet = new Set(selectedNodeIds.value)
       if (newSet.has(nodeId)) {
         newSet.delete(nodeId)
@@ -4372,18 +4229,22 @@ function handleNodeMouseDown(e: MouseEvent, nodeId: string) {
       selectedNodeIds.value = newSet
       selectedNodeId.value = null
       if (newSet.size > 1) showMultiFormatPanel.value = true
+    } else if (selectedNodeIds.value.size > 0 && selectedNodeIds.value.has(nodeId)) {
+      // ✅ KEY FIX: This card is part of an active multi-select.
+      // Do NOT clear — let dragstart use the full selectedNodeIds set.
+      // Only set draggingCard so handleCardDragStart knows which card initiated.
+      // Don't touch selectedNodeIds at all here.
     } else {
-      // Plain click — single select immediately
+      // Plain click on a card that's NOT in current selection → single select
       clearMultiSelect()
       selectedNodeId.value = nodeId
       hyperlinkInput.value = n.hyperLink || n.style?.hyperLink || ''
     }
-    // Do NOT preventDefault here — let HTML5 dragstart still fire
-    e.stopPropagation() // stop viewport mousedown from starting rubber-band
+    e.stopPropagation()
     return
   }
 
-  // Non-card nodes (sheet, list, root): start node drag
+  // Non-card nodes: start canvas drag
   draggedNodeId.value = nodeId
   const cx = (e.clientX - panX.value) / zoom.value
   const cy = (e.clientY - panY.value) / zoom.value
@@ -4479,18 +4340,25 @@ function handleCanvasClick(e: MouseEvent) {
     clearMultiSelect()
   }
 }
-// ── Drag & Drop card between lists ────────────────────────────────────
+// ── REPLACE these functions only ──────────────────────────────────────
+
 function handleCardDragStart(e: DragEvent, node: MindNode) {
   if (node.uniqueName !== 'card') return
-  draggingCard.value = node
-  if (!selectedNodeIds.value.has(node.id)) {
+
+  // If the dragged card is NOT in the current multi-select, downgrade to single
+  if (selectedNodeIds.value.size > 0 && !selectedNodeIds.value.has(node.id)) {
     clearMultiSelect()
     selectedNodeId.value = node.id
+  } else if (selectedNodeIds.value.size === 0) {
+    selectedNodeId.value = node.id
   }
+  // Keep multi-select intact when dragging a card that's already selected
+
+  draggingCard.value = node
+
   if (e.dataTransfer) {
     e.dataTransfer.effectAllowed = 'move'
     e.dataTransfer.setData('text/plain', node.id)
-    // Suppress default ghost image
     const ghost = document.createElement('div')
     ghost.style.cssText = 'position:absolute;top:-9999px;left:-9999px;width:1px;height:1px'
     document.body.appendChild(ghost)
@@ -4500,10 +4368,245 @@ function handleCardDragStart(e: DragEvent, node: MindNode) {
 }
 
 function handleCardDragEnd() {
-  draggingCard.value = null
+  // Do NOT clear draggingCard here — handleCardDrop may not have fired yet
+  // Use a microtask so drop handler always runs first
+  setTimeout(() => {
+    draggingCard.value = null
+    dragOverListId.value = null
+    dragGhostStyle.value = null
+  }, 0)
+}
+
+function handleGlobalMouseUp(_e: MouseEvent) {
+  isPanning.value      = false
+  isRightPanning.value = false
+
+  // IMPORTANT: Do NOT touch draggingCard here — that's HTML5 drag lifecycle,
+  // not mouse drag. Only clear the canvas-drag (non-card node drag).
+  if (draggedNodeId.value) {
+    pushHistory()
+    draggedNodeId.value = null
+    return
+  }
+
+  if (isRubberBanding.value) {
+    isRubberBanding.value = false
+
+    if (rubberBandMoved.value && rubberBand.value) {
+      const rb = rubberBand.value
+      const selected = new Set<string>()
+      for (const n of allNodes.value) {
+        if (n.uniqueName !== 'card') continue
+        if (
+          n.x            < rb.x + rb.w &&
+          n.x + n.width  > rb.x &&
+          n.y            < rb.y + rb.h &&
+          n.y + n.height > rb.y
+        ) selected.add(n.id)
+      }
+
+      if (selected.size === 1) {
+        selectedNodeId.value   = [...selected][0]
+        selectedNodeIds.value  = new Set()
+        showMultiFormatPanel.value = false
+      } else if (selected.size > 1) {
+        selectedNodeIds.value  = selected
+        selectedNodeId.value   = null
+        showMultiFormatPanel.value = true
+        showHint(`${selected.size} cards selected`)
+      }
+
+      rubberBandJustFinished.value = true
+    }
+
+    rubberBand.value      = null
+    rubberBandMoved.value = false
+  }
+}
+
+function handleGlobalMouseMove(e: MouseEvent) {
+  if (isRightPanning.value) {
+    panX.value = e.clientX - rightPanStart.value.x
+    panY.value = e.clientY - rightPanStart.value.y
+    return
+  }
+
+  // Only move non-card nodes (sheets, lists, root) via mouse drag
+  if (draggedNodeId.value) {
+    const x = (e.clientX - panX.value) / zoom.value - dragOffset.value.x
+    const y = (e.clientY - panY.value) / zoom.value - dragOffset.value.y
+    const n = nodeMap.get(draggedNodeId.value)
+    if (n) { n.x = x; n.y = y }
+    return
+  }
+
+  if (isRubberBanding.value && rubberBand.value) {
+    const vp = viewportEl.value
+    if (!vp) return
+    const rect = vp.getBoundingClientRect()
+    const canvasX = (e.clientX - rect.left - panX.value) / zoom.value
+    const canvasY = (e.clientY - rect.top  - panY.value) / zoom.value
+    const rb = rubberBand.value
+    const dx = canvasX - rb.startX
+    const dy = canvasY - rb.startY
+
+    if (!rubberBandMoved.value && Math.abs(dx) < 6 && Math.abs(dy) < 6) return
+    rubberBandMoved.value = true
+
+    rb.x = Math.min(canvasX, rb.startX)
+    rb.y = Math.min(canvasY, rb.startY)
+    rb.w = Math.abs(dx)
+    rb.h = Math.abs(dy)
+
+    const newSet = new Set<string>()
+    for (const n of allNodes.value) {
+      if (n.uniqueName !== 'card') continue
+      if (
+        n.x < rb.x + rb.w &&
+        n.x + n.width  > rb.x &&
+        n.y < rb.y + rb.h &&
+        n.y + n.height > rb.y
+      ) newSet.add(n.id)
+    }
+    selectedNodeIds.value = newSet
+    if (newSet.size > 1) {
+      selectedNodeId.value = null
+      showMultiFormatPanel.value = false
+    }
+  }
+}
+
+async function handleCardDrop(e: DragEvent, targetListNode: MindNode) {
+  e.preventDefault()
+
+  // Snapshot draggingCard and selectedNodeIds BEFORE anything async clears them
+  const card = draggingCard.value
+  const snapshotSelectedIds = new Set(selectedNodeIds.value)
+
+  if (!card) return
+
+  // Collect cards to move: all selected (if multi), or just the dragged card
+  const cardsToMove: MindNode[] = snapshotSelectedIds.size > 1
+    ? [...snapshotSelectedIds]
+        .map(id => nodeMap.get(id))
+        .filter((n): n is MindNode => !!n && n.uniqueName === 'card')
+    : [card]
+
+  // Filter cards already in the target list
+  const movableCards = cardsToMove.filter(c => c.parent?.id !== targetListNode.id)
+
+  // Clear drag state immediately so UI feels responsive
   dragOverListId.value = null
   dragGhostStyle.value = null
+
+  if (movableCards.length === 0) return
+
+  // Snapshot rollback data before any mutations
+  const rollbackData: Array<{
+    card: MindNode
+    sourceList: MindNode
+    originalStatus: string
+  }> = []
+
+  for (const c of movableCards) {
+    const sourceList = c.parent
+    if (!sourceList) continue
+    rollbackData.push({
+      card: c,
+      sourceList,
+      originalStatus: c.variables?.['card-status'] ?? sourceList.topic,
+    })
+    // Optimistic UI update
+    sourceList.children = sourceList.children.filter(x => x.id !== c.id)
+    c.parent = targetListNode
+    c.variables = { ...c.variables, 'card-status': targetListNode.topic }
+    targetListNode.children.push(c)
+    nodeMap.set(c.id, c)
+  }
+
+  // Re-layout immediately after optimistic update, preserving pan/zoom
+  const savedPX = panX.value
+  const savedPY = panY.value
+  const savedZ  = zoom.value
+  const root = nodeMap.get(rootNodeId.value)
+  if (root) {
+    layoutTree(root, _getLayoutStartX(), _getLayoutStartY(), layoutDirection.value)
+    let mx = 0, my = 0
+    for (const n of flattenTree(root)) {
+      mx = Math.max(mx, n.x + n.width)
+      my = Math.max(my, n.y + n.height)
+    }
+    svgW.value = Math.max(mx + 300, 3000)
+    svgH.value = Math.max(my + 300, 3000)
+  }
+  await nextTick()
+  panX.value = savedPX
+  panY.value = savedPY
+  zoom.value = savedZ
+
+  // API calls
+  const failed: MindNode[] = []
+  for (const c of movableCards) {
+    const newIndex = targetListNode.children.findIndex(x => x.id === c.id)
+    try {
+      const sheetId = c.variables?.sheet_id || c.sheet_id || props.selectedSheetId
+      await reOrderCard.mutateAsync({
+  payload: {
+    workspace_id: props.workspaceId,
+    card_id: c.real_id || c.id,
+    group_value: targetListNode.topic,
+    group_variable_id: props.selectedViewBy,
+    new_index: newIndex,
+    sheet_id: Array.isArray(sheetId) ? sheetId[0] : sheetId,
+  },
+})
+    } catch (err) {
+      console.error('Failed to reorder card:', c.id, err)
+      failed.push(c)
+    }
+  }
+
+  // Rollback failed cards
+  if (failed.length > 0) {
+    for (const rb of rollbackData.filter(r => failed.includes(r.card))) {
+      targetListNode.children = targetListNode.children.filter(x => x.id !== rb.card.id)
+      rb.card.parent = rb.sourceList
+      rb.card.variables = { ...rb.card.variables, 'card-status': rb.originalStatus }
+      rb.sourceList.children.push(rb.card)
+      nodeMap.set(rb.card.id, rb.card)
+    }
+    toast.error(`${failed.length} card(s) failed to move`)
+
+    // Re-layout after rollback
+    if (root) layoutTree(root, _getLayoutStartX(), _getLayoutStartY(), layoutDirection.value)
+  }
+
+  const successCount = movableCards.length - failed.length
+  if (successCount > 0) {
+    pushHistory()
+    toast.success(
+      successCount === 1
+        ? 'Ticket moved successfully'
+        : `${successCount} tickets moved successfully`
+    )
+  }
+
+  // Emit for parent
+  for (const rb of rollbackData.filter(r => !failed.includes(r.card))) {
+    emit('reorder:card', {
+      card_id: rb.card.real_id || rb.card.id,
+      from_list: rb.sourceList.topic,
+      to_list: targetListNode.topic,
+      sheet_id: targetListNode.sheet_id || rb.card.sheet_id,
+      workspace_id: props.workspaceId,
+      variables: rb.card.variables,
+    })
+  }
+
+  // Clear drag state (also cleared in handleCardDragEnd via setTimeout)
+  draggingCard.value = null
 }
+
 
 function handleListDragOver(e: DragEvent, listNode: MindNode) {
   if (!draggingCard.value) return
@@ -4532,128 +4635,6 @@ function handleListDragLeave(listNode: MindNode) {
   }
 }
 
-async function handleCardDrop(e: DragEvent, targetListNode: MindNode) {
-  e.preventDefault();
-  const card = draggingCard.value;
-  if (!card) return;
-
-  // Collect cards to move: all selected cards (if multi), or just the dragged card
-  const cardsToMove: MindNode[] = selectedNodeIds.value.size > 1
-    ? [...selectedNodeIds.value]
-        .map(id => nodeMap.get(id))
-        .filter((n): n is MindNode => !!n && n.uniqueName === 'card')
-    : [card];
-
-  // Filter out cards already in the target list
-  const movableCards = cardsToMove.filter(c => c.parent?.id !== targetListNode.id);
-
-  if (movableCards.length === 0) {
-    dragOverListId.value = null;
-    draggingCard.value = null;
-    dragGhostStyle.value = null;
-    return;
-  }
-
-  // --- Optimistic UI: move all cards locally first ---
-  // Track rollback data per card: { card, sourceList, originalStatus }
-  const rollbackData: Array<{ card: MindNode; sourceList: MindNode; originalStatus: string }> = [];
-
-  for (const c of movableCards) {
-    const sourceList = c.parent;
-    if (!sourceList) continue;
-    rollbackData.push({ card: c, sourceList, originalStatus: c.variables?.['card-status'] ?? sourceList.topic });
-    sourceList.children = sourceList.children.filter(x => x.id !== c.id);
-    c.parent = targetListNode;
-    c.variables = { ...c.variables, 'card-status': targetListNode.topic };
-    targetListNode.children.push(c);
-    nodeMap.set(c.id, c);
-  }
-
-  // --- API calls (sequential, tolerant of partial failure) ---
-  const failed: MindNode[] = [];
-  for (const c of movableCards) {
-    const newIndex = targetListNode.children.findIndex(x => x.id === c.id);
-    try {
-      await reOrderCard.mutateAsync({
-        payload: {
-          workspace_id: props.workspaceId,
-          card_id: c.real_id || c.id,
-          group_value: targetListNode.topic,
-          group_variable_id: props.selectedViewBy,
-          new_index: newIndex,
-          sheet_id:
-            props.selectedSheetId === 'all'
-              ? c.variables?.sheet_id
-              : props.selectedSheetId,
-        },
-      });
-    } catch (err) {
-      console.error('Failed to reorder card:', c.id, err);
-      failed.push(c);
-    }
-  }
-
-  if (failed.length > 0) {
-    // Rollback only the failed cards
-    for (const rb of rollbackData.filter(r => failed.includes(r.card))) {
-      targetListNode.children = targetListNode.children.filter(x => x.id !== rb.card.id);
-      rb.card.parent = rb.sourceList;
-      rb.card.variables = { ...rb.card.variables, 'card-status': rb.sourceList.topic };
-      rb.sourceList.children.push(rb.card);
-      nodeMap.set(rb.card.id, rb.card);
-    }
-    toast.error(`${failed.length} card(s) failed to move`);
-  }
-
-  const successCount = movableCards.length - failed.length;
-  if (successCount > 0) {
-    pushHistory();
-    toast.success(
-      successCount === 1
-        ? 'Ticket moved successfully'
-        : `${successCount} tickets moved successfully`
-    );
-  }
-
-  // Emit for parent awareness (non-blocking)
-  for (const rb of rollbackData.filter(r => !failed.includes(r.card))) {
-    emit('reorder:card', {
-      card_id: rb.card.real_id || rb.card.id,
-      from_list: rb.sourceList.topic,
-      to_list: targetListNode.topic,
-      sheet_id: targetListNode.sheet_id || rb.card.sheet_id,
-      workspace_id: props.workspaceId,
-      variables: rb.card.variables,
-    });
-  }
-
-  // Re-layout preserving pan/zoom
-  const savedPX = panX.value;
-  const savedPY = panY.value;
-  const savedZ = zoom.value;
-  isCollapseLayout.value = true;
-  const root = nodeMap.get(rootNodeId.value);
-  if (root) {
-    layoutTree(root, root.x, root.y, layoutDirection.value);
-    let mx = 0, my = 0;
-    for (const n of flattenTree(root)) {
-      mx = Math.max(mx, n.x + n.width);
-      my = Math.max(my, n.y + n.height);
-    }
-    svgW.value = Math.max(mx + 300, 3000);
-    svgH.value = Math.max(my + 300, 3000);
-  }
-  nextTick(() => {
-    panX.value = savedPX;
-    panY.value = savedPY;
-    zoom.value = savedZ;
-    isCollapseLayout.value = false;
-  });
-
-  dragOverListId.value = null;
-  draggingCard.value = null;
-  dragGhostStyle.value = null;
-}
 
 // ── Multi-select style ────────────────────────────────────────────────
 function applyMultiPreset(p: { bg: string; border: string; color: string }) {
@@ -8737,83 +8718,85 @@ const getNodeTitle = (topic: string) =>
 /* ── Multi-select overlay bar ────────────────────────────────────────── */
 .ms-bar {
   position: absolute;
-  bottom: 52px; /* just above canvas-stats */
+  bottom: 60px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 300;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 12px;
+  gap: 8px;
+  padding: 6px 8px 6px 12px;
   background: var(--bg-card, #fff);
-  border: 1.5px solid var(--primary-color);
-  border-radius: 40px;
-  box-shadow:
-    0 0 0 4px color-mix(in srgb, var(--primary-color), transparent 80%),
-    0 8px 28px rgba(0, 0, 0, 0.14);
-  max-width: calc(100% - 200px);
-  flex-wrap: nowrap;
-  white-space: nowrap;
+  border: 1px solid var(--border, #d9d9d9);
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+  max-width: calc(100% - 120px);
   backdrop-filter: blur(8px);
   user-select: none;
+  white-space: nowrap;
 }
+
 .ms-bar-left {
   display: flex;
   align-items: center;
   gap: 6px;
   flex-shrink: 0;
+  padding-right: 8px;
+  border-right: 1px solid var(--border, #d9d9d9);
 }
+
 .ms-bar-icon {
   color: var(--primary-color);
   font-size: 13px;
 }
+
 .ms-bar-count {
   font-size: 12px;
-  font-weight: 700;
-  color: var(--primary-color);
+  font-weight: 600;
+  color: var(--text-primary, #2b2c30);
   white-space: nowrap;
 }
+
 .ms-bar-chips {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   overflow: hidden;
   flex-shrink: 1;
   min-width: 0;
 }
+
 .ms-chip {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 3px 8px 3px 10px;
-  background: color-mix(in srgb, var(--primary-color), transparent 88%);
-  border: 1px solid color-mix(in srgb, var(--primary-color), transparent 70%);
-  border-radius: 20px;
+  gap: 3px;
+  padding: 2px 6px 2px 8px;
+  background: var(--bg-surface, #f3f4f6);
+  border: 1px solid var(--border, #d9d9d9);
+  border-radius: 6px;
   font-size: 11px;
   font-weight: 500;
-  color: var(--text-primary, #2b2c30);
+  color: var(--text-secondary, #6b6b6e);
   white-space: nowrap;
-  max-width: 140px;
-  transition: background 0.12s;
+  max-width: 120px;
 }
-.ms-chip:hover {
-  background: color-mix(in srgb, var(--primary-color), transparent 78%);
-}
+
 .ms-chip--more {
-  padding: 3px 10px;
-  opacity: 0.7;
-  font-style: italic;
+  padding: 2px 8px;
+  opacity: 0.6;
   pointer-events: none;
   border-style: dashed;
 }
+
 .ms-chip-label {
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 110px;
+  max-width: 90px;
 }
+
 .ms-chip-remove {
-  width: 14px;
-  height: 14px;
+  width: 13px;
+  height: 13px;
   border: none;
   background: transparent;
   cursor: pointer;
@@ -8821,49 +8804,51 @@ const getNodeTitle = (topic: string) =>
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 8px;
+  font-size: 7px;
   color: var(--text-secondary, #94a3b8);
   padding: 0;
   flex-shrink: 0;
   transition: background 0.1s, color 0.1s;
 }
 .ms-chip-remove:hover {
-  background: #ef4444;
-  color: #fff;
+  background: #fee2e2;
+  color: #ef4444;
 }
+
 .ms-bar-actions {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   flex-shrink: 0;
-  margin-left: 4px;
   padding-left: 8px;
   border-left: 1px solid var(--border, #d9d9d9);
 }
+
 .ms-action-btn {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 5px 12px;
+  padding: 5px 10px;
   border: none;
-  border-radius: 20px;
+  border-radius: 7px;
   cursor: pointer;
   font-size: 11.5px;
   font-weight: 600;
   font-family: 'Lato', sans-serif;
-  transition: all 0.13s;
+  transition: all 0.12s;
   white-space: nowrap;
 }
+
 .ms-action-btn--format {
   background: var(--primary-color);
   color: #fff;
 }
 .ms-action-btn--format:hover {
-  background: color-mix(in srgb, var(--primary-color), #000 12%);
-  box-shadow: 0 2px 8px color-mix(in srgb, var(--primary-color), transparent 55%);
+  opacity: 0.88;
 }
+
 .ms-action-btn--clear {
-  background: var(--bg-surface, #f3f4f6);
+  background: transparent;
   color: var(--text-secondary, #6b6b6e);
   border: 1px solid var(--border, #d9d9d9);
 }
@@ -8872,13 +8857,41 @@ const getNodeTitle = (topic: string) =>
   color: #ef4444;
   border-color: #fca5a5;
 }
-/* Slide-up animation */
+
+/* animation */
 .ms-bar-enter-active, .ms-bar-leave-active {
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transition: opacity 0.18s ease, transform 0.18s ease;
 }
 .ms-bar-enter-from, .ms-bar-leave-to {
   opacity: 0;
-  transform: translateX(-50%) translateY(12px) scale(0.97);
+  transform: translateX(-50%) translateY(8px);
+}
+
+/* dark */
+.mindmap-root[data-dark="true"] .ms-bar {
+  background: var(--bg-card, #2b2c30);
+  border-color: #3e3e42;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+}
+.mindmap-root[data-dark="true"] .ms-bar-left {
+  border-color: #3e3e42;
+}
+.mindmap-root[data-dark="true"] .ms-bar-count { color: #f5f5f5; }
+.mindmap-root[data-dark="true"] .ms-chip {
+  background: #3e3e42;
+  border-color: #555;
+  color: #b0b0b0;
+}
+.mindmap-root[data-dark="true"] .ms-bar-actions { border-color: #3e3e42; }
+.mindmap-root[data-dark="true"] .ms-action-btn--clear {
+  background: transparent;
+  color: #b0b0b0;
+  border-color: #3e3e42;
+}
+.mindmap-root[data-dark="true"] .ms-action-btn--clear:hover {
+  background: #450a0a;
+  color: #f87171;
+  border-color: #7f1d1d;
 }
 
 /* Dark mode */

@@ -110,46 +110,102 @@
             <p class="text-xs text-text-secondary/50 mt-1">Try a different name or email</p>
           </div>
 
-          <div
-            v-for="member in filteredMembers"
-            :key="member.id"
-            @click="member.isVerified && openConfirmModal(member)"
-            class="flex items-center gap-3 px-5 py-3.5 transition-all duration-150 group/row"
-            :class="member.isVerified ? 'cursor-pointer hover:bg-border/5' : 'opacity-60 cursor-not-allowed'"
-          >
-            <div
-              class="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-transform duration-200"
-              :class="member.isVerified ? 'group-hover/row:scale-105' : ''"
-              :style="{ background: member.color + '22', color: member.color, border: `1.5px solid ${member.color}44` }"
-            >{{ member.initials }}</div>
-            <div class="min-w-0 flex-1">
-              <div class="flex items-center gap-2">
-                <p class="text-sm font-semibold text-text-primary truncate">{{ member.name }}</p>
-                <span
-                  v-if="!member.isVerified"
-                  class="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide bg-amber-400/10 border border-amber-400/20 text-amber-500"
-                >Unverified</span>
-                <span
-                  v-else
-                  class="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide border"
-                  :class="member.role === 'Admin'
-                    ? 'bg-purple-400/10 border-purple-400/20 text-purple-400'
-                    : 'bg-border/20 border-border/30 text-text-secondary'"
-                >{{ member.role }}</span>
-              </div>
-              <p class="text-xs text-text-secondary truncate mt-0.5">{{ member.email }}</p>
-            </div>
-            <div
-              v-if="member.isVerified"
-              title="Transfer Ownership"
-              class="shrink-0 ml-1 w-7 h-7 rounded-lg border border-border/40 flex items-center justify-center text-text-secondary/40 group-hover/row:border-accent/40 group-hover/row:text-accent group-hover/row:bg-accent/5 transition-all duration-150"
-            >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                <path d="M5 12h14M12 5l7 7-7 7"/>
-                
-              </svg>
-            </div>
-          </div>
+          <!-- Member list — use paginatedMembers instead of filteredMembers -->
+<div
+  v-for="member in paginatedMembers"
+  :key="member.id"
+  @click="member.isVerified && openConfirmModal(member)"
+  class="flex items-center gap-3 px-5 py-3.5 transition-all duration-150 group/row"
+  :class="member.isVerified ? 'cursor-pointer hover:bg-border/5' : 'opacity-60 cursor-not-allowed'"
+>
+  <div
+    class="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-transform duration-200"
+    :class="member.isVerified ? 'group-hover/row:scale-105' : ''"
+    :style="{ background: member.color + '22', color: member.color, border: `1.5px solid ${member.color}44` }"
+  >{{ member.initials }}</div>
+  <div class="min-w-0 flex-1">
+    <div class="flex items-center gap-2">
+      <p class="text-sm font-semibold text-text-primary truncate">{{ member.name }}</p>
+      <!-- Status badge replacing role badge -->
+      <span
+        class="hidden sm:inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide border"
+        :class="{
+          'bg-emerald-400/10 border-emerald-400/20 text-emerald-400': member.membershipStatus === 'active',
+          'bg-border/20 border-border/30 text-text-secondary': member.membershipStatus === 'inactive',
+          'bg-red-400/10 border-red-400/20 text-red-400': member.membershipStatus === 'suspended',
+        }"
+      >
+        <span class="w-1 h-1 rounded-full"
+          :class="{
+            'bg-emerald-400': member.membershipStatus === 'active',
+            'bg-text-secondary/40': member.membershipStatus === 'inactive',
+            'bg-red-400': member.membershipStatus === 'suspended',
+          }"
+        ></span>
+        {{ member.membershipStatus }}
+      </span>
+    </div>
+    <p class="text-xs text-text-secondary truncate mt-0.5">{{ member.email }}</p>
+  </div>
+  <div
+    v-if="member.isVerified"
+    title="Transfer Ownership"
+    class="shrink-0 ml-1 w-7 h-7 rounded-lg border border-border/40 flex items-center justify-center text-text-secondary/40 group-hover/row:border-accent/40 group-hover/row:text-accent group-hover/row:bg-accent/5 transition-all duration-150"
+  >
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+      <path d="M5 12h14M12 5l7 7-7 7"/>
+    </svg>
+  </div>
+  <!-- Lock icon for non-verified/suspended/inactive -->
+  <div
+    v-else
+    class="shrink-0 ml-1 w-7 h-7 rounded-lg border border-border/30 flex items-center justify-center text-text-secondary/30"
+  >
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+      <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+    </svg>
+  </div>
+</div>
+<!-- Pagination -->
+<div
+  v-if="totalPages > 1"
+  class="flex items-center justify-between px-5 py-3 border-t border-border/20 bg-border/5"
+>
+  <p class="text-xs text-text-secondary">
+    Showing
+    <span class="font-medium text-text-primary">{{ (currentPage - 1) * PAGE_SIZE + 1 }}</span>–<span
+      class="font-medium text-text-primary">{{ Math.min(currentPage * PAGE_SIZE, filteredMembers.length) }}</span>
+    of
+    <span class="font-medium text-text-primary">{{ filteredMembers.length }}</span>
+  </p>
+  <div class="flex items-center gap-1">
+    <button
+      @click="currentPage--"
+      :disabled="currentPage === 1"
+      class="w-8 h-8 rounded-lg flex items-center justify-center border border-border/50 text-text-secondary hover:text-text-primary hover:border-border transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+    >
+      <i class="fa-solid fa-chevron-left text-[10px]"></i>
+    </button>
+    <template v-for="p in totalPages" :key="p">
+      <template v-if="p === 1 || p === totalPages || (p >= currentPage - 1 && p <= currentPage + 1)">
+        <button
+          @click="currentPage = p"
+          class="w-8 h-8 rounded-lg text-xs font-medium transition-all"
+          :class="p === currentPage ? 'bg-accent text-white border border-accent' : 'border border-border/50 text-text-secondary hover:text-text-primary hover:border-border'"
+        >{{ p }}</button>
+      </template>
+      <span v-else-if="p === currentPage - 2 || p === currentPage + 2" class="w-8 h-8 flex items-center justify-center text-xs text-text-secondary">…</span>
+    </template>
+    <button
+      @click="currentPage++"
+      :disabled="currentPage === totalPages"
+      class="w-8 h-8 rounded-lg flex items-center justify-center border border-border/50 text-text-secondary hover:text-text-primary hover:border-border transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+    >
+      <i class="fa-solid fa-chevron-right text-[10px]"></i>
+    </button>
+  </div>
+</div>
         </div>
       </div>
 
@@ -355,103 +411,123 @@
 
             <div class="px-6 py-5 space-y-5 max-h-[70vh] overflow-y-auto">
 
-              <!-- From → To visual -->
-              <div class="flex items-center gap-3 p-4 bg-border/8 border border-border/30 rounded-xl">
-                <!-- From -->
-                <div class="flex items-center gap-2.5 min-w-0 flex-1">
-                  <div
-                    class="w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold shrink-0 border-2"
-                    :style="{ background: currentOwner.color + '22', color: currentOwner.color, borderColor: currentOwner.color + '55' }"
-                  >{{ currentOwner.initials }}</div>
-                  <div class="min-w-0">
-                    <p class="text-xs font-bold text-text-primary truncate">{{ currentOwner.name }}</p>
-                    <p class="text-[10px] text-text-secondary truncate mt-0.5">{{ currentOwner.email }}</p>
-                    <span class="inline-flex items-center gap-1 mt-1.5 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wide bg-amber-400/10 border border-amber-400/20 text-amber-400">
-                      Owner → Admin
-                    </span>
-                  </div>
-                </div>
-                <!-- Arrow -->
-                <div class="shrink-0">
-                  <div class="w-7 h-7 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                      <path d="M5 12h14M12 5l7 7-7 7"/>
-                    </svg>
-                  </div>
-                </div>
-                <!-- To -->
-                <div class="flex items-center gap-2.5 min-w-0 flex-1 justify-end">
-                  <div class="min-w-0 text-right">
-                    <p class="text-xs font-bold text-text-primary truncate">{{ modalMember.name }}</p>
-                    <p class="text-[10px] text-text-secondary truncate mt-0.5">{{ modalMember.email }}</p>
-                    <span class="inline-flex items-center gap-1 mt-1.5 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wide bg-emerald-400/10 border border-emerald-400/20 text-emerald-400">
-                      {{ modalMember.role }} → Owner
-                    </span>
-                  </div>
-                  <div
-                    class="w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold shrink-0 border-2"
-                    :style="{ background: modalMember.color + '22', color: modalMember.color, borderColor: modalMember.color + '55' }"
-                  >{{ modalMember.initials }}</div>
-                </div>
-              </div>
+  <!-- From → To visual -->
+  <div class="flex items-center gap-3 p-4 bg-border/8 border border-border/30 rounded-xl">
+    <!-- From -->
+    <div class="flex items-center gap-2.5 min-w-0 flex-1">
+      <div
+        class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 border-2 relative"
+        :style="{ background: currentOwner.color + '22', borderColor: currentOwner.color + '55' }"
+      >
+        <svg :stroke="currentOwner.color" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" style="opacity:0.5">
+          <circle cx="12" cy="9" r="3.5"/>
+          <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+          <polyline points="4,13 4,8 8,11 12,4 16,11 20,8 20,13"/>
+        </svg>
+      </div>
+      <div class="min-w-0">
+        <p class="text-xs font-bold text-text-primary truncate">{{ currentOwner.name }}</p>
+        <p class="text-[10px] text-text-secondary truncate mt-0.5">{{ currentOwner.email }}</p>
+        <span class="inline-flex items-center gap-1 mt-1.5 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wide bg-amber-400/10 border border-amber-400/20 text-amber-400">
+          Owner → Admin
+        </span>
+      </div>
+    </div>
 
-              <!-- What happens steps -->
-              <div class="space-y-2">
-                <p class="text-[10px] font-semibold uppercase tracking-widest text-text-secondary">What happens next</p>
-                <div class="space-y-2">
-                  <div
-                    v-for="(step, i) in whatHappensSteps"
-                    :key="i"
-                    class="flex items-start gap-2.5"
-                  >
-                    <span
-                      class="shrink-0 w-4 h-4 rounded-full border flex items-center justify-center text-[9px] font-bold mt-0.5"
-                      :class="step.type === 'warning'
-                        ? 'bg-red-500/10 border-red-500/30 text-red-400'
-                        : 'bg-border/20 border-border/40 text-text-secondary'"
-                    >{{ i + 1 }}</span>
-                    <p
-                      class="text-[11px] leading-relaxed"
-                      :class="step.type === 'warning' ? 'text-red-400/80' : 'text-text-secondary'"
-                    >{{ step.text }}</p>
-                  </div>
-                </div>
-              </div>
+    <!-- Arrow -->
+    <div class="shrink-0">
+      <div class="w-7 h-7 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M5 12h14M12 5l7 7-7 7"/>
+        </svg>
+      </div>
+    </div>
 
-              <!-- Email notification note -->
-              <div class="flex items-start gap-2.5 bg-blue-500/5 border border-blue-500/15 rounded-lg px-3.5 py-3">
-                <svg class="text-blue-400 shrink-0 mt-0.5" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                  <polyline points="22,6 12,13 2,6"/>
-                </svg>
-                <p class="text-[11px] text-blue-400/80 leading-relaxed">
-                  An invitation email will be sent to
-                  <span class="font-semibold text-blue-400">{{ modalMember.email }}</span>.
-                  They must click the link to accept. The invite expires in
-                  <span class="font-semibold text-blue-400">72 hours</span> if not accepted.
-                </p>
-              </div>
+    <!-- To -->
+    <div class="flex items-center gap-2.5 min-w-0 flex-1 justify-end">
+      <div class="min-w-0 text-right">
+        <p class="text-xs font-bold text-text-primary truncate">{{ modalMember.name }}</p>
+        <p class="text-[10px] text-text-secondary truncate mt-0.5">{{ modalMember.email }}</p>
+        <span class="inline-flex items-center gap-1 mt-1.5 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wide bg-emerald-400/10 border border-emerald-400/20 text-emerald-400">
+          {{ modalMember.role }} → Owner
+        </span>
+      </div>
+      <div
+        class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 border-2 relative"
+        :style="{ background: modalMember.color + '22', borderColor: modalMember.color + '55' }"
+      >
+        <svg stroke="#7c3aed" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round">
+          <circle cx="12" cy="9" r="3.5"/>
+          <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+          <polyline points="4,13 4,8 8,11 12,4 16,11 20,8 20,13"/>
+        </svg>
+        <span class="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full flex items-center justify-center bg-[#7c3aed]">
+          <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </span>
+      </div>
+    </div>
+  </div>
 
-              <!-- Confirm input -->
-              <div class="space-y-2">
-                <label class="text-[11px] font-semibold text-text-secondary block">
-                  Type
-                  <span class="font-bold text-text-primary font-mono bg-border/20 px-1.5 py-0.5 rounded mx-1">TRANSFER</span>
-                  to confirm
-                </label>
-                <input
-                  v-model="confirmText"
-                  type="text"
-                  placeholder="TRANSFER"
-                  autocomplete="off"
-                  spellcheck="false"
-                  class="w-full px-4 py-2.5 text-sm font-mono font-semibold text-text-primary bg-border/10 border rounded-lg outline-none transition-colors duration-150 placeholder:text-text-secondary/30"
-                  :class="confirmText === 'TRANSFER'
-                    ? 'border-emerald-400/40 focus:border-emerald-400/60'
-                    : 'border-border/40 focus:border-border/70'"
-                />
-              </div>
-            </div>
+  <!-- What happens steps -->
+  <div class="space-y-2">
+    <p class="text-[10px] font-semibold uppercase tracking-widest text-text-secondary">What happens next</p>
+    <div class="space-y-2">
+      <div
+        v-for="(step, i) in whatHappensSteps"
+        :key="i"
+        class="flex items-start gap-2.5"
+      >
+        <span
+          class="shrink-0 w-4 h-4 rounded-full border flex items-center justify-center text-[9px] font-bold mt-0.5"
+          :class="step.type === 'warning'
+            ? 'bg-red-500/10 border-red-500/30 text-red-400'
+            : 'bg-border/20 border-border/40 text-text-secondary'"
+        >{{ i + 1 }}</span>
+        <p
+          class="text-[11px] leading-relaxed"
+          :class="step.type === 'warning' ? 'text-red-400/80' : 'text-text-secondary'"
+        >{{ step.text }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Email notification note -->
+  <div class="flex items-start gap-2.5 bg-blue-500/5 border border-blue-500/15 rounded-lg px-3.5 py-3">
+    <svg class="text-blue-400 shrink-0 mt-0.5" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+      <polyline points="22,6 12,13 2,6"/>
+    </svg>
+    <p class="text-[11px] text-blue-400/80 leading-relaxed">
+      An invitation email will be sent to
+      <span class="font-semibold text-blue-400">{{ modalMember.email }}</span>.
+      They must click the link to accept. The invite expires in
+      <span class="font-semibold text-blue-400">72 hours</span> if not accepted.
+    </p>
+  </div>
+
+  <!-- Confirm input -->
+  <div class="space-y-2">
+    <label class="text-[11px] font-semibold text-text-secondary block">
+      Type
+      <span class="font-bold text-text-primary font-mono bg-border/20 px-1.5 py-0.5 rounded mx-1">TRANSFER</span>
+      to confirm
+    </label>
+    <input
+      v-model="confirmText"
+      type="text"
+      placeholder="TRANSFER"
+      autocomplete="off"
+      spellcheck="false"
+      class="w-full px-4 py-2.5 text-sm font-mono font-semibold text-text-primary bg-border/10 border rounded-lg outline-none transition-colors duration-150 placeholder:text-text-secondary/30"
+      :class="confirmText === 'TRANSFER'
+        ? 'border-emerald-400/40 focus:border-emerald-400/60'
+        : 'border-border/40 focus:border-border/70'"
+    />
+  </div>
+
+</div>
 
             <!-- Modal footer -->
             <div class="flex items-center gap-3 px-6 py-4 border-t border-border/30 bg-border/5">
@@ -506,6 +582,7 @@ interface Member {
   is_owner?: boolean
   email: string
   role: string
+  membershipStatus?: 'active' | 'inactive' | 'suspended'
   color: string
   lastActive: string
   isYou?: boolean
@@ -516,6 +593,7 @@ interface Member {
 interface RawUser extends TransferUser {
   is_owner?: boolean
   membership_role?: string
+  membership_status?: 'active' | 'inactive' | 'suspended'
   last_active_at?: string
   updated_at?: string
   created_at?: string
@@ -611,8 +689,6 @@ const currentOwner = computed<Member>(() => {
       : '',
   }
 })
-
-// ── Eligible members ───────────────────────────────────────────────────────────
 const allMembers = computed<Member[]>(() => {
   const raw = (usersData.value?.data?.users ?? usersData.value?.users ?? []) as RawUser[]
   const users = Array.isArray(raw) ? raw : []
@@ -625,16 +701,17 @@ const allMembers = computed<Member[]>(() => {
     })
     .map((u, index) => {
       const name = u.u_full_name ?? u.u_email ?? 'Unknown'
-      const role = u.membership_role ?? 'member'
+      const membershipStatus = u.membership_status ?? 'active'
       return {
         id: u._id ?? '',
         name,
         initials: getInitials(name),
         email: u.u_email ?? '',
-        role: role.charAt(0).toUpperCase() + role.slice(1).toLowerCase(),
+        role: '',
+        membershipStatus,
         color: getColor(index + 1),
         lastActive: formatLastActive(u.last_active_at ?? u.updated_at ?? u.created_at),
-        isVerified: u.u_is_verified !== false && u.u_is_verfied !== false,
+        isVerified: membershipStatus === 'active' && (u.u_is_verified !== false && u.u_is_verfied !== false),
       }
     })
 })
@@ -702,7 +779,12 @@ watch(
   { immediate: true, deep: true }
 )
 
-// ── Filtered members ───────────────────────────────────────────────────────────
+const PAGE_SIZE = 5
+const currentPage = ref(1)
+
+// Reset page on search
+watch(searchQuery, () => { currentPage.value = 1 })
+
 const filteredMembers = computed<Member[]>(() => {
   const q = searchQuery.value.trim().toLowerCase()
   if (!q) return allMembers.value
@@ -711,6 +793,12 @@ const filteredMembers = computed<Member[]>(() => {
   )
 })
 
+const totalPages = computed(() => Math.ceil(filteredMembers.value.length / PAGE_SIZE))
+
+const paginatedMembers = computed<Member[]>(() => {
+  const start = (currentPage.value - 1) * PAGE_SIZE
+  return filteredMembers.value.slice(start, start + PAGE_SIZE)
+})
 // ── isTransferring ─────────────────────────────────────────────────────────────
 const isTransferring = computed<boolean>(() => isInitiating.value)
 

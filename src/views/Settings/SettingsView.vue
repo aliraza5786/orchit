@@ -142,6 +142,11 @@
   <OrgRolesTab v-else-if="currentTab === 'org-roles'" :profile="profileData" />
   <OwnershipTransfer v-else-if="currentTab === 'ownership-transfer'" :profile="profileData" />
   <OrgPackagesTab v-else-if="currentTab === 'org-packages'" :profile="profileData" />
+  <OrgBillingTab
+  v-else-if="currentTab === 'org-billing'"
+  :profile="profileData"
+  @go-to-packages="router.push({ query: { tab: 'org-packages' } })"
+/>
   <OrgDomainSetup v-else-if="currentTab === 'org-domain'" :profile="profileData" />
   <OrgAiTokensAllocationTab v-else-if="currentTab === 'token-allocation'" :profile="profileData" />
 </template>
@@ -167,6 +172,7 @@ import OrgAiTokensAllocationTab from './components/AiTokensAllocation.vue'
 import OrgDomainSetup from './components/OrgDomainSetup.vue'
 import OwnershipTransfer from './components/OwnershipTransfer.vue'
 import PersonalTokens from './components/PersonalTokens.vue'
+import OrgBillingTab from './components/OrgBillingTab.vue'
 import { useTheme } from '../../composables/useTheme'
 import { useQuery } from '@tanstack/vue-query'
 import { getProfile } from '../../services/user'
