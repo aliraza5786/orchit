@@ -7,7 +7,7 @@
         <div class="flex items-center gap-2">
         <i class="fa-solid fa-diagram-project text-primary-color"></i>
         <h2 class="text-sm font-semibold text-text-primary">All Processes</h2>
-        <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-primary-color/10 text-primary-color">
+        <span class="text-[10px] font-semibold px-1.5 py-1 rounded-full bg-primary-color/10 text-primary-color">
           {{ filteredList?.reduce((acc, col) => acc + (col.transitions?.length || 0), 0) }}
         </span>
       </div>
@@ -82,12 +82,73 @@
         />
        </div>
 
-        <div class="w-[250px]">
-          <SearchBar
-            placeholder="Search processes..."
-            @onChange="(val: any) => searchQuery = val"
-          />
-        </div>
+        <!-- replace the right-side div in the header -->
+<div class="flex items-center gap-2">
+  <div class="w-[250px]">
+    <SearchBar
+      placeholder="Search processes..."
+      @onChange="(val: any) => searchQuery = val"
+    />
+  </div>
+  <!-- View Switcher -->
+  <div class="flex items-center gap-1 bg-bg-surface/50 h-[36px] px-1.5 border-border border rounded-[6px]">
+    <button
+      class="aspect-square cursor-pointer rounded-sm h-[28px] flex items-center justify-center border border-border outline-0"
+      :class="view === 'kanban' ? 'text-white bg-primary-color' : 'backdrop-blur-2xl transition-all duration-75 hover:text-primary-color'"
+      title="Kanban view"
+      @click="view = 'kanban'"
+    >
+      <i class="fa-solid fa-chart-kanban text-[14px]"></i>
+    </button>
+    <button
+      @click="view = 'table'"
+      class="aspect-square cursor-pointer rounded-sm h-[28px] flex items-center justify-center border border-border outline-0"
+      :class="view === 'table' ? 'text-white bg-primary-color' : 'backdrop-blur-2xl transition-all duration-75 hover:text-primary-color'"
+      title="List view"
+    >
+      <i class="fa-solid fa-align-left text-[14px]"></i>
+    </button>
+    <button
+      @click="view = 'mindmap'"
+      class="aspect-square cursor-pointer rounded-sm h-[28px] flex items-center justify-center border border-border outline-0"
+      :class="view === 'mindmap' ? 'text-white bg-primary-color' : 'backdrop-blur-2xl transition-all duration-75 hover:text-primary-color'"
+      title="MindMap view"
+    >
+      <i class="fa-solid fa-chart-diagram text-[14px]"></i>
+    </button>
+    <button
+      @click="view = 'gantt'"
+      class="aspect-square cursor-pointer rounded-sm h-[28px] flex items-center justify-center border border-border outline-0"
+      :class="view === 'gantt' ? 'text-white bg-primary-color' : 'backdrop-blur-2xl transition-all duration-75 hover:text-primary-color'"
+      title="Gantt Chart view"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M4 6h2v12H4V6Zm4 4h10v2H8v-2Zm0 4h10v2H8v-2Zm0-8h10v2H8V6Z" />
+      </svg>
+    </button>
+    <button
+      @click="view = 'calendar'"
+      class="aspect-square cursor-pointer rounded-sm h-[28px] flex items-center justify-center border border-border outline-0"
+      :class="view === 'calendar' ? 'text-white bg-primary-color' : 'backdrop-blur-2xl transition-all duration-75 hover:text-primary-color'"
+      title="Calendar view"
+    >
+      <i class="fa-regular fa-calendar text-[14px]"></i>
+    </button>
+    <button
+      @click="view = 'timeline'"
+      class="aspect-square cursor-pointer rounded-sm h-[28px] flex items-center justify-center border border-border outline-0"
+      :class="view === 'timeline' ? 'text-white bg-primary-color' : 'backdrop-blur-2xl transition-all duration-75 hover:text-primary-color'"
+      title="Timeline view"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M4 12a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm16 0a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm-8 8a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm0-16a2 2 0 1 1 0-4 2 2 0 0 1 0 4Z" opacity="0"/>
+        <path d="M4 12h4m8 0h4M9 12h6M9 12v-6M15 12v6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+  </div>
+
+  
+</div>
       </div>
     </div>
 
@@ -98,7 +159,7 @@
     <div v-if="!isPending && isFetching" class="h-[2px] bg-primary-color animate-pulse shrink-0" />
 
     <!-- Board Area -->
-    <div v-if="!isPending" class="flex-1 w-full px-2 overflow-hidden flex flex-col">
+    <div v-if="!isPending && view === 'kanban'" class="flex-1 w-full px-2 overflow-hidden flex flex-col">
       <div class="flex-1 overflow-x-auto flex items-start gap-2 scrollbar-visible py-2">
 
         <ProcessKanbanBoard
@@ -146,6 +207,94 @@
         </div>
       </div>
     </div>
+    <!-- ── Table View ──────────────────────────────────────────────────────────── -->
+<template v-if="!isPending && view === 'table'">
+  <div class="ps-4 pe-4 flex-1 overflow-hidden">
+    <TableView
+      :columns="tableColumns"
+      :rows="flatTransitions"
+      :groups="[]"
+      :isGrouped="false"
+      :isPending="isPending || isFetching"
+      :canCreate="false"
+      :canCreateVariable="false"
+      :canDelete="canCreateVariable"
+      :totalCount="flatTransitions.length"
+      :totalTotal="flatTransitions.length"
+      @delete="(t) => { handleDeleteColumn(t) }"
+      @refresh="() => queryClient.invalidateQueries({ queryKey: ['process-groups-with-transitions'] })"
+    />
+  </div>
+</template>
+<!-- ── MindMap View ──────────────────────────────────────────────────── -->
+<template v-if="!isPending && view === 'mindmap'">
+  <div class="relative flex-1 flex flex-col px-2 overflow-hidden">
+    <div
+      v-if="isFetching"
+      class="absolute inset-0 z-20 flex items-center justify-center bg-bg-card/60 backdrop-blur-[2px]"
+    >
+      <div class="flex flex-col items-center gap-3">
+        <i class="fa-solid fa-spinner fa-spin text-primary-color text-3xl"></i>
+        <span class="text-sm font-medium text-text-secondary italic">Mapping your data...</span>
+      </div>
+    </div>
+    <MindMapView
+      :listsData="mindmapListsData"
+      :selectedSheetId="''"
+      :sheetId="''"
+      :selectedViewBy="''"
+      :workspaceId="workspaceId"
+      :moduleId="workspaceId"
+      :addingList="addingList"
+      :activeAddList="activeAddList"
+      :newColumn="newColumn"
+      :selectedSheetTitle="'Processes'"
+      :canCreateCard="false"
+      :canEditCard="false"
+      :canDeleteCard="false"
+      :canAssignCard="false"
+      :canCreateSheet="false"
+      :canCreateVariable="canCreateVariable"
+      :canEditSheet="false"
+      @select:ticket="handleMindmapSelectTicket"
+      @delete:ticket="handleMindmapDeleteTicket"
+      @create:card="handleMindmapCreateCard"
+      @update:card="handleMindmapUpdateCard"
+      @update:sheet="handleMindmapUpdateSheet"
+      @reorder:card="handleMindmapReorderCard"
+      @create:sheet="handleMindmapCreateSheet"
+      @toggle-add-list="() => { activeAddList = !activeAddList }"
+      @add-column="emitAddColumn"
+    />
+  </div>
+</template>
+<!-- ── Gantt View ───────────────────────────────────────────────────── -->
+<template v-if="!isPending && view === 'gantt'">
+  <div class="flex-1 overflow-hidden px-2">
+    <CustomGanttChart
+      :data="ganttListsData"
+      @select:ticket="handleClickTicket"
+    />
+  </div>
+</template>
+<!-- ── Calendar View ─────────────────────────────────────────────────── -->
+<template v-if="!isPending && view === 'calendar'">
+  <div class="flex-1 overflow-hidden px-2">
+    <CustomCalendarView
+      :data="ganttListsData"
+      @select:ticket="handleClickTicket"
+    />
+  </div>
+</template>
+<!-- ── Timeline View ─────────────────────────────────────────────────── -->
+<template v-if="!isPending && view === 'timeline'">
+  <div class="flex-1 overflow-hidden px-2">
+    <CustomTimelineView
+      :data="ganttListsData"
+      @select:ticket="handleClickTicket"
+    />
+  </div>
+</template>
   </div>
 
   <ConfirmDeleteModal
@@ -183,7 +332,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue';
+import { ref,h, watch, computed } from 'vue';
 import BaseTextField from '../../components/ui/BaseTextField.vue';
 import KanbanSkeleton from '../../components/skeletons/KanbanSkeleton.vue';
 import { useRouteIds } from '../../composables/useQueryParams';
@@ -211,10 +360,22 @@ import { debounce } from 'lodash';
 import { usePermissions } from '../../composables/usePermissions';
 import { toast } from 'vue-sonner';
 import ProductFilters from '../Product/components/ProductFilters.vue';
-
-/* -------------------------------------------------------------------------- */
-/*                                Route IDs                                   */
-/* -------------------------------------------------------------------------- */
+import { defineAsyncComponent } from 'vue';
+const TableView = defineAsyncComponent(
+  () => import('../../components/feature/TableView/TableView.vue')
+);
+const MindMapView = defineAsyncComponent(
+  () => import('../../components/feature/MindmapView.vue')
+);
+const CustomGanttChart = defineAsyncComponent(
+  () => import('../../components/feature/CustomGanttChart.vue')
+);
+const CustomCalendarView = defineAsyncComponent(
+  () => import('../../components/feature/CustomCalendarView.vue')
+);
+const CustomTimelineView = defineAsyncComponent(
+  () => import('../../components/feature/CustomTimelineView.vue')
+);
 const { workspaceId } = useRouteIds();
 
 /* -------------------------------------------------------------------------- */
@@ -227,8 +388,8 @@ const showFilterBar        = ref(false);
 const showGroupDropdown    = ref(false);
 const showVariableDropdown = ref(false);
 const filterTriggerRef     = ref<HTMLElement | null>(null);
+const view = ref('kanban');
 const sheetDropdownRef     = ref<any>(null);
-
 const queryParams = computed(() => {
   const f = activeFilters.value ?? {}
 
@@ -733,6 +894,133 @@ function cardMatchesFilters(card: any, filters: Record<string, any>): boolean {
 
   return true;
 }
+// ── Table View Data ────────────────────────────────────────────────────────
+const flatTransitions = computed(() =>
+  filteredList.value.flatMap((col: any) =>
+    (col.transitions ?? []).map((t: any) => ({ ...t, _groupTitle: col.title }))
+  )
+);
+const tableColumns = computed(() => [
+  {
+    key: 'title',
+    label: 'Title',
+    visible: true,
+    render: ({ row, value }: any) =>
+      h('div', { class: 'flex items-center gap-2 px-2' }, [
+        h('span', {
+          class: 'text-[12px] capitalize cursor-pointer hover:text-primary-color transition-colors',
+          onClick: () => handleClickTicket(row),
+        }, value || 'Untitled'),
+      ]),
+  },
+  {
+    key: 'card_type',
+    label: 'Card Type',
+    visible: true,
+    render: ({ row }: any) => {
+      // card_type field varies by grouping
+      const val = row.card_type
+        ?? row.type_value
+        ?? row.assigned_to?.card_type
+        ?? row.variables?.['card-type']
+        ?? row['card-type']
+        ?? '—'
+      return h('div', { class: 'px-2 text-[12px] capitalize text-text-secondary' }, val)
+    },
+  },
+  {
+    key: 'module',
+    label: 'Module',
+    visible: true,
+    render: ({ row }: any) => {
+      // module field varies by grouping
+      const val = row.module
+        ?? row.assigned_to?.module
+        ?? row.process_group_title
+        ?? row._groupTitle
+        ?? '—'
+      return h('div', { class: 'px-2 text-[12px] text-text-secondary' }, val)
+    },
+  },
+  {
+    key: 'process_group_title',
+    label: 'Process Group',
+    visible: true,
+    render: ({ row }: any) => {
+      const val = row.process_group_title
+        ?? row._groupTitle
+        ?? '—'
+      return h('div', { class: 'px-2 text-[12px] text-text-secondary' }, val)
+    },
+  },
+]);
+// ── MindMap View Data ────────────────────────────────────────────────────
+// MindMapView expects sheet_lists format: [{ _id, title, cards: [], ... }]
+const mindmapListsData = computed(() =>
+  filteredList.value.map((col: any) => ({
+    ...col,
+    cards: (col.transitions ?? []).map((t: any) => ({
+      ...t,
+      _id: t._id,
+      'card-title': t.title ?? t.name ?? 'Untitled',
+      'card-status': t.card_status ?? col.title,
+      'card-type': t.card_type ?? t.type_value ?? '',
+      priority: t.priority ?? '',
+      style: t.style ?? {},
+      variables: t.variables ?? {},
+    })),
+  }))
+);
+// ── MindMap event handlers ───────────────────────────────────────────
+function handleMindmapSelectTicket(card: any) {
+  handleClickTicket(card);
+}
+
+function handleMindmapDeleteTicket(cardId: string) {
+  localColumn.value = { columnId: cardId };
+  // Transitions aren't deleted inline from mindmap in Process2
+  // — open the side panel delete flow instead
+  handleClickTicket({ _id: cardId });
+}
+
+function handleMindmapCreateCard(_payload: any) {
+  // Process2 doesn't support inline card creation for transitions
+  // Wire up if needed in future
+}
+
+function handleMindmapUpdateCard(_payload: any) {
+  // Process2 transitions update via WorkflowBuilder
+}
+
+function handleMindmapUpdateSheet(_payload: any) {
+  // Process groups are updated via handleUpdateColumn
+}
+
+function handleMindmapReorderCard(_payload: any) {
+  queryClient.invalidateQueries({ queryKey: ['process-groups-with-transitions'] });
+}
+
+function handleMindmapCreateSheet(_payload: any) {
+  // Not applicable for Process2
+}
+// ── Gantt View Data ──────────────────────────────────────────────────────
+// CustomGanttChart accepts CardList[]: [{ _id, title, cards: Card[] }]
+const ganttListsData = computed(() =>
+  filteredList.value.map((col: any) => ({
+    _id:   col._id ?? col.columnId,
+    title: col.title,
+    cards: (col.transitions ?? []).map((t: any) => ({
+      _id:          t._id,
+      'card-title': t.title ?? t.name ?? t.type_value ?? t['card-title'] ?? 'Untitled',
+      'card-code':  t.code ?? t['card-code'] ?? '',
+      'card-status': t.card_status ?? col.title,
+      'start-date': t['start-date'] ?? t.start_date ?? null,
+      'end-date':   t['end-date']   ?? t.end_date   ?? null,
+      created_at:   t.created_at    ?? new Date().toISOString(),
+      color:        col.color       ?? null,
+    })),
+  }))
+);
 </script>
 
 <style scoped>

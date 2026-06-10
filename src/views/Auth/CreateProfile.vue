@@ -2301,17 +2301,13 @@ function onProvisioningComplete() {
   if (selected.value === 'personal') {
     clearOnboardingState()
     if (maybeRedirectToPendingWorkspaceInvite()) return
-    router.push({ path: '/finish-profile', query: { welcome: '1', type: 'personal', theme: theme.value } })
+    // Use nextTick to let the loader finish its exit animation before navigating
+    nextTick(() => {
+      router.push({ path: '/finish-profile', query: { welcome: '1', type: 'personal', theme: theme.value } })
+    })
     return
   }
-
-  // Custom domain: 8 → 7 handled separately after company create (step 51 disabled)
-  if (isCustomDomainFlow.value) return
-
-  // Subdomain / company subdomain: continue to referral step
-  activeStep.value = 7
 }
-
 // ─── Super Admin OTP Actions (Step 51, Scenario 2a only) ─────────────────────
 // FIX 5: Validate only the prefix (before @domain)
 function validateSuperAdminEmail() {
@@ -2757,19 +2753,21 @@ async function continueHandler() {
   // ── Step 7: referral sources → determine next step by scenario ──────────
   if (activeStep.value === 7) {
     if (selected.value === 'personal') {
-      isUpdatingProfile.value = true
-      isLoaderRunning.value = true
-      try {
-        await updateUserProfile({ heard_about_us: referralSources.value })
-        await authStore.bootstrap()
-        activeStep.value = 6
-      } catch {
-        isLoaderRunning.value = false
-      } finally {
-        isUpdatingProfile.value = false
-      }
-      return
-    }
+  isUpdatingProfile.value = true
+  try {
+    await updateUserProfile({ heard_about_us: referralSources.value })
+    await authStore.bootstrap()
+  } catch {
+    isUpdatingProfile.value = false
+    return
+  } finally {
+    isUpdatingProfile.value = false
+  }
+  // Only start loader AFTER APIs are done — single clean animation
+  isLoaderRunning.value = true
+  activeStep.value = 6
+  return
+}
     // Team/school: updateProfile → onSuccess handles routing per scenario
     updateProfile({ payload: buildProfilePayload() })
     return

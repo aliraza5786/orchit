@@ -52,7 +52,7 @@ const BlogList = () => import("../views/blog/BlogList.vue");
 const BlogDetail = () => import("../views/blog/BlogDetail.vue");
 const KnowledgeCenterView = () => import("../views/KnowledgeCenter/KnowledgeCenterView.vue");
 const SettingsView = () => import("../views/Settings/SettingsView.vue");
-
+const KnowledgeHub = () => import ("../views/KnowledgeHub/Product.vue")
 const ONBOARDING_ROUTE_NAMES = new Set([
   'Register',
   'Otp',
@@ -172,6 +172,7 @@ const routes: RouteRecordRaw[] = [
       { path: "talent/:id",       name: "people",      component: People },
       { path: "pin/:id/:module_id", name: "pin",       component: Pin },
       { path: "plan/:id",         name: "plan",        component: Plan },
+      { path: "knowledge_hub/:id", name: "Knowldege Hub",        component: KnowledgeHub },
       { path: "process/:id",      name: "process",     component: Process2 },
       { path: "more/:id",         name: "more",        component: More },
       { path: "more/detail/:id/:module_id", name: "moreDetail", component: ModuleDetail },
