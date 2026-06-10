@@ -6,7 +6,7 @@ import { useTheme } from './composables/useTheme'
 import { useAuthStore } from './stores/auth'
 import { useDeletionGuard } from './composables/useDeletionGuard'
 import { useRouter } from 'vue-router'
-import Loader from './components/ui/Loader.vue'
+import AuthTransitionLoader from './components/ui/AuthTransitionLoader.vue'
 const { isDark } = useTheme()
 const authStore = useAuthStore()
 const showSuspendedModal = ref(false)
@@ -51,14 +51,8 @@ async function handleSuspendedConfirm() {
       leave-active-class="transition-opacity duration-300 ease-in"
       leave-to-class="opacity-0"
     >
-      <div
-        v-if="!authReady"
-        class="fixed inset-0 z-[9998] flex items-center justify-center bg-bg-body"
-      >
-        <Loader />
-      </div>
+      <AuthTransitionLoader v-if="!authReady" />
     </Transition>
-
     <router-view />
   </div>
 
