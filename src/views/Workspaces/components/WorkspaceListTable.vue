@@ -25,44 +25,17 @@ const handleClick = async (rowEvt: any) => {
   const jobId: string | undefined = r?.LatestTask?.job_id;
   const workspaceId: string = r._id;
 
-  const theme = localStorage.getItem("theme") || "light";
-  const token = localStorage.getItem("token") ?? "";
-
   const peakPath = jobId
     ? `/workspace/peak/${workspaceId}/${jobId}`
     : `/workspace/peak/${workspaceId}`;
 
-  const company = r?.company;
-  const domainLink: string | undefined = company?.domain_link;
-
-  // ── Personal workspace or Localhost ────────────────────────────────────────
-  if (!domainLink || window.location.hostname.includes("localhost") || window.location.hostname === "127.0.0.1") {
-    if (jobId) {
-      localStorage.setItem("jobId", jobId);
-    } else {
-      localStorage.removeItem("jobId");
-    }
-    router.push(peakPath);
-    return;
+  if (jobId) {
+    localStorage.setItem("jobId", jobId);
+  } else {
+    localStorage.removeItem("jobId");
   }
 
-  // ── Company workspace — redirect to tenant subdomain ───────────────────────
-  const queryParams = new URLSearchParams({ theme });
-
-  // ✅ Pass token so tenant subdomain can save it to localStorage on load
-  if (token) queryParams.set("_token", token);
-
-  // ✅ Pass company_id as _cid so tenant subdomain can bootstrap it in storage
-  if (company?._id) {
-    const encode = (s: string) => btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '.');
-    queryParams.set("_cid", encode(company._id));
-  }
-
-  const targetUrl = `${domainLink.replace(/\/$/, "")}${peakPath}?${queryParams.toString()}`;
-
-  setTimeout(() => {
-    window.location.href = targetUrl;
-  }, 80);
+  router.push(peakPath);
 };
 const handleArchive = (row: any) => {
   emit("archive", row);
