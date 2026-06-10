@@ -70,6 +70,23 @@
           :expanded="expanded"
         />
       </div>
+      <!-- <div
+        class="text-center flex-col flex gap-1 min-w-max"
+        :class="expanded ? 'w-full' : 'w-max'"
+      >
+        <SideItem
+          label="Knowledge Hub"
+          :to="`/workspace/knowledge_hub/${workspaceId}`"
+          key="knowledge_hub"
+          id="knowledge_hub"
+          laneLabel="Knowledge Hub"
+          :icon="{
+            prefix: 'fa-regular',
+            iconName: 'fa-database',
+          }"
+          :expanded="expanded"
+        />
+      </div> -->
       <div
         class="flex flex-col gap-1 max-sm:flex-row pin_task min-w-max"
         :class="expanded ? 'w-full' : 'w-max'"
