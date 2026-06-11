@@ -160,8 +160,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, watch, computed, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useInvitedWorkspace } from '../../queries/useWorkspace'
 import { useAuthStore } from '../../stores/auth'
 import api from '../../libs/api'
@@ -169,6 +169,7 @@ import { useRouteIds } from '../../composables/useQueryParams'
 import Button from '../../components/ui/Button.vue'
 import {
   savePendingWorkspaceInvite,
+  savePendingInvitePath,
   clearPendingWorkspaceInvite,
   getPendingWorkspaceInvite,
   type WorkspaceInviteAction,
@@ -176,8 +177,13 @@ import {
 import { clearAuthCookie } from '../../utilities/auth'
 
 const router = useRouter()
+const route = useRoute()
 const auth = useAuthStore()
 const { token } = useRouteIds()
+
+onMounted(() => {
+  savePendingInvitePath(route.path)
+})
 
 
 const { data, refetch, isPending } = useInvitedWorkspace(token.value);
@@ -220,7 +226,7 @@ const isEmailMatch = computed(() => {
 
 function requireAuthForInviteAction(action: WorkspaceInviteAction): boolean {
   if (isLoggedIn.value) return true
-  savePendingWorkspaceInvite(token.value, action)
+  savePendingWorkspaceInvite(token.value, action, 'workspace')
   error.value =
     action === 'accepted'
       ? 'Please log in to accept this invitation.'
@@ -303,7 +309,7 @@ async function runPendingInviteAction() {
   if (pendingActionRan.value || acting.value || !isLoggedIn.value) return
 
   const pending = getPendingWorkspaceInvite()
-  if (!pending || pending.token !== token.value) return
+  if (!pending || pending.token !== token.value || pending.type !== 'workspace') return
 
   pendingActionRan.value = true
   if (pending.action === 'accepted') {

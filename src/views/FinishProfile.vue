@@ -99,14 +99,22 @@
 <script setup lang="ts">
 import AuthLayout from '../layout/AuthLayout/AuthLayout.vue'
 import Button from '../components/ui/Button.vue'
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useTheme } from '../composables/useTheme'
 import { buildCompanyDomainUrl } from '../utilities/authRedirect'
+import { getPendingInviteRedirectPath } from '../utilities/workspaceInvitePending'
 
 const { theme } = useTheme()
 const router = useRouter()
 const route = useRoute()
+
+onMounted(() => {
+  const invitePath = getPendingInviteRedirectPath()
+  if (invitePath) {
+    router.replace(invitePath)
+  }
+})
 
 const isPersonal = computed(() => route.query.type === 'personal')
 const domainLink = computed(() => String(route.query.domainLink ?? '').trim())

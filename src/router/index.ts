@@ -87,6 +87,9 @@ function resolveOnboardingRedirect(
     return '/dashboard'
   }
 
+  // Already on onboarding — stay (preserves step query on refresh / duplicate tab)
+  if (to.name === 'onboarding') return null
+
   return '/onboarding'
 }
 const routes: RouteRecordRaw[] = [
@@ -201,13 +204,15 @@ const router = createRouter({
 api.interceptors.response.use(
   (response: AxiosResponse) => response,
   (error: AxiosError) => {
-    const onWorkspaceInvite =
+    const onInviteRoute =
       typeof window !== 'undefined' &&
-      window.location.pathname.startsWith('/workspace-invite/')
+      (window.location.pathname.startsWith('/workspace-invite/') ||
+        window.location.pathname.startsWith('/space-invite/') ||
+        window.location.pathname.startsWith('/company-invite/'))
     if (
       error.response?.status === 401 &&
       !isPublicAuthRequest(error.config) &&
-      !onWorkspaceInvite
+      !onInviteRoute
     ) {
       const auth = useAuthStore()
       auth.logout()

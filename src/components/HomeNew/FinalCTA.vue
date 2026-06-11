@@ -89,11 +89,11 @@ const scrollTo = async (id: string) => {
           <div>
             <h4 class="font-semibold mb-3">Product</h4>
             <ul class="space-y-2">
-              <li><a href="/onboarding-organization"  class="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors">Organization</a></li>
+              <li><RouterLink to="/onboarding-organization"  class="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors">Organization</RouterLink></li>
               <li><a href="#product" @click.prevent="scrollTo('product')" class="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors">Features</a></li>
               <li><a href="#templates" @click.prevent="scrollTo('templates')" class="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors">Templates</a></li>
               <li><a href="#marketplace" @click.prevent="scrollTo('templates')" class="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors">Marketplace</a></li>
-              <li><a href="/pricing" class="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors">Pricing</a></li>
+              <li><RouterLink to="/pricing" class="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors">Pricing</RouterLink></li>
             </ul>
           </div>
 
@@ -101,9 +101,9 @@ const scrollTo = async (id: string) => {
           <div>
             <h4 class="font-semibold mb-3">Resources</h4>
             <ul class="space-y-2">
-              <li><a href="/blogs"  class="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors">Blog</a></li>
-              <li><a href="/release-notes" class="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors">Release notes</a></li>
-              <li><a href="/knowledge-center" class="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors">Help Center</a></li>
+              <li><RouterLink to="/blogs"  class="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors">Blog</RouterLink></li>
+              <li><RouterLink to="/release-notes" class="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors">Release notes</RouterLink></li>
+              <li><RouterLink to="/knowledge-center" class="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors">Help Center</RouterLink></li>
               <li><a href="#faq" @click.prevent="scrollTo('faq')" class="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors">FAQ</a></li>
             </ul>
           </div>
@@ -112,9 +112,9 @@ const scrollTo = async (id: string) => {
           <div>
             <h4 class="font-semibold mb-3">Company</h4>
             <ul class="space-y-2">
-              <li><a href="/contact-us" class="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors">Contact</a></li>
-              <li><a href="/privacy-policy" class="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors">Privacy</a></li>
-              <li><a href="/terms-of-services" class="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors">Terms</a></li>
+              <li><RouterLink to="/contact-us" class="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors">Contact</RouterLink></li>
+              <li><RouterLink to="/privacy-policy" class="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors">Privacy</RouterLink></li>
+              <li><RouterLink to="/terms-of-services" class="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors">Terms</RouterLink></li>
             </ul>
           </div>
         </div>

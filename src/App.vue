@@ -5,13 +5,20 @@ import 'vue-sonner/style.css'
 import { useTheme } from './composables/useTheme'
 import { useAuthStore } from './stores/auth'
 import { useDeletionGuard } from './composables/useDeletionGuard'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import AuthTransitionLoader from './components/ui/AuthTransitionLoader.vue'
 const { isDark } = useTheme()
 const authStore = useAuthStore()
 const showSuspendedModal = ref(false)
 const router = useRouter()
+const route = useRoute()
 const authReady = ref(false)
+
+const showAuthLoader = computed(() => {
+  if (authReady.value) return false
+  if (route.meta.requiresAuth === false) return false
+  return true
+})
 
 const profileData = computed(() => authStore.user?.data ?? null)
 
@@ -51,7 +58,7 @@ async function handleSuspendedConfirm() {
       leave-active-class="transition-opacity duration-300 ease-in"
       leave-to-class="opacity-0"
     >
-      <AuthTransitionLoader v-if="!authReady" />
+      <AuthTransitionLoader v-if="showAuthLoader" />
     </Transition>
     <router-view />
   </div>

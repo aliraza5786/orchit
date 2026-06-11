@@ -185,8 +185,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
-import { useRouter } from "vue-router";
+import { ref, computed, onMounted } from "vue";
+import { useRouter, useRoute } from "vue-router";
 import { useMutation } from "@tanstack/vue-query";
 import AuthLayout from "../../layout/AuthLayout/AuthLayout.vue";
 import BaseTextField from "../../components/ui/BaseTextField.vue";
@@ -216,7 +216,11 @@ import {
   tryRedirectToCompanyDomainDashboard,
   normalizeProfileUserData,
 } from "../../utilities/authRedirect";
-import { getPendingWorkspaceInviteRedirectPath } from "../../utilities/workspaceInvitePending";
+import {
+  getPendingWorkspaceInviteRedirectPath,
+  isInvitePath,
+  savePendingInvitePath,
+} from "../../utilities/workspaceInvitePending";
 import { getProfile } from "../../services/user";
 
 const { isDark, theme } = useTheme();
@@ -229,6 +233,14 @@ defineProps<{
 // --- Constants (non-reactive) ---
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const authStore = useAuthStore();
+const route = useRoute();
+
+onMounted(() => {
+  const redirect = route.query.redirect as string | undefined;
+  if (redirect && isInvitePath(redirect)) {
+    savePendingInvitePath(redirect);
+  }
+});
 
 // --- State ---
 const email = ref("");

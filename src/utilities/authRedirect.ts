@@ -1,4 +1,5 @@
 import { isCompanyUser } from './onboardingRedirect'
+import { isInvitePath, savePendingInvitePath } from './workspaceInvitePending'
 
 function getPrimaryDomain(): string {
   return import.meta.env.VITE_PRIMARY_DOMAIN || window.location.hostname
@@ -210,6 +211,9 @@ export function redirectToLogin(
   _router?: { replace: (to: any) => void },
   redirectAfterLogin?: string,
 ): boolean {
+  if (redirectAfterLogin && isInvitePath(redirectAfterLogin)) {
+    savePendingInvitePath(redirectAfterLogin)
+  }
   window.location.href = getLoginPageUrl(redirectAfterLogin)
   return true
 }
