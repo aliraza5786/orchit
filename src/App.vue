@@ -21,15 +21,13 @@ const showAuthLoader = computed(() => {
 })
 
 const profileData = computed(() => authStore.user?.data ?? null)
-
 onMounted(async () => {
   try {
     if (!authStore.isBootstrapped) {
       await authStore.bootstrap()
     }
-  } catch { /* router guard handles redirect */ }
-  finally {
-    authReady.value = true 
+  } finally {
+    authReady.value = true
   }
 })
 
