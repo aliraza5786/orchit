@@ -70,7 +70,7 @@
           :expanded="expanded"
         />
       </div>
-      <!-- <div
+      <div
         class="text-center flex-col flex gap-1 min-w-max"
         :class="expanded ? 'w-full' : 'w-max'"
       >
@@ -86,7 +86,7 @@
           }"
           :expanded="expanded"
         />
-      </div> -->
+      </div>
       <div
         class="flex flex-col gap-1 max-sm:flex-row pin_task min-w-max"
         :class="expanded ? 'w-full' : 'w-max'"

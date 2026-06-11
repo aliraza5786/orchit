@@ -52,7 +52,7 @@ const BlogList = () => import("../views/blog/BlogList.vue");
 const BlogDetail = () => import("../views/blog/BlogDetail.vue");
 const KnowledgeCenterView = () => import("../views/KnowledgeCenter/KnowledgeCenterView.vue");
 const SettingsView = () => import("../views/Settings/SettingsView.vue");
-const KnowledgeHub = () => import ("../views/KnowledgeHub/Product.vue")
+const KnowledgeHub = () => import ("../views/KnowledgeHub/KnowledgeHub.vue")
 const ONBOARDING_ROUTE_NAMES = new Set([
   'Register',
   'Otp',
