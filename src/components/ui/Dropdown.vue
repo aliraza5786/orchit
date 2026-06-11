@@ -3,6 +3,7 @@
     <button
       ref="triggerRef"
       @click="toggle"
+      @keydown="handleTriggerKeydown"
       type="button"
         class="text-nowrap inline-flex justify-between items-center gap-2 border rounded-[6px] font-medium cursor-pointer transition bg-transparent px-3 py-1.5 text-sm"
      
@@ -85,10 +86,13 @@
           <div class="max-h-[400px] overflow-y-auto">
             <ul :class="['py-1 z-[2]', listTextSizeClass]">
               <li
-                v-for="option in options"
+                v-for="(option, index) in options"
                 :key="option._id"
                 class="group cursor-pointer flex items-stretch text-nowrap hover:bg-bg-dropdown-menu-hover"
-                :class="itemPaddingClass"
+                :class="[
+                  itemPaddingClass,
+                  highlightedIndex === index ? 'bg-bg-dropdown-menu-hover' : '',
+                ]"
                 @click="handleOptionClick(option)"
                 @mouseenter="handleMouseEnter(option)"
                 @mouseleave="handleItemLeave"
@@ -317,6 +321,7 @@ const emit = defineEmits([
 ] as const);
 
 const open = ref(false);
+const highlightedIndex = ref(-1);
 const wrapperRef = ref<HTMLElement | null>(null);
 const triggerRef = ref<HTMLElement | null>(null);
 const menuRef = ref<HTMLElement | null>(null);
@@ -352,6 +357,68 @@ function isOptionSelected(option: Option) {
   return selected.value === option._id;
 }
 
+function initHighlightedIndex() {
+  const idx = props.options.findIndex((opt) => isOptionSelected(opt));
+  highlightedIndex.value = idx >= 0 ? idx : props.options.length ? 0 : -1;
+}
+
+function scrollHighlightedIntoView() {
+  nextTick(() => {
+    const items = menuRef.value?.querySelectorAll("ul > li");
+    const item = items?.[highlightedIndex.value] as HTMLElement | undefined;
+    item?.scrollIntoView({ block: "nearest" });
+  });
+}
+
+function handleMenuKeydown(e: KeyboardEvent) {
+  if (!open.value || !props.options.length) return;
+
+  if (e.key === "ArrowDown") {
+    e.preventDefault();
+    highlightedIndex.value = Math.min(
+      highlightedIndex.value + 1,
+      props.options.length - 1,
+    );
+    if (highlightedIndex.value < 0) highlightedIndex.value = 0;
+    scrollHighlightedIntoView();
+  } else if (e.key === "ArrowUp") {
+    e.preventDefault();
+    highlightedIndex.value = Math.max(highlightedIndex.value - 1, 0);
+    scrollHighlightedIntoView();
+  } else if (e.key === "Enter") {
+    e.preventDefault();
+    const opt = props.options[highlightedIndex.value];
+    if (opt) handleOptionClick(opt);
+  } else if (e.key === "Escape") {
+    e.preventDefault();
+    closeDropdown();
+    triggerRef.value?.focus();
+  }
+}
+
+function handleTriggerKeydown(e: KeyboardEvent) {
+  if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+    if (!open.value) {
+      e.preventDefault();
+      emit("open");
+      open.value = true;
+      nextTick(() => {
+        startFloating();
+        initHighlightedIndex();
+        addMenuKeydownListener();
+      });
+    }
+  }
+}
+
+function addMenuKeydownListener() {
+  document.addEventListener("keydown", handleMenuKeydown);
+}
+
+function removeMenuKeydownListener() {
+  document.removeEventListener("keydown", handleMenuKeydown);
+}
+
 function toggle() {
   if (open.value) {
     closeDropdown();
@@ -360,6 +427,8 @@ function toggle() {
     open.value = true;
     nextTick(() => {
       startFloating();
+      initHighlightedIndex();
+      addMenuKeydownListener();
     });
   }
 }
@@ -367,6 +436,8 @@ function toggle() {
 function closeDropdown() {
   if (open.value) emit("close");
   open.value = false;
+  highlightedIndex.value = -1;
+  removeMenuKeydownListener();
   openNestedId.value = null;
   if (cleanupFloating) {
     cleanupFloating();
@@ -524,6 +595,7 @@ onClickOutside(wrapperRef, (event) => {
 });
 
 onBeforeUnmount(() => {
+  removeMenuKeydownListener();
   if (cleanupFloating) cleanupFloating();
 });
 
@@ -568,6 +640,8 @@ let hoverTimeout: any = null;
 function handleMouseEnter(option: any) {
   if (hoverTimeout) clearTimeout(hoverTimeout);
   hoveredOptionId.value = option._id;
+  const idx = props.options.findIndex((o) => o._id === option._id);
+  if (idx >= 0) highlightedIndex.value = idx;
   if (option.nested?.length) {
     nextTick(() => startNestedFloating(option._id));
   }

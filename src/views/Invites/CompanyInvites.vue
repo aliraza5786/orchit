@@ -31,10 +31,9 @@
                     </div>
                     <div class="mt-4 flex gap-2">
                         <Button variant="secondary" class="px-4 py-2 rounded-md border text-sm border-border "
-                            @click="() => refetch()">Try
+                            @click="() => { error = null; refetch() }">Try
                             again</Button>
-                        <Button @click="goHome">Go to
-                            home</Button>
+                        <Button @click="goToLogin">Log In</Button>
                     </div>
                 </div>
 
@@ -130,16 +129,35 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, watch, computed, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useInvitedSpace } from '../../queries/useWorkspace'
+import { useAuthStore } from '../../stores/auth'
 import api from '../../libs/api'
 import { useRouteIds } from '../../composables/useQueryParams'
 import { getInitials } from '../../utilities'
 import Button from '../../components/ui/Button.vue'
+import { clearAuthCookie } from '../../utilities/auth'
+import {
+  savePendingWorkspaceInvite,
+  savePendingInvitePath,
+  clearPendingWorkspaceInvite,
+  getPendingWorkspaceInvite,
+  type WorkspaceInviteAction,
+} from '../../utilities/workspaceInvitePending'
+
 const router = useRouter()
+const route = useRoute()
+const auth = useAuthStore()
 const { token } = useRouteIds()
 const { data, refetch, isPending } = useInvitedSpace(token.value)
+
+onMounted(() => {
+  savePendingInvitePath(route.path)
+})
+
+const isLoggedIn = computed(() => auth.isAuthenticated)
+const pendingActionRan = ref(false)
 type Invite = {
     id: string
     token: string
@@ -160,23 +178,33 @@ function toTitle(s?: string) {
     if (!s) return ''
     return s.replace(/[_-]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
 }
+function requireAuthForInviteAction(action: WorkspaceInviteAction): boolean {
+  if (isLoggedIn.value) return true
+  savePendingWorkspaceInvite(token.value, action, 'space')
+  error.value =
+    action === 'accepted'
+      ? 'Please log in to accept this invitation.'
+      : 'Please log in to decline this invitation.'
+  return false
+}
+
 /** ---- actions ---- */
 async function accept() {
     if (!data.value || data.value.status == 'expired') return
+    if (!requireAuthForInviteAction('accepted')) return
+
     acting.value = true
     actionType.value = 'accepted'
     error.value = null
     try {
-        // Get token from localStorage
-        const token = localStorage.getItem('token') // replace 'token' with your key
-        if (!token) throw new Error('User not authenticated');
+        const authToken = localStorage.getItem('token')
+        if (!authToken) throw new Error('User not authenticated')
 
-        await api.post(`/common/invitation/accept/${data.value._id}`, {  status: 'accepted' }, {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            })
+        await api.post(`/common/invitation/accept/${data.value._id}`, { status: 'accepted' }, {
+            headers: { Authorization: `Bearer ${authToken}` },
+        })
         accepted.value = true
+        clearPendingWorkspaceInvite()
     } catch (e: any) {
         error.value = e?.response?.data?.message || 'Could not accept the invitation.'
     } finally {
@@ -187,12 +215,20 @@ async function accept() {
 
 async function decline() {
     if (!data.value) return
+    if (!requireAuthForInviteAction('rejected')) return
+
     acting.value = true
     actionType.value = 'decline'
     error.value = null
     try {
-        await api.post(`/common/invitation/accept/${data.value._id}`, { status: 'rejected' })
+        const authToken = localStorage.getItem('token')
+        await api.post(
+            `/common/invitation/accept/${data.value._id}`,
+            { status: 'rejected' },
+            authToken ? { headers: { Authorization: `Bearer ${authToken}` } } : undefined,
+        )
         declined.value = true
+        clearPendingWorkspaceInvite()
     } catch (e: any) {
         error.value = e?.response?.data?.message || 'Could not decline the invitation.'
     } finally {
@@ -205,6 +241,33 @@ async function decline() {
 function goHome() {
    router.push('/')
 }
+
+function goToLogin() {
+  auth.logout()
+  clearAuthCookie()
+  router.push({
+    name: 'Login',
+    query: {
+      redirect: router.currentRoute.value.fullPath,
+      logout: 'true',
+    },
+  })
+}
+
+async function runPendingInviteAction() {
+  if (pendingActionRan.value || acting.value || !isLoggedIn.value) return
+
+  const pending = getPendingWorkspaceInvite()
+  if (!pending || pending.token !== token.value || pending.type !== 'space') return
+
+  pendingActionRan.value = true
+  if (pending.action === 'accepted') {
+    await accept()
+  } else {
+    await decline()
+  }
+  if (error.value) pendingActionRan.value = false
+}
 function goToWorkspace() {
     if (data.value?.workspace_id) {
         router.push({ name: 'workspace', params: { id: data.value.workspace_id } }).catch(() => { })
@@ -214,12 +277,25 @@ function goToWorkspace() {
 }
 
 
-watch(()=>data.value, ()=>{
-  if (data.value.status == 'rejected') {
-    declined.value= true;
-    return}
-    if (data.value.status == 'accepted') {
-    accepted.value= true;
-    return}
-})
+watch(
+  [() => data.value, isLoggedIn],
+  ([newData, loggedIn]) => {
+    if (!newData) return
+
+    invite.value = newData as Invite
+
+    if (newData.status == 'rejected') {
+      declined.value = true
+      return
+    }
+    if (newData.status == 'accepted') {
+      accepted.value = true
+      return
+    }
+
+    if (!loggedIn) return
+    void runPendingInviteAction()
+  },
+  { immediate: true },
+)
 </script>

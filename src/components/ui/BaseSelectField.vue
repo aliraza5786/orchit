@@ -25,6 +25,7 @@
     <!-- Trigger -->
     <div
       ref="triggerRef"
+      tabindex="0"
       class="relative px-3 py-2 rounded-md w-full border text-sm  flex justify-between items-center"
       :class="[
         size === 'md' ? 'h-10' : size === 'sm' ? 'h-8 !rounded-md' : 'h-12',
@@ -37,6 +38,7 @@
         disabled ? ' cursor-not-allowed' : 'cursor-pointer'  
       ]"
       @click="toggleDropdown"
+      @keydown="handleKeydown"
       :disabled="disabled"
     >
       <div class="flex items-center gap-2 max-w-full overflow-hidden">
@@ -58,6 +60,7 @@
           class="bg-transparent border-none outline-none w-full p-0 text-inherit placeholder:text-text-secondary"
           :placeholder="selected?.title || placeholder"
           @click.stop
+          @keydown.stop="handleKeydown"
         />
       </div>
       <svg
@@ -101,9 +104,15 @@
           <div
             v-for="(option, index) in filteredOptions"
             :key="option._id ?? index"
+            data-select-option
             @click="selectOption(option)"
+            @mouseenter="highlightedIndex = index"
             class="px-4 py-2 text-sm flex items-center gap-2 cursor-pointer hover:bg-bg-dropdown-menu-hover transition-all duration-150"
-            :class="[{ 'bg-bg-dropdown': option._id === selected?._id }, option.customClass]"
+            :class="[
+              { 'bg-bg-dropdown': option._id === selected?._id && highlightedIndex !== index },
+              { 'bg-bg-dropdown-menu-hover': highlightedIndex === index },
+              option.customClass,
+            ]"
           >
             <img v-if="option.icon" :src="option.icon" class="w-4 h-4" />
             <span class="capitalize">{{ option.title }}</span>
@@ -176,6 +185,7 @@ const emit = defineEmits<{
 import type { CSSProperties } from 'vue';
 
 const isOpen = ref(false);
+const highlightedIndex = ref(0);
 const wrapperRef = ref<HTMLElement | null>(null);
 const triggerRef = ref<HTMLElement | null>(null);
 const dropdownRef = ref<HTMLElement | null>(null);
@@ -190,6 +200,68 @@ const filteredOptions = computed(() => {
   return (props.options || []).filter((opt: Option) => 
     String(opt.title || "").toLowerCase().includes(q)
   );
+});
+
+function initHighlightedIndex() {
+  const idx = filteredOptions.value.findIndex(
+    (o: Option) => o._id === selected.value?._id,
+  );
+  highlightedIndex.value = idx >= 0 ? idx : filteredOptions.value.length ? 0 : 0;
+}
+
+function scrollHighlightedIntoView() {
+  nextTick(() => {
+    const items = dropdownRef.value?.querySelectorAll("[data-select-option]");
+    const item = items?.[highlightedIndex.value] as HTMLElement | undefined;
+    item?.scrollIntoView({ block: "nearest" });
+  });
+}
+
+function handleKeydown(e: KeyboardEvent) {
+  if (props.disabled) return;
+
+  if (!isOpen.value) {
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault();
+      toggleDropdown();
+    }
+    return;
+  }
+
+  if (props.loading) return;
+
+  const opts = filteredOptions.value;
+  if (!opts?.length) {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      closeDropdown();
+    }
+    return;
+  }
+
+  if (e.key === "ArrowDown") {
+    e.preventDefault();
+    highlightedIndex.value = Math.min(highlightedIndex.value + 1, opts.length - 1);
+    scrollHighlightedIntoView();
+  } else if (e.key === "ArrowUp") {
+    e.preventDefault();
+    highlightedIndex.value = Math.max(highlightedIndex.value - 1, 0);
+    scrollHighlightedIntoView();
+  } else if (e.key === "Enter") {
+    e.preventDefault();
+    const opt = opts[highlightedIndex.value];
+    if (opt) selectOption(opt);
+  } else if (e.key === "Escape") {
+    e.preventDefault();
+    closeDropdown();
+    triggerRef.value?.focus();
+  }
+}
+
+watch(filteredOptions, () => {
+  if (isOpen.value) {
+    highlightedIndex.value = 0;
+  }
 });
 
 const isDarkTheme = computed(() => {
@@ -225,6 +297,7 @@ onBeforeUnmount(() => {
 
 function closeDropdown() {
   isOpen.value = false;
+  highlightedIndex.value = 0;
   searchQuery.value = "";
   removeOutsideListener();
   if (cleanupFloating) {
@@ -275,10 +348,15 @@ function toggleDropdown() {
                 updatePosition
             );
             addOutsideListener();
-            
+            initHighlightedIndex();
+
             // Focus the search input
             nextTick(() => {
-              searchInputRef.value?.focus();
+              if (props.noSearchAble) {
+                triggerRef.value?.focus();
+              } else {
+                searchInputRef.value?.focus();
+              }
             });
         }
     }, 0);

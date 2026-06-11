@@ -643,6 +643,15 @@
                     />
                   </div>
                 </template>
+
+                <div v-if="!pin && !isPending" class="space-y-2 sm:col-span-1">
+                  <PlanGroupSingleSelect
+                    :workspace-id="workspaceId"
+                    :disabled="!canEditCard"
+                    :model-value="selectedSprintId"
+                    @update:model-value="handlePlanGroupChange"
+                  />
+                </div>
               </div>
               <button
                 @click="
@@ -1351,6 +1360,8 @@ const MentionProfileCard = defineAsyncComponent(
 import CreateVariableModal from "../modals/CreateVariableModal.vue";
 import EmptyState from "../../../components/ui/EmptyState.vue";
 import EditVariableModal from "../modals/EditVariableModal.vue";
+import PlanGroupSingleSelect from "./PlanGroupSingleSelect.vue";
+import { useGroupedSprints } from "../../../queries/usePlan";
 const isCreateVar = ref(false);
 const isEditVar = ref(false);
 const selectedVarToEdit = ref<any>(null);
@@ -1546,6 +1557,42 @@ const dateISO = computed({
 });
 
 const { data: lanes } = useLanes(workspaceId.value);
+const { data: groupedSprints } = useGroupedSprints(workspaceId);
+const selectedSprintId = ref<string | null>(null);
+
+function findPlanItemById(id: string | null) {
+  if (!id) return null;
+  const grouped = groupedSprints.value?.grouped;
+  if (!grouped) return null;
+
+  for (const type of ["milestone", "sprint", "huddle"] as const) {
+    const found = (grouped[type] || []).find((item: any) => item._id === id);
+    if (found) return found;
+  }
+  return null;
+}
+
+watch(
+  () => cardDetails.value,
+  (card) => {
+    selectedSprintId.value =
+      card?.sprint_id || card?.sprint?._id || null;
+  },
+  { immediate: true },
+);
+
+function handlePlanGroupChange(sprintId: string | null) {
+  const prev =
+    cardDetails.value?.sprint_id || cardDetails.value?.sprint?._id || null;
+  if (prev === sprintId) return;
+
+  selectedSprintId.value = sprintId;
+  moveCard.mutate({
+    card_id: props.details._id,
+    sprint_id: sprintId || null,
+  });
+}
+
 const lane = ref(
   cardDetails?.value ? cardDetails.value["workspace_lane_id"] : "Main",
 );
@@ -2373,6 +2420,18 @@ const moveCard = useMoveCard({
       updates.assigned_to = users;
       updates.seats = users;
       updates.seat_id = users.map((u: any) => u?._id || u?.id).filter(Boolean);
+    }
+    if (newPayload.sprint_id !== undefined) {
+      updates.sprint_id = newPayload.sprint_id;
+      const planItem = findPlanItemById(newPayload.sprint_id);
+      updates.sprint = planItem
+        ? {
+            _id: planItem._id,
+            title: planItem.title,
+            status: planItem.status,
+            sprintType: planItem.sprintType,
+          }
+        : null;
     }
 
     boardKeys.forEach((key) => {

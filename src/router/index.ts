@@ -52,7 +52,7 @@ const BlogList = () => import("../views/blog/BlogList.vue");
 const BlogDetail = () => import("../views/blog/BlogDetail.vue");
 const KnowledgeCenterView = () => import("../views/KnowledgeCenter/KnowledgeCenterView.vue");
 const SettingsView = () => import("../views/Settings/SettingsView.vue");
-const KnowledgeHub = () => import ("../views/KnowledgeHub/Product.vue")
+const KnowledgeHub = () => import ("../views/KnowledgeHub/KnowledgeHub.vue")
 const ONBOARDING_ROUTE_NAMES = new Set([
   'Register',
   'Otp',
@@ -86,6 +86,9 @@ function resolveOnboardingRedirect(
     clearOnboardingStorageKeys()
     return '/dashboard'
   }
+
+  // Already on onboarding — stay (preserves step query on refresh / duplicate tab)
+  if (to.name === 'onboarding') return null
 
   return '/onboarding'
 }
@@ -201,13 +204,15 @@ const router = createRouter({
 api.interceptors.response.use(
   (response: AxiosResponse) => response,
   (error: AxiosError) => {
-    const onWorkspaceInvite =
+    const onInviteRoute =
       typeof window !== 'undefined' &&
-      window.location.pathname.startsWith('/workspace-invite/')
+      (window.location.pathname.startsWith('/workspace-invite/') ||
+        window.location.pathname.startsWith('/space-invite/') ||
+        window.location.pathname.startsWith('/company-invite/'))
     if (
       error.response?.status === 401 &&
       !isPublicAuthRequest(error.config) &&
-      !onWorkspaceInvite
+      !onInviteRoute
     ) {
       const auth = useAuthStore()
       auth.logout()

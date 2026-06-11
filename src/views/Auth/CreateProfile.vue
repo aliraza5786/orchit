@@ -1157,7 +1157,7 @@ import { toast } from 'vue-sonner'
 import { useCompanyRolesWithoutPermission } from '../../queries/useCommon'
 import { useIndustries } from '../../queries/useWorkspace'
 import { useTheme } from '../../composables/useTheme';
-import { isCompanyEmail as checkIsCompanyEmail } from '../../utilities/onboardingRedirect'
+import { isCompanyEmail as checkIsCompanyEmail, isOnboardingComplete } from '../../utilities/onboardingRedirect'
 import { clearOrgDraft } from '../../utilities/createOrganizationDraft'
 import { getPendingWorkspaceInviteRedirectPath } from '../../utilities/workspaceInvitePending'
 
@@ -1296,20 +1296,10 @@ onMounted(async () => {
         router.replace('/associated-organization')
         return
       }
-        const u_work_to_do = res.data?.u_work_to_do || ''
-      const workspaces = res.data?.workspaces
-      
-      
-      if (
-  (
-    (Array.isArray(workspaces) && workspaces.length > 0) ||
-    (u_work_to_do && u_work_to_do.trim() !== '')
-  ) &&
-  !isFromSettings
-) {
-  router.replace('/dashboard')
-  return
-}
+      if (isOnboardingComplete(res.data) && !isFromSettings) {
+        router.replace('/dashboard')
+        return
+      }
     }
   } catch (error) {
     console.error('Failed to fetch profile', error)
