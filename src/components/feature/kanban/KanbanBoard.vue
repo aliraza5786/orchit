@@ -34,6 +34,7 @@
           <KanbanColumn
             :plusIcon="plusIcon && canCreateCard"
             :canDragList="!isMobile && canDragList"
+            :showStatusColor="showStatusColor"
             @onPlus="(e) => emit('onPlus', e)"
             :sheet_id="sheet_id"
             :variable_id="variable_id"
@@ -78,6 +79,7 @@ export interface Ticket {
 export interface Column {
   _id: string | number;
   title: string;
+  color?: string;
   avatar?: {
     type: "initials" | "image";
     initials?: string;
@@ -119,9 +121,10 @@ const props = withDefaults(
     variable_id: string;
     sheet_id: string;
     plusIcon?: boolean;
+    showStatusColor?: boolean;
     sprint_id?: string;
   }>(),
-  { plusIcon: true },
+  { plusIcon: true, showStatusColor: false },
 );
 
 const emit = defineEmits<{
@@ -154,9 +157,9 @@ const localBoard = ref<Board>(cloneBoard(props.board));
 watch(
   () => props.board,
   (v) => {
-    // Only replace when the reference changes (e.g. from server)
     localBoard.value = cloneBoard(v);
   },
+  { deep: true },
 );
 
 /** Column drag end -> columns array already reordered by vuedraggable */
@@ -236,11 +239,12 @@ function cloneBoard(b: Column[]): Board {
     columns:
       (b?.length ?? 0) > 0
         ? b.map((c) => ({
-            _id: c._id, // keep same ID
-            title: c.title,
-            avatar: c.avatar,
-            transitions: c.transitions,
-            cards: c.cards ?? [], // do not clone each card unless necessary
+            ...c,
+            color:
+              c.color ??
+              (c as Column & { status_color?: string }).status_color ??
+              (c as Column & { value_color?: string }).value_color,
+            cards: [...(c.cards ?? [])],
           }))
         : [],
   };

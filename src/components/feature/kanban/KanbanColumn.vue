@@ -32,6 +32,69 @@
           </div>
         </div>
 
+        <!-- Status color dot (card-status view only) -->
+        <div
+          v-if="showStatusColor"
+          ref="colorPickerRef"
+          class="relative flex-shrink-0"
+          @mousedown.stop
+          @pointerdown.stop
+          @click.stop
+        >
+          <button
+            type="button"
+            class="w-[25px] h-[25px] flex items-center justify-center rounded hover:bg-bg-card focus:outline-none focus:ring-1 focus:ring-border"
+            :class="canEditStatusColor ? 'cursor-pointer' : 'cursor-default'"
+            :disabled="!canEditStatusColor"
+            title="Change status color"
+            @mousedown.stop
+            @pointerdown.stop
+            @click.stop="toggleColorPicker"
+          >
+            <span
+              class="w-2.5 h-2.5 rounded-full border border-border/60"
+              :style="{ backgroundColor: columnDotColor }"
+            />
+          </button>
+
+          <Teleport to="body">
+            <div
+              v-if="showColorPicker"
+              ref="colorMenuRef"
+              class="fixed z-[9999] min-w-[168px] rounded-lg border border-border bg-bg-dropdown p-2 shadow-lg"
+              :style="colorMenuStyle"
+              @mousedown.stop
+              @pointerdown.stop
+              @click.stop
+            >
+              <div class="mb-2 flex items-center justify-between gap-2">
+                <span class="text-xs font-medium text-text-secondary"
+                  >Pick color</span
+                >
+                <button
+                  type="button"
+                  class="flex h-6 w-6 items-center justify-center rounded text-text-secondary hover:bg-bg-card"
+                  title="Close"
+                  @mousedown.stop
+                  @pointerdown.stop
+                  @click.stop.prevent="closeColorPicker"
+                >
+                  <i class="fa-solid fa-xmark text-xs"></i>
+                </button>
+              </div>
+              <input
+                type="color"
+                :value="columnDotColor"
+                class="h-9 w-full cursor-pointer rounded border border-border bg-transparent"
+                @mousedown.stop
+                @pointerdown.stop
+                @click.stop
+                @input="onColorChange"
+              />
+            </div>
+          </Teleport>
+        </div>
+
         <!-- Title: display vs edit -->
         <button
           v-if="!isEditingTitle"
@@ -48,7 +111,7 @@
           autofocus
           ref="titleInputRef"
           v-model="localTitle"
-          class="font-semibold inline text-[14px] text-foreground px-1 py-0.5 rounded bg-transparent border border-border focus:outline-none focus:ring-1 focus:ring-border"
+          class="font-semibold inline text-[14px] text-foreground px-1 py-0.5 rounded bg-transparent border border-border focus:outline-none focus:ring-1 focus:ring-border w-[150px]"
           @keydown.enter.prevent="commitTitle"
           @keydown.esc.prevent="cancelTitle"
           @blur="commitTitle"
@@ -56,7 +119,7 @@
         />
 
         <span
-          class="text-xs bg-muted bg-bg-card aspect-square flex justify-center items-center text-muted-foreground p-1 min-w-6 rounded-full"
+          class="text-xs bg-muted bg-bg-card aspect-square flex justify-center items-center text-muted-foreground p-1 rounded-full min-w-4"
         >
           {{ localTickets.length }}
         </span>
@@ -119,7 +182,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from "vue";
+import { computed, nextTick, onUnmounted, ref, watch, type CSSProperties } from "vue";
+import { onClickOutside } from "@vueuse/core";
 import Draggable from "vuedraggable";
 import DropMenu from "../../ui/DropMenu.vue";
 import { useWorkspaceStore } from "../../../stores/workspace";
@@ -135,6 +199,7 @@ export interface Ticket {
 export interface Column {
   _id: Id;
   title: string;
+  color?: string;
   avatar?: {
     type: "initials" | "image";
     initials?: string;
@@ -145,17 +210,23 @@ export interface Column {
   showADDNEW?: any;
 }
 
+const DEFAULT_COLUMN_COLOR = "#9CA3AF";
+
 const props = defineProps<{
   column: Column;
   variable_id: string;
   sheet_id: string;
   canDragList: boolean;
   plusIcon: boolean;
+  showStatusColor?: boolean;
   index?: number;
   totalColumns?: number;
 }>();
 const emit = defineEmits<{
-  (e: "update:column", payload: { title: string; oldTitle: string }): void;
+  (
+    e: "update:column",
+    payload: { title: string; oldTitle: string; color?: string },
+  ): void;
   (e: "delete:column", payload: { columnId: Id; title: string }): void;
   (e: "onPlus", payload: any): void;
   (
@@ -188,11 +259,105 @@ const onEnd = () => {
 const isEditingTitle = ref(false);
 const localTitle = ref(props.column.title);
 const titleInputRef = ref<HTMLInputElement | null>(null);
+const colorPickerRef = ref<HTMLElement | null>(null);
+const colorMenuRef = ref<HTMLElement | null>(null);
+const showColorPicker = ref(false);
+const colorMenuStyle = ref<CSSProperties>({});
+
+function resolveColumnColor(column: Column & Record<string, any>) {
+  return column.color ?? column.status_color ?? column.value_color;
+}
+
+const localColor = ref(resolveColumnColor(props.column));
+
+const columnDotColor = computed(() => normalizeColor(localColor.value));
+const canEditStatusColor = computed(
+  () => canEditVariable.value && showActions(),
+);
+
+function normalizeColor(color?: string | null) {
+  if (!color || color === "null" || color === "undefined") {
+    return DEFAULT_COLUMN_COLOR;
+  }
+  const trimmed = String(color).trim();
+  if (!trimmed) return DEFAULT_COLUMN_COLOR;
+  return trimmed.startsWith("#") ? trimmed : `#${trimmed}`;
+}
+
+function updateColorMenuPosition() {
+  const el = colorPickerRef.value;
+  if (!el) return;
+
+  const rect = el.getBoundingClientRect();
+  colorMenuStyle.value = {
+    top: `${rect.bottom + 4}px`,
+    left: `${rect.left}px`,
+  };
+}
+
+function toggleColorPicker() {
+  if (!canEditStatusColor.value) return;
+  showColorPicker.value = !showColorPicker.value;
+  if (showColorPicker.value) {
+    nextTick(updateColorMenuPosition);
+  }
+}
+
+function closeColorPicker() {
+  showColorPicker.value = false;
+}
+
+onClickOutside([colorPickerRef, colorMenuRef], () => {
+  showColorPicker.value = false;
+});
+
+function bindColorMenuListeners() {
+  window.addEventListener("scroll", updateColorMenuPosition, true);
+  window.addEventListener("resize", updateColorMenuPosition);
+}
+
+function unbindColorMenuListeners() {
+  window.removeEventListener("scroll", updateColorMenuPosition, true);
+  window.removeEventListener("resize", updateColorMenuPosition);
+}
+
+watch(showColorPicker, (open) => {
+  if (open) {
+    nextTick(updateColorMenuPosition);
+    bindColorMenuListeners();
+  } else {
+    unbindColorMenuListeners();
+  }
+});
+
+onUnmounted(unbindColorMenuListeners);
+
+function onColorChange(event: Event) {
+  if (!canEditStatusColor.value) return;
+  const newColor = (event.target as HTMLInputElement).value;
+  if (normalizeColor(newColor) === columnDotColor.value) return;
+
+  localColor.value = newColor;
+
+  emit("update:column", {
+    ...props.column,
+    title: props.column.title,
+    oldTitle: props.column.title,
+    color: newColor,
+  });
+}
 
 watch(
   () => props.column.title,
   (v) => {
     localTitle.value = v;
+  },
+);
+
+watch(
+  () => resolveColumnColor(props.column),
+  (v) => {
+    localColor.value = v;
   },
 );
 
