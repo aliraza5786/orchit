@@ -307,13 +307,10 @@ function closeColorPicker() {
   showColorPicker.value = false;
 }
 
-onClickOutside(
-  colorPickerRef,
-  () => {
-    showColorPicker.value = false;
-  },
-  { ignore: [colorMenuRef] },
-);
+onClickOutside(colorPickerRef, (event) => {
+  if (colorMenuRef.value?.contains(event.target as Node)) return;
+  showColorPicker.value = false;
+});
 
 function bindColorMenuListeners() {
   window.addEventListener("scroll", updateColorMenuPosition, true);
