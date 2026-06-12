@@ -311,6 +311,7 @@
             @addColumn="handleAddColumn"
             @select:ticket="selectCardHandler"
             @onBoardUpdate="handleBoardUpdate"
+            :showStatusColor="isStatusView"
             :variable_id="selected_view_by"
             :sheet_id="selected_sheet_id"
           >
@@ -979,6 +980,24 @@ watch(selected_sheet_id, (newId) => {
   }
 });
 
+function patchColumnInSheetListCache(
+  columnTitle: string,
+  patch: Record<string, any>,
+) {
+  queryClient.setQueriesData({ queryKey: ["sheet-list"] }, (old: any) => {
+    if (!old?.sheets) return old;
+    return {
+      ...old,
+      sheets: old.sheets.map((sheet: any) => ({
+        ...sheet,
+        sheet_lists: (sheet.sheet_lists || []).map((list: any) =>
+          list.title === columnTitle ? { ...list, ...patch } : list,
+        ),
+      })),
+    };
+  });
+}
+
 // ─── Add List ─────────────────────────────────────────────────────────────────
 const { mutate: addList, isPending: addingList } = useAddList({
   onSuccess: () => {
@@ -1543,14 +1562,27 @@ function emitAddColumn() {
   handleAddColumn(t);
 }
 
-const handleUpdateColumn = (newTitle: any) => {
-  addList({
+const handleUpdateColumn = (payload: any) => {
+  const apiPayload: Record<string, any> = {
     workspace_id: route.params.id,
     module_id: route.params.module_id,
-    new_value: newTitle.title,
-    value: newTitle.oldTitle,
+    new_value: payload.title,
+    value: payload.oldTitle,
     variable_id: selected_view_by.value,
-  });
+  };
+
+  if (payload.color) {
+    const normalizedColor = payload.color.startsWith("#")
+      ? payload.color
+      : `#${payload.color}`;
+    apiPayload.color = normalizedColor;
+    patchColumnInSheetListCache(payload.oldTitle, {
+      color: normalizedColor,
+      status_color: normalizedColor,
+    });
+  }
+
+  addList(apiPayload);
 };
 
 const showDelete = ref(false);
